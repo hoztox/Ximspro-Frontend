@@ -22,8 +22,8 @@ import CompanyLayout from "./pages/CompanyLayout";
 import CompanyDashboard from "./pages/Company Dashboard/CompanyDashboard";
 import CompanyBackup from "./pages/Company Backup/CompanyBackup";
 import QmsPolicy from "./pages/QMS/Documentation/Policy/QmsPolicy";
-import AddUser from "./pages/QMS/User Management/Add User/AddUser";
-import ListUser from "./pages/QMS/User Management/List User/ListUser";
+// import AddUser from "./pages/QMS/User Management/Add User/AddUser";
+// import ListUser from "./pages/QMS/User Management/List User/ListUser";
 import QmsManual from "./pages/QMS/Documentation/Manual/QmsManual";
 import QmsProcedure from "./pages/QMS/Documentation/Procedure/QmsProcedure";
 import QmsRecordFormat from "./pages/QMS/Documentation/Record Format/QmsRecordFormat";
@@ -74,12 +74,12 @@ import AmsProcedure from "./pages/AMS/Documentation/Procedure/AmsProcedure";
 import AddAmsProcedure from "./pages/AMS/Documentation/Procedure/AddAmsProcedure";
 import AmsRecordFormat from "./pages/AMS/Documentation/Record Format/AmsRecordFormat";
 import AddAmsRecordFormat from "./pages/AMS/Documentation/Record Format/AddAmsRecordFormat";
-import Adduser from "./pages/EMS/User Management/Add User/adduser";
-import ListUser from "./pages/EMS/User Management/List User/ListUser";
-import OHSAddUser from "./pages/OHS/User Management/Add User/OHSAddUser";
-import OHSListUser from "./pages/OHS/User Management/List User/OHSListUser";
-import EnmsAddUser from "./pages/EnMS/User Management/Add User/EnmsAddUser";
-import EnmsListUser from "./pages/EnMS/User Management/List User/EnmsListUser";
+// import Adduser from "./pages/QMS/User Management/Add User";
+// import ListUser from "./pages/QMS/User Management/List User";
+// import OHSAddUser from "./pages/OHS/User Management/Add User/OHSAddUser";
+// import OHSListUser from "./pages/OHS/User Management/List User/OHSListUser";
+// import EnmsAddUser from "./pages/EnMS/User Management/Add User/EnmsAddUser";
+// import EnmsListUser from "./pages/EnMS/User Management/List User/EnmsListUser";
 
 
 const ThemedApp = () => {
@@ -127,8 +127,8 @@ const ThemedApp = () => {
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
-          <Route path="qms/adduser" element={<AddUser />} />
-          <Route path="qms/listuser" element={<ListUser />} />
+          {/* <Route path="qms/adduser" element={<Adduser />} /> */}
+          {/* <Route path="qms/listuser" element={<ListUser />} /> */}
 
 
 
@@ -147,8 +147,8 @@ const ThemedApp = () => {
           <Route path="ems/record-format" element={<EmsRecordFormat />} />
           <Route path="ems/addrecordformat" element={<AddEmsRecordFormat />} />
 
-          <Route path="ems/adduser" element={<Adduser />} />
-          <Route path="ems/listuser" element={<ListUser />} />
+          {/* <Route path="ems/adduser" element={<Adduser />} /> */}
+          {/* <Route path="ems/listuser" element={<ListUser />} /> */}
 
 
 
@@ -166,8 +166,8 @@ const ThemedApp = () => {
           <Route path="ohs/record-format" element={<OhsRecordFormat />} />
           <Route path="ohs/addrecordformat" element={<AddOhsRecordFormat />} />
 
-          <Route path="ohs/adduser" element={<OHSAddUser/>} />
-          <Route path="ohs/listuser" element={<OHSListUser/>} />
+          {/* <Route path="ohs/adduser" element={<OHSAddUser/>} /> */}
+          {/* <Route path="ohs/listuser" element={<OHSListUser/>} /> */}
 
 
 
@@ -185,8 +185,8 @@ const ThemedApp = () => {
           <Route path="enms/record-format" element={<EnMSRecordFormat />} />
           <Route path="enms/addrecordformat" element={<AddEnMSRecordFormat />} />
 
-          <Route path="enms/adduser" element={<EnmsAddUser/>} />
-          <Route path="enms/listuser" element={<EnmsListUser/>} />
+          {/* <Route path="enms/adduser" element={<EnmsAddUser/>} /> */}
+          {/* <Route path="enms/listuser" element={<EnmsListUser/>} /> */}
 
 
 
