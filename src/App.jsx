@@ -22,8 +22,6 @@ import CompanyLayout from "./pages/CompanyLayout";
 import CompanyDashboard from "./pages/Company Dashboard/CompanyDashboard";
 import CompanyBackup from "./pages/Company Backup/CompanyBackup";
 import QmsPolicy from "./pages/QMS/Documentation/Policy/QmsPolicy";
-// import AddUser from "./pages/QMS/User Management/Add User/AddUser";
-// import ListUser from "./pages/QMS/User Management/List User/ListUser";
 import QmsManual from "./pages/QMS/Documentation/Manual/QmsManual";
 import QmsProcedure from "./pages/QMS/Documentation/Procedure/QmsProcedure";
 import QmsRecordFormat from "./pages/QMS/Documentation/Record Format/QmsRecordFormat";
@@ -74,6 +72,8 @@ import AmsProcedure from "./pages/AMS/Documentation/Procedure/AmsProcedure";
 import AddAmsProcedure from "./pages/AMS/Documentation/Procedure/AddAmsProcedure";
 import AmsRecordFormat from "./pages/AMS/Documentation/Record Format/AmsRecordFormat";
 import AddAmsRecordFormat from "./pages/AMS/Documentation/Record Format/AddAmsRecordFormat";
+import QMSAddUser from "./pages/QMS/UserManagement/AddUser/QMSAddUser";
+import QMSListUser from "./pages/QMS/UserManagement/ListUser/QMSListUser";
 // import Adduser from "./pages/QMS/User Management/Add User";
 // import ListUser from "./pages/QMS/User Management/List User";
 // import OHSAddUser from "./pages/OHS/User Management/Add User/OHSAddUser";
@@ -127,8 +127,8 @@ const ThemedApp = () => {
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
-          {/* <Route path="qms/adduser" element={<Adduser />} /> */}
-          {/* <Route path="qms/listuser" element={<ListUser />} /> */}
+          <Route path="qms/adduser" element={<QMSAddUser />} />
+          <Route path="qms/listuser" element={<QMSListUser />} />
 
 
 
