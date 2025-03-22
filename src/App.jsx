@@ -74,8 +74,8 @@ import AmsProcedure from "./pages/AMS/Documentation/Procedure/AmsProcedure";
 import AddAmsProcedure from "./pages/AMS/Documentation/Procedure/AddAmsProcedure";
 import AmsRecordFormat from "./pages/AMS/Documentation/Record Format/AmsRecordFormat";
 import AddAmsRecordFormat from "./pages/AMS/Documentation/Record Format/AddAmsRecordFormat";
-import EMSAdduser from "./pages/EMS/User Management/Add User/adduser";
-import EMSListUser from "./pages/EMS/User Management/List User/ListUser";
+import Adduser from "./pages/EMS/User Management/Add User/adduser";
+import ListUser from "./pages/EMS/User Management/List User/ListUser";
 import OHSAddUser from "./pages/OHS/User Management/Add User/OHSAddUser";
 import OHSListUser from "./pages/OHS/User Management/List User/OHSListUser";
 import EnmsAddUser from "./pages/EnMS/User Management/Add User/EnmsAddUser";
@@ -147,8 +147,8 @@ const ThemedApp = () => {
           <Route path="ems/record-format" element={<EmsRecordFormat />} />
           <Route path="ems/addrecordformat" element={<AddEmsRecordFormat />} />
 
-          <Route path="ems/adduser" element={<EMSAdduser />} />
-          <Route path="ems/listuser" element={<EMSListUser />} />
+          <Route path="ems/adduser" element={<Adduser />} />
+          <Route path="ems/listuser" element={<ListUser />} />
 
 
 
