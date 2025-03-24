@@ -10,7 +10,7 @@ import { BASE_URL } from "../../../../Utils/Config";
 import toast, { Toaster } from 'react-hot-toast';
 import "./listuser.css";
 
-const OHSListUser = () => {
+const EMSListUser = () => {
     const [users, setUsers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -83,7 +83,7 @@ const OHSListUser = () => {
     };
 
     const handleAddUsers = () => {
-        navigate('/company/ohs/adduser');
+        navigate('/company/ems/adduser');
     };
 
     const handleDeleteUser = async (userId) => {
@@ -227,4 +227,4 @@ const OHSListUser = () => {
     );
 };
 
-export default OHSListUser
+export default EMSListUser

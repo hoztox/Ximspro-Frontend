@@ -74,13 +74,8 @@ import AmsRecordFormat from "./pages/AMS/Documentation/Record Format/AmsRecordFo
 import AddAmsRecordFormat from "./pages/AMS/Documentation/Record Format/AddAmsRecordFormat";
 import QMSAddUser from "./pages/QMS/UserManagement/AddUser/QMSAddUser";
 import QMSListUser from "./pages/QMS/UserManagement/ListUser/QMSListUser";
-// import Adduser from "./pages/QMS/User Management/Add User";
-// import ListUser from "./pages/QMS/User Management/List User";
-// import OHSAddUser from "./pages/OHS/User Management/Add User/OHSAddUser";
-// import OHSListUser from "./pages/OHS/User Management/List User/OHSListUser";
-// import EnmsAddUser from "./pages/EnMS/User Management/Add User/EnmsAddUser";
-// import EnmsListUser from "./pages/EnMS/User Management/List User/EnmsListUser";
-
+import EMSAddUser from "./pages/EMS/UserManagement/AddUser/EMSAddUser";
+import EMSListUser from "./pages/EMS/UserManagement/ListUser/EMSListUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -147,8 +142,8 @@ const ThemedApp = () => {
           <Route path="ems/record-format" element={<EmsRecordFormat />} />
           <Route path="ems/addrecordformat" element={<AddEmsRecordFormat />} />
 
-          {/* <Route path="ems/adduser" element={<Adduser />} /> */}
-          {/* <Route path="ems/listuser" element={<ListUser />} /> */}
+          <Route path="ems/adduser" element={<EMSAddUser />} />
+          <Route path="ems/listuser" element={<EMSListUser />} />
 
 
 
@@ -166,9 +161,6 @@ const ThemedApp = () => {
           <Route path="ohs/record-format" element={<OhsRecordFormat />} />
           <Route path="ohs/addrecordformat" element={<AddOhsRecordFormat />} />
 
-          {/* <Route path="ohs/adduser" element={<OHSAddUser/>} /> */}
-          {/* <Route path="ohs/listuser" element={<OHSListUser/>} /> */}
-
 
 
 
@@ -184,9 +176,6 @@ const ThemedApp = () => {
 
           <Route path="enms/record-format" element={<EnMSRecordFormat />} />
           <Route path="enms/addrecordformat" element={<AddEnMSRecordFormat />} />
-
-          {/* <Route path="enms/adduser" element={<EnmsAddUser/>} /> */}
-          {/* <Route path="enms/listuser" element={<EnmsListUser/>} /> */}
 
 
 
