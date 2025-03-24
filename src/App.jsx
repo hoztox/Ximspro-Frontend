@@ -78,6 +78,8 @@ import EMSAddUser from "./pages/EMS/UserManagement/AddUser/EMSAddUser";
 import EMSListUser from "./pages/EMS/UserManagement/ListUser/EMSListUser";
 import OHSAddUser from "./pages/OHS/UserManagement/AddUser/OHSAddUser"
 import OHSListUser from "./pages/OHS/UserManagement/ListUser/OHSListUser";
+import EnMSAddUser from "./pages/EnMS/UserManagement/AddUser/EnMSAddUser"
+import EnMSListUser from "./pages/EnMS/UserManagement/ListUser/EnMSListUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -105,7 +107,7 @@ const ThemedApp = () => {
         <Route path="/company" element={<CompanyLayout />}>
           <Route path="dashboard" element={<CompanyDashboard />} />
 
-          {/* Documentation */}
+          {/* QMS Documentation */}
           <Route path="qms/policy" element={<QmsPolicy />} />
           <Route path="qms/addpolicy" element={<AddQmsPolicy />} />
 
@@ -115,15 +117,15 @@ const ThemedApp = () => {
           <Route path="qms/procedure" element={<QmsProcedure />} />
           <Route path="qms/addprocedure" element={<AddQmsProcedure/>} />
 
-
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />
-
 
           <Route path="qms/interested-parties" element={<QmsInterestedParties />} />
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
+
+           {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
 
@@ -131,7 +133,7 @@ const ThemedApp = () => {
 
 
 
-
+          {/* EMS Documentation */}
           <Route path="ems/policy" element={<EmsPolicy />} />
           <Route path="ems/addpolicy" element={<AddEmspolicy/>} />
 
@@ -144,13 +146,15 @@ const ThemedApp = () => {
           <Route path="ems/record-format" element={<EmsRecordFormat />} />
           <Route path="ems/addrecordformat" element={<AddEmsRecordFormat />} />
 
+
+           {/* EMS User Management */}
           <Route path="ems/adduser" element={<EMSAddUser />} />
           <Route path="ems/listuser" element={<EMSListUser />} />
 
 
 
 
-
+           {/* OHS Documentation */}
           <Route path="ohs/policy" element={<OhsPolicy />} />
           <Route path="ohs/addpolicy" element={<AddOhsPolicy/>} />
 
@@ -163,13 +167,15 @@ const ThemedApp = () => {
           <Route path="ohs/record-format" element={<OhsRecordFormat />} />
           <Route path="ohs/addrecordformat" element={<AddOhsRecordFormat />} />
 
+
+          {/* OHS User Management */}
           <Route path="ohs/adduser" element={<OHSAddUser />} />
           <Route path="ohs/listuser" element={<OHSListUser />} />
 
 
 
 
-
+          {/* EnMS Documentation */}
           <Route path="enms/policy" element={<EnMSPolicy />} />
           <Route path="enms/addpolicy" element={<AddEnMSPolicy/>} />
 
@@ -181,6 +187,11 @@ const ThemedApp = () => {
 
           <Route path="enms/record-format" element={<EnMSRecordFormat />} />
           <Route path="enms/addrecordformat" element={<AddEnMSRecordFormat />} />
+
+
+          {/* EnMS User Management */}
+          <Route path="enms/adduser" element={<EnMSAddUser />} />
+          <Route path="enms/listuser" element={<EnMSListUser />} />
 
 
 
