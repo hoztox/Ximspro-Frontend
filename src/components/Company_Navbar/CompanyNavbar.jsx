@@ -552,7 +552,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
               <div>
                 <img src={bell} alt="bell icon" className="w-[20px] h-[20px]" />
                 {unreadCount > 0 && (
-                  <span className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center notification-badge
+                  <span className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center pb-[1.5px] justify-center notification-badge
                     ${theme === "dark" ? "text-white" : "text-white"}`}
                   >
                     {unreadCount > 9 ? '9+' : unreadCount}
