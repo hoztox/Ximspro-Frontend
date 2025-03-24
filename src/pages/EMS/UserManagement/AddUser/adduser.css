@@ -15,7 +15,7 @@
 }
 
 .list-user-btn {
-    border: 1px solid white;
+ 
     background-color: transparent;
     width: 140px;
     height: 42px;
@@ -25,12 +25,7 @@
     font-size: 14px;
     font-style: normal;
     line-height: normal;
-    color: white;
-}
-
-.list-user-btn:hover {
-    background-color: white;
-    color: #1C1C24;
+    
 }
 
 .add-user-form {

@@ -263,7 +263,7 @@ const OHSAddUser = () => {
             <div className="flex justify-between items-center add-user-header">
                 <h1 className="add-user-text">Add User</h1>
                 <button
-                    className="list-user-btn duration-200"
+                     className="list-user-btn duration-200 border border-[#F9291F] text-[#F9291F] hover:bg-[#F9291F] hover:text-white"
                     onClick={handleListUsers}
                 >
                     List Users

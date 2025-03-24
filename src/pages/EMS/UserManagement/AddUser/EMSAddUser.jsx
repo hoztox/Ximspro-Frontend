@@ -263,7 +263,7 @@ const EMSAddUser = () => {
             <div className="flex justify-between items-center add-user-header">
                 <h1 className="add-user-text">Add User</h1>
                 <button
-                    className="list-user-btn duration-200"
+                     className="list-user-btn duration-200 border border-[#38E76C] text-[#38E76C] hover:bg-[#38E76C] hover:text-white"
                     onClick={handleListUsers}
                 >
                     List Users
