@@ -52,7 +52,7 @@ const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto }) =>
         formData.append('profile_photo', blob, 'profile.jpg');
         
         // Upload the photo
-        await axios.post(`${BASE_URL}/accounts/update-profile-photo/`, formData, {
+        await axios.put(`${BASE_URL}/accounts/change-profile-photo/`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },

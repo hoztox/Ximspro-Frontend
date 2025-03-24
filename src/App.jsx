@@ -76,6 +76,8 @@ import QMSAddUser from "./pages/QMS/UserManagement/AddUser/QMSAddUser";
 import QMSListUser from "./pages/QMS/UserManagement/ListUser/QMSListUser";
 import EMSAddUser from "./pages/EMS/UserManagement/AddUser/EMSAddUser";
 import EMSListUser from "./pages/EMS/UserManagement/ListUser/EMSListUser";
+import OHSAddUser from "./pages/OHS/UserManagement/AddUser/OHSAddUser"
+import OHSListUser from "./pages/OHS/UserManagement/ListUser/OHSListUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -160,6 +162,9 @@ const ThemedApp = () => {
 
           <Route path="ohs/record-format" element={<OhsRecordFormat />} />
           <Route path="ohs/addrecordformat" element={<AddOhsRecordFormat />} />
+
+          <Route path="ohs/adduser" element={<OHSAddUser />} />
+          <Route path="ohs/listuser" element={<OHSListUser />} />
 
 
 

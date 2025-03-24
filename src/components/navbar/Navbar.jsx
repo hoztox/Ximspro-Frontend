@@ -22,6 +22,9 @@ import sunIcon from "../../assets/images/Navbar/sun.svg";
 import moonIcon from "../../assets/images/Navbar/moon.svg";
 import { BASE_URL } from "../../Utils/Config";
 import axios from "axios";
+// Import the AdminProfilePhotoModal component
+import AdminProfilePhotoModal from "./AdminProfilePhotoModal"; // Update path if needed
+
 const Navbar = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
@@ -33,6 +36,12 @@ const Navbar = () => {
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [activeMenu, setActiveMenu] = useState("Dashboard");
+  
+  // State for profile photo modal
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+  const [adminId, setAdminId] = useState(null);
+
   // Handle outside click to close dropdown
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -45,51 +54,120 @@ const Navbar = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
-        if (adminDetails) {
-          setUserEmail(adminDetails.email || "");
-          setUserName(adminDetails.username || "");
-        }
-      } catch (error) {
-        console.error("Error fetching user details from localStorage:", error);
-      }
-    };
+  
+  // Fetch user details and profile photo
+  // useEffect(() => {
+  //   const fetchUserDetails = async () => {
+  //     try {
+  //       const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
+  //       if (adminDetails) {
+  //         setUserEmail(adminDetails.email || "");
+  //         setUserName(adminDetails.username || "");
+  //         setAdminId(adminDetails.id || null);
+          
+  //         // Fetch profile photo if not already in localStorage
+  //         if (!adminDetails.profile_photo) {
+  //           fetchProfilePhoto(adminDetails.id);
+  //         } else {
+  //           setProfilePhotoUrl(adminDetails.profile_photo);
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching user details from localStorage:", error);
+  //     }
+  //   };
 
-    fetchUserDetails();
-  }, []);
+  //   fetchUserDetails();
+  // }, []);
 
+  // Function to fetch profile photo from backend
+  // const fetchProfilePhoto = async (userId) => {
+  //   try {
+  //     const token = localStorage.getItem("adminAuthToken");
+      
+  //     if (!token || !userId) return;
+      
+  //     const response = await axios.get(`${BASE_URL}/accounts/change-profile-photo/${userId}/`, {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`
+  //       }
+  //     });
+      
+  //     if (response.data && response.data.profile_photo) {
+  //       setProfilePhotoUrl(response.data.profile_photo);
+        
+  //       // Update profile photo in localStorage
+  //       const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
+  //       if (adminDetails) {
+  //         adminDetails.profile_photo = response.data.profile_photo;
+  //         localStorage.setItem("adminDetails", JSON.stringify(adminDetails));
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching profile photo:", error);
+  //   }
+  // };
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+  
   const toggleDropdowns = () => {
     setIsSubscribersOpen((prev) => !prev);
     setIsSubscriptionOpen(false); // Close subscription dropdown when subscribers is opened
   };
+  
   const toggleDropdownsubscription = () => {
     setIsSubscriptionOpen((prev) => !prev);
     setIsSubscribersOpen(false); // Close subscribers dropdown when subscription is opened
   };
+  
   const handleLogout = () => {
     localStorage.removeItem("adminAuthToken");
     localStorage.removeItem('logoutTime');
     navigate("/");
   };
+  
   const handleChangePassword = () => {
     navigate("/changepassword");
   };
+  
   const handleItemClick = (path) => {
     setIsDropdownOpen(false);
     navigate(path);
   };
+  
+  // Function to open profile photo modal
+  const handleChangeProfilePhoto = () => {
+    setIsProfileModalOpen(true);
+  };
+  
+  // Function to handle successful photo upload
+  const handleProfilePhotoSuccess = (newPhotoUrl) => {
+    // Update state with new photo URL
+    setProfilePhotoUrl(newPhotoUrl);
+    
+    // Update the profile photo in localStorage
+    try {
+      const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
+      if (adminDetails) {
+        adminDetails.profile_photo = newPhotoUrl;
+        localStorage.setItem("adminDetails", JSON.stringify(adminDetails));
+      }
+    } catch (error) {
+      console.error("Error updating profile photo in localStorage:", error);
+    }
+    
+    // Close dropdown after successful update
+    setIsDropdownOpen(false);
+  };
+  
   // Trigger rotation on theme change
   const handleThemeToggle = () => {
     setIsRotating(true);
     toggleTheme();
   };
+  
   // Reset rotation animation after it's completed
   useEffect(() => {
     if (isRotating) {
@@ -99,12 +177,15 @@ const Navbar = () => {
       return () => clearTimeout(timer); // Cleanup timer
     }
   }, [isRotating]);
+  
   const handleDashboard = () => {
     navigate("/admin/dashboard");
   };
+  
   const handleMenuClick = (menu) => {
     setActiveMenu(menu); // Set the active menu when a menu item is clicked
   };
+  
   return (
     <div
       className={`navbar h-20 flex items-center justify-between relative ${theme}`}
@@ -141,14 +222,6 @@ const Navbar = () => {
         >
           <img src={bell} alt="bell icon" className="bellimg" />
         </button>
-        {/* <button
-          aria-label="Settings"
-          className={`icon-button settingicon ${
-            theme === "dark" ? "dark" : "light"
-          } duration-200`}
-        >
-          <img src={setting} alt="setting icon" className="settingimg" />
-        </button> */}
         <div
           className={`divider ${theme === "dark" ? "dark" : "light"
             } duration-100`}
@@ -159,9 +232,9 @@ const Navbar = () => {
             onClick={toggleDropdown}
           >
             <img
-              src={profile}
+              src={profilePhotoUrl || profile}
               alt="Profile Avatar"
-              className="w-10 h-10 rounded-full profileicon"
+              className="w-10 h-10 rounded-full profileicon object-cover"
             />
             <button
               aria-label="Dashboard"
@@ -190,24 +263,16 @@ const Navbar = () => {
               } ${theme === "dark" ? "dark" : "light"}`}
           >
             <ul className="py-2 changpswdlogout">
-              {/* <li
-              className="px-4 py-2 cursor-pointer text-sm chngepaswd md:flex md:gap-4"
-              >
-                <img src={profileicon} alt="" className="w-6 desktopprofileicon" />
-                Profile
-              </li> */}
-
               <div className="px-4 py-3 border-b border-[#383840] text-center">
                 <div className="flex flex-col items-center">
                   <img
-                    src={profile}
+                    src={profilePhotoUrl || profile}
                     alt="Profile"
                     className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
-
                   />
                   <button
                     className="text-sm text-[#1E4DA1] hover:text-[#24447b] mt-1 mb-1 transition-colors duration-200 change-profile"
-                    // onClick={handleChangeProfilePhoto}
+                    onClick={handleChangeProfilePhoto}
                   >
                     Change Profile Photo
                   </button>
@@ -377,7 +442,17 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+      
+      {/* Profile Photo Modal */}
+      <AdminProfilePhotoModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSuccess={handleProfilePhotoSuccess}
+        currentPhoto={profilePhotoUrl || profile}
+        adminId={adminId}
+      />
     </div>
   );
 };
+
 export default Navbar;
