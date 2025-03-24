@@ -6,6 +6,7 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+
 const QmsRecordFormat = () => {
   const [recordFormat, setRecordFormat] = useState([])
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,7 @@ const QmsRecordFormat = () => {
     }
     return null;
   };
+  
   const companyId = getUserCompanyId();
   console.log("Stored Company ID:", companyId);
 
@@ -57,13 +59,22 @@ const QmsRecordFormat = () => {
       const companyId = getUserCompanyId();
       console.log("Fetching Record Format for Company ID:", companyId);
       const response = await axios.get(`${BASE_URL}/company/records/${companyId}/`);
-      console.log("API Responsessssss:", response.data);
+      console.log("API Response:", response.data);
 
       setRecordFormat(response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching Record Formats:", err);
-      setError("Failed to load Record Formats. Please try again.");
+      
+      // Check if it's a 404 error (no record formats found)
+      if (err.response && err.response.status === 404) {
+        // This is expected when no record formats exist
+        setRecordFormat([]);
+        setError(null);
+      } else {
+        // For other errors, set the error state
+        setError("Failed to load Record Formats. Please try again.");
+      }
       setLoading(false);
     }
   };
@@ -245,4 +256,4 @@ const QmsRecordFormat = () => {
   );
 };
 
-export default QmsRecordFormat
+export default QmsRecordFormat;
