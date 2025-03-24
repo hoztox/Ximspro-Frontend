@@ -131,11 +131,11 @@ const EMSListUser = () => {
                         </div>
                     </div>
                     <button
-                        className="flex items-center justify-center add-user-btn gap-[10px] duration-200"
+                        className="flex items-center justify-center add-user-btn gap-[10px] duration-200 border border-[#38E76C] text-[#38E76C] hover:bg-[#38E76C] hover:text-white"
                         onClick={handleAddUsers}
                     >
                         <span>Add Users</span>
-                        <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] add-plus' />
+                        <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] ems-add-plus' />
                     </button>
                 </div>
             </div>

@@ -131,11 +131,11 @@ const OHSListUser = () => {
             </div>
           </div>
           <button
-            className="flex items-center justify-center add-user-btn gap-[10px] duration-200"
+             className="flex items-center justify-center add-user-btn gap-[10px] duration-200 border border-[#F9291F] text-[#F9291F] hover:bg-[#F9291F] hover:text-white"
             onClick={handleAddUsers}
           >
             <span>Add Users</span>
-            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] add-plus' />
+            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] ohs-add-plus' />
           </button>
         </div>
       </div>
