@@ -49,6 +49,8 @@ const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto }) =>
         
         // Create form data
         const formData = new FormData();
+        console.log('uploadd', formData);
+        
         formData.append('profile_photo', blob, 'profile.jpg');
         
         // Upload the photo
