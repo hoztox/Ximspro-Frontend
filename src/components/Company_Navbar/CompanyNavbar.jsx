@@ -364,7 +364,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
       navigate("/company-login");
     } else if (isUserLogin) {
       localStorage.removeItem("userAccessToken");
-      navigate("/user-login");
+      navigate("/company-login");
     }
     localStorage.removeItem('logoutTime');
   };
