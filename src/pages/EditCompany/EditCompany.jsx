@@ -212,7 +212,7 @@ const EditCompany = () => {
       if (response.status === 200 || response.status === 201) {
         toast.success("Company updated successfully!");
         setTimeout(() => {
-          // navigate("/admin/companies");  
+          navigate("/admin/companies");  
         }, 2000);
       }
     } catch (error) {
