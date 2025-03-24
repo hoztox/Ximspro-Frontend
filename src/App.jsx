@@ -245,11 +245,6 @@ const ThemedApp = () => {
 
 
 
-
-
-
-          {/* User Management */}
-
           <Route path="backup" element={<CompanyBackup />} />
         </Route>
 
