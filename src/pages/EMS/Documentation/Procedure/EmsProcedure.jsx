@@ -16,6 +16,7 @@ const EmsProcedure = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const procedurePerPage = 10;
+  
   // Format date from ISO to DD-MM-YYYY
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -26,6 +27,7 @@ const EmsProcedure = () => {
       year: 'numeric'
     }).replace(/\//g, '-');
   };
+  
   const getUserCompanyId = () => {
     // First check if company_id is stored directly
     const storedCompanyId = localStorage.getItem("company_id");
@@ -47,8 +49,10 @@ const EmsProcedure = () => {
     }
     return null;
   };
+  
   const companyId = getUserCompanyId();
   console.log("Stored Company ID:", companyId);
+  
   // Fetch procedures from API
   const fetchProcedure = async () => {
     try {
@@ -56,13 +60,22 @@ const EmsProcedure = () => {
       const companyId = getUserCompanyId();
       console.log("Fetching Procedures for Company ID:", companyId);
       const response = await axios.get(`${BASE_URL}/company/procedure/${companyId}/`);
-      console.log("API Responsessssss:", response.data);
+      console.log("API Response:", response.data);
 
       setProcedure(response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedures:", err);
-      setError("Failed to load procedures. Please try again.");
+      
+      // Check if it's a 404 error (no procedures found)
+      if (err.response && err.response.status === 404) {
+        // This is expected when no procedures exist
+        setProcedure([]);
+        setError(null);
+      } else {
+        // For other errors, set the error state
+        setError("Failed to load procedures. Please try again.");
+      }
       setLoading(false);
     }
   };
@@ -244,4 +257,5 @@ const EmsProcedure = () => {
     </div>
   );
 };
+
 export default EmsProcedure
