@@ -80,6 +80,8 @@ import OHSAddUser from "./pages/OHS/UserManagement/AddUser/OHSAddUser"
 import OHSListUser from "./pages/OHS/UserManagement/ListUser/OHSListUser";
 import EnMSAddUser from "./pages/EnMS/UserManagement/AddUser/EnMSAddUser"
 import EnMSListUser from "./pages/EnMS/UserManagement/ListUser/EnMSListUser";
+import BMSAddUser from "./pages/BMS/UserManagement/AddUser/BMSAddUser";
+import BMSListUser from "./pages/BMS/UserManagement/ListUser/BMSListUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -196,7 +198,7 @@ const ThemedApp = () => {
 
 
 
-
+          {/* BMS Documentation */}
           <Route path="bms/policy" element={<BMSPolicy />} />
           <Route path="bms/addpolicy" element={<AddBMSPolicy/>} />
 
@@ -208,6 +210,11 @@ const ThemedApp = () => {
 
           <Route path="bms/record-format" element={<BmsRecordFormat />} />
           <Route path="bms/addrecordformat" element={<AddBmsRecordFormat />} />
+
+
+          {/* BMS User Management */}
+          <Route path="bms/adduser" element={<BMSAddUser />} />
+          <Route path="bms/listuser" element={<BMSListUser />} />
 
 
 
