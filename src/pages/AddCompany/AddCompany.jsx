@@ -100,7 +100,7 @@ const AddCompany = () => {
             params: { user_id: formDataState.user_id },
           });
           if (response.data.exists) {
-            setUseridError('User ID already exists!');
+            setUseridError('Username already exists!');
             setUseridValid(false);
           } else {
             setUseridError('');
@@ -502,7 +502,7 @@ const AddCompany = () => {
             <h3 className="text-[#677487] credentials">Credentials</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
               <div>
-                <label htmlFor="user_id">User ID</label>
+                <label htmlFor="user_id">Username</label>
                 <input
                   type="text"
                   id="user_id"
@@ -523,7 +523,7 @@ const AddCompany = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    User ID is available!
+                    Username is available!
                   </p>
                 )}
               </div>
