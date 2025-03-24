@@ -3,7 +3,7 @@ import policy from "../../../../assets/images/Company-Sidebar/policy.svg";
 import manual from "../../../../assets/images/Company-Sidebar/manual.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const AMSUserSubmenu = () => {
+const AMSUserSubmenu = (props) => {
     const navigate = useNavigate();
       const location = useLocation();
 
@@ -12,13 +12,13 @@ const AMSUserSubmenu = () => {
             id: "adduser",
             label: "Add User",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/adduser",
+            path: "/company/ams/adduser",
           },
           {
             id: "listuser",
             label: "List User",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/listuser",
+            path: "/company/ams/listuser",
           },
         ];
 

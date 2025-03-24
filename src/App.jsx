@@ -82,6 +82,8 @@ import EnMSAddUser from "./pages/EnMS/UserManagement/AddUser/EnMSAddUser"
 import EnMSListUser from "./pages/EnMS/UserManagement/ListUser/EnMSListUser";
 import BMSAddUser from "./pages/BMS/UserManagement/AddUser/BMSAddUser";
 import BMSListUser from "./pages/BMS/UserManagement/ListUser/BMSListUser";
+import AMSAddUser from "./pages/AMS/UserManagement/AddUser/AMSAddUser";
+import AMSListUser from "./pages/AMS/UserManagement/ListUser/AMSListUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -114,10 +116,10 @@ const ThemedApp = () => {
           <Route path="qms/addpolicy" element={<AddQmsPolicy />} />
 
           <Route path="qms/manual" element={<QmsManual />} />
-          <Route path="qms/addmanual" element={<AddQmsManual/>} />
+          <Route path="qms/addmanual" element={<AddQmsManual />} />
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
-          <Route path="qms/addprocedure" element={<AddQmsProcedure/>} />
+          <Route path="qms/addprocedure" element={<AddQmsProcedure />} />
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />
@@ -127,7 +129,7 @@ const ThemedApp = () => {
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
 
-           {/* QMS User Management */}
+          {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
 
@@ -137,34 +139,34 @@ const ThemedApp = () => {
 
           {/* EMS Documentation */}
           <Route path="ems/policy" element={<EmsPolicy />} />
-          <Route path="ems/addpolicy" element={<AddEmspolicy/>} />
+          <Route path="ems/addpolicy" element={<AddEmspolicy />} />
 
-          <Route path="ems/manual" element={<EmsManual/>} />
-          <Route path="ems/addmanual" element={<AddEmsManual/>} />
+          <Route path="ems/manual" element={<EmsManual />} />
+          <Route path="ems/addmanual" element={<AddEmsManual />} />
 
-          <Route path="ems/procedure" element={<EmsProcedure/>} />
-          <Route path="ems/addprocedure" element={<AddEmsProcedure/>} />
+          <Route path="ems/procedure" element={<EmsProcedure />} />
+          <Route path="ems/addprocedure" element={<AddEmsProcedure />} />
 
           <Route path="ems/record-format" element={<EmsRecordFormat />} />
           <Route path="ems/addrecordformat" element={<AddEmsRecordFormat />} />
 
 
-           {/* EMS User Management */}
+          {/* EMS User Management */}
           <Route path="ems/adduser" element={<EMSAddUser />} />
           <Route path="ems/listuser" element={<EMSListUser />} />
 
 
 
 
-           {/* OHS Documentation */}
+          {/* OHS Documentation */}
           <Route path="ohs/policy" element={<OhsPolicy />} />
-          <Route path="ohs/addpolicy" element={<AddOhsPolicy/>} />
+          <Route path="ohs/addpolicy" element={<AddOhsPolicy />} />
 
-          <Route path="ohs/manual" element={<OhsManual/>} />
-          <Route path="ohs/addmanual" element={<AddOhsManual/>} />
+          <Route path="ohs/manual" element={<OhsManual />} />
+          <Route path="ohs/addmanual" element={<AddOhsManual />} />
 
-          <Route path="ohs/procedure" element={<OhsProcedure/>} />
-          <Route path="ohs/addprocedure" element={<AddOhsProcedure/>} />
+          <Route path="ohs/procedure" element={<OhsProcedure />} />
+          <Route path="ohs/addprocedure" element={<AddOhsProcedure />} />
 
           <Route path="ohs/record-format" element={<OhsRecordFormat />} />
           <Route path="ohs/addrecordformat" element={<AddOhsRecordFormat />} />
@@ -179,13 +181,13 @@ const ThemedApp = () => {
 
           {/* EnMS Documentation */}
           <Route path="enms/policy" element={<EnMSPolicy />} />
-          <Route path="enms/addpolicy" element={<AddEnMSPolicy/>} />
+          <Route path="enms/addpolicy" element={<AddEnMSPolicy />} />
 
-          <Route path="enms/manual" element={<EnMSManual/>} />
-          <Route path="enms/addmanual" element={<AddEnMSManual/>} />
+          <Route path="enms/manual" element={<EnMSManual />} />
+          <Route path="enms/addmanual" element={<AddEnMSManual />} />
 
-          <Route path="enms/procedure" element={<EnMSProcedure/>} />
-          <Route path="enms/addprocedure" element={<AddEnMSProcedure/>} />
+          <Route path="enms/procedure" element={<EnMSProcedure />} />
+          <Route path="enms/addprocedure" element={<AddEnMSProcedure />} />
 
           <Route path="enms/record-format" element={<EnMSRecordFormat />} />
           <Route path="enms/addrecordformat" element={<AddEnMSRecordFormat />} />
@@ -200,13 +202,13 @@ const ThemedApp = () => {
 
           {/* BMS Documentation */}
           <Route path="bms/policy" element={<BMSPolicy />} />
-          <Route path="bms/addpolicy" element={<AddBMSPolicy/>} />
+          <Route path="bms/addpolicy" element={<AddBMSPolicy />} />
 
-          <Route path="bms/manual" element={<BmsManual/>} />
-          <Route path="bms/addmanual" element={<AddBmsManual/>} />
+          <Route path="bms/manual" element={<BmsManual />} />
+          <Route path="bms/addmanual" element={<AddBmsManual />} />
 
-          <Route path="bms/procedure" element={<BmsProcedure/>} />
-          <Route path="bms/addprocedure" element={<AddBmsProcedure/>} />
+          <Route path="bms/procedure" element={<BmsProcedure />} />
+          <Route path="bms/addprocedure" element={<AddBmsProcedure />} />
 
           <Route path="bms/record-format" element={<BmsRecordFormat />} />
           <Route path="bms/addrecordformat" element={<AddBmsRecordFormat />} />
@@ -220,19 +222,24 @@ const ThemedApp = () => {
 
 
 
-
+          {/* AMS Documentation */}
           <Route path="ams/policy" element={<AMSPolicy />} />
-          <Route path="ams/addpolicy" element={<AddAMSPolicy/>} />
+          <Route path="ams/addpolicy" element={<AddAMSPolicy />} />
 
-          <Route path="ams/manual" element={<AmsManual/>} />
-          <Route path="ams/addmanual" element={<AddAmsManual/>} />
+          <Route path="ams/manual" element={<AmsManual />} />
+          <Route path="ams/addmanual" element={<AddAmsManual />} />
 
-          <Route path="ams/procedure" element={<AmsProcedure/>} />
-          <Route path="ams/addprocedure" element={<AddAmsProcedure/>} />
+          <Route path="ams/procedure" element={<AmsProcedure />} />
+          <Route path="ams/addprocedure" element={<AddAmsProcedure />} />
 
           <Route path="ams/record-format" element={<AmsRecordFormat />} />
           <Route path="ams/addrecordformat" element={<AddAmsRecordFormat />} />
-          
+
+
+          {/* AMS User Management */}
+          <Route path="ams/adduser" element={<AMSAddUser />} />
+          <Route path="ams/listuser" element={<AMSListUser />} />
+
 
 
 
