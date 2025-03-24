@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Cropper } from 'react-advanced-cropper';  // Changed from AdvancedCropper to Cropper
+import { Cropper } from 'react-advanced-cropper';
 import 'react-advanced-cropper/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { BASE_URL } from "../../Utils/Config";
 
-const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto }) => {
+const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto, adminId }) => {
     const [image, setImage] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -39,35 +39,52 @@ const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto }) =>
       }
     };
   
-    const handleUpload = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Convert base64 to blob
-        const response = await fetch(croppedImage);
-        const blob = await response.blob();
-        
-        // Create form data
-        const formData = new FormData();
-        console.log('uploadd', formData);
-        
-        formData.append('profile_photo', blob, 'profile.jpg');
-        
-        // Upload the photo
-        await axios.put(`${BASE_URL}/accounts/change-profile-photo/`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        
-        setIsLoading(false);
-        onSuccess(croppedImage);
-        resetAndClose();
-      } catch (error) {
-        console.error('Error uploading profile photo:', error);
-        setIsLoading(false);
-      }
-    };
+    // In AdminProfilePhotoModal.jsx - update the handleUpload function:
+const handleUpload = async () => {
+  try {
+    setIsLoading(true);
+    
+    // Convert base64 to blob
+    const fetchResponse = await fetch(croppedImage);
+    const blob = await fetchResponse.blob();
+    
+    // Create form data
+    const formData = new FormData();
+    
+    // Create a file from the blob
+    const file = new File([blob], 'profile.jpg', { type: 'image/jpeg' });
+    
+    // Append the file to FormData with the correct field name
+    formData.append('profile_photo', file);
+    
+    // Add admin ID if available
+    if (adminId) {
+      formData.append('admin_id', adminId);
+    }
+    
+    // Upload the photo
+    const token = localStorage.getItem("adminAuthToken");
+    const response = await axios.put(`${BASE_URL}/accounts/change-profile-photo/`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      },
+    });
+    
+    console.log("Profile photo upload response:", response.data);
+    
+    // Use the URL returned from the server instead of the local cropped image
+    const serverPhotoUrl = response.data.profile_photo;
+    
+    setIsLoading(false);
+    onSuccess(serverPhotoUrl); // Pass the server URL to the parent component
+    resetAndClose();
+  } catch (error) {
+    console.error('Error uploading profile photo:', error.response ? error.response.data : error);
+    setIsLoading(false);
+    alert('Failed to upload profile photo. Please try again.');
+  }
+};
   
     const resetAndClose = () => {
       setImage(null);
@@ -153,7 +170,7 @@ const AdminProfilePhotoModal = ({ isOpen, onClose, onSuccess, currentPhoto }) =>
                     <div className="flex flex-col items-center justify-center p-8">
                       <div className="mb-6 w-32 h-32 rounded-full overflow-hidden border-2 border-gray-300 dark:border-gray-600">
                         <img 
-                          src={currentPhoto || '/default-profile.jpg'} // Added fallback for profile
+                          src={currentPhoto || '/default-profile.jpg'}
                           alt="Current profile" 
                           className="w-full h-full object-cover"
                         />
