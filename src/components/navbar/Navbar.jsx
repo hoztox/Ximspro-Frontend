@@ -56,29 +56,29 @@ const Navbar = () => {
   }, []);
   
   // Fetch user details and profile photo
-  // useEffect(() => {
-  //   const fetchUserDetails = async () => {
-  //     try {
-  //       const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
-  //       if (adminDetails) {
-  //         setUserEmail(adminDetails.email || "");
-  //         setUserName(adminDetails.username || "");
-  //         setAdminId(adminDetails.id || null);
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      try {
+        const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
+        if (adminDetails) {
+          setUserEmail(adminDetails.email || "");
+          setUserName(adminDetails.username || "");
+          setAdminId(adminDetails.id || null);
           
-  //         // Fetch profile photo if not already in localStorage
-  //         if (!adminDetails.profile_photo) {
-  //           fetchProfilePhoto(adminDetails.id);
-  //         } else {
-  //           setProfilePhotoUrl(adminDetails.profile_photo);
-  //         }
-  //       }
-  //     } catch (error) {
-  //       console.error("Error fetching user details from localStorage:", error);
-  //     }
-  //   };
+          // Fetch profile photo if not already in localStorage
+          if (!adminDetails.profile_photo) {
+            fetchProfilePhoto(adminDetails.id);
+          } else {
+            setProfilePhotoUrl(adminDetails.profile_photo);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user details from localStorage:", error);
+      }
+    };
 
-  //   fetchUserDetails();
-  // }, []);
+    fetchUserDetails();
+  }, []);
 
   // Function to fetch profile photo from backend
   // const fetchProfilePhoto = async (userId) => {
