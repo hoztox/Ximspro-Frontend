@@ -15,6 +15,8 @@ import { BASE_URL } from "../../Utils/Config";
 import ProfilePhotoModal from './CompanyProfilePhotoModal';
 import CompanyChangePasswordModal from './CompanyChangePasswordModal';
 import logout from "../../assets/images/Company-Sidebar/icon18.svg"
+import NotificationsMenu from './NotificationsMenu';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapsed }) => {
   const { theme, toggleTheme } = useTheme();
@@ -22,12 +24,14 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownAnimation, setDropdownAnimation] = useState('');
   const dropdownRef = useRef(null);
-  
-  // Notification states
-  const [notifications, setNotifications] = useState([]);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-  const [notificationAnimation, setNotificationAnimation] = useState('');
-  const notificationRef = useRef(null);
+
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  const toggleNotifications = () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+  };
+
+ 
   
   // Profile photo modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -182,37 +186,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
       }
     }
   };
-
-  // Fetch notifications
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        // const response = await axios.get(`${BASE_URL}/company/notifications/`);
-        // setNotifications(response.data || []);
-        
-        // Use mock data for now
-        setNotifications([
-          { id: 1, message: "New task assigned to your team", isRead: false, timestamp: "2024-03-22T10:30:00Z" },
-          { id: 2, message: "Environmental report due in 3 days", isRead: false, timestamp: "2024-03-21T15:45:00Z" },
-          { id: 3, message: "Compliance check scheduled for next week", isRead: true, timestamp: "2024-03-20T09:15:00Z" }
-        ]);
-      } catch (error) {
-        console.error("Error fetching notifications:", error);
-        // Fallback mock data
-        setNotifications([
-          { id: 1, message: "New task assigned to your team", isRead: false, timestamp: "2024-03-22T10:30:00Z" },
-          { id: 2, message: "Environmental report due in 3 days", isRead: false, timestamp: "2024-03-21T15:45:00Z" },
-          { id: 3, message: "Compliance check scheduled for next week", isRead: true, timestamp: "2024-03-20T09:15:00Z" }
-        ]);
-      }
-    };
-    
-    fetchNotifications();
-    
-    // Poll for notifications every 5 minutes
-    const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+ 
 
   const handleThemeToggle = () => {
     setIsRotating(true);
@@ -234,84 +208,8 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     }
   };
   
-  const toggleNotifications = () => {
-    if (isNotificationOpen) {
-      // Start closing animation
-      setNotificationAnimation('animate-fade-out');
-      setTimeout(() => {
-        setIsNotificationOpen(false);
-        setNotificationAnimation('');
-      }, 300); // Match with CSS animation duration
-    } else {
-      // Open the dropdown with opening animation
-      setIsNotificationOpen(true);
-      setNotificationAnimation('animate-fade-in');
-    }
-  };
-
-  const markNotificationAsRead = async (id) => {
-    try {
-      // await axios.put(`${BASE_URL}/company/notifications/${id}/read/`);
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === id ? { ...notif, isRead: true } : notif
-        )
-      );
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      // For demo, update state directly
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === id ? { ...notif, isRead: true } : notif
-        )
-      );
-    }
-  };
   
-  // Mark all notifications as read
-  const markAllNotificationsAsRead = async () => {
-    try {
-      // await axios.put(`${BASE_URL}/company/notifications/read-all/`);
-    
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, isRead: true }))
-      );
-    } catch (error) {
-      console.error("Error marking all notifications as read:", error);
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, isRead: true }))
-      );
-    }
-  };
-
-  const handleNotificationClick = (id, link) => {
-    markNotificationAsRead(id);
-    
-    // Start closing animation
-    setNotificationAnimation('animate-fade-out');
-    setTimeout(() => {
-      setIsNotificationOpen(false);
-      setNotificationAnimation('');
-      if (link) navigate(link);
-    }, 300);
-  };
-  
-  // Format notification time
-  const formatNotificationTime = (timestamp) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now - date) / (1000 * 60));
-      return `${diffInMinutes} min ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    }
-  };
+ 
 
   // Handle change profile photo - Open the modal
   const handleChangeProfilePhoto = () => {
@@ -373,22 +271,6 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const handleCloseChangePasswordModal = () => {
     setIsChangePasswordModalOpen(false);
   };
-
-  // Handle click outside notifications
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-        if (isNotificationOpen) {
-          toggleNotifications();
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isNotificationOpen]);
   
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -425,9 +307,6 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const handleLogoClick = () => {
     navigate('/company/dashboard');
   };
-
-  // Count unread notifications
-  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   // Add these CSS animation classes to your companynavbar.css file
   useEffect(() => {
@@ -546,88 +425,20 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             </button>
 
             {/* Notification bell icon with badge */}
-            <div className="bell-icon flex justify-center items-center cursor-pointer relative" ref={notificationRef}
-            onClick={toggleNotifications}
+            <div 
+          className="bell-icon flex justify-center items-center cursor-pointer relative"
+          onClick={toggleNotifications}
+        >
+          <div>
+            <img src={bell} alt="notification icon" className="w-[20px] h-[20px]" />
+            {/* Optional: Add a notification count badge */}
+            <span 
+              className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
             >
-              <div>
-                <img src={bell} alt="bell icon" className="w-[20px] h-[20px]" />
-                {unreadCount > 0 && (
-                  <span className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center pb-[1.5px] justify-center notification-badge
-                    ${theme === "dark" ? "text-white" : "text-white"}`}
-                  >
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </div>
-              
-              {/* Notification Dropdown */}
-              {isNotificationOpen && (
-                <div 
-                  className={`absolute right-0 top-8 shadow-lg rounded-lg w-72 z-50 py-2 dropdown-container ${notificationAnimation}
-                    ${theme === "dark" ? "bg-[#1E1E26] text-white" : "bg-white text-[#13131A] border border-gray-200"}`}
-                >
-                  <div className="px-3 py-2 border-b border-[#383840] flex justify-between items-center">
-                    <h3 className="font-semibold">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button 
-                        className={`text-xs hover:underline transition-colors duration-200
-                          ${theme === "dark" ? "text-blue-400 hover:text-blue-300" : "text-blue-500 hover:text-blue-700"}`}
-                        onClick={markAllNotificationsAsRead}
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-                  
-                  <div className="max-h-80 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500">
-                        No notifications yet
-                      </div>
-                    ) : (
-                      notifications.map((notification) => (
-                        <div 
-                          key={notification.id} 
-                          className={`p-3 border-b border-[#383840] cursor-pointer transition-colors duration-200
-                            ${notification.isRead 
-                              ? theme === "dark" ? "text-gray-400" : "text-gray-600" 
-                              : theme === "dark" ? "bg-[#282836]" : "bg-blue-50"
-                            } ${theme === "dark" ? "hover:bg-[#2A2A36]" : "hover:bg-gray-100"}`}
-                          onClick={() => handleNotificationClick(notification.id, notification.link)}
-                        >
-                          <div className="flex items-start">
-                            <div className="flex-grow">
-                              <p className={`text-sm ${!notification.isRead && "font-semibold"}`}>
-                                {notification.message}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatNotificationTime(notification.timestamp)}
-                              </p>
-                            </div>
-                            {!notification.isRead && (
-                              <span className="h-2 w-2 bg-blue-500 rounded-full mt-1"></span>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  
-                  <div className="p-2 text-center border-t border-[#383840]">
-                    <button 
-                      className={`text-sm hover:underline transition-colors duration-200
-                        ${theme === "dark" ? "text-blue-400 hover:text-blue-300" : "text-blue-500 hover:text-blue-700"}`}
-                      onClick={() => {
-                        toggleNotifications();
-                        setTimeout(() => navigate("/company/all-notifications"), 300);
-                      }}
-                    >
-                      View all notifications
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              3
+            </span>
+          </div>
+        </div>
             
             {/* Profile section with dropdown */}
             <div className="flex items-center space-x-2 border-l border-[#383840] pl-4 relative">
@@ -712,6 +523,9 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           entityType={isCompanyLogin ? 'company' : 'user'} // Pass entity type to the modal
         />
       )}
+     <AnimatePresence>
+        {isNotificationsOpen && <NotificationsMenu />}
+      </AnimatePresence>
     </>
   );
 };
