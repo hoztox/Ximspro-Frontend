@@ -40,10 +40,18 @@
     /* color: #858585; */
 }
 
-/* .add-manual-btn:hover {
-    background-color: #858585;
-    color: white;
-} */
+.add-draft-btn {
+    border-radius: 4px;
+    width: auto;
+    height: 42px;
+    width: 90px;
+    padding: 10px;
+    font-family: 'Switzer Regular';
+    font-size: 14px;
+    font-style: normal;
+    line-height: normal;
+}
+
 .qms-add-plus {
     filter: brightness(0) saturate(100%) invert(57%) sepia(3%) saturate(28%) hue-rotate(358deg) brightness(92%) contrast(87%);
 }

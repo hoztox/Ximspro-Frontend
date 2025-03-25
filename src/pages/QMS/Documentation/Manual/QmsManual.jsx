@@ -28,37 +28,33 @@ const QmsManual = () => {
     }).replace(/\//g, '-');
   };
   const getUserCompanyId = () => {
-    // First check if company_id is stored directly
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
-    
-    // If user data exists with company_id
+
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        // Try to get company_id from user data that was stored during login
-        const userData = localStorage.getItem("user_company_id");
-        if (userData) {
-            try {
-                return JSON.parse(userData);
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
-            }
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
         }
+      }
     }
     return null;
-};
-const companyId = getUserCompanyId();
-    console.log("Stored Company ID:", companyId);
+  };
+
+  const companyId = getUserCompanyId();
+  console.log("Stored Company ID:", companyId);
   // Fetch manuals from API
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
-      console.log("Fetching manuals for Company ID:", companyId);
       const response = await axios.get(`${BASE_URL}/company/manuals/${companyId}/`);
-      console.log("API Response:", response.data);
-      
+
       setManuals(response.data);
       setLoading(false);
     } catch (err) {
@@ -67,10 +63,23 @@ const companyId = getUserCompanyId();
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchManuals();
   }, []);
+
+  const handleClickApprove = async (id, status) => {
+    try {
+      await axios.patch(`${BASE_URL}/company/manuals/${id}/`, { status });
+      fetchManuals(); // Refresh the list
+      alert(`Manual ${status} successfully`);
+    } catch (err) {
+      console.error(`Error updating manual status to ${status}:`, err);
+      alert(`Failed to ${status} manual`);
+    }
+  };
+
+
   // Delete manual
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this manual?")) {
@@ -84,6 +93,7 @@ const companyId = getUserCompanyId();
       }
     }
   };
+
   const filteredManual = manuals.filter(manual =>
     (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -119,8 +129,27 @@ const companyId = getUserCompanyId();
   const handleEdit = (id) => {
     navigate(`/company/qms/editmanual/${id}`);
   };
+
+  const handleView = (id) => {
+    navigate(`/company/qms/viewmanual/${id}`);
+  };
+
+  const renderStatusBadge = (status) => {
+    switch (status) {
+      case 'Pending':
+        return <span className="bg-[#ffee0015] text-[#ddcc36] px-2 py-1 rounded-md text-xs">Pending Review</span>;
+      case 'Reviewed':
+        return <span className="bg-[#0044ff15] text-[#3663dd] px-2 py-1 rounded-md text-xs">Pending Approval</span>;
+      case 'Approved':
+        return <span className="bg-[#36DDAE11] text-[#36DDAE] px-2 py-1 rounded-md text-xs">Approved</span>;
+      default:
+        return <span className="bg-gray-500 text-white px-2 py-1 rounded-md text-xs">Unknown</span>;
+    }
+  };
+
   return (
     <div className="bg-[#1C1C24] list-manual-main">
+      {/* Header section - kept the same */}
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
         <h1 className="list-manual-head">List Manual Sections</h1>
         <div className="flex space-x-5">
@@ -136,7 +165,11 @@ const companyId = getUserCompanyId();
               <Search size={18} />
             </div>
           </div>
-          <button className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+          <button className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white">
+            <span>Drafts</span>
+          </button>
+          <button
+            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleQMSAddManual}
           >
             <span>Add Manual Sections</span>
@@ -144,6 +177,8 @@ const companyId = getUserCompanyId();
           </button>
         </div>
       </div>
+
+      {/* Table section with updated columns */}
       <div className="p-5 overflow-hidden">
         {loading ? (
           <div className="text-center py-4 text-white">Loading manuals...</div>
@@ -153,75 +188,102 @@ const companyId = getUserCompanyId();
           <table className="w-full">
             <thead className='bg-[#24242D]'>
               <tr className="h-[48px]">
-                <th className="px-5 text-left add-manual-theads">No</th>
-                <th className="px-5 text-left add-manual-theads">Section Title</th>
-                <th className="px-5 text-left add-manual-theads">Section No</th>
-                <th className="px-5 text-left add-manual-theads">Approved by</th>
-                <th className="px-5 text-left add-manual-theads">Revision</th>
-                <th className="px-5 text-left add-manual-theads">Date</th>
-                <th className="px-5 text-center add-manual-theads">View</th>
-                <th className="px-5 text-center add-manual-theads">Edit</th>
-                <th className="px-5 text-center add-manual-theads">Delete</th>
+                <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
+                <th className="px-2 text-left add-manual-theads">Section Title</th>
+                <th className="px-2 text-left add-manual-theads">Section No</th>
+                <th className="px-2 text-left add-manual-theads">Approved by</th>
+                <th className="px-2 text-left add-manual-theads">Revision</th>
+                <th className="px-2 text-left add-manual-theads">Date</th>
+                <th className="px-2 text-left add-manual-theads">Status</th>
+                <th className="px-2 text-left add-manual-theads">Action</th>
+                <th className="px-2 text-center add-manual-theads">View</th>
+                <th className="px-2 text-center add-manual-theads">Edit</th>
+                <th className="pl-2 pr-4 text-center add-manual-theads">Delete</th>
               </tr>
             </thead>
             <tbody key={currentPage}>
               {paginatedManual.length > 0 ? (
                 paginatedManual.map((manual, index) => (
-                  <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] cursor-pointer h-[46px]">
-                    <td className="px-[23px] add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
-                    <td className="px-5 add-manual-datas">{manual.title || 'N/A'}</td>
-                    <td className="px-5 add-manual-datas">{manual.no || 'N/A'}</td>
-                    <td className="px-5 add-manual-datas">
-                      {manual.approved_by ? 
-                        `${manual.approved_by.first_name} ${manual.approved_by.last_name}` : 
+                  <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
+                    <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
+                    <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
+                    <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                    <td className="px-2 add-manual-datas">
+                      {manual.approved_by ?
+                        `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
                         'N/A'}
                     </td>
-                    <td className="px-5 add-manual-datas">{manual.rivision || 'N/A'}</td>
-                    <td className="px-5 add-manual-datas">{formatDate(manual.date)}</td>
-                    <td className="px-4 add-manual-datas text-center">
-                      <button onClick={() => handleView(manual.id)}>
-                        <img src={views} alt="Edit" />
+                    <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
+                    <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
+                    <td className="px-2 add-manual-datas">
+                      {renderStatusBadge(manual.status || 'Reviewed')}
+                    </td>
+                    <td className='px-2 add-manual-datas'>
+                        <button
+                          onClick={() => handleClickApprove(manual.id)}
+                          className="text-[#1E84AF]"
+                        
+                        >
+                          Click to Approve
+                        </button>
+                 
+                    </td>
+                    <td className="px-2 add-manual-datas text-center">
+                      <button
+                        onClick={() => handleView(manual.id)}
+                        title="View"
+                      >
+                        <img src={views} alt="" />
                       </button>
                     </td>
-                    <td className="px-4 add-manual-datas text-center">
-                      <button onClick={() => handleEdit(manual.id)}>
-                        <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
+                    <td className="px-2 add-manual-datas text-center">
+                      <button
+                        onClick={() => handleEdit(manual.id)}
+                        title="Edit"
+                      >
+                        <img src={edits} alt="" />
                       </button>
                     </td>
-                    <td className="px-4 add-manual-datas text-center">
-                      <button onClick={() => handleDelete(manual.id)}>
-                        <img src={deletes} alt="Delete" className='w-[16px] h-[16px]' />
+
+                    <td className="pl-2 pr-4 add-manual-datas text-center">
+                      <button
+                        onClick={() => handleDelete(manual.id)}
+                        title="Delete"
+                      >
+                        <img src={deletes} alt="" />
                       </button>
+
                     </td>
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="9" className="text-center py-4 not-found">No Manuals found.</td></tr>
+                <tr><td colSpan="11" className="text-center py-4 not-found">No Manuals found.</td></tr>
               )}
+              {/* Pagination row - kept the same */}
               <tr>
-                <td colSpan="9" className="pt-[15px] border-t border-[#383840]">
+                <td colSpan="11" className="pt-[15px] border-t border-[#383840]">
                   <div className="flex items-center justify-between w-full">
                     <div className="text-white total-text">Total-{filteredManual.length}</div>
                     <div className="flex items-center gap-5">
-                      <button 
-                        onClick={handlePrevious} 
-                        disabled={currentPage === 1} 
+                      <button
+                        onClick={handlePrevious}
+                        disabled={currentPage === 1}
                         className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                       >
                         Previous
                       </button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button 
-                          key={page} 
-                          onClick={() => handlePageClick(page)} 
+                        <button
+                          key={page}
+                          onClick={() => handlePageClick(page)}
                           className={`${currentPage === page ? 'pagin-active' : 'pagin-inactive'}`}
                         >
                           {page}
                         </button>
                       ))}
-                      <button 
-                        onClick={handleNext} 
-                        disabled={currentPage === totalPages || totalPages === 0} 
+                      <button
+                        onClick={handleNext}
+                        disabled={currentPage === totalPages || totalPages === 0}
                         className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
                       >
                         Next
@@ -234,7 +296,7 @@ const companyId = getUserCompanyId();
           </table>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 
