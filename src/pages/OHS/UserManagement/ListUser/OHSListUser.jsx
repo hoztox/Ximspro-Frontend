@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Search } from "lucide-react";
 import plusicon from "../../../../assets/images/Company User Management/plus icon.svg";
+import views from "../../../../assets/images/Companies/view.svg";
 import permissions from "../../../../assets/images/Company User Management/permission.svg";
 import edits from "../../../../assets/images/Company User Management/edits.svg";
 import deletes from "../../../../assets/images/Company User Management/deletes.svg";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from "react-hot-toast";
 import "./listuser.css";
 
 const OHSListUser = () => {
   const [users, setUsers] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const usersPerPage = 10;
@@ -25,8 +26,8 @@ const OHSListUser = () => {
 
   const companyId = localStorage.getItem("company_id") || null;
   console.log("Stored Company ID:", companyId);
-  //   useEffect(() => { 
-  //     const companyId = localStorage.getItem("company_id"); 
+  //   useEffect(() => {
+  //     const companyId = localStorage.getItem("company_id");
   //     console.log("Stored Company ID:", companyId);
 
   //     if (companyId) {
@@ -36,11 +37,7 @@ const OHSListUser = () => {
   //     }
   // }, [currentPage, searchQuery]);
 
-
   useEffect(() => {
-
-
-
     if (companyId) {
       fetchUsers(companyId);
     } else {
@@ -52,13 +49,16 @@ const OHSListUser = () => {
     try {
       if (!companyId) return;
 
-      const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`, {
-        params: {
-          search: searchQuery,
-          page: currentPage,
-          limit: usersPerPage,
-        },
-      });
+      const response = await axios.get(
+        `${BASE_URL}/company/users/${companyId}/`,
+        {
+          params: {
+            search: searchQuery,
+            page: currentPage,
+            limit: usersPerPage,
+          },
+        }
+      );
 
       console.log("API Response:", response.data);
 
@@ -83,16 +83,18 @@ const OHSListUser = () => {
   };
 
   const handleAddUsers = () => {
-    navigate('/company/ohs/adduser');
+    navigate("/company/ohs/adduser");
   };
 
   const handleDeleteUser = async (userId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this user?"
+    );
     if (!confirmDelete) return;
 
     try {
       await axios.delete(`${BASE_URL}/company/users/delete/${userId}/`);
-      setUsers(users.filter(user => user.id !== userId)); // Update UI
+      setUsers(users.filter((user) => user.id !== userId)); // Update UI
       toast.success("User deleted successfully");
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -105,11 +107,11 @@ const OHSListUser = () => {
   };
 
   const handlePrevious = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
 
   const handleNext = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
   return (
@@ -126,23 +128,27 @@ const OHSListUser = () => {
               onChange={handleSearchChange}
               className="serach-input focus:outline-none bg-transparent"
             />
-            <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
+            <div className="absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />
             </div>
           </div>
           <button
-             className="flex items-center justify-center add-user-btn gap-[10px] duration-200 border border-[#F9291F] text-[#F9291F] hover:bg-[#F9291F] hover:text-white"
+            className="flex items-center justify-center add-user-btn gap-[10px] duration-200 border border-[#F9291F] text-[#F9291F] hover:bg-[#F9291F] hover:text-white"
             onClick={handleAddUsers}
           >
             <span>Add Users</span>
-            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] ohs-add-plus' />
+            <img
+              src={plusicon}
+              alt="Add Icon"
+              className="w-[18px] h-[18px] ohs-add-plus"
+            />
           </button>
         </div>
       </div>
 
       <div className="p-5 overflow-hidden">
         <table className="w-full">
-          <thead className='bg-[#24242D]'>
+          <thead className="bg-[#24242D]">
             <tr className="list-users-tr h-[48px]">
               <th className="px-5 text-left add-user-theads">No</th>
               <th className="px-5 text-left add-user-theads">Username</th>
@@ -150,6 +156,7 @@ const OHSListUser = () => {
               <th className="px-5 text-left add-user-theads">Email</th>
               <th className="px-5 text-left add-user-theads">Status</th>
               <th className="px-5 text-center add-user-theads">Permissions</th>
+              <th className="px-5 text-center add-user-theads">View</th>
               <th className="px-5 text-center add-user-theads">Edit</th>
               <th className="px-5 text-center add-user-theads">Delete</th>
             </tr>
@@ -157,35 +164,58 @@ const OHSListUser = () => {
           <tbody>
             {users.length > 0 ? (
               users.map((user, index) => (
-                <tr key={user.id} className="border-b border-[#383840] hover:bg-[#1a1a20] cursor-pointer h-[46px]">
-                  <td className="px-[23px] add-user-datas">{(currentPage - 1) * usersPerPage + index + 1}</td>
+                <tr
+                  key={user.id}
+                  className="border-b border-[#383840] hover:bg-[#1a1a20] cursor-pointer h-[46px]"
+                >
+                  <td className="px-[23px] add-user-datas">
+                    {(currentPage - 1) * usersPerPage + index + 1}
+                  </td>
                   <td className="px-5 add-user-datas">{user.username}</td>
                   <td className="px-5 add-user-datas">{user.last_name}</td>
                   <td className="px-5 add-user-datas">{user.email}</td>
                   <td className="px-5 add-user-datas">{user.status}</td>
                   <td className="px-4 add-user-datas text-center flex justify-center items-center h-[46px]">
-                    <img src={permissions} alt="Permission" className='w-[16px] h-[16px]' />
+                    <img
+                      src={permissions}
+                      alt="Permission"
+                      className="w-[16px] h-[16px]"
+                    />
                   </td>
                   <td className="px-4 add-user-datas text-center">
                     <button>
-                      <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
+                      <img src={views} alt="View" />
+                    </button>
+                  </td>
+                  <td className="px-4 add-user-datas text-center">
+                    <button>
+                      <img
+                        src={edits}
+                        alt="Edit"
+                        className="w-[16px] h-[16px]"
+                      />
                     </button>
                   </td>
                   <td className="px-4 add-user-datas text-center">
                     <button onClick={() => handleDeleteUser(user.id)}>
-                      <img src={deletes} alt="Delete" className='w-[16px] h-[16px]' />
+                      <img
+                        src={deletes}
+                        alt="Delete"
+                        className="w-[16px] h-[16px]"
+                      />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center py-4 not-found">No users found.</td>
+                <td colSpan="9" className="text-center py-4 not-found">
+                  No users found.
+                </td>
               </tr>
             )}
             <tr>
-              <td colSpan="8" className="pt-[15px] border-t border-[#383840]">
-
+              <td colSpan="9" className="pt-[15px] border-t border-[#383840]">
                 <div className="flex items-center justify-between">
                   <div className="text-white total-text">
                     Total-{users.length}
@@ -199,15 +229,21 @@ const OHSListUser = () => {
                       Previous
                     </button>
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageClick(page)}
-                        className={`${currentPage === page ? 'pagin-active' : 'pagin-inactive'}`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => handlePageClick(page)}
+                          className={`${
+                            currentPage === page
+                              ? "pagin-active"
+                              : "pagin-inactive"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
 
                     <button
                       onClick={handleNext}
@@ -227,5 +263,4 @@ const OHSListUser = () => {
   );
 };
 
-
-export default OHSListUser
+export default OHSListUser;

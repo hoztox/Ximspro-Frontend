@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search } from 'lucide-react';
 import plusicon from "../../../../assets/images/Company User Management/plus icon.svg";
+import views from "../../../../assets/images/Companies/view.svg";
 import permissions from "../../../../assets/images/Company User Management/permission.svg";
 import edits from "../../../../assets/images/Company User Management/edits.svg";
 import deletes from "../../../../assets/images/Company User Management/deletes.svg";
@@ -150,6 +151,7 @@ const QMSListUser = () => {
                 <th className="px-5 text-left add-user-theads">Email</th>
                 <th className="px-5 text-left add-user-theads">Status</th>
                 <th className="px-5 text-center add-user-theads">Permissions</th>
+                <th className="px-5 text-center add-user-theads">View</th>
                 <th className="px-5 text-center add-user-theads">Edit</th>
                 <th className="px-5 text-center add-user-theads">Delete</th>
               </tr>
@@ -168,6 +170,11 @@ const QMSListUser = () => {
                     </td>
                     <td className="px-4 add-user-datas text-center">
                       <button>
+                        <img src={views} alt="View" />
+                      </button>
+                    </td>
+                    <td className="px-4 add-user-datas text-center">
+                      <button>
                         <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
                       </button>
                     </td>
@@ -180,11 +187,11 @@ const QMSListUser = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="text-center py-4 not-found">No users found.</td>
+                  <td colSpan="9" className="text-center py-4 not-found">No users found.</td>
                 </tr>
               )}
               <tr>
-                <td colSpan="8" className="pt-[15px] border-t border-[#383840]">
+                <td colSpan="9" className="pt-[15px] border-t border-[#383840]">
   
                   <div className="flex items-center justify-between">
                     <div className="text-white total-text">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import views from "../../../../assets/images/Companies/view.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
@@ -158,6 +159,7 @@ const companyId = getUserCompanyId();
                 <th className="px-5 text-left add-manual-theads">Approved by</th>
                 <th className="px-5 text-left add-manual-theads">Revision</th>
                 <th className="px-5 text-left add-manual-theads">Date</th>
+                <th className="px-5 text-center add-manual-theads">View</th>
                 <th className="px-5 text-center add-manual-theads">Edit</th>
                 <th className="px-5 text-center add-manual-theads">Delete</th>
               </tr>
@@ -177,6 +179,11 @@ const companyId = getUserCompanyId();
                     <td className="px-5 add-manual-datas">{manual.rivision || 'N/A'}</td>
                     <td className="px-5 add-manual-datas">{formatDate(manual.date)}</td>
                     <td className="px-4 add-manual-datas text-center">
+                      <button onClick={() => handleView(manual.id)}>
+                        <img src={views} alt="Edit" />
+                      </button>
+                    </td>
+                    <td className="px-4 add-manual-datas text-center">
                       <button onClick={() => handleEdit(manual.id)}>
                         <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
                       </button>
@@ -189,11 +196,11 @@ const companyId = getUserCompanyId();
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan="8" className="text-center py-4 not-found">No Manuals found.</td></tr>
+                <tr><td colSpan="9" className="text-center py-4 not-found">No Manuals found.</td></tr>
               )}
               <tr>
-                <td colSpan="8" className="pt-[15px] border-t border-[#383840]">
-                  <div className="flex items-center justify-between">
+                <td colSpan="9" className="pt-[15px] border-t border-[#383840]">
+                  <div className="flex items-center justify-between w-full">
                     <div className="text-white total-text">Total-{filteredManual.length}</div>
                     <div className="flex items-center gap-5">
                       <button 
