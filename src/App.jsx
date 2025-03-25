@@ -84,6 +84,8 @@ import BMSAddUser from "./pages/BMS/UserManagement/AddUser/BMSAddUser";
 import BMSListUser from "./pages/BMS/UserManagement/ListUser/BMSListUser";
 import AMSAddUser from "./pages/AMS/UserManagement/AddUser/AMSAddUser";
 import AMSListUser from "./pages/AMS/UserManagement/ListUser/AMSListUser";
+import NotificationView from "./pages/NotificationView/NotificationView";
+import EditQmsPolicy from "./pages/QMS/Documentation/Policy/EditQmsPolicy";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -110,10 +112,12 @@ const ThemedApp = () => {
 
         <Route path="/company" element={<CompanyLayout />}>
           <Route path="dashboard" element={<CompanyDashboard />} />
+          <Route path="notificationview" element={<NotificationView/>} />
 
           {/* QMS Documentation */}
           <Route path="qms/policy" element={<QmsPolicy />} />
           <Route path="qms/addpolicy" element={<AddQmsPolicy />} />
+          <Route path="qms/editpolicy/:id" element={<EditQmsPolicy/>} />
 
           <Route path="qms/manual" element={<QmsManual />} />
           <Route path="qms/addmanual" element={<AddQmsManual />} />

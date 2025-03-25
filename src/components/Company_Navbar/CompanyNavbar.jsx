@@ -26,7 +26,32 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const dropdownRef = useRef(null);
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationsRef = useRef(null);
   const [totalNotificationCount, setTotalNotificationCount] = useState(0);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        isNotificationsOpen &&
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target) &&
+        // Ensure the click is not on the bell icon
+        !event.target.closest('.bell-icon') 
+      ) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    // Add event listener when notifications are open
+    if (isNotificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    // Cleanup the event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   const initialNotifications = {
     QMS: [
@@ -255,6 +280,10 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     }
   };
 
+  const handleCloseNotifications = () => {
+    setIsNotificationsOpen(false);
+};
+
 
 
 
@@ -324,11 +353,16 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         if (isDropdownOpen) {
-          toggleDropdown();
+          // Trigger the closing animation
+          setDropdownAnimation('animate-fade-out');
+          setTimeout(() => {
+            setIsDropdownOpen(false);
+            setDropdownAnimation('');
+          }, 300);
         }
       }
     };
-
+  
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -419,7 +453,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
             {/* Notification bell icon with badge */}
             <div
-              className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active":""}`}
+              className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active" : ""}`}
               onClick={toggleNotifications}
             >
               <div>
@@ -451,18 +485,18 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
               {/* Profile Dropdown Menu with Animation */}
               {isDropdownOpen && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -20 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 20
-                  }}
-                  ref={dropdownRef}
-                  className={`absolute right-0 top-16 shadow-lg rounded-lg w-60 z-50 py-2 dropdown-container ${dropdownAnimation}
-                  ${theme === "dark" ? "bg-[#1E1E26] text-white" : "bg-white text-[#13131A]"}`}
-                >
+                ref={dropdownRef}
+                className={`absolute right-0 top-16 shadow-lg rounded-lg w-60 z-50 py-2 dropdown-container ${dropdownAnimation}
+                ${theme === "dark" ? "bg-[#1E1E26] text-white" : "bg-white text-[#13131A]"}`}
+                initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 20
+                }}
+              >
                   {/* Profile Photo Section */}
                   <div className="px-4 py-3 border-b border-[#383840] text-center">
                     <div className="flex flex-col items-center">
@@ -525,12 +559,13 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           entityType={isCompanyLogin ? 'company' : 'user'} // Pass entity type to the modal
         />
       )}
-      <AnimatePresence>
+       <AnimatePresence>
         {isNotificationsOpen && (
           <NotificationsMenu
+            ref={notificationsRef}
+            onClose={handleCloseNotifications}
             initialNotifications={initialNotifications}
             onNotificationsUpdate={(notifications) => {
-              // Calculate and set total notification count
               const totalCount = Object.values(notifications).reduce(
                 (total, categoryNotifications) => total + categoryNotifications.length,
                 0

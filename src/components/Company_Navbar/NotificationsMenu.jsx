@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import profile from "../../assets/images/Company-Navbar/profile.svg"
 import "./notificationmenu.css"
+import { useNavigate } from "react-router-dom";
 
 // Notification tabs with their unique colors
 const TABS = [
@@ -14,15 +15,16 @@ const TABS = [
     { name: 'IMS', activeColor: 'border-[#CBA301] text-[#CBA301]' }
 ];
 
-const NotificationsMenu = ({ 
-  initialNotifications, 
-  onNotificationsUpdate 
-}) => {
-    const [activeTab, setActiveTab] = useState('QMS'); // Default active tab
-    const [notifications, setNotifications] = useState(initialNotifications);
+const NotificationsMenu = forwardRef(({
+    initialNotifications,
+    onNotificationsUpdate,
+    onClose // Added onClose prop
+}, ref) => {
+    const [activeTab, setActiveTab] = React.useState('QMS'); // Default active tab
+    const [notifications, setNotifications] = React.useState(initialNotifications);
 
     // Use effect to notify parent component about notifications
-    useEffect(() => {
+    React.useEffect(() => {
         if (onNotificationsUpdate) {
             onNotificationsUpdate(notifications);
         }
@@ -31,6 +33,24 @@ const NotificationsMenu = ({
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
+
+    const navigate = useNavigate();
+
+    const handleDetailView = () => {
+        navigate('/company/notificationview');
+        // Close the dropdown when clicked
+        if (onClose) {
+            onClose();
+        }
+    }
+
+    const handleViewAll = () => {
+        navigate('/company/notifications');
+        // Close the dropdown when clicked
+        if (onClose) {
+            onClose();
+        }
+    }
 
     const renderNotificationItem = (notification) => (
         <motion.div
@@ -54,13 +74,19 @@ const NotificationsMenu = ({
                 </div>
             </div>
             <div className='h-[108px] py-5 flex items-end'>
-                <button className="click-view-btn duration-100">Click to view</button>
+                <button 
+                    className="click-view-btn duration-100"
+                    onClick={handleDetailView}
+                >
+                    Click to view
+                </button>
             </div>
         </motion.div>
     );
 
     return (
         <motion.div
+            ref={ref}
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -114,11 +140,16 @@ const NotificationsMenu = ({
                 <div
                     className="px-5 h-[74px] flex items-center justify-end border-t border-[#383840]"
                 >
-                    <button className="text-[#1E84AF] view-all-btn border rounded-md border-[#1E84AF] w-[108px] h-[34px] duration-200">View All</button>
+                    <button 
+                        className="text-[#1E84AF] view-all-btn border rounded-md border-[#1E84AF] w-[108px] h-[34px] duration-200"
+                        onClick={handleViewAll}
+                    >
+                        View All
+                    </button>
                 </div>
             )}
         </motion.div>
     );
-};
+});
 
 export default NotificationsMenu;
