@@ -659,7 +659,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                         className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
                       />
                       <button 
-                        className="text-sm text-[#1E4DA1] hover:text-[#24447b] mt-1 mb-1 transition-colors duration-200 change-profile"
+                        className="text-sm text-white  mt-1 mb-1 transition-colors duration-200 change-profile"
                         onClick={handleChangeProfilePhoto}
                       >
                         Change Profile Photo

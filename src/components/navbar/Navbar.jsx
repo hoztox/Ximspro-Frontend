@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useTheme } from "../../ThemeContext";
 import "./navbar.css";
 import bell from "../../assets/images/Navbar/bell.svg";
-import setting from "../../assets/images/Navbar/settings.svg";
+// import setting from "../../assets/images/Navbar/settings.svg";
 import profile from "../../assets/images/Navbar/profile.svg";
 import logo from "../../assets/images/logo.svg";
 import dashboardicon from "../../assets/images/Sidebar/dashboard.svg";
@@ -65,7 +65,6 @@ const Navbar = () => {
             Authorization: `Bearer ${token}`
           }
         });
-        console.log("Admin details from API:", response.data);
 
         // Check if response.data is an array and has items
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
@@ -73,38 +72,57 @@ const Navbar = () => {
           setUserEmail(adminData.email || "");
           setUserName(adminData.username || "");
           setAdminId(adminData.id || null);
-          setProfilePhotoUrl(adminData.profile_photo || "");
+          
+          // Prioritize server profile photo, then localStorage, then default
+          const photoUrl = adminData.profile_photo || 
+                           localStorage.getItem('adminProfilePhoto')
+          
+          setProfilePhotoUrl(photoUrl);
 
+          // Update localStorage with the most recent data
           localStorage.setItem("adminDetails", JSON.stringify({
             email: adminData.email,
             username: adminData.username,
             id: adminData.id,
+            profile_photo: photoUrl
           }));
+          
+          // Store profile photo separately for easier retrieval
+          localStorage.setItem('adminProfilePhoto', photoUrl);
         } else if (response.data) {
           // Handle case where it's not an array but a single object
           const adminData = response.data;
           setUserEmail(adminData.email || "");
           setUserName(adminData.username || "");
           setAdminId(adminData.id || null);
-          setProfilePhotoUrl(adminData.profile_photo || "");
+          
+          const photoUrl = adminData.profile_photo || 
+                           localStorage.getItem('adminProfilePhoto')
+          
+          setProfilePhotoUrl(photoUrl);
 
           localStorage.setItem("adminDetails", JSON.stringify({
             email: adminData.email,
             username: adminData.username,
             id: adminData.id,
+            profile_photo: photoUrl
           }));
+          
+          localStorage.setItem('adminProfilePhoto', photoUrl);
         }
       } catch (error) {
         console.error("Error fetching admin details:", error);
 
         // Fallback to localStorage if API call fails
         try {
-          const adminDetails = JSON.parse(localStorage.getItem("adminDetails"));
+          const adminDetails = JSON.parse(localStorage.getItem("adminDetails") || "{}");
+          const storedProfilePhoto = localStorage.getItem('adminProfilePhoto');
+          
           if (adminDetails) {
             setUserEmail(adminDetails.email || "");
             setUserName(adminDetails.username || "");
             setAdminId(adminDetails.id || null);
-            // We don't set profile photo from localStorage anymore
+            setProfilePhotoUrl(storedProfilePhoto);
           }
         } catch (localStorageError) {
           console.error("Error reading from localStorage:", localStorageError);
@@ -149,17 +167,16 @@ const Navbar = () => {
     setIsProfileModalOpen(true);
   };
 
-  // Function to handle successful photo upload
-  // In Navbar.jsx - modify the handleProfilePhotoSuccess function:
+  // Update handleProfilePhotoSuccess to store in localStorage
   const handleProfilePhotoSuccess = (newPhotoUrl) => {
     // Update state with new photo URL from server
     setProfilePhotoUrl(newPhotoUrl);
     setIsDropdownOpen(false);
 
-    // Force a UI refresh to show the new image
-    console.log("Updated profile photo URL:", newPhotoUrl);
+    // Store in localStorage
+    localStorage.setItem('adminProfilePhoto', newPhotoUrl);
 
-    // Optional: Update the user's profile in localStorage if needed
+    // Update adminDetails in localStorage
     try {
       const adminDetails = JSON.parse(localStorage.getItem("adminDetails") || "{}");
       adminDetails.profile_photo = newPhotoUrl;
@@ -235,7 +252,7 @@ const Navbar = () => {
             onClick={toggleDropdown}
           >
             <img
-              src={profilePhotoUrl || profile}
+              src={profilePhotoUrl}
               alt="Profile Avatar"
               className="w-10 h-10 rounded-full profileicon object-cover"
             />
@@ -260,18 +277,18 @@ const Navbar = () => {
           </div>
           <div
             ref={dropdownRef}
-            className={`dropdown-menu absolute right-0 mt-2 shadow-lg rounded-lg w-48 ${isDropdownOpen ? "show" : ""} ${theme === "dark" ? "dark" : "light"}`}
+            className={`dropdown-menu absolute right-0 mt-2 shadow-lg rounded-lg w-56 ${isDropdownOpen ? "show" : ""} ${theme === "dark" ? "dark" : "light"}`}
           >
             <ul className="py-2 changpswdlogout">
               <div className="px-4 py-3 border-b border-[#383840] text-center">
                 <div className="flex flex-col items-center">
                   <img
-                    src={profilePhotoUrl || profile}
+                    src={profilePhotoUrl}
                     alt="Profile"
                     className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
                   />
                   <button
-                    className="text-sm text-[#1E4DA1] hover:text-[#24447b] mt-1 mb-1 transition-colors duration-200 change-profile"
+                    className="text-sm text-white mt-1 mb-1 transition-colors duration-200 change-profile"
                     onClick={handleChangeProfilePhoto}
                   >
                     Change Profile Photo
@@ -279,7 +296,7 @@ const Navbar = () => {
                 </div>
               </div>
               <li
-                className="px-4 py-2 cursor-pointer text-sm chngepaswd md:flex md:gap-4"
+                className="px-4 py-2 cursor-pointer text-sm chngepaswd md:flex md:gap-4 mt-2"
                 onClick={handleChangePassword}
               >
                 <img src={changepswd} alt="" className="desktopchangepswdimg" />
@@ -439,7 +456,7 @@ const Navbar = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         onSuccess={handleProfilePhotoSuccess}
-        currentPhoto={profilePhotoUrl || profile}
+        currentPhoto={profilePhotoUrl}
         adminId={adminId}
       />
     </div>

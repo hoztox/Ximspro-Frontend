@@ -193,6 +193,10 @@
   color: white;
 }
 
+.dropdown-menu.light .change-profile {
+  color: #13131a;
+}
+
 /* Smooth rotation for the dropdown icon */
 .rotate-180 {
   transform: rotate(360deg);
