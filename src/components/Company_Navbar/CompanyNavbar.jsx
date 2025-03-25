@@ -491,7 +491,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             <button
               className="mr-[41px]"
               onClick={handleLogoClick}>
-              <img src={logo} alt="Ximspro Logo" />
+              <img src={logo} alt="Ximspro Logo" className='xims-logo'/>
             </button>
 
             {/* Close Menu Icon - With rotation animation */}
@@ -526,7 +526,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
               <input
                 type="text"
                 placeholder="Search..."
-                className="bg-[#13131A] text-gray-300 px-4 py-2 rounded-full outline-none w-64 nav-search"
+                className="bg-transparent text-gray-300 px-4 py-2 rounded-full outline-none w-64 nav-search"
               />
               <Search className="absolute right-3 top-3 text-[#414345] w-5 h-5" />
             </div>
@@ -639,7 +639,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-[white] text-1">{userName || (isUserLogin ? 'User' : 'Company')}</span>
+                <span className="text-[white] text-1 admin-username">{userName || (isUserLogin ? 'User' : 'Company')}</span>
                 <span className="text-[#6D6D6D] text-2">{userEmail || 'email@example.com'}</span>
               </div>
               
