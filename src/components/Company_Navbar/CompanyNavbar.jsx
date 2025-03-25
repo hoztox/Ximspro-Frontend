@@ -26,13 +26,60 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const dropdownRef = useRef(null);
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [totalNotificationCount, setTotalNotificationCount] = useState(0);
+
+  const initialNotifications = {
+    QMS: [
+      {
+        id: 1,
+        icon: '/path/to/user-icon.png',
+        title: 'Notification for Checking/Review',
+        description: 'User A has created a manual. Please review it.',
+        timestamp: '20-04-2025, 09:30am'
+      },
+      {
+        id: 2,
+        icon: '/path/to/user-icon.png',
+        title: 'Notification for Checking/Review',
+        description: 'User A has created a manual. Please review it.',
+        timestamp: '20-04-2025, 09:30am'
+      },
+      {
+        id: 3,
+        icon: '/path/to/user-icon.png',
+        title: 'Notification for Checking/Review',
+        description: 'User A has created a manual. Please review it.',
+        timestamp: '20-04-2025, 09:30am'
+      },
+    ],
+    EMS: [
+      {
+        id: 5,
+        icon: '/path/to/user-icon.png',
+        title: 'EMS Notification',
+        description: 'New environmental task assigned.',
+        timestamp: '21-04-2025, 02:15pm'
+      }
+    ],
+    OHS: [],
+    EnMS: [],
+    BMS: [],
+    AMS: [],
+    IMS: []
+  };
+
+  useEffect(() => {
+    const totalCount = Object.values(initialNotifications).reduce(
+      (total, categoryNotifications) => total + categoryNotifications.length,
+      0
+    );
+    setTotalNotificationCount(totalCount);
+  }, []);
 
   const toggleNotifications = () => {
     setIsNotificationsOpen(!isNotificationsOpen);
   };
 
- 
-  
   // Profile photo modal state
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(profile); // Default profile image
@@ -41,12 +88,12 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const [entityLogo, setEntityLogo] = useState('');
   const [entityData, setEntityData] = useState(null);
   const [companyPermissions, setCompanyPermissions] = useState([]);
-  
+
   // Change password modal state
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const [isUserLogin, setIsUserLogin] = useState(false);
   const [isCompanyLogin, setIsCompanyLogin] = useState(false);
-  
+
   const navigate = useNavigate();
 
   const storedCompanyId = localStorage.getItem('company_id');
@@ -79,32 +126,32 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         console.error("Company ID not found");
         return;
       }
-      
+
       const response = await axios.get(`${BASE_URL}/accounts/permissions/${storedCompanyId}/`);
-      
+
       console.log("Company API Response:", response.data);
-  
+
       if (response.status === 200) {
         // Set company data
         if (response.data) {
           setEntityData(response.data);
-          
+
           // Update company information from API response
           if (response.data.email_address) {
             setUserEmail(response.data.email_address);
           }
-          
+
           if (response.data.company_admin_name) {
             setUserName(response.data.company_admin_name);
           }
-          
+
           if (response.data.company_logo) {
             const logoUrl = response.data.company_logo;
             setEntityLogo(logoUrl);
             setProfileImage(logoUrl); // Use company logo as profile image
           }
         }
- 
+
         if (response.data && response.data.permissions && Array.isArray(response.data.permissions)) {
           setCompanyPermissions(response.data.permissions);
         } else {
@@ -124,25 +171,25 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         console.error("User ID not found");
         return;
       }
-  
+
       const response = await axios.get(`${BASE_URL}/company/user/${storedUserId}/`);
-      
+
       console.log("User API Response:", response.data);
-  
+
       if (response.status === 200) {
         // Set user data
         if (response.data) {
           setEntityData(response.data);
-          
+
           // Update user information from API response
           if (response.data.email) {
             setUserEmail(response.data.email);
           }
-          
+
           if (response.data.name) {
             setUserName(response.data.name);
           }
-          
+
           if (response.data.user_logo) {
             const logoUrl = response.data.user_logo;
             setEntityLogo(logoUrl);
@@ -159,15 +206,15 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   // Fallback function to use localStorage data if API fails
   const fallbackToLocalStorage = (entityType) => {
     const storedEmail = localStorage.getItem('email_address');
-    
+
     if (entityType === 'company') {
-      const storedCompanyName = localStorage.getItem('company_company_admin_name') 
-        ? JSON.parse(localStorage.getItem('company_company_admin_name')) 
+      const storedCompanyName = localStorage.getItem('company_company_admin_name')
+        ? JSON.parse(localStorage.getItem('company_company_admin_name'))
         : '';
       const storedCompanyLogo = localStorage.getItem('company_company_logo')
         ? JSON.parse(localStorage.getItem('company_company_logo'))
         : '';
-        
+
       if (storedEmail) setUserEmail(storedEmail);
       if (storedCompanyName) setUserName(storedCompanyName);
       if (storedCompanyLogo) {
@@ -177,7 +224,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     } else if (entityType === 'user') {
       const storedUserName = localStorage.getItem('user_name') || storedUserId;
       const storedUserLogo = localStorage.getItem('user_logo') || '';
-      
+
       if (storedEmail) setUserEmail(storedEmail);
       if (storedUserName) setUserName(storedUserName);
       if (storedUserLogo) {
@@ -186,7 +233,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
       }
     }
   };
- 
+
 
   const handleThemeToggle = () => {
     setIsRotating(true);
@@ -207,9 +254,9 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
       setDropdownAnimation('animate-fade-in');
     }
   };
-  
-  
- 
+
+
+
 
   // Handle change profile photo - Open the modal
   const handleChangeProfilePhoto = () => {
@@ -223,20 +270,20 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
       // Here you would typically upload the image to your server
       // const formData = new FormData();
       // formData.append('profileImage', file);
-      
+
       console.log("New profile image:", newImageUrl);
-      
+
       // Update the profile image state and localStorage
       setProfileImage(newImageUrl);
       setEntityLogo(newImageUrl);
-      
+
       // Store in appropriate localStorage based on logged in entity
       if (isCompanyLogin) {
         localStorage.setItem('company_company_logo', JSON.stringify(newImageUrl));
       } else if (isUserLogin) {
         localStorage.setItem('user_logo', newImageUrl);
       }
-      
+
       // Show success message or notification
       // ...
     } catch (error) {
@@ -271,7 +318,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   const handleCloseChangePasswordModal = () => {
     setIsChangePasswordModalOpen(false);
   };
-  
+
   // Close profile dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -292,7 +339,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     if (isRotating) {
       const timer = setTimeout(() => {
         setIsRotating(false);
-      }, 600);  
+      }, 600);
       return () => clearTimeout(timer); // Cleanup timer
     }
   }, [isRotating]);
@@ -308,59 +355,6 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     navigate('/company/dashboard');
   };
 
-  // Add these CSS animation classes to your companynavbar.css file
-  useEffect(() => {
-    // Add animation styles to the stylesheet if they don't exist
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      
-      @keyframes fadeOut {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-      }
-      
-      .animate-fade-in {
-        animation: fadeIn 0.3s ease forwards;
-      }
-      
-      .animate-fade-out {
-        animation: fadeOut 0.3s ease forwards;
-      }
-      
-      .dropdown-container {
-        transform-origin: top center;
-      }
-      
-      @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-      }
-      
-      .notification-badge {
-        animation: pulse 1.5s infinite;
-      }
-      
-      /* Fix for modal overlay z-index */
-      .password-modal-overlay {
-        z-index: 100;
-      }
-      
-      .password-modal-content {
-        z-index: 101;
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
-
   return (
     <>
       <nav className={`flex items-center bg-[white] h-[88px] company-navbar ${theme}`}>
@@ -370,7 +364,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             <button
               className="mr-[41px]"
               onClick={handleLogoClick}>
-              <img src={logo} alt="Ximspro Logo" className='xims-logo'/>
+              <img src={logo} alt="Ximspro Logo" className='xims-logo' />
             </button>
 
             {/* Close Menu Icon - With rotation animation */}
@@ -412,9 +406,8 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
             <button
               aria-label="Toggle Theme"
-              className={`icon-buttons rotates outline-none toggle-theme-btns ${
-                theme === "dark" ? "dark" : "light"
-              }`}
+              className={`icon-buttons rotates outline-none toggle-theme-btns ${theme === "dark" ? "dark" : "light"
+                }`}
               onClick={handleThemeToggle}
             >
               <img
@@ -425,21 +418,22 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             </button>
 
             {/* Notification bell icon with badge */}
-            <div 
-          className="bell-icon flex justify-center items-center cursor-pointer relative"
-          onClick={toggleNotifications}
-        >
-          <div>
-            <img src={bell} alt="notification icon" className="w-[20px] h-[20px]" />
-            {/* Optional: Add a notification count badge */}
-            <span 
-              className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center"
+            <div
+              className="bell-icon flex justify-center items-center cursor-pointer relative"
+              onClick={toggleNotifications}
             >
-              3
-            </span>
-          </div>
-        </div>
-            
+              <div>
+                <img src={bell} alt="notification icon" className="w-[20px] h-[20px]" />
+                {/* Optional: Add a notification count badge */}
+                <span
+                  className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${totalNotificationCount > 0 ? 'opacity-100' : 'opacity-0'
+                    }`}
+                >
+                  {totalNotificationCount}
+                </span>
+              </div>
+            </div>
+
             {/* Profile section with dropdown */}
             <div className="flex items-center space-x-2 border-l border-[#383840] pl-4 relative">
               <div onClick={toggleDropdown} className="cursor-pointer">
@@ -453,10 +447,18 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                 <span className="text-[white] text-1 admin-username">{userName || (isUserLogin ? 'User' : 'Company')}</span>
                 <span className="text-[#6D6D6D] text-2">{userEmail || 'email@example.com'}</span>
               </div>
-              
+
               {/* Profile Dropdown Menu with Animation */}
               {isDropdownOpen && (
-                <div 
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20
+                  }}
                   ref={dropdownRef}
                   className={`absolute right-0 top-16 shadow-lg rounded-lg w-60 z-50 py-2 dropdown-container ${dropdownAnimation}
                   ${theme === "dark" ? "bg-[#1E1E26] text-white" : "bg-white text-[#13131A]"}`}
@@ -469,7 +471,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                         alt="Profile"
                         className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
                       />
-                      <button 
+                      <button
                         className="text-sm text-white  mt-1 mb-1 transition-colors duration-200 change-profile"
                         onClick={handleChangeProfilePhoto}
                       >
@@ -477,17 +479,17 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                       </button>
                     </div>
                   </div>
-                  
+
                   {/* Menu Options */}
                   <ul>
-                    <li 
+                    <li
                       className="px-4 py-2 hover:bg-[#2A2A36] cursor-pointer flex items-center gap-3 transition-colors duration-200 cmpy-nav-menu"
                       onClick={handleChangePassword}
                     >
                       <img src={changepswd} alt="Change Password" className='change-pswd-img' />
                       Change Password
                     </li>
-                    <li 
+                    <li
                       className="px-4 py-2 hover:bg-[#2A2A36] cursor-pointer flex items-center gap-3 transition-colors duration-200 cmpy-nav-menu"
                       onClick={handleLogout}
                     >
@@ -495,16 +497,16 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                       Logout
                     </li>
                   </ul>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>
         </div>
       </nav>
-      
+
       {/* Profile Photo Modal */}
       {isProfileModalOpen && (
-        <ProfilePhotoModal 
+        <ProfilePhotoModal
           isOpen={isProfileModalOpen}
           onClose={() => setIsProfileModalOpen(false)}
           onSave={handleSaveProfilePhoto}
@@ -513,7 +515,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           entityType={isCompanyLogin ? 'company' : 'user'} // Pass entity type to the modal
         />
       )}
-      
+
       {/* Change Password Modal */}
       {isChangePasswordModalOpen && (
         <CompanyChangePasswordModal
@@ -523,8 +525,20 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           entityType={isCompanyLogin ? 'company' : 'user'} // Pass entity type to the modal
         />
       )}
-     <AnimatePresence>
-        {isNotificationsOpen && <NotificationsMenu />}
+      <AnimatePresence>
+        {isNotificationsOpen && (
+          <NotificationsMenu
+            initialNotifications={initialNotifications}
+            onNotificationsUpdate={(notifications) => {
+              // Calculate and set total notification count
+              const totalCount = Object.values(notifications).reduce(
+                (total, categoryNotifications) => total + categoryNotifications.length,
+                0
+              );
+              setTotalNotificationCount(totalCount);
+            }}
+          />
+        )}
       </AnimatePresence>
     </>
   );

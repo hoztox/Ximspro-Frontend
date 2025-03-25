@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import profile from "../../assets/images/Company-Navbar/profile.svg"
 import "./notificationmenu.css"
@@ -14,46 +14,19 @@ const TABS = [
     { name: 'IMS', activeColor: 'border-[#CBA301] text-[#CBA301]' }
 ];
 
-const NotificationsMenu = () => {
+const NotificationsMenu = ({ 
+  initialNotifications, 
+  onNotificationsUpdate 
+}) => {
     const [activeTab, setActiveTab] = useState('QMS'); // Default active tab
-    const [notifications, setNotifications] = useState({
-        QMS: [
-            {
-                id: 1,
-                icon: '/path/to/user-icon.png',
-                title: 'Notification for Checking/Review',
-                description: 'User A has created a manual. Please review it.',
-                timestamp: '20-04-2025, 09:30am'
-            },
-            {
-                id: 2,
-                icon: '/path/to/user-icon.png',
-                title: 'Notification for Checking/Review',
-                description: 'User A has created a manual. Please review it.',
-                timestamp: '20-04-2025, 09:30am'
-            },
-            {
-                id: 3,
-                icon: '/path/to/user-icon.png',
-                title: 'Notification for Checking/Review',
-                description: 'User A has created a manual. Please review it.',
-                timestamp: '20-04-2025, 09:30am'
-            },
-            {
-                id: 4,
-                icon: '/path/to/user-icon.png',
-                title: 'Notification for Checking/Review',
-                description: 'User A has created a manual. Please review it.',
-                timestamp: '20-04-2025, 09:30am'
-            },
-        ],
-        EMS: [],
-        OHS: [],
-        EnMS: [],
-        BMS: [],
-        AMS: [],
-        IMS: []
-    });
+    const [notifications, setNotifications] = useState(initialNotifications);
+
+    // Use effect to notify parent component about notifications
+    useEffect(() => {
+        if (onNotificationsUpdate) {
+            onNotificationsUpdate(notifications);
+        }
+    }, [notifications, onNotificationsUpdate]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
