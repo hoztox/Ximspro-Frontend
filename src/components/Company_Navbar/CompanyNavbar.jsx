@@ -419,11 +419,11 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
             {/* Notification bell icon with badge */}
             <div
-              className="bell-icon flex justify-center items-center cursor-pointer relative"
+              className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active":""}`}
               onClick={toggleNotifications}
             >
               <div>
-                <img src={bell} alt="notification icon" className="w-[20px] h-[20px]" />
+                <img src={bell} alt="notification icon" className="w-[20px] h-[20px] bell" />
                 {/* Optional: Add a notification count badge */}
                 <span
                   className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${totalNotificationCount > 0 ? 'opacity-100' : 'opacity-0'
