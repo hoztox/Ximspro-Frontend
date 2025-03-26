@@ -512,7 +512,7 @@ const AddQmsManual = () => {
                     </div>
 
                     <div className="flex flex-col items-end mt-[22px] justify-center">
-                        <div className='flex gap-[113px] mb-5'>
+                        {/* <div className='flex gap-[113px] mb-5'>
                             <div className="flex items-center">
                                 <span className="mr-3 add-qms-manual-label">Publish?</span>
                                 <input
@@ -531,7 +531,7 @@ const AddQmsManual = () => {
                                     onChange={() => setFormData(prev => ({ ...prev, send_notification: !prev.send_notification }))}
                                 />
                             </div>
-                        </div>
+                        </div> */}
                         <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"

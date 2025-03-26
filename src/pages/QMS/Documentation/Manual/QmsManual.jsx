@@ -130,8 +130,8 @@ const QmsManual = () => {
     navigate(`/company/qms/editmanual/${id}`);
   };
 
-  const handleView = (id) => {
-    navigate(`/company/qms/viewmanual/${id}`);
+  const handleView = () => {
+    navigate(`/company/qms/viewmanual`);
   };
 
   const renderStatusBadge = (status) => {
@@ -230,7 +230,7 @@ const QmsManual = () => {
                     </td>
                     <td className="px-2 add-manual-datas text-center">
                       <button
-                        onClick={() => handleView(manual.id)}
+                        onClick={() => handleView()}
                         title="View"
                       >
                         <img src={views} alt="" />

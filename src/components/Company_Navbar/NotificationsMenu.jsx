@@ -36,14 +36,6 @@ const NotificationsMenu = forwardRef(({
 
     const navigate = useNavigate();
 
-    const handleDetailView = () => {
-        navigate('/company/notificationview');
-        // Close the dropdown when clicked
-        if (onClose) {
-            onClose();
-        }
-    }
-
     const handleViewAll = () => {
         navigate('/company/notifications');
         // Close the dropdown when clicked
@@ -76,7 +68,6 @@ const NotificationsMenu = forwardRef(({
             <div className='h-[108px] py-5 flex items-end'>
                 <button 
                     className="click-view-btn duration-100"
-                    onClick={handleDetailView}
                 >
                     Click to view
                 </button>
