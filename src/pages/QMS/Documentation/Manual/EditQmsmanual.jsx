@@ -2,52 +2,27 @@ import React, { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import "./addqmsmanual.css"
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
 
-const AddQmsManual = () => {
-    const navigate = useNavigate()
+const EditQmsmanual = () => {
+    const navigate = useNavigate();
+    const { manualId } = useParams();  
+    console.log('sdsd',manualId );
+    
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [usersPerPage, setUsersPerPage] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
+
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileObject, setFileObject] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-
-    const getUserCompanyId = () => {
-        // First check if company_id is stored directly
-        const storedCompanyId = localStorage.getItem("company_id");
-        if (storedCompanyId) return storedCompanyId;
-
-        // If user data exists with company_id
-        const userRole = localStorage.getItem("role");
-        if (userRole === "user") {
-            // Try to get company_id from user data that was stored during login
-            const userData = localStorage.getItem("user_company_id");
-            if (userData) {
-                try {
-                    return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
-                    return null;
-                }
-            }
-        }
-        return null;
-    };
-
-    const companyId = getUserCompanyId();
-    console.log("Stored Company ID:", companyId);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -73,11 +48,34 @@ const AddQmsManual = () => {
         month: false,
         year: false
     });
+
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
     useEffect(() => {
         if (companyId) {
             fetchUsers();
+            fetchManualDetails();
         }
-    }, [companyId]);
+    }, [companyId, manualId]);
 
     const fetchUsers = async () => {
         try {
@@ -85,18 +83,40 @@ const AddQmsManual = () => {
 
             const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
 
-            console.log("API Response:", response.data);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
-                console.log("Users loaded:", response.data);
             } else {
                 setUsers([]);
                 console.error("Unexpected response format:", response.data);
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load manuals. Please check your connection and try again.");
+            setError("Failed to load users. Please check your connection and try again.");
+        }
+    };
+
+    const fetchManualDetails = async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${BASE_URL}/company/manuals/${manualId}/`);
+            
+            // Set form data with retrieved manual details
+            setFormData({
+                ...response.data,
+                date: response.data.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`
+            });
+
+            // Set selected file if exists
+            if (response.data.upload_attachment) {
+                setSelectedFile(response.data.upload_attachment.split('/').pop());
+            }
+
+            setLoading(false);
+            setIsInitialLoad(false);
+        } catch (error) {
+            console.error("Error fetching manual details:", error);
+            setError("Failed to load manual details. Please try again.");
+            setLoading(false);
         }
     };
 
@@ -104,7 +124,6 @@ const AddQmsManual = () => {
         return new Date(year, month, 0).getDate();
     };
 
-    // Parse date to get day, month, year
     const parseDate = () => {
         const dateObj = new Date(formData.date);
         return {
@@ -121,10 +140,8 @@ const AddQmsManual = () => {
         (_, i) => i + 1
     );
 
-    // Generate months (1-12)
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    // Generate years (current year - 10 to current year + 10)
     const years = Array.from(
         { length: 21 },
         (_, i) => currentYear - 10 + i
@@ -166,10 +183,8 @@ const AddQmsManual = () => {
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
 
-            // Update the appropriate part of the date
             dateObj[dropdown] = parseInt(value, 10);
 
-            // Create new date string in YYYY-MM-DD format
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
             setFormData(prev => ({
@@ -190,11 +205,10 @@ const AddQmsManual = () => {
         navigate('/company/qms/manual')
     }
 
-    const handleSaveClick = async () => {
+    const handleUpdateClick = async () => {
         try {
             setLoading(true);
 
-            // Fetch company ID based on role
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
@@ -205,32 +219,32 @@ const AddQmsManual = () => {
             const submitData = new FormData();
             submitData.append('company', companyId);
 
-            // Add all other form data
+            // Add all form data
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
             });
 
+            // Add file if new file is selected
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/company/manuals/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/company/manuals/${manualId}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             setLoading(false);
-            alert('Manual added successfully!');
+            alert('Manual updated successfully!');
             navigate('/company/qms/manual');
         } catch (err) {
             setLoading(false);
-            setError('Failed to save manual');
-            console.error('Error saving manual:', err);
+            setError('Failed to update manual');
+            console.error('Error updating manual:', err);
         }
     };
 
-    // Get month name from number
     const getMonthName = (monthNum) => {
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -239,15 +253,19 @@ const AddQmsManual = () => {
         return monthNames[monthNum - 1];
     };
 
-    // Format user name for display
     const formatUserName = (user) => {
         return `${user.first_name} ${user.last_name}`;
     };
 
+    // Render loading state
+    if (isInitialLoad) {
+        return <div>Loading...</div>;
+    }
+
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-                <h1 className="add-manual-sections">Add Manual Sections</h1>
+                <h1 className="add-manual-sections">Edit Manual Sections</h1>
 
                 {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
@@ -512,26 +530,6 @@ const AddQmsManual = () => {
                     </div>
 
                     <div className="flex items-center mt-[22px] justify-between">
-                        {/* <div className='flex gap-[113px] mb-5'>
-                            <div className="flex items-center">
-                                <span className="mr-3 add-qms-manual-label">Publish?</span>
-                                <input
-                                    type="checkbox"
-                                    className="qms-manual-form-checkbox"
-                                    checked={formData.publish}
-                                    onChange={() => setFormData(prev => ({ ...prev, publish: !prev.publish }))}
-                                />
-                            </div>
-                            <div className="flex items-center">
-                                <span className="mr-3 add-qms-manual-label">Send Notification?</span>
-                                <input
-                                    type="checkbox"
-                                    className="qms-manual-form-checkbox"
-                                    checked={formData.send_notification}
-                                    onChange={() => setFormData(prev => ({ ...prev, send_notification: !prev.send_notification }))}
-                                />
-                            </div>
-                        </div> */}
                         <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
@@ -549,10 +547,10 @@ const AddQmsManual = () => {
                             </button>
                             <button
                                 className="save-btn duration-200"
-                                onClick={handleSaveClick}
+                                onClick={handleUpdateClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Saving...' : 'Final Save'}
+                                {loading ? 'Updating...' : 'Update'}
                             </button>
                         </div>
                     </div>
@@ -562,4 +560,4 @@ const AddQmsManual = () => {
     );
 };
 
-export default AddQmsManual
+export default EditQmsmanual

@@ -126,13 +126,17 @@ const QmsManual = () => {
   const handleQMSAddManual = () => {
     navigate('/company/qms/addmanual');
   };
-  const handleEdit = (id) => {
-    navigate(`/company/qms/editmanual/${id}`);
+  const handleEdit = () => {
+    navigate(`/company/qms/editmanual`);
   };
 
   const handleView = () => {
     navigate(`/company/qms/viewmanual`);
   };
+
+  const handleManualDraft = () => {
+    navigate('/company/qms/draftmanual')
+  }
 
   const renderStatusBadge = (status) => {
     switch (status) {
@@ -165,7 +169,9 @@ const QmsManual = () => {
               <Search size={18} />
             </div>
           </div>
-          <button className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white">
+          <button className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+          onClick={handleManualDraft}
+          >
             <span>Drafts</span>
           </button>
           <button
@@ -240,7 +246,7 @@ const QmsManual = () => {
                     </td>
                     <td className="px-2 add-manual-datas text-center">
                       <button
-                        onClick={() => handleEdit(manual.id)}
+                        onClick={() => handleEdit()}
                         title="Edit"
                       >
                         <img src={edits} alt="" />

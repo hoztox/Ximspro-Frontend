@@ -26,7 +26,10 @@ const DocumentationSubmenu = (props) => {
       label: "Manual",
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
       path: "/company/qms/manual",
-      relatedPaths: ["/company/qms/addmanual"]
+      relatedPaths: ["/company/qms/addmanual",
+                     "/company/qms/draftmanual",
+                     "/company/qms/viewmanual",
+                    ]
     },
     {
       id: "procedure",
