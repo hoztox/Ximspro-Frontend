@@ -216,17 +216,19 @@ const QmsManual = () => {
                     <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
                     <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                     <td className="px-2 add-manual-datas">
-                      {renderStatusBadge(manual.status || 'Reviewed')}
+                      {renderStatusBadge(manual.status)}
                     </td>
                     <td className='px-2 add-manual-datas'>
+                      {manual.status === 'Approved' ? (
+                        <span className="text-[#36DDAE]">No need to change</span>
+                      ) : (
                         <button
                           onClick={() => handleClickApprove(manual.id)}
                           className="text-[#1E84AF]"
-                        
                         >
                           Click to Approve
                         </button>
-                 
+                      )}
                     </td>
                     <td className="px-2 add-manual-datas text-center">
                       <button
