@@ -1,30 +1,31 @@
 import React, { useState } from 'react';
 import profile from "../../assets/images/Company-Navbar/profile.svg";
+import "./viewallnotifications.css";
 
 const NotificationItem = ({ statusStages = [], notificationDetails = {} }) => {
   return (
-    <div className="bg-gray-800 p-4 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
+    <div className="bg-[#24242D] p-5 rounded-md flex flex-col md:flex-row items-center justify-between mb-5 last:mb-0">
       {/* Profile Image and Notification Details */}
-      <div className='flex gap-2'>
-        <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
+      <div className='flex gap-4'>
+        <div className="w-[50px] h-[50px] rounded-full flex items-center justify-center">
           <img src={profile} alt="" />
         </div>
 
         <div className="flex-grow">
-          <div className="text-white text-sm font-medium">{notificationDetails.title}</div>
-          <div className="text-gray-400 text-xs mt-1">{notificationDetails.description}</div>
-          <div className="text-gray-500 text-xs mt-1">Section Name/Title: {notificationDetails.sectionName}</div>
-          <div className="text-gray-500 text-xs">Section Number: {notificationDetails.sectionNumber}</div>
+          <div className="notification-title mb-[6px]">{notificationDetails.title}</div>
+          <div className="notification-description mb-1">{notificationDetails.description}</div>
+          <div className="notification-description mb-1">Section Name/Title: {notificationDetails.sectionName}</div>
+          <div className="notification-description mb-1">Section Number: {notificationDetails.sectionNumber}</div>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="w-full md:w-[45%] relative">
-        <div className="absolute top-2 left-0 right-0 z-0 flex justify-between w-full px-12">
+        <div className="absolute top-2 left-0 right-0 z-0 flex justify-between w-full px-[50px]">
           {statusStages.map((stage, index) => {
             // Set segment color based on previous step completion
             const isPrevCompleted = index > 0 && statusStages[index - 0].completed;
-            const segmentColor = isPrevCompleted ? 'border-green-500' : 'border-[#D9D9D9]';
+            const segmentColor = isPrevCompleted ? 'border-[#38E76C]' : 'border-[#D9D9D9]';
 
             return (
               index !== 0 && (
@@ -40,16 +41,15 @@ const NotificationItem = ({ statusStages = [], notificationDetails = {} }) => {
             <div key={stage.status} className="flex flex-col items-center z-10">
               {/* Status Point */}
               <div
-                className={`w-4 h-4 rounded-full border-4 ${
-                  stage.completed ? 'bg-green-500 border-green-500' : 'bg-[#D9D9D9] border-[#D9D9D9]'
-                }`}
+                className={`w-3 h-3 mt-[2px] rounded-full border-4 ${stage.completed ? 'bg-[#38E76C] border-[#38E76C]' : 'bg-[#D9D9D9] border-[#D9D9D9]'
+                  }`}
               ></div>
 
               {/* Stage Details */}
-              <div className="text-center mt-2">
-                <div className="text-xs text-white">{stage.status}</div>
-                <div className="text-xs text-white">{stage.user}</div>
-                <div className="text-xs text-[#AAAAAA]">{stage.timestamp}</div>
+              <div className="text-center mt-[10px]">
+                <div className="notification-status mb-1">{stage.status}</div>
+                <div className="notification-status-user mb-1">{stage.user}</div>
+                <div className="notification-status-timestamp">{stage.timestamp}</div>
               </div>
             </div>
           ))}
@@ -57,7 +57,7 @@ const NotificationItem = ({ statusStages = [], notificationDetails = {} }) => {
       </div>
 
       {/* View Button */}
-      <button className="ml-0 md:ml-4 text-blue-400 text-sm border border-blue-400 rounded px-3 py-1 hover:bg-blue-400 hover:text-white transition-colors">
+      <button className="rounded px-[10px] w-[88px] h-[30px] notification-click-view whitespace-nowrap duration-200">
         Click to view
       </button>
     </div>
@@ -66,9 +66,30 @@ const NotificationItem = ({ statusStages = [], notificationDetails = {} }) => {
 
 
 const ViewAllNotifications = ({
-  tabs = ['QMS', 'EMS', 'OHS', 'EnMS', 'BMS', 'AMS', 'IMS'],
+  tabs = [
+    { name: 'QMS', borderColor: 'border-[#858585]', textColor: 'text-[#858585]' },
+    { name: 'EMS', borderColor: 'border-[#38E76C]', textColor: 'text-[#38E76C]' },
+    { name: 'OHS', borderColor: 'border-[#F9291F]', textColor: 'text-[#F9291F]' },
+    { name: 'EnMS', borderColor: 'border-[#10B8FF]', textColor: 'text-[#10B8FF]' },
+    { name: 'BMS', borderColor: 'border-[#F310FF]', textColor: 'text-[#F310FF]' },
+    { name: 'AMS', borderColor: 'border-[#DD6B06]', textColor: 'text-[#DD6B06]' },
+    { name: 'IMS', borderColor: 'border-[#CBA301]', textColor: 'text-[#CBA301]' }
+  ],
   notifications = {
     'QMS': [
+      {
+        statusStages: [
+          { status: 'Written By', user: 'User A', timestamp: '20-04-2025 06:30am', completed: true },
+          { status: 'Checked By', user: 'User B', timestamp: '20-04-2025 09:30am', completed: true },
+          { status: 'Approved By', user: 'User D', timestamp: '20-04-2025 09:30am', completed: false }
+        ],
+        notificationDetails: {
+          title: 'Notification for Checking/Review',
+          description: 'User A has created a manual. Please review it.',
+          sectionName: 'Quality Procedures',
+          sectionNumber: 'QMS-001'
+        }
+      },
       {
         statusStages: [
           { status: 'Written By', user: 'User A', timestamp: '20-04-2025 06:30am', completed: true },
@@ -76,25 +97,12 @@ const ViewAllNotifications = ({
           { status: 'Approved By', user: 'User D', timestamp: '20-04-2025 09:30am', completed: true }
         ],
         notificationDetails: {
-          title: 'QMS Manual Update',
-          description: 'Quality Management System manual needs review.',
+          title: 'Notification for Checking/Review',
+          description: 'User A has created a manual. Please review it.',
           sectionName: 'Quality Procedures',
           sectionNumber: 'QMS-001'
         }
       },
-      {
-        statusStages: [
-          { status: 'Written By', user: 'User X', timestamp: '21-04-2025 10:30am', completed: true },
-          { status: 'Checked By', user: 'User Y', timestamp: '22-04-2025 11:30am', completed: false },
-          { status: 'Approved By', user: 'User Z', timestamp: '21-04-2025 10:30am', completed: false }
-        ],
-        notificationDetails: {
-          title: 'QMS Process Improvement',
-          description: 'New quality improvement document submitted.',
-          sectionName: 'Continuous Improvement',
-          sectionNumber: 'QMS-002'
-        }
-      }
     ],
     'EMS': [
       {
@@ -118,24 +126,30 @@ const ViewAllNotifications = ({
     'IMS': []
   }
 }) => {
-  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const [activeTab, setActiveTab] = useState(tabs[0].name);
 
   return (
-    <div className="bg-gray-900 p-6">
+    <div className="bg-[#1C1C24] p-5 rounded-md">
       <div>
-        <div className="flex mb-4 space-x-2 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={`px-4 py-2 text-sm rounded transition-colors flex-shrink-0 ${activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-300 hover:bg-gray-700'
-                }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
+        <div className='flex justify-between mb-5'>
+          <div>
+            <h1 className='notifications-head'>Notifications</h1>
+          </div>
+          <div className="flex space-x-[23px]">
+            {tabs.map((tab) => (
+              <button
+                key={tab.name}
+                className={`notifications-tabs pb-1 
+                  ${activeTab === tab.name 
+                    ? `${tab.borderColor} ${tab.textColor} border-b-2` 
+                    : 'text-white'
+                  }`}
+                onClick={() => setActiveTab(tab.name)}
+              >
+                {tab.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Notification Items or No Notifications Message */}
@@ -148,8 +162,8 @@ const ViewAllNotifications = ({
             />
           ))
         ) : (
-          <div className="text-gray-400 text-center py-10">
-            No notifications for {activeTab} at the moment
+          <div className="no-notification text-center py-10">
+            No Notifications
           </div>
         )}
       </div>
