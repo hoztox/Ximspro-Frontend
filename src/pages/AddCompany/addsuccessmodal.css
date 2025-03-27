@@ -1,4 +1,4 @@
-.modal-overlay {
+.success-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,42 +11,45 @@
     z-index: 1000;
   }
   
-  .modal {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  .success-modal {
     background-color: white;
     color: #25282b;
     border-radius: 8px;
     padding: 20px;
-    width: 350px;
-    height: 200px;
+    width: 493px;
+    height: 347px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  }  
-  .successclosebtn {
-    padding: 8px 20px;
-    margin-top: 15px;
-    background-color: #21ab86;
+  } 
+
+  .success-modal.light .success-dark {
+    display: none;
+  }
+  .success-modal.dark .success-light {
+    display: none;
+  }
+  .success-modal.dark .success-messege {
+
     color: white;
-    border: none;
-    cursor: pointer;
-    border-radius: 5px;
-    font-family: 'Switzer Light';
   }
   
-  .successclosebtn:hover {
-    background-color: #1a9b76;
+  .success-modal.dark {
+    background-color: #1C1C24;
   }
-  
-  .messegehead{
-    margin-top: 5px;
+  .success-modal.dark .modal-close-icon {
+    background-color: #24242D;
+  }
+  .success-modal.dark .close-img {
+    color: white;
+  }
+
+  .success-messegehead{
+    margin-top: 16px;
     font-family: 'Switzer SemiBold';
-    font-size:25px;
+    font-size:26px;
+    color: #38E76C;
   }
-  .messege {
+  .success-messege {
+    margin-top: 16px;
     font-family: 'Switzer Regular';
-    font-size: medium;
-  }
-  .modal-content.dark .messegehead, .modal-content.dark .messege {
-    color: white;
+    font-size: 16px;
   }
