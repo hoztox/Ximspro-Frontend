@@ -100,7 +100,7 @@ const ViewAllNotifications = ({
           title: 'Notification for Checking/Review',
           description: 'User A has created a manual. Please review it.',
           sectionName: 'Quality Procedures',
-          sectionNumber: 'QMS-001'
+          sectionNumber: 'QMS-002'
         }
       },
     ],
