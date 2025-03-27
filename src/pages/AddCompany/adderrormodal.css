@@ -1,4 +1,4 @@
-.modal-overlay {
+.add-cmy-error-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -11,7 +11,7 @@
     z-index: 1000;
   }
   
-  .modal {
+  .add-cmy-error-modal {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -23,7 +23,7 @@
     height: 200px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }  
-  .deleteclosebtns {
+  .add-cmy-error-deleteclosebtns {
     padding: 8px 20px;
     margin-top: 15px;
     background-color: #f44336;
@@ -34,19 +34,19 @@
     font-family: 'Switzer Light';
   }
   
-  .deleteclosebtns:hover {
+  .add-cmy-error-deleteclosebtns-deleteclosebtns:hover {
     background-color: #ae1c1c;
   }
   
-  .messegehead{
+  .add-cmy-error-messegehead{
     margin-top: 5px;
     font-family: 'Switzer SemiBold';
     font-size:25px;
   }
-  .messege {
+  .add-cmy-error-messege {
     font-family: 'Switzer Regular';
     font-size: medium;
   }
-  .modal-content.dark .messegehead, .modal-content.dark .messege {
+  .add-cmy-error-modal-content.dark .add-cmy-error-messegehead, .add-cmy-error-modal-content.dark .add-cmy-error-messege {
     color: white;
   }
