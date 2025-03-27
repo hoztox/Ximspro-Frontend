@@ -536,7 +536,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                       Change Password
                     </li>
                     <li
-                      className="bg-[#24242D] text-[#F9291F] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"
+                      className="bg-[#24242D] text-[#F9291F] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"  
                       onClick={handleLogout}
                     >
                       <img src={logout} alt="logout" />
