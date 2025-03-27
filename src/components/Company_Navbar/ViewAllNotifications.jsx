@@ -1,12 +1,7 @@
 import React, { useState } from 'react';
-import profile from "../../assets/images/Company-Navbar/profile.svg"
+import profile from "../../assets/images/Company-Navbar/profile.svg";
 
-const NotificationItem = ({
-  statusStages = [],
-  notificationDetails = {}
-}) => {
-  const completedStagesCount = statusStages.filter(stage => stage.completed).length;
-
+const NotificationItem = ({ statusStages = [], notificationDetails = {} }) => {
   return (
     <div className="bg-gray-800 p-4 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
       {/* Profile Image and Notification Details */}
@@ -16,48 +11,40 @@ const NotificationItem = ({
         </div>
 
         <div className="flex-grow">
-          <div className="text-white text-sm font-medium">
-            {notificationDetails.title}
-          </div>
-          <div className="text-gray-400 text-xs mt-1">
-            {notificationDetails.description}
-          </div>
-          <div className="text-gray-500 text-xs mt-1">
-            Section Name/Title: {notificationDetails.sectionName}
-          </div>
-          <div className="text-gray-500 text-xs">
-            Section Number: {notificationDetails.sectionNumber}
-          </div>
+          <div className="text-white text-sm font-medium">{notificationDetails.title}</div>
+          <div className="text-gray-400 text-xs mt-1">{notificationDetails.description}</div>
+          <div className="text-gray-500 text-xs mt-1">Section Name/Title: {notificationDetails.sectionName}</div>
+          <div className="text-gray-500 text-xs">Section Number: {notificationDetails.sectionNumber}</div>
         </div>
       </div>
 
+      {/* Progress Bar */}
       <div className="w-full md:w-[45%] relative">
-        {/* Dashed Line Spanning Entire Container */}
-        <div className="absolute top-2 left-0 right-0 z-0 mx-[50px]">
-          <div className={`w-full h-[2px] border-t-2 border-dashed ${
-            completedStagesCount > 0 
-              ? 'border-green-500' 
-              : 'border-[#D9D9D9]'
-          }`}></div>
+        <div className="absolute top-2 left-0 right-0 z-0 flex justify-between w-full px-12">
+          {statusStages.map((stage, index) => {
+            // Set segment color based on previous step completion
+            const isPrevCompleted = index > 0 && statusStages[index - 0].completed;
+            const segmentColor = isPrevCompleted ? 'border-green-500' : 'border-[#D9D9D9]';
+
+            return (
+              index !== 0 && (
+                <div key={index} className={`w-full h-[2px] border-t-2 border-dashed ${segmentColor}`}></div>
+              )
+            );
+          })}
         </div>
 
         {/* Stages Container */}
         <div className="relative flex justify-between items-center">
           {statusStages.map((stage, index) => (
-            <div 
-              key={stage.status} 
-              className={`flex flex-col items-center z-10 ${
-                index === 0 ? 'ml-0' : (index === statusStages.length - 1 ? 'mr-0' : '')
-              }`}
-            >
+            <div key={stage.status} className="flex flex-col items-center z-10">
               {/* Status Point */}
               <div
-                className={`w-4 h-4 rounded-full border-4 ${stage.completed
-                    ? 'bg-green-500 border-green-500'
-                    : 'bg-[#D9D9D9] border-[#D9D9D9]'
-                  }`}
+                className={`w-4 h-4 rounded-full border-4 ${
+                  stage.completed ? 'bg-green-500 border-green-500' : 'bg-[#D9D9D9] border-[#D9D9D9]'
+                }`}
               ></div>
-              
+
               {/* Stage Details */}
               <div className="text-center mt-2">
                 <div className="text-xs text-white">{stage.status}</div>
@@ -77,6 +64,7 @@ const NotificationItem = ({
   );
 };
 
+
 const ViewAllNotifications = ({
   tabs = ['QMS', 'EMS', 'OHS', 'EnMS', 'BMS', 'AMS', 'IMS'],
   notifications = {
@@ -85,7 +73,7 @@ const ViewAllNotifications = ({
         statusStages: [
           { status: 'Written By', user: 'User A', timestamp: '20-04-2025 06:30am', completed: true },
           { status: 'Checked By', user: 'User B', timestamp: '20-04-2025 09:30am', completed: true },
-          { status: 'Approved By', user: 'User D', timestamp: '20-04-2025 09:30am', completed: false }
+          { status: 'Approved By', user: 'User D', timestamp: '20-04-2025 09:30am', completed: true }
         ],
         notificationDetails: {
           title: 'QMS Manual Update',
