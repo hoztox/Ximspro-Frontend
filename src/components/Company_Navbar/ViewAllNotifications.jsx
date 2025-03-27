@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import profile from "../../assets/images/Company-Navbar/profile.svg"
 
-const NotificationItem = ({ 
+const NotificationItem = ({
   statusStages = [],
   notificationDetails = {}
 }) => {
-    const completedStagesCount = statusStages.filter(stage => stage.completed).length;
+  const completedStagesCount = statusStages.filter(stage => stage.completed).length;
 
   return (
     <div className="bg-gray-800 p-4 rounded-lg mb-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-4">
       {/* Profile Image and Notification Details */}
-      <div className='flex gap-2  '>
+      <div className='flex gap-2'>
         <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
           <img src={profile} alt="" />
         </div>
@@ -31,38 +31,43 @@ const NotificationItem = ({
         </div>
       </div>
 
-    
-<div className="w-[45%] relative flex justify-between items-center">
-  {statusStages.map((stage, index) => (
-    <React.Fragment key={stage.status}>
-      {/* Status Point */}
-      <div className="relative z-10 flex flex-col items-center">
-        <div 
-          className={`w-4 h-4 rounded-full z-40 border-4 ${
-            stage.completed 
-              ? 'bg-green-500 border-green-500' 
-              : 'bg-[#D9D9D9] border-[#D9D9D9]'
-          }`}
-        ></div>
-        <div className="text-center mt-2">
-          <div className="text-xs text-white">{stage.status}</div>
-          <div className="text-xs text-white">{stage.user}</div>
-          <div className="text-xs text-[#AAAAAA]">{stage.timestamp}</div>
+      <div className="w-full md:w-[45%] relative">
+        {/* Dashed Line Spanning Entire Container */}
+        <div className="absolute top-2 left-0 right-0 z-0 mx-[50px]">
+          <div className={`w-full h-[2px] border-t-2 border-dashed ${
+            completedStagesCount > 0 
+              ? 'border-green-500' 
+              : 'border-[#D9D9D9]'
+          }`}></div>
+        </div>
+
+        {/* Stages Container */}
+        <div className="relative flex justify-between items-center">
+          {statusStages.map((stage, index) => (
+            <div 
+              key={stage.status} 
+              className={`flex flex-col items-center z-10 ${
+                index === 0 ? 'ml-0' : (index === statusStages.length - 1 ? 'mr-0' : '')
+              }`}
+            >
+              {/* Status Point */}
+              <div
+                className={`w-4 h-4 rounded-full border-4 ${stage.completed
+                    ? 'bg-green-500 border-green-500'
+                    : 'bg-[#D9D9D9] border-[#D9D9D9]'
+                  }`}
+              ></div>
+              
+              {/* Stage Details */}
+              <div className="text-center mt-2">
+                <div className="text-xs text-white">{stage.status}</div>
+                <div className="text-xs text-white">{stage.user}</div>
+                <div className="text-xs text-[#AAAAAA]">{stage.timestamp}</div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* Line Segment (Only render if it's not the last stage) */}
-      {index < statusStages.length - 1 && (
-        <div 
-          className={`w-[82%] h-1 border-t-2 border-dashed absolute right-[9%] top-[8%] ${
-            stage.completed ? 'border-green-500' : 'border-[#D9D9D9]'
-          }`}
-        ></div>
-      )}
-    </React.Fragment>
-  ))}
-</div>
-
 
       {/* View Button */}
       <button className="ml-0 md:ml-4 text-blue-400 text-sm border border-blue-400 rounded px-3 py-1 hover:bg-blue-400 hover:text-white transition-colors">
@@ -72,7 +77,7 @@ const NotificationItem = ({
   );
 };
 
-const ViewAllNotifications = ({ 
+const ViewAllNotifications = ({
   tabs = ['QMS', 'EMS', 'OHS', 'EnMS', 'BMS', 'AMS', 'IMS'],
   notifications = {
     'QMS': [
@@ -134,11 +139,10 @@ const ViewAllNotifications = ({
           {tabs.map((tab) => (
             <button
               key={tab}
-              className={`px-4 py-2 text-sm rounded transition-colors flex-shrink-0 ${
-                activeTab === tab 
-                  ? 'bg-blue-600 text-white' 
+              className={`px-4 py-2 text-sm rounded transition-colors flex-shrink-0 ${activeTab === tab
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-300 hover:bg-gray-700'
-              }`}
+                }`}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
@@ -149,8 +153,8 @@ const ViewAllNotifications = ({
         {/* Notification Items or No Notifications Message */}
         {notifications[activeTab].length > 0 ? (
           notifications[activeTab].map((notification, index) => (
-            <NotificationItem 
-              key={index} 
+            <NotificationItem
+              key={index}
               statusStages={notification.statusStages}
               notificationDetails={notification.notificationDetails}
             />
