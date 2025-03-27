@@ -75,7 +75,7 @@
   opacity: 0;
   transform: translateY(-10px); /* Initially translate it slightly up */
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
-  background-color: rgb(247, 252, 255);
+  background-color:#ffff;
   border-color: #e9e9e9;
 }
 
@@ -160,7 +160,7 @@
   background-color: #f5f5f5;
 }
 .logoutbtn {
-  color: #25282b;
+  color: #F9291F;
   font-family: "Switzer Regular";
 }
 .logoutbtn:hover {
@@ -187,10 +187,6 @@
 }
 .dropdown-menu.dark .logoutbtn:hover {
   background-color: rgb(14, 14, 14);
-}
-
-.dropdown-menu.dark .logoutbtn {
-  color: white;
 }
 
 .dropdown-menu.light .change-profile {
@@ -261,10 +257,52 @@ ul li.active .navdropicon {
     hue-rotate(155deg) brightness(88%) contrast(83%);
 }
 .dropdown-menu.dark .desktopprofileicon,
-.dropdown-menu.dark .desktopchangepswdimg,
-.dropdown-menu.dark .desktoplogoutimg {
+.dropdown-menu.dark .desktopchangepswdimg {
   filter: brightness(0) saturate(100%) invert(100%) sepia(25%) saturate(0%)
     hue-rotate(308deg) brightness(110%) contrast(101%);
+}
+
+.desktoplogoutimg {
+  filter: brightness(0) saturate(100%) invert(40%) sepia(71%) saturate(6271%) hue-rotate(346deg) brightness(95%) contrast(107%);
+}
+
+.admin-profile-settings-head {
+  font-family: 'Switzer SemiBold';
+  font-size: 16px;
+}
+
+.dropdown-menu.light .admin-profile-settings-head {
+  color: #25282b;
+  border-color: #e9e9e9;
+}
+
+.dropdown-menu.light .admin-photo-upload {
+  background-color: rgb(252, 252, 252);
+  border: 1px solid #b8b8b8;;
+}
+.dropdown-menu.light .admin-photo-img {
+  filter: brightness(0) saturate(100%) invert(11%) sepia(8%) saturate(738%) hue-rotate(169deg) brightness(95%) contrast(87%); 
+}
+.dropdown-menu.light .admin-username {
+  color: #25282B;
+}
+.dropdown-menu.light .chngepaswd,  .dropdown-menu.light .logoutbtn{
+  background-color: #fafafa;
+}
+.dropdown-menu.light .chngepaswd:hover,  .dropdown-menu.light .logoutbtn:hover{
+  background-color: #f3f2f2;
+}
+
+.admin-username {
+  font-family: 'Switzer Regular';
+  font-size: 16px;
+  color: white;
+}
+
+.admin-useremail {
+  font-family: 'Switzer Regular';
+  font-size: 12px;
+  color: #6D6D6D;
 }
 
 @keyframes slideDown {

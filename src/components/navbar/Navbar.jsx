@@ -16,6 +16,7 @@ import dropdownicon from "../../assets/images/Navbar/dropdown.svg";
 import closeIcon from "../../assets/images/Navbar/closeicon.svg";
 import menuicons from "../../assets/images/Navbar/menu.svg";
 import navfooter from "../../assets/images/Navbar/navfooter.svg";
+import imgupload from "../../assets//images/Company-Navbar/img-upload.svg"
 import profileicon from "../../assets/images/Navbar/profile icon.svg";
 import sunIcon from "../../assets/images/Navbar/sun.svg";
 import moonIcon from "../../assets/images/Navbar/moon.svg";
@@ -72,11 +73,11 @@ const Navbar = () => {
           setUserEmail(adminData.email || "");
           setUserName(adminData.username || "");
           setAdminId(adminData.id || null);
-          
+
           // Prioritize server profile photo, then localStorage, then default
-          const photoUrl = adminData.profile_photo || 
-                           localStorage.getItem('adminProfilePhoto')
-          
+          const photoUrl = adminData.profile_photo ||
+            localStorage.getItem('adminProfilePhoto')
+
           setProfilePhotoUrl(photoUrl);
 
           // Update localStorage with the most recent data
@@ -86,7 +87,7 @@ const Navbar = () => {
             id: adminData.id,
             profile_photo: photoUrl
           }));
-          
+
           // Store profile photo separately for easier retrieval
           localStorage.setItem('adminProfilePhoto', photoUrl);
         } else if (response.data) {
@@ -95,10 +96,10 @@ const Navbar = () => {
           setUserEmail(adminData.email || "");
           setUserName(adminData.username || "");
           setAdminId(adminData.id || null);
-          
-          const photoUrl = adminData.profile_photo || 
-                           localStorage.getItem('adminProfilePhoto')
-          
+
+          const photoUrl = adminData.profile_photo ||
+            localStorage.getItem('adminProfilePhoto')
+
           setProfilePhotoUrl(photoUrl);
 
           localStorage.setItem("adminDetails", JSON.stringify({
@@ -107,7 +108,7 @@ const Navbar = () => {
             id: adminData.id,
             profile_photo: photoUrl
           }));
-          
+
           localStorage.setItem('adminProfilePhoto', photoUrl);
         }
       } catch (error) {
@@ -117,7 +118,7 @@ const Navbar = () => {
         try {
           const adminDetails = JSON.parse(localStorage.getItem("adminDetails") || "{}");
           const storedProfilePhoto = localStorage.getItem('adminProfilePhoto');
-          
+
           if (adminDetails) {
             setUserEmail(adminDetails.email || "");
             setUserName(adminDetails.username || "");
@@ -277,33 +278,44 @@ const Navbar = () => {
           </div>
           <div
             ref={dropdownRef}
-            className={`dropdown-menu absolute right-0 mt-2 shadow-lg rounded-lg w-56 ${isDropdownOpen ? "show" : ""} ${theme === "dark" ? "dark" : "light"}`}
+            className={`dropdown-menu absolute top-[68px] right-0 rounded-md w-[381px] border p-5 ${isDropdownOpen ? "show" : ""} ${theme === "dark" ? "dark" : "light"}`}
           >
-            <ul className="py-2 changpswdlogout">
-              <div className="px-4 py-3 border-b border-[#383840] text-center">
+            <h1 className='admin-profile-settings-head border-b border-[#383840] pb-[14px] text-white'>Profile Settings</h1>
+            <ul className="changpswdlogout mt-8">
+              <div className="  text-center">
                 <div className="flex flex-col items-center">
                   <img
                     src={profilePhotoUrl}
                     alt="Profile"
-                    className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
+                    className="w-[130px] h-[130px] rounded-full object-cover relative"
                   />
                   <button
                     className="text-sm text-white mt-1 mb-1 transition-colors duration-200 change-profile"
                     onClick={handleChangeProfilePhoto}
                   >
-                    Change Profile Photo
+                    <div className='w-[81px] h-[32px] rounded-[140px] bg-[#24242D] flex justify-center items-center absolute left-[150px] top-[203px] admin-photo-upload'>
+                      <img src={imgupload} alt="image upload" className='w-[18px] h-[18px] admin-photo-img' />
+                    </div>
                   </button>
+                  <div className='mt-5 flex flex-col items-center'>
+                    <p className='admin-username'>
+                      {userName}
+                    </p>
+                    <p className='admin-useremail'>
+                      {userEmail}
+                    </p>
+                  </div>
                 </div>
               </div>
               <li
-                className="px-4 py-2 cursor-pointer text-sm chngepaswd md:flex md:gap-4 mt-2"
+                className="bg-[#24242D] px-5 py-3 rounded-md cursor-pointer chngepaswd md:flex md:gap-4 mt-8 mb-5 duration-200"
                 onClick={handleChangePassword}
               >
                 <img src={changepswd} alt="" className="desktopchangepswdimg" />
                 Change Password
               </li>
               <li
-                className="px-4 py-2 cursor-pointer text-sm logoutbtn md:flex md:gap-5"
+                className="bg-[#24242D] px-5 py-3 rounded-md cursor-pointer logoutbtn md:flex md:gap-5 duration-200"
                 onClick={handleLogout}
               >
                 <img src={logout} alt="" className="desktoplogoutimg" />
