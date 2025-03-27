@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronUp, X, Download, FileText, Plus } from 'lucide-react';
 // import plus from "../../../../assets/images/Company Documentation/plus icon.svg";
 import arrow from '../../../../assets/images/Company Documentation/arrow.svg';
@@ -224,78 +225,96 @@ const QmsPolicy = () => {
         </div>
       </div>
       {/* View Policy Modal */}
-      {showViewModal && selectedPolicy && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
-          <div className="bg-[#24242D] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-auto shadow-lg">
-            <div className="flex justify-between items-center p-5 border-b border-[#383840]">
-              <h2 className="text-xl font-semibold">Policy Details</h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6">
-              <h3 className="text-xl mb-4 text-[#A3A3A3]">Policy Content:</h3>
-              <div className="bg-[#1C1C24] p-5 rounded-md">
-                {selectedPolicy.text.startsWith('<') ? (
-                  <div className="policy-content" dangerouslySetInnerHTML={createMarkup(selectedPolicy.text)} />
-                ) : (
-                  <p>{selectedPolicy.text}</p>
-                )}
+      <AnimatePresence>
+        {showViewModal && selectedPolicy && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{
+                type: "spring",
+                stiffness: 300,
+                damping: 20
+              }}
+              className="bg-[#24242D] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-auto shadow-lg"
+            >
+              {/* Modal content remains the same as in the previous version */}
+              <div className="flex justify-between items-center p-5 border-b border-[#383840]">
+                <h2 className="text-xl font-semibold">Policy Details</h2>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              {selectedPolicy.energy_policy && (
-                <div className="mt-6">
-                  <h3 className="text-xl mb-4 text-[#A3A3A3]">Attached Document:</h3>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-[#2C2C36] p-3 rounded">
-                      {getFileIcon(selectedPolicy.energy_policy)}
-                      <span className="truncate max-w-md">
-                        {getFileNameFromUrl(selectedPolicy.energy_policy)}
-                      </span>
-                    </div>
+              <div className="p-6">
+                <h3 className="text-xl mb-4 text-[#A3A3A3]">Policy Content:</h3>
+                <div className="bg-[#1C1C24] p-5 rounded-md">
+                  {selectedPolicy.text.startsWith('<') ? (
+                    <div className="policy-content" dangerouslySetInnerHTML={createMarkup(selectedPolicy.text)} />
+                  ) : (
+                    <p>{selectedPolicy.text}</p>
+                  )}
+                </div>
 
-                    <div className="flex gap-2">
-                      <a
-                        href={selectedPolicy.energy_policy}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-[#2C2C36] hover:bg-[#383844] text-white font-medium py-2 px-4 rounded inline-flex items-center"
-                      >
-                        <span>View</span>
-                      </a>
+                {selectedPolicy.energy_policy && (
+                  <div className="mt-6">
+                    <h3 className="text-xl mb-4 text-[#A3A3A3]">Attached Document:</h3>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 bg-[#2C2C36] p-3 rounded">
+                        {getFileIcon(selectedPolicy.energy_policy)}
+                        <span className="truncate max-w-md">
+                          {getFileNameFromUrl(selectedPolicy.energy_policy)}
+                        </span>
+                      </div>
 
-                      <button
-                        onClick={() => downloadFile(selectedPolicy.energy_policy, getFileNameFromUrl(selectedPolicy.energy_policy))}
-                        className="bg-[#3A3A47] hover:bg-[#4A4A57] text-white font-medium py-2 px-4 rounded inline-flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>Download</span>
-                      </button>
+                      <div className="flex gap-2">
+                        <a
+                          href={selectedPolicy.energy_policy}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-[#2C2C36] hover:bg-[#383844] text-white font-medium py-2 px-4 rounded inline-flex items-center"
+                        >
+                          <span>View</span>
+                        </a>
+
+                        <button
+                          onClick={() => downloadFile(selectedPolicy.energy_policy, getFileNameFromUrl(selectedPolicy.energy_policy))}
+                          className="bg-[#3A3A47] hover:bg-[#4A4A57] text-white font-medium py-2 px-4 rounded inline-flex items-center gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Download</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
+                )}
+                <div className="mt-8 text-sm text-[#858585]">
+                  <p>Created: {new Date(selectedPolicy.created_at).toLocaleString()}</p>
+                  {selectedPolicy.user && <p>Created by: User ID: {selectedPolicy.user}</p>}
                 </div>
-              )}
-              <div className="mt-8 text-sm text-[#858585]">
-                <p>Created: {new Date(selectedPolicy.created_at).toLocaleString()}</p>
-                {selectedPolicy.user && <p>Created by: User ID: {selectedPolicy.user}</p>}
               </div>
-            </div>
 
-            <div className="flex justify-end p-5 border-t border-[#383840]">
-              <button
-                onClick={handleCloseModal}
-                className="bg-[#1C1C24] hover:bg-[#2C2C36] text-white font-medium py-2 px-6 rounded"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="flex justify-end p-5 border-t border-[#383840]">
+                <button
+                  onClick={handleCloseModal}
+                  className="bg-[#1C1C24] hover:bg-[#2C2C36] text-white font-medium py-2 px-6 rounded"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
