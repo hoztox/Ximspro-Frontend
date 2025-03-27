@@ -7,6 +7,7 @@ import bell from "../../assets/images/Company-Navbar/bell.svg";
 import profile from "../../assets/images/Company-Navbar/profile.svg";
 import sunIcon from "../../assets/images/Navbar/sun.svg"
 import moonIcon from "../../assets/images/Navbar/moon.svg"
+import imgupload from "../../assets/images/Company-Navbar/img-upload.svg"
 import changepswd from "../../assets/images/Navbar/changepaswd.svg"
 import "./companynavbar.css";
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +15,7 @@ import axios from 'axios';
 import { BASE_URL } from "../../Utils/Config";
 import ProfilePhotoModal from './CompanyProfilePhotoModal';
 import CompanyChangePasswordModal from './CompanyChangePasswordModal';
-import logout from "../../assets/images/Company-Sidebar/icon18.svg"
+import logout from "../../assets/images/Company-Navbar/logout.svg"
 import NotificationsMenu from './NotificationsMenu';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -36,7 +37,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         notificationsRef.current &&
         !notificationsRef.current.contains(event.target) &&
         // Ensure the click is not on the bell icon
-        !event.target.closest('.bell-icon') 
+        !event.target.closest('.bell-icon')
       ) {
         setIsNotificationsOpen(false);
       }
@@ -282,7 +283,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
   const handleCloseNotifications = () => {
     setIsNotificationsOpen(false);
-};
+  };
 
 
 
@@ -362,7 +363,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         }
       }
     };
-  
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -485,49 +486,60 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
               {/* Profile Dropdown Menu with Animation */}
               {isDropdownOpen && (
                 <motion.div
-                ref={dropdownRef}
-                className={`absolute right-0 top-16 shadow-lg rounded-lg w-60 z-50 py-2 dropdown-container ${dropdownAnimation}
-                ${theme === "dark" ? "bg-[#1E1E26] text-white" : "bg-white text-[#13131A]"}`}
-                initial={{ opacity: 0, scale: 0.95, y: -20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 300,
-                  damping: 20
-                }}
-              >
+                  ref={dropdownRef}
+                  className={`absolute right-0 top-20 rounded-md w-[381px] z-50 dropdown-container border border-[#383840] p-5 ${dropdownAnimation}
+                ${theme === "dark" ? "bg-[#1C1C24] text-white" : "bg-white text-[#13131A]"}`}
+                  initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -20 }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 20
+                  }}
+                >
                   {/* Profile Photo Section */}
-                  <div className="px-4 py-3 border-b border-[#383840] text-center">
+                  <div className="mb-8">
+                    <h1 className='profile-settings-head border-b border-[#383840] pb-[14px]'>Profile Settings</h1>
                     <div className="flex flex-col items-center">
                       <img
                         src={profileImage}
                         alt="Profile"
-                        className="w-16 h-16 rounded-full mb-2 border-2 border-gray-600 object-cover"
+                        className="w-[130px] h-[130px] rounded-full mt-8 object-cover relative"
                       />
                       <button
                         className="text-sm text-white  mt-1 mb-1 transition-colors duration-200 change-profile"
                         onClick={handleChangeProfilePhoto}
                       >
-                        Change Profile Photo
+                        <div className='w-[81px] h-[32px] rounded-[140px] bg-[#24242D] flex justify-center items-center absolute left-[150px] top-[203px]'>
+                          <img src={imgupload} alt="image upload" className='w-[18px] h-[18px]' />
+                        </div>
                       </button>
+                      <div className='mt-5 flex flex-col items-center'>
+                        <p className='username'>
+                          {userName}
+                        </p>
+                        <p className='useremail'>
+                          {userEmail}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
                   {/* Menu Options */}
-                  <ul>
+                  <ul className='space-y-5'>
                     <li
-                      className="px-4 py-2 hover:bg-[#2A2A36] cursor-pointer flex items-center gap-3 transition-colors duration-200 cmpy-nav-menu"
+                      className="bg-[#24242D] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"
                       onClick={handleChangePassword}
                     >
                       <img src={changepswd} alt="Change Password" className='change-pswd-img' />
                       Change Password
                     </li>
                     <li
-                      className="px-4 py-2 hover:bg-[#2A2A36] cursor-pointer flex items-center gap-3 transition-colors duration-200 cmpy-nav-menu"
+                      className="bg-[#24242D] text-[#F9291F] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"
                       onClick={handleLogout}
                     >
-                      <img src={logout} alt="logout" className='change-pswd-img' />
+                      <img src={logout} alt="logout" />
                       Logout
                     </li>
                   </ul>
@@ -559,7 +571,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           entityType={isCompanyLogin ? 'company' : 'user'} // Pass entity type to the modal
         />
       )}
-       <AnimatePresence>
+      <AnimatePresence>
         {isNotificationsOpen && (
           <NotificationsMenu
             ref={notificationsRef}
