@@ -192,8 +192,8 @@ const AddCompany = () => {
         if (canvas) {
           // Create a new canvas with exactly 200x200 dimensions
           const finalCanvas = document.createElement('canvas');
-          finalCanvas.width = 200;
-          finalCanvas.height = 200;
+          finalCanvas.width = 400;
+          finalCanvas.height = 400;
           const ctx = finalCanvas.getContext('2d');
 
           // Draw the cropped area onto the new canvas, resizing if necessary
