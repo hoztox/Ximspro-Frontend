@@ -54,52 +54,29 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
     };
   }, [isNotificationsOpen]);
 
-  const initialNotifications = {
-    QMS: [
-      {
-        id: 1,
-        icon: '/path/to/user-icon.png',
-        title: 'Notification for Checking/Review',
-        description: 'User A has created a manual. Please review it.',
-        timestamp: '20-04-2025, 09:30am'
-      },
-      {
-        id: 2,
-        icon: '/path/to/user-icon.png',
-        title: 'Notification for Checking/Review',
-        description: 'User A has created a manual. Please review it.',
-        timestamp: '20-04-2025, 09:30am'
-      },
-      {
-        id: 3,
-        icon: '/path/to/user-icon.png',
-        title: 'Notification for Checking/Review',
-        description: 'User A has created a manual. Please review it.',
-        timestamp: '20-04-2025, 09:30am'
-      },
-    ],
-    EMS: [
-      {
-        id: 5,
-        icon: '/path/to/user-icon.png',
-        title: 'EMS Notification',
-        description: 'New environmental task assigned.',
-        timestamp: '21-04-2025, 02:15pm'
+  const [qmsNotificationCount, setQmsNotificationCount] = useState(0);
+  const fetchQmsNotificationCount = async () => {
+    try {
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        console.error("User ID not found");
+        return;
       }
-    ],
-    OHS: [],
-    EnMS: [],
-    BMS: [],
-    AMS: [],
-    IMS: []
-  };
 
+      const response = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
+      setQmsNotificationCount(response.data.unread_count || 0);
+    } catch (error) {
+      console.error("Error fetching QMS notification count:", error);
+    }
+  };
   useEffect(() => {
-    const totalCount = Object.values(initialNotifications).reduce(
-      (total, categoryNotifications) => total + categoryNotifications.length,
-      0
-    );
-    setTotalNotificationCount(totalCount);
+    fetchQmsNotificationCount();
+
+    // Optionally, set up a periodic check (every 5 minutes)
+    const intervalId = setInterval(fetchQmsNotificationCount, 5 * 60 * 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const toggleNotifications = () => {
@@ -454,20 +431,19 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
             {/* Notification bell icon with badge */}
             <div
-              className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active" : ""}`}
-              onClick={toggleNotifications}
+          className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active" : ""}`}
+          onClick={toggleNotifications}
+        >
+          <div>
+            <img src={bell} alt="notification icon" className="w-[20px] h-[20px] bell" />
+            {/* QMS Notification count badge */}
+            <span
+              className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${qmsNotificationCount > 0 ? 'opacity-100' : 'opacity-0'}`}
             >
-              <div>
-                <img src={bell} alt="notification icon" className="w-[20px] h-[20px] bell" />
-                {/* Optional: Add a notification count badge */}
-                <span
-                  className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${totalNotificationCount > 0 ? 'opacity-100' : 'opacity-0'
-                    }`}
-                >
-                  {totalNotificationCount}
-                </span>
-              </div>
-            </div>
+              {qmsNotificationCount}
+            </span>
+          </div>
+        </div>
 
             {/* Profile section with dropdown */}
             <div className="flex items-center space-x-2 border-l border-[#383840] pl-4 relative">
@@ -576,7 +552,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           <NotificationsMenu
             ref={notificationsRef}
             onClose={handleCloseNotifications}
-            initialNotifications={initialNotifications}
+            // initialNotifications={initialNotifications}
             onNotificationsUpdate={(notifications) => {
               const totalCount = Object.values(notifications).reduce(
                 (total, categoryNotifications) => total + categoryNotifications.length,

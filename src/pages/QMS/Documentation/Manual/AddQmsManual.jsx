@@ -169,7 +169,7 @@ const AddQmsManual = () => {
             // Update the appropriate part of the date
             dateObj[dropdown] = parseInt(value, 10);
 
-            // Create new date string in YYYY-MM-DD format
+   
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
             setFormData(prev => ({
@@ -194,7 +194,7 @@ const AddQmsManual = () => {
         try {
             setLoading(true);
 
-            // Fetch company ID based on role
+         
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
@@ -205,7 +205,7 @@ const AddQmsManual = () => {
             const submitData = new FormData();
             submitData.append('company', companyId);
 
-            // Add all other form data
+          
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
             });
@@ -214,7 +214,7 @@ const AddQmsManual = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/company/manuals/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/manuals-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -222,6 +222,47 @@ const AddQmsManual = () => {
 
             setLoading(false);
             alert('Manual added successfully!');
+            navigate('/company/qms/manual');
+        } catch (err) {
+            setLoading(false);
+            setError('Failed to save manual');
+            console.error('Error saving manual:', err);
+        }
+    };
+
+
+    const handleDraftClick = async () => {
+        try {
+            setLoading(true);
+
+           
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+            submitData.append('company', companyId);
+
+        
+            Object.keys(formData).forEach(key => {
+                submitData.append(key, formData[key]);
+            });
+
+            if (fileObject) {
+                submitData.append('upload_attachment', fileObject);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/manuals/draft-create/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setLoading(false);
+            alert('Manual Draft Save successfully!');
             navigate('/company/qms/manual');
         } catch (err) {
             setLoading(false);
@@ -512,13 +553,16 @@ const AddQmsManual = () => {
                     </div>
 
                     <div className="flex items-center mt-[22px] justify-between">
+
                         <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
+                                onClick={handleDraftClick}
                             >
                                 Save as Draft
                             </button>
                         </div>
+
                         <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"
@@ -532,7 +576,7 @@ const AddQmsManual = () => {
                                 onClick={handleSaveClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Saving...' : 'Final Save'}
+                                {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>

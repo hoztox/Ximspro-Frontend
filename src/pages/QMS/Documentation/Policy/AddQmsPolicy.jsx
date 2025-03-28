@@ -610,85 +610,94 @@ const AddQmsPolicy = () => {
     }
   }, []);
 
-  const handleSave = async () => {
-    const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
 
-    if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
+  const getUserCompanyId = () => {
+    // First check if company_id is stored directly
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+
+    // If user data exists with company_id
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+        // Try to get company_id from user data that was stored during login
+        const userData = localStorage.getItem("user_company_id");
+        if (userData) {
+            try {
+                return JSON.parse(userData);
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
+        }
+    }
+    return null;
+};
+
+const handleSave = async () => {
+  const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
+
+  if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
       toast.error('Please enter policy content');
       return;
-    }
+  }
 
-    try {
-      // Gather user data
-      const accessToken = localStorage.getItem("accessToken");
-      const role = localStorage.getItem("role");
-      const companyId = localStorage.getItem("company_id");
-      const userId = localStorage.getItem("user_id");
+  try {
+      // Get company ID using getUserCompanyId function
+      const companyId = getUserCompanyId();
 
-      // Debug user info
-      console.log("Debug Info:", { role, companyId, userId, hasToken: !!accessToken });
+      if (!companyId) {
+          toast.error("Company ID not found.");
+          return;
+      }
+
+      // Debug company ID
+      console.log("Debug Info:", { companyId });
 
       // Create FormData
       const apiFormData = new FormData();
 
-      // Add content
+      // Add policy content
       apiFormData.append('text', editorContent);
 
-      // Add the correct ID field based on role
-      if (role === "company" && companyId) {
-        apiFormData.append('company', companyId);
-      } else if (userId) {
-        apiFormData.append('user', userId);
-      } else {
-        toast.error('User or Company information not found. Please login again.');
-        return;
-      }
+      // Add only company ID
+      apiFormData.append('company', companyId);
 
-      // Add policy file if exists
+      // Add policy file if it exists
       if (formData.energyPolicy) {
-        apiFormData.append('energy_policy', formData.energyPolicy);
+          apiFormData.append('energy_policy', formData.energyPolicy);
       }
 
-      // Use the correct endpoint based on your API structure
-      const endpoint = '/company/policy-documents/';
-
-      console.log("API URL:", `${BASE_URL}${endpoint}`);
       console.log("Request data:", Object.fromEntries(apiFormData.entries()));
 
-      const response = await axios.post(
-        `${BASE_URL}${endpoint}`,
-        apiFormData,
-        {
+      const response = await axios.post(`${BASE_URL}/qms/policy/`, apiFormData, {
           headers: {
-
-            'Content-Type': 'multipart/form-data'
+              'Content-Type': 'multipart/form-data'
           }
-        }
-      );
+      });
 
       if (response && (response.status === 200 || response.status === 201)) {
-        toast.success('Policy added successfully');
+          toast.success('Policy added successfully');
+          navigate('/company/qms/policy');
 
-        navigate('/company/qms/policy')
+          // Reset form
+          setFormData({
+              content: '',
+              energyPolicy: null
+          });
 
-        // Reset form
-        setFormData({
-          content: '',
-          energyPolicy: null
-        });
-
-        // Clear editor
-        if (editorRef.current) {
-          editorRef.current.innerHTML = '\n\n\n\n\n';
-        }
+          // Clear editor
+          if (editorRef.current) {
+              editorRef.current.innerHTML = '\n\n\n\n\n';
+          }
       } else {
-        toast.error('Failed to add policy. Please try again.');
+          toast.error('Failed to add policy. Please try again.');
       }
-    } catch (error) {
+  } catch (error) {
       console.error('Error details:', error.response?.data || error.message);
       toast.error('An error occurred. Please try again.');
-    }
-  };
+  }
+};
+
 
   // Dropdown component to show selected option
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {

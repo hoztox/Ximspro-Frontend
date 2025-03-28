@@ -1,10 +1,11 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import profile from "../../assets/images/Company-Navbar/profile.svg"
 import "./notificationmenu.css"
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import { BASE_URL } from "../../Utils/Config";
 
-// Notification tabs with their unique colors
 const TABS = [
     { name: 'QMS', activeColor: 'border-[#858585] text-[#858585]' },
     { name: 'EMS', activeColor: 'border-[#38E76C] text-[#38E76C]' },
@@ -16,29 +17,164 @@ const TABS = [
 ];
 
 const NotificationsMenu = forwardRef(({
-    initialNotifications,
     onNotificationsUpdate,
-    onClose // Added onClose prop
+    onClose
 }, ref) => {
-    const [activeTab, setActiveTab] = React.useState('QMS'); // Default active tab
-    const [notifications, setNotifications] = React.useState(initialNotifications);
+    const [activeTab, setActiveTab] = useState('QMS');
+    const [notifications, setNotifications] = useState({
+        QMS: [],
+        EMS: [],
+        OHS: [],
+        EnMS: [],
+        BMS: [],
+        AMS: [],
+        IMS: []
+    });
+    const [isLoading, setIsLoading] = useState(true);
+    const [unreadCount, setUnreadCount] = useState(0);
 
-    // Use effect to notify parent component about notifications
-    React.useEffect(() => {
-        if (onNotificationsUpdate) {
-            onNotificationsUpdate(notifications);
+    const navigate = useNavigate();
+    const getCurrentUser = () => {
+        const role = localStorage.getItem('role');
+
+        try {
+            if (role === 'company') {
+                const companyData = {};
+                Object.keys(localStorage)
+                    .filter(key => key.startsWith('company_'))
+                    .forEach(key => {
+                        const cleanKey = key.replace('company_', '');
+                        try {
+                            companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
+                        } catch (e) {
+                            companyData[cleanKey] = localStorage.getItem(key);
+                        }
+                    });
+
+                companyData.role = role;
+                companyData.company_id = localStorage.getItem('company_id');
+                companyData.company_name = localStorage.getItem('company_name');
+                companyData.email_address = localStorage.getItem('email_address');
+
+                return companyData;
+            } else if (role === 'user') {
+                const userData = {};
+                Object.keys(localStorage)
+                    .filter(key => key.startsWith('user_'))
+                    .forEach(key => {
+                        const cleanKey = key.replace('user_', '');
+                        try {
+                            userData[cleanKey] = JSON.parse(localStorage.getItem(key));
+                        } catch (e) {
+                            userData[cleanKey] = localStorage.getItem(key);
+                        }
+                    });
+
+                userData.role = role;
+                userData.user_id = localStorage.getItem('user_id');
+
+                return userData;
+            }
+        } catch (error) {
+            console.error("Error retrieving user data:", error);
+            return null;
         }
-    }, [notifications, onNotificationsUpdate]);
+    };
+
+    const fetchUnreadCount = async (userId) => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
+            setUnreadCount(response.data.unread_count);
+        } catch (error) {
+            console.error("Error fetching unread notification count:", error);
+        }
+    };
+
+    const markNotificationAsRead = async (notificationId) => {
+        try {
+            const response = await axios.patch(
+                `${BASE_URL}/qms/notifications/${notificationId}/read/`
+            );
+            return response.data; 
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+            return null;
+        }
+    };
+
+    const handleView = async (notification) => {
+        if (notification.manual && notification.manual.id) {
+        
+            const updatedNotification = await markNotificationAsRead(notification.id);
+            
+      
+            setNotifications(prev => ({
+                ...prev,
+                QMS: prev.QMS.map(n => 
+                    n.id === notification.id 
+                        ? { ...n, is_read: true } 
+                        : n
+                )
+            }));
+
+         
+            navigate(`/company/qms/viewmanual/${notification.manual.id}`);
+            if (onClose) {
+                onClose();
+            }
+        } else {
+            console.error("Invalid Notification or Manual ID:", notification);
+        }
+    };
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                setIsLoading(true);
+
+                const user = getCurrentUser();
+                if (!user || !user.user_id) {
+                    console.error("User not found or not logged in");
+                    return;
+                }
+
+                // Fetch unread count
+                await fetchUnreadCount(user.user_id);
+
+                const response = await axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
+                console.log("Notifications Response:", response.data);
+
+                setNotifications(prev => ({
+                    ...prev,
+                    QMS: response.data
+                }));
+
+                if (onNotificationsUpdate) {
+                    onNotificationsUpdate(prev => ({
+                        ...prev,
+                        QMS: response.data
+                    }));
+                }
+            } catch (error) {
+                console.error("Error fetching notifications:", error);
+                setNotifications(prev => ({
+                    ...prev,
+                    QMS: []
+                }));
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchNotifications();
+    }, [onNotificationsUpdate]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
 
-    const navigate = useNavigate();
-
     const handleViewAll = () => {
         navigate('/company/notifications');
-        // Close the dropdown when clicked
         if (onClose) {
             onClose();
         }
@@ -51,9 +187,9 @@ const NotificationsMenu = forwardRef(({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center justify-between p-5 bg-[#24242D] hover:bg-[#1a1a22] h-[108px] cursor-pointer border-b border-[#383840] last:border-b-0"
+            className={`flex items-center justify-between p-5 ${notification.is_read ? 'bg-[#1a1a22]' : 'bg-[#24242D] hover:bg-[#1a1a22]'} h-[108px] cursor-pointer border-b border-[#383840] last:border-b-0`}
         >
-            <div className='flex items-start'>
+            <div className='flex items-start w-[81%]'>
                 <img
                     src={profile}
                     alt="User"
@@ -61,13 +197,16 @@ const NotificationsMenu = forwardRef(({
                 />
                 <div className="flex-grow">
                     <h2 className="notification-title pb-[2px]">{notification.title}</h2>
-                    <p className="notification-description pb-[3px]">{notification.description}</p>
-                    <span className="notification-time">{notification.timestamp}</span>
+                    <p className="notification-description pb-[3px]">{notification.message}</p>
+                    <span className="notification-time">
+                        {new Date(notification.created_at).toLocaleString()}
+                    </span>
                 </div>
             </div>
             <div className='h-[108px] py-5 flex items-end'>
-                <button 
+                <button
                     className="click-view-btn duration-100"
+                    onClick={() => handleView(notification)}
                 >
                     Click to view
                 </button>
@@ -103,6 +242,11 @@ const NotificationsMenu = forwardRef(({
                                 }`}
                         >
                             {tab.name}
+                            {tab.name === 'QMS' && unreadCount > 0 && (
+                                <span className="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                                    {unreadCount}
+                                </span>
+                            )}
                         </button>
                     );
                 })}
@@ -111,16 +255,19 @@ const NotificationsMenu = forwardRef(({
             {/* Notifications List */}
             <div className="max-h-96 overflow-y-auto text-white">
                 <AnimatePresence>
-                    {notifications[activeTab].length > 0 ? (
+                    {isLoading ? (
+                        <motion.div
+                            className="text-center py-4 no-notification"
+                        >
+                            Loading Notifications...
+                        </motion.div>
+                    ) : notifications[activeTab].length > 0 ? (
                         notifications[activeTab].map(renderNotificationItem)
                     ) : (
                         <motion.div
-                            initial={{ opacity: 1 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 1 }}
                             className="text-center py-4 no-notification"
                         >
-                            No Notifications
+                            No QMS Notifications
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -131,7 +278,7 @@ const NotificationsMenu = forwardRef(({
                 <div
                     className="px-5 h-[74px] flex items-center justify-end border-t border-[#383840]"
                 >
-                    <button 
+                    <button
                         className="text-[#1E84AF] view-all-btn border rounded-md border-[#1E84AF] w-[108px] h-[34px] duration-200"
                         onClick={handleViewAll}
                     >

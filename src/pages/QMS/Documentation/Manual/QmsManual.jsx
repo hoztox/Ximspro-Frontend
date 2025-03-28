@@ -11,13 +11,16 @@ import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsManual = () => {
   const [manuals, setManuals] = useState([]);
+  const [draftCount, setDraftCount] = useState(0);
+  const [corrections, setCorrections] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const manualPerPage = 10;
-  // Format date from ISO to DD-MM-YYYY
+  
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -27,35 +30,87 @@ const QmsManual = () => {
       year: 'numeric'
     }).replace(/\//g, '-');
   };
-  const getUserCompanyId = () => {
-    const storedCompanyId = localStorage.getItem("company_id");
-    if (storedCompanyId) return storedCompanyId;
 
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
-        }
+  const getCurrentUser = () => {
+    const role = localStorage.getItem('role');
+    
+    try {
+      if (role === 'company') {
+        // Retrieve company user data
+        const companyData = {};
+        Object.keys(localStorage)
+          .filter(key => key.startsWith('company_'))
+          .forEach(key => {
+            const cleanKey = key.replace('company_', '');
+            try {
+              companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+              companyData[cleanKey] = localStorage.getItem(key);
+            }
+          });
+        
+        // Add additional fields from localStorage
+        companyData.role = role;
+        companyData.company_id = localStorage.getItem('company_id');
+        companyData.company_name = localStorage.getItem('company_name');
+        companyData.email_address = localStorage.getItem('email_address');
+        
+        console.log("Company User Data:", companyData);
+        return companyData;
+      } else if (role === 'user') {
+        // Retrieve regular user data
+        const userData = {};
+        Object.keys(localStorage)
+          .filter(key => key.startsWith('user_'))
+          .forEach(key => {
+            const cleanKey = key.replace('user_', '');
+            try {
+              userData[cleanKey] = JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+              userData[cleanKey] = localStorage.getItem(key);
+            }
+          });
+        
+        // Add additional fields from localStorage
+        userData.role = role;
+        userData.user_id = localStorage.getItem('user_id');
+        
+        console.log("Regular User Data:", userData);
+        return userData;
+      }
+    } catch (error) {
+      console.error("Error retrieving user data:", error);
+      return null;
+    }
+  };
+
+  const getUserCompanyId = () => {
+    const role = localStorage.getItem("role");
+    
+    if (role === "company") {
+      return localStorage.getItem("company_id");
+    } else if (role === "user") {
+      
+      try {
+        const userCompanyId = localStorage.getItem("user_company_id");
+        return userCompanyId ? JSON.parse(userCompanyId) : null;
+      } catch (e) {
+        console.error("Error parsing user company ID:", e);
+        return null;
       }
     }
+    
     return null;
   };
 
-  const companyId = getUserCompanyId();
-  console.log("Stored Company ID:", companyId);
-  // Fetch manuals from API
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
-      const response = await axios.get(`${BASE_URL}/company/manuals/${companyId}/`);
+      const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
 
       setManuals(response.data);
+      console.log("Manuals Data:", response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
@@ -65,35 +120,88 @@ const QmsManual = () => {
   };
 
   useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // First, fetch manuals
+        const companyId = getUserCompanyId();
+        const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
+        
+        // Set manuals first
+        setManuals(manualsResponse.data);
+        
+        // Then fetch corrections for all manuals
+        const correctionsPromises = manualsResponse.data.map(async (manual) => {
+          try {
+            const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
+            return { manualId: manual.id, corrections: correctionResponse.data };
+          } catch (correctionError) {
+            console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+            return { manualId: manual.id, corrections: [] };
+          }
+        });
+        
+        // Process all corrections
+        const correctionResults = await Promise.all(correctionsPromises);
+        
+        // Transform corrections into the dictionary format
+        const correctionsByManual = correctionResults.reduce((acc, result) => {
+          acc[result.manualId] = result.corrections;
+          return acc;
+        }, {});
+        
+        setCorrections(correctionsByManual);
+        
+        // Set current user and clear loading state
+        setCurrentUser(getCurrentUser());
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching manuals or corrections:", error);
+        setError("Failed to load manuals and corrections. Please try again.");
+        setLoading(false);
+      }
+    };
+  
+    fetchAllData();
+  }, []); // Empty dependency array to run only once on component mount
+
+  useEffect(() => {
     fetchManuals();
+ 
+    setCurrentUser(getCurrentUser());
   }, []);
 
-  const handleClickApprove = async (id, status) => {
-    try {
-      await axios.patch(`${BASE_URL}/company/manuals/${id}/`, { status });
-      fetchManuals(); // Refresh the list
-      alert(`Manual ${status} successfully`);
-    } catch (err) {
-      console.error(`Error updating manual status to ${status}:`, err);
-      alert(`Failed to ${status} manual`);
-    }
+  const handleClickApprove = (id) => {
+    navigate(`/company/qms/viewmanual/${id}`);
   };
-
 
   // Delete manual
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this manual?")) {
       try {
-        await axios.delete(`${BASE_URL}/company/manuals/${id}/`);
+        await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
         alert("Manual deleted successfully");
-        fetchManuals(); // Refresh the list
+        fetchManuals(); 
       } catch (err) {
         console.error("Error deleting manual:", err);
         alert("Failed to delete manual");
       }
     }
   };
-
+  useEffect(() => {
+    const fetchDraftManuals = async () => {
+      try {
+        const companyId = getUserCompanyId(); 
+        const response = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${companyId}/`);
+        setDraftCount(response.data.count);
+      } catch (error) {
+        console.error("Error fetching draft manuals:", error);
+        setDraftCount(0);
+      }
+    };
+  
+    fetchDraftManuals();
+  }, []);
+ 
   const filteredManual = manuals.filter(manual =>
     (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -101,59 +209,81 @@ const QmsManual = () => {
     (manual.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
   );
+
   const totalPages = Math.ceil(filteredManual.length / manualPerPage);
   const paginatedManual = filteredManual.slice((currentPage - 1) * manualPerPage, currentPage * manualPerPage);
+
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
+
   const handlePageClick = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo(0, 0); // Scroll to top on page change
+    window.scrollTo(0, 0); 
   };
+
   const handlePrevious = () => {
     if (currentPage > 1) {
       setCurrentPage(prev => prev - 1);
       window.scrollTo(0, 0);
     }
   };
+
   const handleNext = () => {
     if (currentPage < totalPages) {
       setCurrentPage(prev => prev + 1);
       window.scrollTo(0, 0);
     }
   };
+
   const handleQMSAddManual = () => {
     navigate('/company/qms/addmanual');
   };
-  const handleEdit = () => {
-    navigate(`/company/qms/editmanual`);
+
+  const handleEdit = (id) => {
+    navigate(`/company/qms/editmanual/${id}`);
   };
 
-  const handleView = () => {
-    navigate(`/company/qms/viewmanual`);
+  const handleView = (id) => {
+    navigate(`/company/qms/viewmanual/${id}`);
   };
 
   const handleManualDraft = () => {
     navigate('/company/qms/draftmanual')
   }
 
-  const renderStatusBadge = (status) => {
-    switch (status) {
-      case 'Pending':
-        return <span className="bg-[#ffee0015] text-[#ddcc36] px-2 py-1 rounded-md text-xs">Pending Review</span>;
-      case 'Reviewed':
-        return <span className="bg-[#0044ff15] text-[#3663dd] px-2 py-1 rounded-md text-xs">Pending Approval</span>;
-      case 'Approved':
-        return <span className="bg-[#36DDAE11] text-[#36DDAE] px-2 py-1 rounded-md text-xs">Approved</span>;
-      default:
-        return <span className="bg-gray-500 text-white px-2 py-1 rounded-md text-xs">Unknown</span>;
+  const canReview = (manual) => {
+    const currentUserId = Number(localStorage.getItem('user_id'));
+    const manualCorrections = corrections[manual.id] || [];
+  
+    console.log('Reviewing Conditions Debug:', {
+      currentUserId,
+      checkedById: manual.checked_by?.id,
+      status: manual.status,
+      corrections: manualCorrections,
+      toUserId: manualCorrections.length > 0 ? manualCorrections[0].to_user?.id : null,
+    });
+  
+    if (manual.status === "Pending for Review/Checking") {
+      return currentUserId === manual.checked_by?.id;
     }
+  
+    if (manual.status === "Correction Requested") {   
+      return manualCorrections.some(correction => 
+        correction.to_user?.id === currentUserId && currentUserId === correction.to_user?.id
+      );
+    }
+    
+    if (manual.status === "Reviewed,Pending for Approval") {
+      return currentUserId === manual.approved_by?.id;
+    }
+  
+    return false;
   };
 
   return (
     <div className="bg-[#1C1C24] list-manual-main">
-      {/* Header section - kept the same */}
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
         <h1 className="list-manual-head">List Manual Sections</h1>
         <div className="flex space-x-5">
@@ -169,10 +299,16 @@ const QmsManual = () => {
               <Search size={18} />
             </div>
           </div>
-          <button className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-          onClick={handleManualDraft}
+          <button 
+            className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+            onClick={handleManualDraft}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-56">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -184,7 +320,6 @@ const QmsManual = () => {
         </div>
       </div>
 
-      {/* Table section with updated columns */}
       <div className="p-5 overflow-hidden">
         {loading ? (
           <div className="text-center py-4 text-white">Loading manuals...</div>
@@ -209,65 +344,79 @@ const QmsManual = () => {
             </thead>
             <tbody key={currentPage}>
               {paginatedManual.length > 0 ? (
-                paginatedManual.map((manual, index) => (
-                  <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
-                    <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
-                    <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                    <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
-                    <td className="px-2 add-manual-datas">
-                      {manual.approved_by ?
-                        `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
-                        'N/A'}
-                    </td>
-                    <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
-                    <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
-                    <td className="px-2 add-manual-datas">
-                      {renderStatusBadge(manual.status)}
-                    </td>
-                    <td className='px-2 add-manual-datas'>
-                      {manual.status === 'Approved' ? (
-                        <span className="text-[#36DDAE]">No need to change</span>
-                      ) : (
+                paginatedManual.map((manual, index) => {
+                  const canApprove = canReview(manual);
+
+                  return (
+                    <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
+                      <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
+                      <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
+                      <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                      <td className="px-2 add-manual-datas">
+                        {manual.approved_by ?
+                          `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
+                          'N/A'}
+                      </td>
+                      <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
+                      <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
+                      <td className="px-2 add-manual-datas">
+                        {manual.status}
+                      </td>
+                      <td className='px-2 add-manual-datas'>
+                        {manual.status === 'Approved' ? (
+                          <span className="text-[#36DDAE]">No need to change</span>
+                        ) : canApprove ? (
+                          <button
+                            onClick={() => handleClickApprove(manual.id,  
+                              manual.status === 'Pending for Review/Checking'  
+                                ? 'Reviewed,Pending for Approval'  
+                                : (manual.status === 'Correction Requested'  
+                                    ? 'Approved'  
+                                    : 'Approved') 
+                            )} 
+                            className="text-[#1E84AF]" 
+                          > 
+                            {manual.status === 'Pending for Review/Checking'  
+                              ? 'Review'  
+                              : (manual.status === 'Correction Requested' 
+                                  ? 'Click to Approve' 
+                                  : 'Click to Approve')} 
+                          </button> 
+                        ) : ( 
+                          <span className="text-[#858585]">Not Authorized</span> 
+                        )}
+                      </td>
+                      <td className="px-2 add-manual-datas text-center">
                         <button
-                          onClick={() => handleClickApprove(manual.id)}
-                          className="text-[#1E84AF]"
+                          onClick={() => handleView(manual.id)}  
+                          title="View"
                         >
-                          Click to Approve
+                          <img src={views} alt="" />
                         </button>
-                      )}
-                    </td>
-                    <td className="px-2 add-manual-datas text-center">
-                      <button
-                        onClick={() => handleView()}
-                        title="View"
-                      >
-                        <img src={views} alt="" />
-                      </button>
-                    </td>
-                    <td className="px-2 add-manual-datas text-center">
-                      <button
-                        onClick={() => handleEdit()}
-                        title="Edit"
-                      >
-                        <img src={edits} alt="" />
-                      </button>
-                    </td>
+                      </td>
+                      <td className="px-2 add-manual-datas text-center">
+                        <button
+                          onClick={() => handleEdit(manual.id)}
+                          title="Edit"
+                        >
+                          <img src={edits} alt="" />
+                        </button>
+                      </td>
 
-                    <td className="pl-2 pr-4 add-manual-datas text-center">
-                      <button
-                        onClick={() => handleDelete(manual.id)}
-                        title="Delete"
-                      >
-                        <img src={deletes} alt="" />
-                      </button>
-
-                    </td>
-                  </tr>
-                ))
+                      <td className="pl-2 pr-4 add-manual-datas text-center">
+                        <button
+                          onClick={() => handleDelete(manual.id)}
+                          title="Delete"
+                        >
+                          <img src={deletes} alt="" />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr><td colSpan="11" className="text-center py-4 not-found">No Manuals found.</td></tr>
               )}
-              {/* Pagination row - kept the same */}
               <tr>
                 <td colSpan="11" className="pt-[15px] border-t border-[#383840]">
                   <div className="flex items-center justify-between w-full">
@@ -304,9 +453,8 @@ const QmsManual = () => {
           </table>
         )}
       </div>
-    </div >
+    </div>
   );
 };
-
 
 export default QmsManual;

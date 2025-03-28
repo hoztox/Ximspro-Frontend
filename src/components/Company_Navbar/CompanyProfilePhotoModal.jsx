@@ -5,7 +5,14 @@ import { Cropper } from 'react-advanced-cropper';
 import 'react-advanced-cropper/dist/style.css';
 import { BASE_URL } from '../../Utils/Config';
 
-const CompanyProfilePhotoModal = ({ isOpen, onClose, onSave, currentProfilePic, companyId }) => {
+const CompanyProfilePhotoModal = ({ 
+  isOpen, 
+  onClose, 
+  onSave, 
+  currentProfilePic, 
+  companyId, 
+  entityType // New prop to distinguish between user and company
+}) => {
     const [image, setImage] = useState(null);
     const [croppedImage, setCroppedImage] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -13,8 +20,6 @@ const CompanyProfilePhotoModal = ({ isOpen, onClose, onSave, currentProfilePic, 
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
   
-    console.log('Company Id:', companyId);
-    
     if (!isOpen) return null;
   
     const handleFileChange = (e) => {
@@ -49,27 +54,35 @@ const CompanyProfilePhotoModal = ({ isOpen, onClose, onSave, currentProfilePic, 
         const blob = await response.blob();
         const file = new File([blob], 'profile-image.jpg', { type: 'image/jpeg' });
         
-         
         const formData = new FormData();
         formData.append('logo', file);
         
-         
-        const result = await axios.put(`${BASE_URL}/accounts/edit-logo/${companyId}/`, formData, {
+        // Dynamically choose the API endpoint based on entity type
+        const apiEndpoint = entityType === 'company' 
+          ? `${BASE_URL}/accounts/edit-logo/${companyId}/`  // Company logo update
+          : `${BASE_URL}/company/edit-logo/${companyId}/`;  // User logo update
+        
+        const result = await axios.put(apiEndpoint, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
         });
         
-        // Get the updated company data from the response
-        const updatedCompanyData = result.data;
+        // Get the updated entity data from the response
+        const updatedEntityData = result.data;
         
-        // Update company data in localStorage
-        const storedCompanyData = JSON.parse(localStorage.getItem('companyData') || '{}');
-        const updatedStoredData = { ...storedCompanyData, logo: updatedCompanyData.logo || croppedImage };
-        localStorage.setItem('companyData', JSON.stringify(updatedStoredData));
+        // Update data in localStorage based on entity type
+        if (entityType === 'company') {
+          const storedCompanyData = JSON.parse(localStorage.getItem('companyData') || '{}');
+          const updatedStoredData = { ...storedCompanyData, logo: updatedEntityData.logo || croppedImage };
+          localStorage.setItem('companyData', JSON.stringify(updatedStoredData));
+          localStorage.setItem('company_company_logo', JSON.stringify(updatedEntityData.logo || croppedImage));
+        } else {
+          localStorage.setItem('user_logo', updatedEntityData.logo || croppedImage);
+        }
         
-        // Call the onSave callback with the updated company data
-        onSave(updatedCompanyData);
+        // Call the onSave callback with the updated entity data
+        onSave(updatedEntityData.logo || croppedImage);
         
         setIsLoading(false);
         onClose();
@@ -83,9 +96,6 @@ const CompanyProfilePhotoModal = ({ isOpen, onClose, onSave, currentProfilePic, 
         setIsLoading(false);
       }
     };
-  
-
-    
 
     const triggerFileInput = () => {
       fileInputRef.current.click();

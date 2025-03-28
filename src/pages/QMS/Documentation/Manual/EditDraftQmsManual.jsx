@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import "./addqmsmanual.css"
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-
 const EditDraftQmsManual = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+    const location = useLocation();  
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
@@ -22,17 +22,18 @@ const EditDraftQmsManual = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
+    const [manuals, setManuals] = useState([]);
+    const [previewAttachment, setPreviewAttachment] = useState(null);
+    const [manualDetails, setManualDetails] = useState(null);  
+    const { id } = useParams();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const getUserCompanyId = () => {
-        // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
 
-        // If user data exists with company_id
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-            // Try to get company_id from user data that was stored during login
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
@@ -47,6 +48,67 @@ const EditDraftQmsManual = () => {
     };
 
     const companyId = getUserCompanyId();
+        useEffect(() => {
+            if (companyId && id) {
+                fetchManualDetails();
+                
+            }
+        }, [companyId, id]);
+        useEffect(() => {
+            if (manualDetails) {
+                setFormData({
+                    title: manualDetails.title || '',
+                    written_by: manualDetails.written_by?.id || null,
+                    no: manualDetails.no || '',
+                    checked_by: manualDetails.checked_by?.id || null,
+                    rivision: manualDetails.rivision || '',
+                    approved_by: manualDetails.approved_by?.id || null,
+                    document_type: manualDetails.document_type || 'System',
+                    date: manualDetails.date || formData.date,
+                    review_frequency_year: manualDetails.review_frequency_year || '',
+                    review_frequency_month: manualDetails.review_frequency_month || '',
+                    publish: manualDetails.publish || false,
+                    send_notification: manualDetails.send_notification || false
+                });
+            }
+        }, [manualDetails]);
+        const fetchManualDetails = async () => {
+            try {
+                const response = await axios.get(`${BASE_URL}/qms/manual-detail/${id}/`);
+                setManualDetails(response.data);
+                setIsInitialLoad(false);
+                console.log("Manual Details:", response.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching manual details:", err);
+                setError("Failed to load manual details");
+                setIsInitialLoad(false);
+                setLoading(false);
+            }
+        };
+    const renderAttachmentPreview = () => {
+    
+        if (previewAttachment) {
+            const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
+            
+            return (
+                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
+                    <div className="text-white flex items-center space-x-4">
+                        <span>{attachmentName}</span>
+                        <button 
+                            onClick={() => window.open(previewAttachment, '_blank')}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
+                        >
+                            View File
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+    
+   
     console.log("Stored Company ID:", companyId);
 
     const [formData, setFormData] = useState({
@@ -73,6 +135,7 @@ const EditDraftQmsManual = () => {
         month: false,
         year: false
     });
+    
     useEffect(() => {
         if (companyId) {
             fetchUsers();
@@ -104,7 +167,7 @@ const EditDraftQmsManual = () => {
         return new Date(year, month, 0).getDate();
     };
 
-    // Parse date to get day, month, year
+    
     const parseDate = () => {
         const dateObj = new Date(formData.date);
         return {
@@ -121,10 +184,10 @@ const EditDraftQmsManual = () => {
         (_, i) => i + 1
     );
 
-    // Generate months (1-12)
+ 
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    // Generate years (current year - 10 to current year + 10)
+ 
     const years = Array.from(
         { length: 21 },
         (_, i) => currentYear - 10 + i
@@ -160,16 +223,40 @@ const EditDraftQmsManual = () => {
         }
     };
 
+    // Comprehensive method to fetch draft manual details
+    
+ 
+    useEffect(() => {
+    
+        const draftManualId = localStorage.getItem('selected_draft_manual_id');
+        
+        
+        const routeState = location.state?.draftManualId;
+
+ 
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDraftManualId = urlParams.get('draftManualId');
+
+        const id = draftManualId || routeState || urlDraftManualId;
+
+        if (id) {
+            console.log("Draft Manual ID found:", id);
+            fetchDraftManualDetails(id);
+        } else {
+            console.warn("No draft manual ID found");
+        }
+    }, []);
+
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
 
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
 
-            // Update the appropriate part of the date
+     
             dateObj[dropdown] = parseInt(value, 10);
 
-            // Create new date string in YYYY-MM-DD format
+        
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
             setFormData(prev => ({
@@ -190,11 +277,29 @@ const EditDraftQmsManual = () => {
         navigate('/company/qms/draftmanual')
     }
 
-    const handleSaveClick = async () => {
+    useEffect(() => {
+        if (manualDetails?.upload_attachment) {
+            setPreviewAttachment(manualDetails.upload_attachment);
+        }
+    }, [manualDetails]);
+  
+    const getMonthName = (monthNum) => {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return monthNames[monthNum - 1];
+    };
+
+   
+    const formatUserName = (user) => {
+        return `${user.first_name} ${user.last_name}`;
+    };
+ 
+    const handleUpdateClick = async () => {
         try {
             setLoading(true);
 
-            // Fetch company ID based on role
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
@@ -205,43 +310,30 @@ const EditDraftQmsManual = () => {
             const submitData = new FormData();
             submitData.append('company', companyId);
 
-            // Add all other form data
+            
             Object.keys(formData).forEach(key => {
                 submitData.append(key, formData[key]);
             });
 
+           
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/company/manuals/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/manuals/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             setLoading(false);
-            alert('Manual added successfully!');
+            alert('Manual updated successfully!');
             navigate('/company/qms/manual');
         } catch (err) {
             setLoading(false);
-            setError('Failed to save manual');
-            console.error('Error saving manual:', err);
+            setError('Failed to update manual');
+            console.error('Error updating manual:', err);
         }
-    };
-
-    // Get month name from number
-    const getMonthName = (monthNum) => {
-        const monthNames = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        return monthNames[monthNum - 1];
-    };
-
-    // Format user name for display
-    const formatUserName = (user) => {
-        return `${user.first_name} ${user.last_name}`;
     };
 
     return (
@@ -484,6 +576,7 @@ const EditDraftQmsManual = () => {
                                 </button>
                                 {!selectedFile && <p className="text-right no-file">No file chosen</p>}
                             </div>
+                            {renderAttachmentPreview()}
                         </div>
 
                         <div>
@@ -511,14 +604,14 @@ const EditDraftQmsManual = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center mt-[22px] justify-between">
-                        <div className='mb-6'>
+                    <div className="flex items-center mt-[22px] justify-end">
+                        {/* <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
                             >
                                 Save as Draft
                             </button>
-                        </div>
+                        </div> */}
                         <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"
@@ -529,10 +622,10 @@ const EditDraftQmsManual = () => {
                             </button>
                             <button
                                 className="save-btn duration-200"
-                                onClick={handleSaveClick}
+                                onClick={handleUpdateClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Saving...' : 'Final Save'}
+                                {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>

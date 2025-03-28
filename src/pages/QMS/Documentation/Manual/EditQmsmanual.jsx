@@ -6,12 +6,12 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-
 const EditQmsmanual = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const { manualId } = useParams();  
-    console.log('sdsd',manualId );
-    
+    const [manualDetails, setManualDetails] = useState(null);
+    const [corrections, setCorrections] = useState([]); 
+    const [previewAttachment, setPreviewAttachment] = useState(null);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
@@ -48,7 +48,44 @@ const EditQmsmanual = () => {
         month: false,
         year: false
     });
+   
 
+  
+    const closeAttachmentPreview = () => {
+        setPreviewAttachment(null);
+    };
+// Add a method to handle attachment preview
+const handleAttachmentPreview = () => {
+    // If there's an existing attachment from the manual details
+    if (manualDetails && manualDetails.upload_attachment) {
+        setPreviewAttachment(manualDetails.upload_attachment);
+    } 
+    // If a new file is selected
+    else if (fileObject) {
+        // Create a URL for the selected file
+        const fileUrl = URL.createObjectURL(fileObject);
+        setPreviewAttachment(fileUrl);
+    }
+};
+
+// You can call this method after file selection or when manual details are loaded
+useEffect(() => {
+    if (manualDetails && manualDetails.upload_attachment) {
+        handleAttachmentPreview();
+    }
+}, [manualDetails]);
+
+// Modify file change handler to trigger preview
+const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        setSelectedFile(file.name);
+        setFileObject(file);
+        // Create a preview URL for the newly selected file
+        const fileUrl = URL.createObjectURL(file);
+        setPreviewAttachment(fileUrl);
+    }
+};
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -70,12 +107,38 @@ const EditQmsmanual = () => {
 
     const companyId = getUserCompanyId();
 
+    // Populate form data when manual details are loaded
+    useEffect(() => {
+        if (manualDetails) {
+            setFormData({
+                title: manualDetails.title || '',
+                written_by: manualDetails.written_by?.id || null,
+                no: manualDetails.no || '',
+                checked_by: manualDetails.checked_by?.id || null,
+                rivision: manualDetails.rivision || '',
+                approved_by: manualDetails.approved_by?.id || null,
+                document_type: manualDetails.document_type || 'System',
+                date: manualDetails.date || formData.date,
+                review_frequency_year: manualDetails.review_frequency_year || '',
+                review_frequency_month: manualDetails.review_frequency_month || '',
+                publish: manualDetails.publish || false,
+                send_notification: manualDetails.send_notification || false
+            });
+        }
+    }, [manualDetails]);
+
     useEffect(() => {
         if (companyId) {
             fetchUsers();
-            fetchManualDetails();
         }
-    }, [companyId, manualId]);
+    }, [companyId])
+
+    useEffect(() => {
+        if (companyId && id) {
+            fetchManualDetails();
+            fetchManualCorrections();
+        }
+    }, [companyId, id]);
 
     const fetchUsers = async () => {
         try {
@@ -88,35 +151,37 @@ const EditQmsmanual = () => {
             } else {
                 setUsers([]);
                 console.error("Unexpected response format:", response.data);
+                setError("Unable to load users");
             }
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setUsers([]);
         }
     };
 
     const fetchManualDetails = async () => {
         try {
-            setLoading(true);
-            const response = await axios.get(`${BASE_URL}/company/manuals/${manualId}/`);
-            
-            // Set form data with retrieved manual details
-            setFormData({
-                ...response.data,
-                date: response.data.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`
-            });
-
-            // Set selected file if exists
-            if (response.data.upload_attachment) {
-                setSelectedFile(response.data.upload_attachment.split('/').pop());
-            }
-
-            setLoading(false);
+            const response = await axios.get(`${BASE_URL}/qms/manual-detail/${id}/`);
+            setManualDetails(response.data);
             setIsInitialLoad(false);
-        } catch (error) {
-            console.error("Error fetching manual details:", error);
-            setError("Failed to load manual details. Please try again.");
+            console.log("Manual Details:", response.data);
             setLoading(false);
+        } catch (err) {
+            console.error("Error fetching manual details:", err);
+            setError("Failed to load manual details");
+            setIsInitialLoad(false);
+            setLoading(false);
+        }
+    };
+
+    const fetchManualCorrections = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/manuals/${id}/corrections/`);
+            setCorrections(response.data);
+            console.log("Fetched Manual Corrections:", response.data);
+        } catch (error) {
+            console.error("Error fetching manual corrections:", error);
         }
     };
 
@@ -169,14 +234,7 @@ const EditQmsmanual = () => {
         }));
     };
 
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setSelectedFile(file.name);
-            setFileObject(file);
-        }
-    };
-
+   
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
 
@@ -229,7 +287,7 @@ const EditQmsmanual = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/company/manuals/${manualId}/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/manuals/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -259,9 +317,30 @@ const EditQmsmanual = () => {
 
     // Render loading state
     if (isInitialLoad) {
-        return <div>Loading...</div>;
+        return <div className="text-white">Loading...</div>;
     }
-
+    const renderAttachmentPreview = () => {
+        // If there's a preview attachment from existing manual or newly selected file
+        if (previewAttachment) {
+            const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
+            
+            return (
+                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
+                    <div className="text-white flex items-center space-x-4">
+                        <span>{attachmentName}</span>
+                        <button 
+                            onClick={() => window.open(previewAttachment, '_blank')}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
+                        >
+                            View File
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+    
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
@@ -502,6 +581,8 @@ const EditQmsmanual = () => {
                                 </button>
                                 {!selectedFile && <p className="text-right no-file">No file chosen</p>}
                             </div>
+                            {renderAttachmentPreview()}
+ 
                         </div>
 
                         <div>

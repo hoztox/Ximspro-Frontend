@@ -35,7 +35,7 @@ const EditQmsPolicy = () => {
     newPolicy: null
   });
   const [isLoading, setIsLoading] = useState(true);
-
+ 
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
@@ -100,7 +100,7 @@ const EditQmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-      // Try to get company_id from user data that was stored during login
+     
       const userData = localStorage.getItem("user_company_id");
       if (userData) {
         try {
@@ -116,21 +116,24 @@ const EditQmsPolicy = () => {
   const companyId = getUserCompanyId();
   console.log("Stored Company ID:", companyId);
 
+  const extractFilenameFromUrl = (url) => {
+    if (!url) return null;
+    const parts = url.split('/');
+    return parts[parts.length - 1];
+  };
+
 
   const fetchPolicyDetails = async () => {
     try {
       console.log('Fetching policy with ID:', id);
-    console.log('Base URL:', BASE_URL);
-    
-    const accessToken = localStorage.getItem("accessToken");
-    console.log('Access Token:', accessToken ? 'Present' : 'Missing');
+ 
 
       // Fetch specific policy details using the ID from URL
-      const response = await axios.get(`${BASE_URL}/company/documentation/${id}/`, {
+      const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {
       
     });
       const policyData = response.data;
-
+      console.log("policieeeeeeeeeeeeeee",response.data)
       // Set editor content
       if (editorRef.current && policyData.text) {
         editorRef.current.innerHTML = policyData.text;
@@ -138,9 +141,13 @@ const EditQmsPolicy = () => {
 
       // Set file information if exists
       if (policyData.energy_policy) {
+        const filename = extractFilenameFromUrl(policyData.energy_policy);
         setFormData(prev => ({
           ...prev,
-          existingPolicy: policyData.energy_policy
+          existingPolicy: {
+            name: filename,
+            url: policyData.energy_policy
+          }
         }));
       }
 
@@ -678,37 +685,18 @@ const EditQmsPolicy = () => {
 
 
   const handleSave = async () => {
-    const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
-  
-    if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
-      toast.error('Please enter policy content');
-      return;
-    }
-  
     try {
-      // More robust authentication check
-      const accessToken = localStorage.getItem("accessToken");
-      const companyId = localStorage.getItem("company_id");
-      const userId = localStorage.getItem("user_id");
-      const role = localStorage.getItem("role");
+      const editorContent = editorRef.current ? editorRef.current.innerHTML.trim() : '';
   
-      if (!accessToken) {
-        toast.error('Authentication token missing. Please log in again.');
+      if (!editorContent.length) {
+        toast.error('Please enter policy content');
         return;
       }
   
       const apiFormData = new FormData();
       apiFormData.append('text', editorContent);
   
-      // Determine which ID to use based on role
-      if (role === "company" && companyId) {
-        apiFormData.append('company', companyId);
-      } else if (userId) {
-        apiFormData.append('user', userId);
-      } else {
-        toast.error('User or Company information not found. Please log in again.');
-        return;
-      }
+       
   
       // Add policy file if selected
       if (formData.newPolicy) {
@@ -716,17 +704,16 @@ const EditQmsPolicy = () => {
       }
   
       const response = await axios.put(
-        `${BASE_URL}/company/documentation/${id}/`,
+        `${BASE_URL}/qms/policy/${id}/update/`,
         apiFormData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${accessToken}`
           }
         }
       );
   
-      if (response && (response.status === 200 || response.status === 201)) {
+      if (response?.status === 200 || response?.status === 201) {
         toast.success('Policy updated successfully');
         navigate('/company/qms/policy');
       } else {
@@ -737,6 +724,7 @@ const EditQmsPolicy = () => {
       toast.error(error.response?.data?.detail || 'An error occurred. Please try again.');
     }
   };
+  
 
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -1026,8 +1014,10 @@ const EditQmsPolicy = () => {
             />
           </label>
           <div className="mt-1 ml-2 text-sm text-[#54545B]">
-            {formData.energyPolicy?.name ? formData.energyPolicy.name : "No file chosen"}
-          </div>
+  {formData.existingPolicy 
+    ? formData.existingPolicy.name 
+    : "No file chosen"}
+</div>
 
         </div>
       </div>

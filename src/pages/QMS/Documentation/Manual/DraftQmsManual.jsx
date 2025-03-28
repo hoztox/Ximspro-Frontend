@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import "./qmsmanual.css";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
-
 const DraftQmsManual = () => {
     const [manuals, setManuals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -15,7 +14,7 @@ const DraftQmsManual = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const manualPerPage = 10;
-    // Format date from ISO to DD-MM-YYYY
+    
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -25,10 +24,13 @@ const DraftQmsManual = () => {
             year: 'numeric'
         }).replace(/\//g, '-');
     };
+    const handleEditDraft = (id) => {
+      
+      navigate(`/company/qms/editdraftmanual/${id}`);
+  }
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
-
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
             const userData = localStorage.getItem("user_company_id");
@@ -43,17 +45,16 @@ const DraftQmsManual = () => {
         }
         return null;
     };
-
     const companyId = getUserCompanyId();
     console.log("Stored Company ID:", companyId);
-    // Fetch manuals from API
+ 
     const fetchManuals = async () => {
         try {
             setLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/company/manuals/${companyId}/`);
-
+            const response = await axios.get(`${BASE_URL}/qms/manuals-draft/${companyId}/`);
             setManuals(response.data);
+            console.log("mnual draft listssssssssss",response.data)
             setLoading(false);
         } catch (err) {
             console.error("Error fetching manuals:", err);
@@ -61,26 +62,22 @@ const DraftQmsManual = () => {
             setLoading(false);
         }
     };
-
     useEffect(() => {
         fetchManuals();
     }, []);
-
-
-    // Delete manual
+ 
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this manual?")) {
             try {
                 await axios.delete(`${BASE_URL}/company/manuals/${id}/`);
                 alert("Manual deleted successfully");
-                fetchManuals(); // Refresh the list
+                fetchManuals();  
             } catch (err) {
                 console.error("Error deleting manual:", err);
                 alert("Failed to delete manual");
             }
         }
     };
-
     const filteredManual = manuals.filter(manual =>
         (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -96,7 +93,7 @@ const DraftQmsManual = () => {
     };
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
-        window.scrollTo(0, 0); // Scroll to top on page change
+        window.scrollTo(0, 0);  
     };
     const handlePrevious = () => {
         if (currentPage > 1) {
@@ -113,15 +110,9 @@ const DraftQmsManual = () => {
     const handleCloseManualDraft = () => {
         navigate('/company/qms/manual');
     };
-
     const handleView = () => {
         navigate(`/company/qms/viewmanual`);
     };
-
-    const handleEditDraft = () => {
-        navigate('/company/qms/editdraftmanual')
-    }
-
     return (
         <div className="bg-[#1C1C24] list-manual-main">
             {/* Header section - kept the same */}
@@ -148,7 +139,6 @@ const DraftQmsManual = () => {
                     </button>
                 </div>
             </div>
-
             {/* Table section with updated columns */}
             <div className="p-5 overflow-hidden">
                 {loading ? (
@@ -185,8 +175,9 @@ const DraftQmsManual = () => {
                                         <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                                         <td className='px-2 add-manual-datas'>
-                                            <button className='text-[#1E84AF]'
-                                            onClick={handleEditDraft}
+                                        <button className='text-[#1E84AF]'
+                                          
+                                            onClick={() => handleEditDraft(manual.id)}
                                             >
                                                 Click to Continue
                                             </button>
@@ -199,7 +190,6 @@ const DraftQmsManual = () => {
                                                 <img src={views} alt="" />
                                             </button>
                                         </td>
-
                                         <td className="pl-2 pr-4 add-manual-datas text-center">
                                             <button
                                                 onClick={() => handleDelete(manual.id)}
@@ -207,7 +197,6 @@ const DraftQmsManual = () => {
                                             >
                                                 <img src={deletes} alt="" />
                                             </button>
-
                                         </td>
                                     </tr>
                                 ))

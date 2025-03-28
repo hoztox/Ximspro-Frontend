@@ -30,19 +30,19 @@ const QmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-      // Try to get company_id from user data that was stored during login
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
+        // Try to get company_id from user data that was stored during login
+        const userData = localStorage.getItem("user_company_id");
+        if (userData) {
+            try {
+                return JSON.parse(userData);
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
         }
-      }
     }
     return null;
-  };
+};
   const companyId = getUserCompanyId();
   console.log("Stored Company ID:", companyId);
 
@@ -50,7 +50,7 @@ const QmsPolicy = () => {
     try {
       const companyId = getUserCompanyId();
       console.log("Fetching manuals for Company ID:", companyId);
-      const response = await axios.get(`${BASE_URL}/company/policy-documents/${companyId}/`);
+      const response = await axios.get(`${BASE_URL}/qms/policy/${companyId}/`);
       setQmsPolicies(response.data);
       console.log("Policies loaded:", response.data);
     } catch (error) {
@@ -71,7 +71,7 @@ const QmsPolicy = () => {
   const handleDeletePolicy = async (policyId) => {
     if (window.confirm("Are you sure you want to delete this policy?")) {
       try {
-        await axios.delete(`${BASE_URL}/company/documentation/${policyId}/delete/`);
+        await axios.delete(`${BASE_URL}/qms/policy/${policyId}/update/`);
         // Refresh the list after deletion
         fetchPolicies();
       } catch (error) {
