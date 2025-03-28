@@ -7,7 +7,7 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
 
-const AddQmsManual = () => {
+const EditDraftQmsManual = () => {
     const navigate = useNavigate()
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
@@ -187,7 +187,7 @@ const AddQmsManual = () => {
     };
 
     const handleCancelClick = () => {
-        navigate('/company/qms/manual')
+        navigate('/company/qms/draftmanual')
     }
 
     const handleSaveClick = async () => {
@@ -247,7 +247,7 @@ const AddQmsManual = () => {
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-                <h1 className="add-manual-sections">Add Manual Sections</h1>
+                <h1 className="add-manual-sections">Manual Sections Draft</h1>
 
                 {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
@@ -542,4 +542,4 @@ const AddQmsManual = () => {
     );
 };
 
-export default AddQmsManual
+export default EditDraftQmsManual

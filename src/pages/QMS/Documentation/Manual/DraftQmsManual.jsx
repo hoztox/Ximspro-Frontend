@@ -118,6 +118,10 @@ const DraftQmsManual = () => {
         navigate(`/company/qms/viewmanual`);
     };
 
+    const handleEditDraft = () => {
+        navigate('/company/qms/editdraft')
+    }
+
     return (
         <div className="bg-[#1C1C24] list-manual-main">
             {/* Header section - kept the same */}
@@ -181,7 +185,9 @@ const DraftQmsManual = () => {
                                         <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                                         <td className='px-2 add-manual-datas'>
-                                            <button className='text-[#1E84AF]'>
+                                            <button className='text-[#1E84AF]'
+                                            onClick={handleEditDraft}
+                                            >
                                                 Click to Continue
                                             </button>
                                         </td>

@@ -2,6 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./confirmmodal.css"; // External CSS file for the modal styles
 import { useTheme } from "../../ThemeContext";
+import deleteIllustrate from "../../assets/images/Modal/deleteillustration.svg"
 
 const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
   const { theme } = useTheme();
@@ -10,14 +11,14 @@ const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
     <AnimatePresence>
       {showDeleteModal && (
         <motion.div
-          className="modal-overlay"
+          className="modal-overlays"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className={`modal ${
+            className={`modals ${
                 theme === "dark" ? "dark" : "light"
               }`}
             initial={{ scale: 0.9 }}
@@ -26,20 +27,23 @@ const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
             transition={{ duration: 0.3 }}
           >
             <div
-              className={`modal-content space-y-6 ${
+              className={`modal-contents space-y-6 ${
                 theme === "dark" ? "dark" : "light"
               }`}
             >
-              <h3 className="confirmation">
-                Are you sure you want to
+              <div className="flex justify-center">
+              <img src={deleteIllustrate} alt="Delete" className="w-[267px] h-[163px]" />
+              </div>
+              <h3 className="confirmations">
+                Are you sure you want to delete
                 <br />
-                delete this company?
+                this company?
               </h3>
-              <div className="modal-actions gap-3">
-                <button onClick={onCancel} className="btn-cancel duration-200">
+              <div className="modal-actionss gap-3">
+                <button onClick={onCancel} className="btn-cancels duration-200 w-[176px] h-[49px]">
                   Cancel
                 </button>
-                <button onClick={onConfirm} className="btn-confirm duration-200">
+                <button onClick={onConfirm} className="btn-confirms duration-200 w-[176px] h-[49px]">
                   Delete
                 </button>
               </div>

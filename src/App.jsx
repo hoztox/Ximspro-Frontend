@@ -89,6 +89,7 @@ import ViewQmsManual from "./pages/QMS/Documentation/Manual/ViewQmsManual";
 import DraftQmsManual from "./pages/QMS/Documentation/Manual/DraftQmsManual";
 import EditQmsmanual from "./pages/QMS/Documentation/Manual/EditQmsmanual";
 import ViewAllNotifications from "./components/Company_Navbar/ViewAllNotifications";
+import EditDraftQmsManual from "./pages/QMS/Documentation/Manual/EditDraftQmsManual";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -126,6 +127,7 @@ const ThemedApp = () => {
           <Route path="qms/addmanual" element={<AddQmsManual />} />
           <Route path="qms/viewmanual" element={<ViewQmsManual/>}/>
           <Route path="qms/draftmanual" element={<DraftQmsManual/>}/>
+          <Route path="qms/editdraft" element={<EditDraftQmsManual/>} />
           <Route path="qms/editmanual" element={<EditQmsmanual/>}/>
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
