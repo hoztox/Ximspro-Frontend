@@ -9,6 +9,8 @@ import { useTheme } from "../../ThemeContext";
 import { Cropper } from "react-advanced-cropper";
 import "react-advanced-cropper/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
+import EditSuccessModal from "./EditSuccessModal";
+import EditErrorModal from "./EditErrorModal";
 // import Cropper from "react-easy-crop";
 
 const EditCompany = () => {
@@ -32,6 +34,9 @@ const EditCompany = () => {
   const { companyId } = useParams();
   const navigate = useNavigate();
 
+  const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
+  const [showEditErrorModal, setShowEditErrorModal] = useState(false);
+
   // States for the image crop modal
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(null);
@@ -40,7 +45,7 @@ const EditCompany = () => {
   // Password modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    
+
     newPassword: "",
     confirmPassword: ""
   });
@@ -210,14 +215,18 @@ const EditCompany = () => {
       );
 
       if (response.status === 200 || response.status === 201) {
-        toast.success("Company updated successfully!");
+        setShowEditSuccessModal(true)
         setTimeout(() => {
-          navigate("/admin/companies");  
+          setShowEditSuccessModal(false)
+          navigate("/admin/companies");
         }, 2000);
       }
     } catch (error) {
       console.error("Error updating company:", error);
-      toast.error("Failed to update company. Please try again.");
+      setShowEditErrorModal(true);
+      setTimeout(() => {
+        setShowEditErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -230,9 +239,9 @@ const EditCompany = () => {
     // Clear error when user types
     if (passwordError) setPasswordError("");
   };
- 
 
-  
+
+
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
@@ -247,7 +256,7 @@ const EditCompany = () => {
       const response = await axios.put(
         `${BASE_URL}/accounts/admin-company/change-password/${companyId}/`,
         {
-              
+
           new_password: passwordData.newPassword
         }
       );
@@ -255,7 +264,7 @@ const EditCompany = () => {
       if (response.status === 200) {
         toast.success("Password changed successfully!");
         setIsPasswordModalOpen(false);
-        setPasswordData({  newPassword: "", confirmPassword: "" });
+        setPasswordData({ newPassword: "", confirmPassword: "" });
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -344,6 +353,16 @@ const EditCompany = () => {
         }`}
     >
       <Toaster position="top-center" reverseOrder={false} />
+
+      <EditSuccessModal
+        showEditSuccessModal={showEditSuccessModal}
+        onClose={() => { setShowEditSuccessModal(false) }}
+      />
+
+      <EditErrorModal
+        showEditErrorModal={showEditErrorModal}
+        onClose={() => { setShowEditErrorModal(false) }}
+      />
 
       {/* Left Form Section */}
       <div className="w-full rounded-lg p-5 ediform lg:w-2/3">
@@ -569,7 +588,7 @@ const EditCompany = () => {
                   </motion.div>
                 )}
                 <div className="mb-4">
-                  
+
                 </div>
                 <div className="mb-4">
                   <label htmlFor="newPassword" className="new-pswd-label">
