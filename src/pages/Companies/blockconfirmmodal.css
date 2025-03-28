@@ -58,19 +58,19 @@
   }
   
   .block-cmy-btn-cancel {
-    background-color: #f44336;
+    background-color: #AAAAAA;
     color: white;
   }
   
   .block-cmy-btn-confirm {
-    background-color: #4caf50;
+    background-color: #F9291F;
     color: white;
   }
   
   .block-cmy-btn-cancel:hover {
-    background-color: #c53227;
+    background-color: #858585;
   }
   .block-cmy-btn-confirm:hover {
-    background-color: #2f8132;
+    background-color: #b80900;
   }
   

@@ -4,15 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../ThemeContext";
 import blockillustrate from "../../assets/images/Modal/blockillustrate.svg"
 
-const BlockConfirmModal = ({ showBlockConfirmModal,actionType, onConfirm, onCancel }) => {
-    const { theme } = useTheme();
+const BlockConfirmModal = ({ showBlockConfirmModal, actionType, onConfirm, onCancel }) => {
+  const { theme } = useTheme();
 
-    const modalMessage =
+  const modalMessage =
     actionType === "block"
-      ? "Are you sure you want to block this company?"
-      : "Are you sure you want to unblock this company?";
+      ? ["Are you sure you want to block", "this company?"]
+      : ["Are you sure you want to unblock", "this company?"];
 
-      const confirmButtonLabel = actionType === "block" ? "Block" : "Unblock";
+
+  const confirmButtonLabel = actionType === "block" ? "Block" : "Unblock";
   return (
     <AnimatePresence>
       {showBlockConfirmModal && (
@@ -24,8 +25,7 @@ const BlockConfirmModal = ({ showBlockConfirmModal,actionType, onConfirm, onCanc
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className={`block-cmy-modal ${
-                theme === "dark" ? "dark" : "light"
+            className={`block-cmy-modal ${theme === "dark" ? "dark" : "light"
               }`}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
@@ -33,16 +33,16 @@ const BlockConfirmModal = ({ showBlockConfirmModal,actionType, onConfirm, onCanc
             transition={{ duration: 0.3 }}
           >
             <div
-              className={`block-cmy-modal-content space-y-6 ${
-                theme === "dark" ? "dark" : "light"
-              }`}
+              className={`block-cmy-modal-content space-y-6 ${theme === "dark" ? "dark" : "light"
+                }`}
             >
               <div className='flex justify-center'>
                 <img src={blockillustrate} alt="Block" className='w-[168px] h-[147px]' />
               </div>
               <h3 className="block-cmy-confirmation">
-              {modalMessage}
+                {modalMessage[0]} <br /> {modalMessage[1]}
               </h3>
+
               <div className="block-cmy-modal-actions gap-3 ">
                 <button onClick={onCancel} className="block-cmy-btn-cancel duration-200  w-[176px] h-[49px]">
                   Cancel
