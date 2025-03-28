@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronUp, X, Download, FileText, Plus } from 'lucide-react';
+import { Search, ChevronUp, X, FileText, Plus, Eye } from 'lucide-react';
 // import plus from "../../../../assets/images/Company Documentation/plus icon.svg";
 import arrow from '../../../../assets/images/Company Documentation/arrow.svg';
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import edit from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
+import downloads from "../../../../assets/images/Company Documentation/download.svg"
 import { useNavigate } from "react-router-dom";
 import './qmspolicy.css';
 
@@ -242,22 +243,22 @@ const QmsPolicy = () => {
                 stiffness: 300,
                 damping: 20
               }}
-              className="bg-[#24242D] rounded-lg w-full max-w-2xl max-h-[80vh] overflow-auto shadow-lg"
+              className="bg-[#1C1C24] rounded-lg w-full max-w-[690px] max-h-[386px] overflow-auto shadow-lg"
             >
               {/* Modal content remains the same as in the previous version */}
-              <div className="flex justify-between items-center p-5 border-b border-[#383840]">
-                <h2 className="text-xl font-semibold">Policy Details</h2>
+              <div className="flex justify-between items-center mx-5 mt-5 mb-[27px] border-b border-[#383840] pb-[21px]">
+                <h2 className="qms-policy-modal-head">QMS Policy</h2>
                 <button
                   onClick={handleCloseModal}
-                  className="text-gray-400 hover:text-white"
+                  className="text-white bg-[#24242D] w-[36px] h-[36px] flex justify-center items-center rounded-md"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="p-6">
-                <h3 className="text-xl mb-4 text-[#A3A3A3]">Policy Content:</h3>
-                <div className="bg-[#1C1C24] p-5 rounded-md">
+              <div className="px-5 pb-5">
+                <h2 className="policy-content-head mb-3">Policy Content</h2>
+                <div className="bg-[#24242D] p-5 rounded-md">
                   {selectedPolicy.text.startsWith('<') ? (
                     <div className="policy-content" dangerouslySetInnerHTML={createMarkup(selectedPolicy.text)} />
                   ) : (
@@ -266,50 +267,38 @@ const QmsPolicy = () => {
                 </div>
 
                 {selectedPolicy.energy_policy && (
-                  <div className="mt-6">
-                    <h3 className="text-xl mb-4 text-[#A3A3A3]">Attached Document:</h3>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2 bg-[#2C2C36] p-3 rounded">
+                  <div className="mt-5">
+                    <h2 className="attached-document-head pb-3">Attached Document</h2>
+                    <div className="flex justify-between items-center gap-5">
+                      <div className="flex items-center gap-3 bg-[#24242D] px-[10px] py-[8px] rounded-md w-[269px] h-[59px]">
                         {getFileIcon(selectedPolicy.energy_policy)}
-                        <span className="truncate max-w-md">
+                        <span className="truncate attached-file-name">
                           {getFileNameFromUrl(selectedPolicy.energy_policy)}
                         </span>
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex">
                         <a
                           href={selectedPolicy.energy_policy}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="bg-[#2C2C36] hover:bg-[#383844] text-white font-medium py-2 px-4 rounded inline-flex items-center"
+                          className="bg-[#24242D] hover:bg-[#17171d] text-white px-4 rounded-md inline-flex items-center w-[187px] h-[59px] duration-200"
                         >
-                          <span>View</span>
+                          <span className='flex gap-[6px] items-center view-attachment-text'><Eye/> View Attachment</span>
                         </a>
-
+                      </div>
+                      <div>
                         <button
                           onClick={() => downloadFile(selectedPolicy.energy_policy, getFileNameFromUrl(selectedPolicy.energy_policy))}
-                          className="bg-[#3A3A47] hover:bg-[#4A4A57] text-white font-medium py-2 px-4 rounded inline-flex items-center gap-2"
+                          className="bg-[#24242D] hover:bg-[#17171d] text-white px-4 rounded-md inline-flex items-center gap-[6px] h-[59px] duration-200"
                         >
-                          <Download className="w-4 h-4" />
-                          <span>Download</span>
+                          <img src={downloads} alt="Download" className='w-[24px] h-[24px]' />
+                          <span className='download-btn'>Download</span>
                         </button>
                       </div>
                     </div>
                   </div>
                 )}
-                <div className="mt-8 text-sm text-[#858585]">
-                  <p>Created: {new Date(selectedPolicy.created_at).toLocaleString()}</p>
-                  {selectedPolicy.user && <p>Created by: User ID: {selectedPolicy.user}</p>}
-                </div>
-              </div>
-
-              <div className="flex justify-end p-5 border-t border-[#383840]">
-                <button
-                  onClick={handleCloseModal}
-                  className="bg-[#1C1C24] hover:bg-[#2C2C36] text-white font-medium py-2 px-6 rounded"
-                >
-                  Close
-                </button>
               </div>
             </motion.div>
           </motion.div>
