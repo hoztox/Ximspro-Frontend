@@ -127,7 +127,7 @@ const ThemedApp = () => {
           <Route path="qms/addmanual" element={<AddQmsManual />} />
           <Route path="qms/viewmanual" element={<ViewQmsManual/>}/>
           <Route path="qms/draftmanual" element={<DraftQmsManual/>}/>
-          <Route path="qms/editdraft" element={<EditDraftQmsManual/>} />
+          <Route path="qms/editdraftmanual" element={<EditDraftQmsManual/>} />
           <Route path="qms/editmanual" element={<EditQmsmanual/>}/>
 
           <Route path="qms/procedure" element={<QmsProcedure />} />

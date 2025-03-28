@@ -119,7 +119,7 @@ const DraftQmsManual = () => {
     };
 
     const handleEditDraft = () => {
-        navigate('/company/qms/editdraft')
+        navigate('/company/qms/editdraftmanual')
     }
 
     return (
