@@ -18,7 +18,8 @@ const TABS = [
 
 const NotificationsMenu = forwardRef(({
     onNotificationsUpdate,
-    onClose
+    onClose,
+    onNotificationRead
 }, ref) => {
     const [activeTab, setActiveTab] = useState('QMS');
     const [notifications, setNotifications] = useState({
@@ -104,10 +105,10 @@ const NotificationsMenu = forwardRef(({
 
     const handleView = async (notification) => {
         if (notification.manual && notification.manual.id) {
-        
+            // Mark notification as read
             const updatedNotification = await markNotificationAsRead(notification.id);
             
-      
+            // Update local state
             setNotifications(prev => ({
                 ...prev,
                 QMS: prev.QMS.map(n => 
@@ -117,8 +118,14 @@ const NotificationsMenu = forwardRef(({
                 )
             }));
 
-         
+            // Decrease notification count if it's an unread notification
+            if (!notification.is_read && onNotificationRead) {
+                onNotificationRead();
+            }
+
+            // Navigate to manual view
             navigate(`/company/qms/viewmanual/${notification.manual.id}`);
+            
             if (onClose) {
                 onClose();
             }
@@ -126,6 +133,7 @@ const NotificationsMenu = forwardRef(({
             console.error("Invalid Notification or Manual ID:", notification);
         }
     };
+
 
     useEffect(() => {
         const fetchNotifications = async () => {

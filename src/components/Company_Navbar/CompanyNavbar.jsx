@@ -548,21 +548,24 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         />
       )}
       <AnimatePresence>
-        {isNotificationsOpen && (
-          <NotificationsMenu
-            ref={notificationsRef}
-            onClose={handleCloseNotifications}
-            // initialNotifications={initialNotifications}
-            onNotificationsUpdate={(notifications) => {
-              const totalCount = Object.values(notifications).reduce(
-                (total, categoryNotifications) => total + categoryNotifications.length,
-                0
-              );
-              setTotalNotificationCount(totalCount);
-            }}
-          />
-        )}
-      </AnimatePresence>
+  {isNotificationsOpen && (
+    <NotificationsMenu
+      ref={notificationsRef}
+      onClose={handleCloseNotifications}
+      onNotificationRead={() => {
+        // Decrease the QMS notification count
+        setQmsNotificationCount(prevCount => Math.max(0, prevCount - 1));
+      }}
+      onNotificationsUpdate={(notifications) => {
+        const totalCount = Object.values(notifications).reduce(
+          (total, categoryNotifications) => total + categoryNotifications.length,
+          0
+        );
+        setTotalNotificationCount(totalCount);
+      }}
+    />
+  )}
+</AnimatePresence>
     </>
   );
 };
