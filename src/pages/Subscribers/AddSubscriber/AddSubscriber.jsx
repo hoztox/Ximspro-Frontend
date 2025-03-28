@@ -7,6 +7,7 @@ import { useTheme } from "../../../ThemeContext";
 import { BASE_URL } from "../../../Utils/Config";
 import { useNavigate } from "react-router-dom";
 import AddSubscriberSuccessModal from "./AddSubscriberSuccessModal";
+import AddSubscriberErrorModal from "./AddSubscriberErrorModal";
 
 const AddSubscriber = () => {
   const [companies, setCompanies] = useState([]);
@@ -22,6 +23,7 @@ const AddSubscriber = () => {
   const navigate = useNavigate();
 
   const [showAddSubSuccessModal, setShowAddSubSuccessModal] = useState(false);
+  const [showAddSubErrorModal, setShowAddSubErrorModal] = useState(false);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -118,7 +120,10 @@ const AddSubscriber = () => {
       console.log(data);
     } catch (error) {
       console.error("Error adding subscriber:", error);
-      toast.error("Failed to add subscriber. Please try again.");
+      setShowAddSubErrorModal(true);
+      setTimeout(() => {
+        setShowAddSubErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -132,6 +137,11 @@ const AddSubscriber = () => {
       <AddSubscriberSuccessModal
         showAddSubSuccessModal={showAddSubSuccessModal}
         onClose={() => { setShowAddSubSuccessModal(false) }}
+      />
+
+      <AddSubscriberErrorModal
+        showAddSubErrorModal={showAddSubErrorModal}
+        onClose={() => { setShowAddSubErrorModal(false) }}
       />
 
       <div className="lg:w-1/3 rounded-lg p-5">
