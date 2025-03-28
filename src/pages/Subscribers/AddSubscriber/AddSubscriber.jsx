@@ -6,6 +6,7 @@ import dropicon from "../../../assets/images/Subscriber/dropdownicon.svg";
 import { useTheme } from "../../../ThemeContext";
 import { BASE_URL } from "../../../Utils/Config";
 import { useNavigate } from "react-router-dom";
+import AddSubscriberSuccessModal from "./AddSubscriberSuccessModal";
 
 const AddSubscriber = () => {
   const [companies, setCompanies] = useState([]);
@@ -19,6 +20,8 @@ const AddSubscriber = () => {
   const [planSearch, setPlanSearch] = useState("");
   const { theme } = useTheme();
   const navigate = useNavigate();
+
+  const [showAddSubSuccessModal, setShowAddSubSuccessModal] = useState(false);
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -103,13 +106,15 @@ const AddSubscriber = () => {
         `${BASE_URL}/accounts/subscribers/`,
         data
       );
-      toast.success("Subscriber added successfully!");
-      // Clear the inputs after successful submission
+      setShowAddSubSuccessModal(true)
+      setTimeout(() => {
+        setShowAddSubSuccessModal(false);
+        navigate("/admin/manage-subscriber");
+      }, 1500);
       setSelectedCompany("");
       setSelectedPlan("");
       setCompanySearch("");
       setPlanSearch("");
-      navigate("/admin/manage-subscriber");
       console.log(data);
     } catch (error) {
       console.error("Error adding subscriber:", error);
@@ -119,11 +124,15 @@ const AddSubscriber = () => {
 
   return (
     <div
-      className={`flex flex-col md:flex-row w-full rounded-lg addsub ${
-        theme === "dark" ? "dark" : "light"
-      }`}
+      className={`flex flex-col md:flex-row w-full rounded-lg addsub ${theme === "dark" ? "dark" : "light"
+        }`}
     >
       <Toaster position="top-center" reverseOrder={false} />
+
+      <AddSubscriberSuccessModal
+        showAddSubSuccessModal={showAddSubSuccessModal}
+        onClose={() => { setShowAddSubSuccessModal(false) }}
+      />
 
       <div className="lg:w-1/3 rounded-lg p-5">
         <h2 className="addsubhead">Add Subscribers</h2>
@@ -131,60 +140,58 @@ const AddSubscriber = () => {
           <div className="mb-5">
             {/* Company Dropdown */}
             <div className="mb-4">
-  <label htmlFor="companyName" className="addsublabel">
-    Company Name
-  </label>
-  <div className="relative dropdown-container">
-    <div
-      className={`custom-dropdown ${
-        !selectedCompany ? "placeholder" : ""
-      }`}
-      onClick={() => setIsCompanyOpen(!isCompanyOpen)}
-    >
-      <input
-        type="text"
-        className="dropdown-input"
-        placeholder="Select Company Name"
-        value={companySearch || selectedCompany}
-        onChange={(e) => setCompanySearch(e.target.value)}
-        onFocus={() => setIsCompanyOpen(true)}
-      />
-      <img
-        src={dropicon}
-        alt="Dropdown Icon"
-        className={`dropdown-icon ${
-          isCompanyOpen ? "rotate-180" : ""
-        }`}
-      />
-    </div>
-    {isCompanyOpen && (
-      <ul className="dropdown-list">
-        {companies
-          .filter(
-            (company) =>
-              !subscribers.some(
-                (subscriber) => subscriber.company === company.id
-              ) && // Exclude already subscribed companies
-              company.company_name
-                .toLowerCase()
-                .includes(companySearch.toLowerCase())
-          )
-          .map((company) => (
-            <li
-              key={company.id}
-              onClick={() => {
-                setSelectedCompany(company.company_name);
-                setIsCompanyOpen(false);
-                setCompanySearch("");
-              }}
-            >
-              {company.company_name}
-            </li>
-          ))}
-      </ul>
-    )}
-  </div>
-</div>
+              <label htmlFor="companyName" className="addsublabel">
+                Company Name
+              </label>
+              <div className="relative dropdown-container">
+                <div
+                  className={`custom-dropdown ${!selectedCompany ? "placeholder" : ""
+                    }`}
+                  onClick={() => setIsCompanyOpen(!isCompanyOpen)}
+                >
+                  <input
+                    type="text"
+                    className="dropdown-input"
+                    placeholder="Select Company Name"
+                    value={companySearch || selectedCompany}
+                    onChange={(e) => setCompanySearch(e.target.value)}
+                    onFocus={() => setIsCompanyOpen(true)}
+                  />
+                  <img
+                    src={dropicon}
+                    alt="Dropdown Icon"
+                    className={`dropdown-icon ${isCompanyOpen ? "rotate-180" : ""
+                      }`}
+                  />
+                </div>
+                {isCompanyOpen && (
+                  <ul className="dropdown-list">
+                    {companies
+                      .filter(
+                        (company) =>
+                          !subscribers.some(
+                            (subscriber) => subscriber.company === company.id
+                          ) && // Exclude already subscribed companies
+                          company.company_name
+                            .toLowerCase()
+                            .includes(companySearch.toLowerCase())
+                      )
+                      .map((company) => (
+                        <li
+                          key={company.id}
+                          onClick={() => {
+                            setSelectedCompany(company.company_name);
+                            setIsCompanyOpen(false);
+                            setCompanySearch("");
+                          }}
+                        >
+                          {company.company_name}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </div>
+            </div>
 
 
             {/* Subscription Plan Dropdown */}
@@ -194,9 +201,8 @@ const AddSubscriber = () => {
               </label>
               <div className="relative dropdown-container">
                 <div
-                  className={`custom-dropdown ${
-                    !selectedPlan ? "placeholder" : ""
-                  }`}
+                  className={`custom-dropdown ${!selectedPlan ? "placeholder" : ""
+                    }`}
                   onClick={() => setIsPlanOpen(!isPlanOpen)}
                 >
                   <input
@@ -210,9 +216,8 @@ const AddSubscriber = () => {
                   <img
                     src={dropicon}
                     alt="Dropdown Icon"
-                    className={`dropdown-icon ${
-                      isPlanOpen ? "rotate-180" : ""
-                    }`}
+                    className={`dropdown-icon ${isPlanOpen ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 {isPlanOpen && (
