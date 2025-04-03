@@ -6,6 +6,8 @@ import axios from "axios";
 import { BASE_URL } from "../../Utils/Config";
 import "./adminlogin.css";
 import logo from "../../assets/images/logo.svg";
+import AdminLoginSuccessModal from "./AdminLoginSuccessModal";
+import AdminLoginErrorModal from "./AdminLoginErrorModal";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -13,16 +15,19 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [showAdminLoginSuccessModal, setShowAdminLoginSuccessModal] = useState(false);
+  const [showAdminLoginErrorModal, setShowAdminLoginErrorModal] = useState(false);
 
-    useEffect(() => {
-      const adminToken = localStorage.getItem('adminAuthToken');
-      console.log('Admin Token',adminToken);
-      
-      if (!adminToken) {
-          navigate('/');
-      } else {
-          navigate('/admin/dashboard');
-      }
+
+  useEffect(() => {
+    const adminToken = localStorage.getItem('adminAuthToken');
+    console.log('Admin Token', adminToken);
+
+    if (!adminToken) {
+      navigate('/');
+    } else {
+      navigate('/admin/dashboard');
+    }
   }, [navigate]);
 
   const handleEmailChange = (e) => {
@@ -62,27 +67,33 @@ const AdminLogin = () => {
         localStorage.setItem("logoutTime", logoutTime);
         localStorage.setItem("adminDetails", JSON.stringify(admin)); // Store admin details
         console.log("Stored Admin Details:", JSON.parse(localStorage.getItem("adminDetails")));
-        toast.success("Admin Login Success");
+        setShowAdminLoginSuccessModal(true);
         setTimeout(() => {
+          setShowAdminLoginSuccessModal(false);
           navigate("/admin/dashboard");
-        }, 500);
+        }, 1500);
       } else {
         throw new Error(response.data.error || "Login failed");
       }
     } catch (error) {
       console.error("Error during login request:", error);
       if (error.response && error.response.status === 400) {
-        toast.error("Invalid username or password");
+        setShowAdminLoginErrorModal(true);
+        setTimeout(() => {
+          setShowAdminLoginErrorModal(false);
+        }, 3000);
+        // toast.error("Invalid username or password");
       } else {
-        toast.error(
-          error.message || "An error occurred during login. Please try again later."
-        );
+        setShowAdminLoginErrorModal(true);
+        setTimeout(() => {
+          setShowAdminLoginErrorModal(false);
+        }, 3000);
       }
     } finally {
       setLoading(false);
     }
   };
-  
+
 
   useEffect(() => {
     const adminToken = localStorage.getItem("adminAuthToken");
@@ -104,6 +115,17 @@ const AdminLogin = () => {
   return (
     <div className="flex flex-col h-screen items-center justify-center adminloginscreen">
       <Toaster position="top-center" />
+
+      <AdminLoginSuccessModal
+        showAdminLoginSuccessModal={showAdminLoginSuccessModal}
+        onClose={() => { setShowAdminLoginSuccessModal(false) }}
+      />
+
+      <AdminLoginErrorModal
+        showAdminLoginErrorModal={showAdminLoginErrorModal}
+        onClose={() => { setShowAdminLoginErrorModal(false) }}
+      />
+
       {/* Logo Section */}
       <div className="adminloginstyle">
         <div className="mb-9 mt-14">

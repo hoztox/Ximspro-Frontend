@@ -5,11 +5,16 @@ import { useTheme } from "../../../ThemeContext";
 import { BASE_URL } from "../../../Utils/Config";
 import { useNavigate, useParams } from "react-router-dom"; // Assuming you are using React Router
 import { toast, Toaster } from "react-hot-toast";
+import EditSubscriptionSuccessModal from "./EditSubscriptionSuccessModal";
+import EditSubscriptionErrorModal from "./EditSubscriptionErrorModal";
 
 const EditSubscription = () => {
   // States for managing form values
   const [subscriptionName, setSubscriptionName] = useState("");
   const [validity, setValidity] = useState("");
+
+  const [showEditSubscriptionSuccessModal, setShowEditSubscriptionSuccessModal] = useState(false);
+  const [showEditSubscriptionErrorModal, setShowEditSubscriptionErrorModal] = useState(false);
 
   const [error, setError] = useState(null); // State for errors
   const { theme } = useTheme();
@@ -38,7 +43,7 @@ const EditSubscription = () => {
         console.error("Error fetching subscription data:", err);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching the subscription."
+          "An error occurred while fetching the subscription."
         );
       } finally {
       }
@@ -60,20 +65,34 @@ const EditSubscription = () => {
         validity,
       });
 
-      toast.success("Subscription updated successfully!");
-      navigate("/admin/manage-subscription");
+      setShowEditSubscriptionSuccessModal(true)
+      setTimeout(() => {
+        setShowEditSubscriptionSuccessModal(false)
+        navigate("/admin/manage-subscription");
+      }, 2000);
     } catch (err) {
+      setShowEditSubscriptionErrorModal(true);
+      setTimeout(() => {
+        setShowEditSubscriptionErrorModal(false);
+      }, 3000);
       console.error("Error updating subscription data:", err);
-      toast.error(
-        err.response?.data?.message ||
-          "An error occurred while updating the subscription."
-      );
     }
   };
 
   return (
     <div className={`editsub ${theme === "dark" ? "dark" : "light"}`}>
       <Toaster position="top-center" reverseOrder={false} />
+
+      <EditSubscriptionSuccessModal
+        showEditSubscriptionSuccessModal={showEditSubscriptionSuccessModal}
+        onClose={() => { setShowEditSubscriptionSuccessModal(false) }}
+      />
+
+      <EditSubscriptionErrorModal
+        showEditSubscriptionErrorModal={showEditSubscriptionErrorModal}
+        onClose={() => { setShowEditSubscriptionErrorModal(false) }}
+      />
+
       <div className="lg:w-1/3 p-5">
         <h2 className="editsubhead">Edit Subscription</h2>
 

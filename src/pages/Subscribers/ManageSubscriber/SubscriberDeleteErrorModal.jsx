@@ -1,43 +1,49 @@
 import React from 'react'
-import "./subscriberdeleteerrormodal.css";
-import errors from "../../../assets/images/Modal/errors.svg";
+// import "./subscriberdeleteerrormodal.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from '../../../ThemeContext';
+import errors from "../../../assets/images/Modal/errorIllustration.svg";
+import errorsdark from "../../../assets/images/Modal/errorIllustrationdark.svg"
+import { X } from "lucide-react"
 
 const SubscriberDeleteErrorModal = ({ showDeleteSubscriberErrorModal, onClose }) => {
-    const { theme } = useTheme();
+  const { theme } = useTheme();
 
-    if (!showDeleteSubscriberErrorModal) return null;
-    return (
-      <AnimatePresence>
-        {showDeleteSubscriberErrorModal && (
+  if (!showDeleteSubscriberErrorModal) return null;
+  return (
+    <AnimatePresence>
+      {showDeleteSubscriberErrorModal && (
+        <motion.div
+          className="add-cmy-error-modal-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <motion.div
-            className="modal-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className={`add-cmy-error-modal ${theme === "dark" ? "dark" : "light"}`}
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            exit={{ scale: 0.9 }}
             transition={{ duration: 0.3 }}
           >
-            <motion.div
-              className={`modal ${theme === "dark" ? "dark" : "light"}`}
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className={`modal-content flex flex-col items-center justify-center ${theme === "dark" ? "dark" : "light"}`}>
-                <img src={errors} alt="" className="w-12" />
-                <h1 className="messegehead">An error occurred!</h1>
-                <p className="messege">Please try again</p>
-                <button onClick={onClose} className="deleteclosebtns duration-200">
-                  Close
-                </button>
-              </div>
-            </motion.div>
+            <div className='w-full justify-end flex'>
+              <button onClick={onClose} className="add-cmy-error-deleteclosebtns">
+                <X className='text-[#1C1C24] close' />
+              </button>
+            </div>
+            <div className={`add-cmy-error-modal-content flex flex-col items-center justify-center ${theme === "dark" ? "dark" : "light"}`}>
+              <img src={errors} alt="" className="w-[156px] h-[156px] errors-light" />
+              <img src={errorsdark} alt="" className="w-[156px] h-[156px] errors-dark" />
+              <h1 className="add-cmy-error-messegehead">An error occurred!</h1>
+              <p className="add-cmy-error-messege">Please try again</p>
+
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  };
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 export default SubscriberDeleteErrorModal

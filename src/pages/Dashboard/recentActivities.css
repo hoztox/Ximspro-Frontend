@@ -184,6 +184,7 @@
   .recent-activities {
     width: 100%;
     margin-bottom: 5rem;
+    height: auto;
   }
   .recent-activities .recenthead {
     margin-bottom: 0px;

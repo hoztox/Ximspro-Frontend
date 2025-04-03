@@ -76,7 +76,7 @@ const RecentActivities = () => {
     const data = getActiveData();
     const total = totalPages(data);
     return (
-      <div className="flex justify-end items-center px-5 paginationmob">
+      <div className="flex justify-end items-center px-5 paginationmob !mb-0">
         {/* <p className="pagination">
           Showing{" "}
           <span className="paginationno">
@@ -189,7 +189,7 @@ const RecentActivities = () => {
     >
       <h2 className="recenthead">Subscription Expiring</h2>
       <div>
-        <div className="flex space-x-4 justify-between expirydaystabs ">
+        <div className="flex md:space-x-4 justify-between expirydaystabs ">
           {tabs.map((tab, index) => (
             <button
               key={index}

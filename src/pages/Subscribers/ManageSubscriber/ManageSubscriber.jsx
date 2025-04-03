@@ -153,26 +153,18 @@ const ManageSubscriber = () => {
     }
   };
 
-  const [showDeleteSubscriberModal, setShowDeleteSubscriberModal] =
-    useState(false);
   const [subscriberToDelete, setSubscriberToDelete] = useState(null);
-  const [
-    showDeleteSubscriberSuccesssModal,
-    setShowDeleteSubscriberSuccesssModal,
-  ] = useState(false);
-  const [showDeleteSubscriberErrorModal, setShowDeleteSubscriberErrorModal] =
-    useState(false);
-
-  const [showBlockSubscriberModal, setShowBlockSubscriberModal] =
-    useState(false);
   const [subscriberToBlock, setSubscriberToBlock] = useState(null);
   const [currentStatus, setCurrentStatus] = useState("");
   const [actionType, setActionType] = useState(""); // "block" or "activate"
   const [successMessage, setSuccessMessage] = useState("");
-  const [showsubscriberBlockSuccessModal, setShowSubscriberBlockSuccessModal] =
-    useState(false);
-  const [showSubscriberBlockErrorModal, setShowSubscriberBlockErrorModal] =
-    useState(false);
+
+  const [showDeleteSubscriberModal, setShowDeleteSubscriberModal] = useState(false);
+  const [showDeleteSubscriberSuccesssModal, setShowDeleteSubscriberSuccesssModal] = useState(false);
+  const [showDeleteSubscriberErrorModal, setShowDeleteSubscriberErrorModal] = useState(false);
+  const [showBlockSubscriberModal, setShowBlockSubscriberModal] = useState(false);
+  const [showsubscriberBlockSuccessModal, setShowSubscriberBlockSuccessModal] = useState(false);
+  const [showSubscriberBlockErrorModal, setShowSubscriberBlockErrorModal] = useState(false);
 
   useEffect(() => {
     // Fetch subscribers from the backend API
@@ -229,7 +221,7 @@ const ManageSubscriber = () => {
           const message =
             newAction === "block"
               ? "Subsciber Blocked Successfully!"
-              : "Subscriber Activated Successfully!";
+              : "Subscriber Unblocked Successfully!";
           setSuccessMessage(message);
           setShowSubscriberBlockSuccessModal(true);
           setTimeout(() => {

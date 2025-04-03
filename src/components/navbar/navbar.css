@@ -473,16 +473,21 @@ ul li.active .navdropicon {
 @media (max-width: 431px) {
   .navbar {
     height: 90px;
-    width: 100%;
+    /* width: 100%; */
+    max-width: calc(100vw - 0px);
     border-bottom: none;
     box-shadow: 1px 1px 50px rgba(105, 105, 105, 0.1);
+  }
+  .navfooters {
+    max-width: calc(100vw - 40px);
   }
   .span1,
   .span2,
   .divider,
   .adminname,
   .profileicon,
-  .changpswdlogout {
+  .changpswdlogout,
+  .admin-profile-settings-head {
     display: none;
   }
   .navlogo {
@@ -522,9 +527,9 @@ ul li.active .navdropicon {
   }
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 431px;
-    height: 100svh;
+    margin-top: -120px;
+    width: 100vw;
+    
   }
   /* .sidebarmenus {
     margin: 15px;
@@ -590,8 +595,8 @@ ul li.active .navdropicon {
 @media (max-width: 425px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 425px;
+    margin-top: -120px;
+    
   }
 }
 
@@ -623,37 +628,32 @@ ul li.active .navdropicon {
   }
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 421px;
+    margin-top: -120px;
+    
   }
 }
 @media (max-width: 420px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
+    margin-top: -120px;
     height: 105vh;
-    width: 420px;
+    
   }
 }
 @media (max-width: 415px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 415px;
   }
 }
 @media (max-width: 410px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 410px;
   }
 }
 @media (max-width: 405px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 405px;
+ 
   }
 }
 @media (max-width: 400px) {
@@ -681,15 +681,13 @@ ul li.active .navdropicon {
   }
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 400px;
+ 
   }
 }
 @media (max-width: 395px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 395px;
+ 
   }
   .sidebarmenustexts {
     font-family: "Switzer Light";
@@ -701,8 +699,7 @@ ul li.active .navdropicon {
 @media (max-width: 390px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 390px;
+ 
   }
   .sidebarmenustexts {
     font-family: "Switzer Light";
@@ -714,30 +711,26 @@ ul li.active .navdropicon {
 @media (max-width: 389px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 391px;
+ 
   }
 }
 
 @media (max-width: 385px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 395px;
+ 
   }
 }
 @media (max-width: 381px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 391px;
+ 
   }
 }
 @media (max-width: 378px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 395px;
+ 
   }
   /* Dynamic styling for dropdowns */
   .subscribers-open,
@@ -776,8 +769,7 @@ ul li.active .navdropicon {
   }
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 378px;
+ 
   }
   /* Dynamic styling for dropdowns */
   .subscribers-open,
@@ -810,15 +802,13 @@ ul li.active .navdropicon {
 @media (max-width: 375px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 377px;
+ 
   }
 }
 @media (max-width: 370px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 380px;
+ 
   }
   /* Dynamic styling for dropdowns */
   .subscribers-open,
@@ -843,8 +833,7 @@ ul li.active .navdropicon {
 @media (max-width: 365px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 380px;
+ 
   }
 }
 @media (max-width: 361px) {
@@ -875,8 +864,7 @@ ul li.active .navdropicon {
   }
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 361px;
+ 
   }
   .sidebarmenustext {
     font-size: 17px;
@@ -908,28 +896,24 @@ ul li.active .navdropicon {
 @media (max-width: 360px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 360px;
+ 
   }
 }
 @media (max-width: 355px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 360px;
+ 
   }
 }
 @media (max-width: 350px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 360px;
+ 
   }
 }
 @media (max-width: 345px) {
   .dropdown-menu {
     right: -16px;
-    margin-top: -75px;
-    width: 360px;
+ 
   }
 }

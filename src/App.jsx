@@ -90,6 +90,7 @@ import EditQmsmanual from "./pages/QMS/Documentation/Manual/EditQmsmanual";
 import ViewAllNotifications from "./components/Company_Navbar/ViewAllNotifications";
 import DraftQmsManual from "./pages/QMS/Documentation/Manual/DraftQmsManual";
 import EditDraftQmsManual from "./pages/QMS/Documentation/Manual/EditDraftQmsManual";
+import QMSEditUser from "./pages/QMS/UserManagement/EditUser/QmsEditUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -145,6 +146,7 @@ const ThemedApp = () => {
           {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
+          <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
 
 
 

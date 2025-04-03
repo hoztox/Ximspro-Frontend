@@ -1,6 +1,6 @@
 /* modal.css */
 
-.modal-overlay {
+.block-sub-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -13,7 +13,7 @@
     z-index: 1000;
   }
   
-  .modal {
+  .block-sub-modal {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -21,35 +21,35 @@
     color: #25282b;
     border-radius: 8px;
     padding: 20px;
-    width: 350px;
-    height: 200px;
+    width: 414px;
+    height: 346px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   }
-  .modal-content.dark .confirmation {
+  .block-sub-modal-content.dark .block-sub-confirmation {
     color: white;
   }
-  .modal.dark {
+  .block-sub-modal.dark {
     background-color: #1c1c24;
   }
   
-  .confirmation {
+  .block-sub-confirmation {
     font-family: "Switzer Light";
     font-size: medium;
   }
   
-  .modal-content {
+  .block-sub-modal-content {
     text-align: center;
     justify-items: center;
   }
   
-  .modal-actions {
+  .block-sub-modal-actions {
     display: flex;
     margin-top: 20px;
     justify-content: center;
   }
   
-  .btn-cancel,
-  .btn-confirm {
+  .block-sub-btn-cancel,
+  .block-sub-btn-confirm {
     padding: 8px 16px;
     border: none;
     font-family: "Switzer Light";
@@ -57,20 +57,20 @@
     cursor: pointer;
   }
   
-  .btn-cancel {
-    background-color: #f44336;
+  .block-sub-btn-cancel {
+    background-color: #AAAAAA;
     color: white;
   }
   
-  .btn-confirm {
-    background-color: #4caf50;
+  .block-sub-btn-confirm {
+    background-color: #F9291F;
     color: white;
   }
   
-  .btn-cancel:hover {
-    background-color: #c53227;
+  .block-sub-btn-cancel:hover {
+    background-color: #858585;
   }
-  .btn-confirm:hover {
-    background-color: #2f8132;
+  .block-sub-btn-confirm:hover {
+    background-color: #b80900;
   }
   

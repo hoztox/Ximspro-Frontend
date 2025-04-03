@@ -6,17 +6,22 @@ import { BASE_URL } from "../../../Utils/Config";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import toast, { Toaster } from "react-hot-toast";
+import ChangeSubscriptionSuccessModal from "./ChangeSubscriptionSuccessModal";
+import ChangeSubscriptionErrorModal from "./ChangeSubscriptionErrorModal";
 
 const ChangeSubscription = () => {
   const [companyName, setCompanyName] = useState("");
   const [selectedPlan, setSelectedPlan] = useState(""); // Track selected plan
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { theme } = useTheme();
   const { id } = useParams();
   const [isPlanOpen, setIsPlanOpen] = useState(false);
   const navigate = useNavigate();
+
+  const [showChangeSubscriptionSuccessModal, setShowChangeSubscriptionSuccessModal] = useState(false);
+  const [showChangeSubscriptionErrorModal, setShowChangeSubscriptionErrorModal] = useState(false);
 
   const handleClickOutside = (e) => {
     if (!e.target.closest(".dropdown-container")) {
@@ -27,7 +32,7 @@ const ChangeSubscription = () => {
   useEffect(() => {
     const fetchSubscription = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
         setError(null);
 
         const response = await axios.get(
@@ -44,10 +49,8 @@ const ChangeSubscription = () => {
         console.error("Error fetching subscription data:", err);
         setError(
           err.response?.data?.message ||
-            "An error occurred while fetching the subscription."
+          "An error occurred while fetching the subscription."
         );
-      } finally {
-        setLoading(false);
       }
     };
     fetchSubscription();
@@ -97,7 +100,7 @@ const ChangeSubscription = () => {
     console.log("Request Body Sent to API:", { plan: planId });
 
     try {
-      setLoading(true);
+      // setLoading(true);
 
       // Send the plan ID instead of the plan name
       const response = await axios.put(
@@ -109,19 +112,21 @@ const ChangeSubscription = () => {
 
       // Check if the response was successful
       if (response.status === 200) {
-        toast.success("Subscription changed successfully");
+        setShowChangeSubscriptionSuccessModal(true);
         console.log("Updated subscription response:", response.data);
-        navigate("/admin/manage-subscriber");
+        setTimeout(() => {
+          setShowChangeSubscriptionSuccessModal(false);
+          navigate("/admin/manage-subscriber");
+        }, 1500);
       } else {
         toast.error("There was an issue updating the subscription.");
       }
     } catch (err) {
+      setShowChangeSubscriptionErrorModal(true);
+      setTimeout(() => {
+        setShowChangeSubscriptionErrorModal(false);
+      }, 3000);
       console.error("Error updating subscription plan:", err);
-      alert(
-        "An error occurred while updating the subscription. Please try again."
-      );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -129,6 +134,17 @@ const ChangeSubscription = () => {
     <div className={`changesubplan p-5 ${theme === "dark" ? "dark" : "light"}`}>
       <Toaster position="top-center" reverseOrder={false} />
       <h2 className="changesubplanhead">Change Subscription</h2>
+
+      <ChangeSubscriptionSuccessModal
+        showChangeSubscriptionSuccessModal={showChangeSubscriptionSuccessModal}
+        onClose={() => { setShowChangeSubscriptionSuccessModal(false) }}
+      />
+
+      <ChangeSubscriptionErrorModal
+        showChangeSubscriptionErrorModal={showChangeSubscriptionErrorModal}
+        onClose={() => { setShowChangeSubscriptionErrorModal(false) }}
+      />
+
       <div className="flex gap-14">
         <div className="w-full lg:w-1/3">
           <form onSubmit={handleSubmit} className="mt-5">
@@ -154,9 +170,8 @@ const ChangeSubscription = () => {
               <label className="changesubplanlabel">Change to</label>
               <div className="relative dropdown-container">
                 <div
-                  className={`custom-dropdowns ${
-                    !selectedPlan ? "placeholder" : ""
-                  }`}
+                  className={`custom-dropdowns ${!selectedPlan ? "placeholder" : ""
+                    }`}
                 >
                   <input
                     type="text"
@@ -168,9 +183,8 @@ const ChangeSubscription = () => {
                   <img
                     src={dropicon}
                     alt="Dropdown Icon"
-                    className={`dropdown-icon ${
-                      isPlanOpen ? "rotate-180" : ""
-                    }`}
+                    className={`dropdown-icon ${isPlanOpen ? "rotate-180" : ""
+                      }`}
                     onClick={() => setIsPlanOpen(!isPlanOpen)}
                   />
                 </div>

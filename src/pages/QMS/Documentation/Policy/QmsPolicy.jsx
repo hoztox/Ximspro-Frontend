@@ -243,7 +243,7 @@ const QmsPolicy = () => {
                 stiffness: 300,
                 damping: 20
               }}
-              className="bg-[#1C1C24] rounded-lg w-full max-w-[690px] max-h-[386px] overflow-auto shadow-lg"
+              className="bg-[#1C1C24] rounded-lg w-full max-w-[700px] max-h-auto overflow-auto shadow-lg"
             >
               {/* Modal content remains the same as in the previous version */}
               <div className="flex justify-between items-center mx-5 mt-5 mb-[27px] border-b border-[#383840] pb-[21px]">

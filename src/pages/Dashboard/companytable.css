@@ -177,7 +177,7 @@
     font-family: "Switzer Light";
     font-weight: 400;
     color: #677487;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 21px;
     padding: 0px 10px;
     border-right: 1px solid #E9E9E9;
@@ -233,7 +233,7 @@
 .tabledatespan {
   font-family: "Switzer Light";
   font-weight: 400;
-  font-size: 12px;
+  font-size: 11px;
   margin-left: 5px;
 }
 
@@ -247,7 +247,7 @@
 
 @media (max-width:430px) {
   .regcompany {
-    width: 70%;
+    width: 80%;
     line-height: 29px;
   }
   .tableheading {
@@ -273,7 +273,7 @@
     height: auto;
     /* width: 90%; */
     font-family: "Switzer Regular";
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 18.48px;
     padding: 4.5px;
@@ -302,7 +302,7 @@
   .tabledatespan {
     font-family: "Switzer Light";
     font-weight: 400;
-    font-size: 12px;
+    font-size: 11px;
     margin-left: 5px;
   }
   .data {
@@ -323,9 +323,9 @@
   .tabledateres {
     background-color: #F4F7FB;
     height: auto;
-    width: 84%;
+    width: 90%;
     font-family: "Switzer Regular";
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     line-height: 17.48px;
     padding: 4.5px;
@@ -336,7 +336,7 @@
   .tabledatespan {
     font-family: "Switzer Light";
     font-weight: 400;
-    font-size: 11px;
+    font-size: 10px;
     margin-left: 5px;
   }
   .tableheading {
@@ -359,9 +359,9 @@
   .tabledateres {
     background-color: #F4F7FB;
     height: auto;
-    width: 88%;
+    width: 91%;
     font-family: "Switzer Regular";
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     line-height: 17.48px;
     padding: 4.5px;
@@ -372,7 +372,7 @@
   .tabledatespan {
     font-family: "Switzer Light";
     font-weight: 400;
-    font-size: 11px;
+    font-size: 10px;
     margin-left: 5px;
   }
 }
@@ -381,7 +381,7 @@
   .tabledateres {
     background-color: #F4F7FB;
     height: auto;
-    width: 88%;
+    width: 97%;
     font-family: "Switzer Regular";
     font-size: 11px;
     font-weight: 500;
@@ -403,13 +403,22 @@
   }
 }
 
+@media (max-width:379px) {
+  .tabledateres {
+    font-size: 10px;
+  }
+  .tabledatespan {
+    font-size: 9px;
+  }
+}
+
 @media (max-width:377px) {
   .tabledateres {
     background-color: #F4F7FB;
     height: auto;
-    width: 89%;
+    /* width: 89%; */
     font-family: "Switzer Regular";
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     line-height: 17.48px;
     padding: 4.5px;
@@ -417,13 +426,26 @@
     color: #677487;
     display: flex;
   }
+  .tableheading {
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width:367px) {
+  .tabledateres {
+    width: 100%;
+    font-size: 9px;
+  }
+  .tabledatespan {
+    font-size: 9px;
+  }
 }
 
 @media (max-width:360px) {
     .tabledateres {
       background-color: #F4F7FB;
       height: auto;
-      width: 90%;
+      /* width: 90%; */
       font-family: "Switzer Regular";
       font-size: 9px;
       font-weight: 500;
@@ -440,7 +462,7 @@
       margin-left: 5px;
     }
     .tableheading {
-      font-size: 11px;
+      font-size: 10px;
       line-height: 20px;
      
     }

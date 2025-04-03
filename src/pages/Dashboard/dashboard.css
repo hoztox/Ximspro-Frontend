@@ -71,6 +71,7 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
 }
+
 .twotables {
   gap: 20px;
 }
@@ -93,28 +94,23 @@
 }
 
 .dashboarddark.dark .totalcompaniesdark {
-  filter: brightness(0) saturate(100%) invert(52%) sepia(97%) saturate(3530%)
-    hue-rotate(207deg) brightness(105%) contrast(101%);
+  filter: brightness(0) saturate(100%) invert(52%) sepia(97%) saturate(3530%) hue-rotate(207deg) brightness(105%) contrast(101%);
 }
 
 .dashboarddark.dark .totalusersdark {
-  filter: brightness(0) saturate(100%) invert(62%) sepia(34%) saturate(2819%)
-    hue-rotate(324deg) brightness(102%) contrast(92%);
+  filter: brightness(0) saturate(100%) invert(62%) sepia(34%) saturate(2819%) hue-rotate(324deg) brightness(102%) contrast(92%);
 }
 
 .dashboarddark.dark .companyfilesdark {
-  filter: brightness(0) saturate(100%) invert(27%) sepia(94%) saturate(5513%)
-    hue-rotate(247deg) brightness(100%) contrast(96%);
+  filter: brightness(0) saturate(100%) invert(27%) sepia(94%) saturate(5513%) hue-rotate(247deg) brightness(100%) contrast(96%);
 }
 
 .dashboarddark.dark .companyservicesdark {
-  filter: brightness(0) saturate(100%) invert(67%) sepia(57%) saturate(494%)
-    hue-rotate(112deg) brightness(98%) contrast(88%);
+  filter: brightness(0) saturate(100%) invert(67%) sepia(57%) saturate(494%) hue-rotate(112deg) brightness(98%) contrast(88%);
 }
 
 .dashboarddark.dark .activecompaniesdark {
-  filter: brightness(0) saturate(100%) invert(76%) sepia(80%) saturate(476%)
-    hue-rotate(328deg) brightness(108%) contrast(101%);
+  filter: brightness(0) saturate(100%) invert(76%) sepia(80%) saturate(476%) hue-rotate(328deg) brightness(108%) contrast(101%);
 }
 
 .dashboarddark.dark .subheads {
@@ -129,6 +125,7 @@
   .dashcmpytable {
     width: 60%;
   }
+
   .dashrecenttable {
     width: 40%;
   }
@@ -140,25 +137,31 @@
     width: 50px;
     height: 50px;
   }
+
   .dashicons {
     height: 30px;
     width: 30px;
   }
+
   .subheads {
     font-size: 17px;
     line-height: 18px;
     margin-top: 10px;
     margin-bottom: 10px;
   }
+
   .ptexts {
     font-size: 30px;
   }
+
   .card {
     height: 180px;
   }
+
   .cardslay {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
   .twotables {
     flex-direction: column;
   }
@@ -166,27 +169,32 @@
 
 
 
-@media (min-width: 820px) and (max-width: 1024px) { 
+@media (min-width: 820px) and (max-width: 1024px) {
   .singlecard {
     width: 50px;
     height: 50px;
   }
+
   .dashicons {
     height: 25px;
     width: 25px;
   }
+
   .subheads {
     font-size: 17px;
     line-height: 18px;
     margin-top: 10px;
     margin-bottom: 10px;
   }
+
   .ptexts {
     font-size: 30px;
   }
+
   .card {
     height: 170px;
   }
+
   .cardslay {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -201,25 +209,31 @@
     width: 50px;
     height: 50px;
   }
+
   .dashicons {
     height: 20px;
     width: 20px;
   }
+
   .subheads {
     font-size: 17px;
     line-height: 18px;
     margin-top: 10px;
     margin-bottom: 10px;
   }
+
   .ptexts {
     font-size: 28px;
   }
+
   .card {
     height: 165px;
   }
+
   .cardslay {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
   .subheads {
     font-size: 16px;
     line-height: 18px;
@@ -233,25 +247,31 @@
     width: 50px;
     height: 50px;
   }
+
   .dashicons {
     height: 20px;
     width: 20px;
   }
+
   .subheads {
     font-size: 17px;
     line-height: 18px;
     margin-top: 10px;
     margin-bottom: 10px;
   }
+
   .ptexts {
     font-size: 28px;
   }
+
   .card {
     height: 165px;
   }
+
   .cardslay {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
   .subheads {
     font-size: 16px;
     line-height: 18px;
@@ -264,19 +284,23 @@
   .cardslay {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
   .subheads {
     font-size: 16px;
     line-height: 18px;
     margin-top: 10px;
     margin-bottom: 10px;
   }
+
   .card {
     height: 165px;
   }
+
   .singlecard {
     width: 50px;
     height: 50px;
   }
+
   .dashicons {
     height: 20px;
     width: 20px;
@@ -291,7 +315,7 @@
 
 @media (max-width: 431px) {
   .cards {
-    width: 100%;
+    max-width: calc(100vw - 40px);
     margin-bottom: 35px;
   }
 
@@ -300,7 +324,8 @@
   }
 
   .cardslay .card:last-child {
-    grid-column: span 2; /* Make the last card span full width on mobile */
+    grid-column: span 2;
+    /* Make the last card span full width on mobile */
   }
 
   .singlecard {
@@ -320,12 +345,13 @@
   }
 
   .subheads {
-    font-size: 16px;
+    font-size: 14px;
     font-family: "Switzer Regular";
     font-weight: 500;
     line-height: 21.12px;
     margin-top: 15px;
   }
+
   .dashboarddark.dark .toptextspan {
     color: white;
   }
@@ -335,13 +361,16 @@
   .cards {
     width: 100%;
   }
+
   .subheads {
-    font-size: 15px;
+    font-size: 14px;
     margin-bottom: 5px;
   }
+
   .toptext {
     font-size: 14px;
   }
+
   .toptextspan {
     font-size: 18px;
   }
@@ -351,24 +380,36 @@
   .cards {
     width: 359px;
   }
+
   .card {
     height: 153px;
   }
+
   .mainheadss {
     font-size: 22px;
   }
+
   .subheads {
     font-size: 14px;
     margin-bottom: 5px;
   }
+
   .ptexts {
     font-size: 30px;
   }
+
   .toptext {
     font-size: 13px;
   }
+
   .toptextspan {
     font-size: 17px;
+  }
+}
+
+@media(max-width:395px) {
+  .subheads {
+    font-size: 13px;
   }
 }
 
@@ -376,13 +417,16 @@
   .cards {
     width: 345px;
   }
+
   .subheads {
-    font-size: 13px;
+    font-size: 12px;
     margin-bottom: 5px;
   }
+
   .toptext {
     font-size: 12px;
   }
+
   .toptextspan {
     font-size: 16px;
   }
@@ -392,14 +436,23 @@
   .cards {
     width: 328px;
   }
+
   .subheads {
     font-size: 12px;
     margin-bottom: 5px;
   }
+
   .toptext {
     font-size: 11px;
   }
+
   .toptextspan {
     font-size: 15px;
+  }
+}
+
+@media (max-width: 359px) {
+  .subheads {
+    font-size: 11px;
   }
 }

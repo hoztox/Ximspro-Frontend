@@ -2,29 +2,29 @@ import React from 'react'
 import "./subscriberblockmodal.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from '../../../ThemeContext';
+import blockillustrate from "../../../assets/images/Modal/blockillustrate.svg"
 
-const SubscriberBlockModal = ({ showBlockSubscriberModal,actionType, onConfirm, onCancel }) => {
-    const { theme } = useTheme();
+const SubscriberBlockModal = ({ showBlockSubscriberModal, actionType, onConfirm, onCancel }) => {
+  const { theme } = useTheme();
 
-    const modalMessage =
+  const modalMessage =
     actionType === "block"
-      ? "Are you sure you want to block this subscriber?"
-      : "Are you sure you want to activate this subscriber?";
+      ? ["Are you sure you want to block", "this subscriber?"]
+      : ["Are you sure you want to unblock", "this subscriber?"];
 
-      const confirmButtonLabel = actionType === "block" ? "Block" : "Activate";
+  const confirmButtonLabel = actionType === "block" ? "Block" : "Unblock";
   return (
     <AnimatePresence>
       {showBlockSubscriberModal && (
         <motion.div
-          className="modal-overlay"
+          className="block-sub-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className={`modal ${
-                theme === "dark" ? "dark" : "light"
+            className={`block-sub-modal ${theme === "dark" ? "dark" : "light"
               }`}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
@@ -32,18 +32,20 @@ const SubscriberBlockModal = ({ showBlockSubscriberModal,actionType, onConfirm, 
             transition={{ duration: 0.3 }}
           >
             <div
-              className={`modal-content space-y-6 ${
-                theme === "dark" ? "dark" : "light"
-              }`}
+              className={`block-sub-modal-content space-y-6 ${theme === "dark" ? "dark" : "light"
+                }`}
             >
-              <h3 className="confirmation">
-              {modalMessage}
+              <div className='flex justify-center'>
+                <img src={blockillustrate} alt="Block" className='w-[168px] h-[147px]' />
+              </div>
+              <h3 className="block-sub-confirmation">
+              {modalMessage[0]} <br /> {modalMessage[1]}
               </h3>
-              <div className="modal-actions gap-3 ">
-                <button onClick={onCancel} className="btn-cancel duration-200">
+              <div className="block-sub-modal-actions gap-3 ">
+                <button onClick={onCancel} className="block-sub-btn-cancel duration-200  w-[176px] h-[49px]">
                   Cancel
                 </button>
-                <button onClick={onConfirm} className="btn-confirm duration-200">
+                <button onClick={onConfirm} className="block-sub-btn-confirm duration-200  w-[176px] h-[49px]">
                   {confirmButtonLabel}
                 </button>
               </div>

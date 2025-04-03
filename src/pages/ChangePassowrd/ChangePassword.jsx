@@ -7,6 +7,8 @@ import { BASE_URL } from "../../Utils/Config";
 import logo from "../../assets/images/logo.svg";
 import closeIcon from "../../assets/images/close.svg";
 import { IoEye, IoEyeOff } from "react-icons/io5";
+import ChangePasswordSuccessModal from "./ChangePasswordSuccessModal";
+import ChangePasswordErrorModal from "./ChangePasswordErrorModal";
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -16,44 +18,52 @@ const ChangePassword = () => {
     confirm_password: "",
   });
 
+  const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false);
+  const [showPasswordErrorModal, setShowPasswordErrorModal] = useState(false);
+
   useEffect(() => {
     const adminToken = localStorage.getItem("adminAuthToken");
     if (!adminToken) {
       navigate("/");
     }
   }, [navigate]);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (formData.new_password !== formData.confirm_password) {
       toast.error("New Password and Confirm Password do not match.");
       return;
     }
-  
+
     try {
       const response = await axios.put(`${BASE_URL}/accounts/admin-change-password/`, {
         current_password: formData.current_password,
         new_password: formData.new_password,
         confirm_password: formData.confirm_password,
       });
-  
+
       if (response.status === 200) {
-        toast.success("Password changed successfully!");
+        setShowPasswordSuccessModal(true);
         localStorage.removeItem("adminAuthToken");
         setFormData({
           current_password: "",
           new_password: "",
           confirm_password: "",
         });
-        navigate("/");
+        setTimeout(() => {
+          setShowPasswordSuccessModal(false);
+          navigate("/");
+        }, 1500);
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "An error occurred.";
-      toast.error(errorMessage);
+      setShowPasswordErrorModal(true);
+      setTimeout(() => {
+        setShowPasswordErrorModal(false);
+      }, 3000);
     }
   };
-  
+
 
   const [passwordVisible, setPasswordVisible] = useState({
     current_password: false,
@@ -80,6 +90,17 @@ const ChangePassword = () => {
   return (
     <div className="flex flex-col h-screen items-center justify-center forgotscreens">
       <Toaster position="top-center" reverseOrder={false} />
+
+      <ChangePasswordSuccessModal
+        showPasswordSuccessModal={showPasswordSuccessModal}
+        onClose={() => { setShowPasswordSuccessModal(false) }}
+      />
+
+      <ChangePasswordErrorModal
+        showPasswordErrorModal={showPasswordErrorModal}
+        onClose={() => { setShowPasswordErrorModal(false) }}
+      />
+
       <div className="relative rounded-lg shadow-lg mainpasses">
         <div className="headers">
           <img

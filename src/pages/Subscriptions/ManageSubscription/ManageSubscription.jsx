@@ -23,9 +23,9 @@ const ManageSubscription = () => {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10; // Items per page
+  const [subscriptionToDelete, setSubscriptionToDelete] = useState(null);
 
   const [showDeleteSubscriptionModal, setShowDeleteSubscriptionModal] = useState(false);
-  const [subscriptionToDelete, setSubscriptionToDelete] = useState(null);
   const [showDeleteSubscriptionSuccesssModal,setShowDeleteSubscriptionSuccesssModal,] = useState(false);
   const [showDeleteSubscriptionErrorModal, setShowDeleteSubscriptionErrorModal] = useState(false);
 
