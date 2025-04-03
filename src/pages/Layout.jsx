@@ -19,7 +19,7 @@ const Layout = () => {
 
         {/* Main Content */}
         <div className={`flex-1 overflow-y-auto p-5 outlets ${theme === "dark" ? "dark" : "light"}`}>
-          <Outlet />
+          <Outlet /> 
         </div>
       </div>
     </div>
