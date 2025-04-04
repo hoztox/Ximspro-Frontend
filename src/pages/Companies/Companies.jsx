@@ -451,7 +451,7 @@ const Companies = () => {
                     </td>
                     <td className="companiesdata nodisplaydata tabview">
                       <span
-                        className={`p-1 rounded block ${company.status.toLowerCase() === "active"
+                        className={`p-1 rounded blockk ${company.status.toLowerCase() === "active"
                             ? "companiesactivestate"
                             : "companiesblockstate"
                           }`}
@@ -570,7 +570,7 @@ const Companies = () => {
                             <div>
                               <h4 className="text-end mobhead">Status</h4>
                               <span
-                                className={`rounded block text-xs blocks ${company.status.toLowerCase() === "active"
+                                className={`rounded blockk text-xs blocks ${company.status.toLowerCase() === "active"
                                     ? "mobstatusactive"
                                     : "mobstatusInactive"
                                   }`}

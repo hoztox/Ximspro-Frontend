@@ -91,6 +91,7 @@ import ViewAllNotifications from "./components/Company_Navbar/ViewAllNotificatio
 import DraftQmsManual from "./pages/QMS/Documentation/Manual/DraftQmsManual";
 import EditDraftQmsManual from "./pages/QMS/Documentation/Manual/EditDraftQmsManual";
 import QMSEditUser from "./pages/QMS/UserManagement/EditUser/QMSEditUser";
+import QMSViewUser from "./pages/QMS/UserManagement/ViewUser/QMSViewUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -147,6 +148,7 @@ const ThemedApp = () => {
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
           <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
+          <Route path="qms/user-details" element={<QMSViewUser/>} />
 
 
 
