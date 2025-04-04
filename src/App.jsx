@@ -90,7 +90,7 @@ import EditQmsmanual from "./pages/QMS/Documentation/Manual/EditQmsmanual";
 import ViewAllNotifications from "./components/Company_Navbar/ViewAllNotifications";
 import DraftQmsManual from "./pages/QMS/Documentation/Manual/DraftQmsManual";
 import EditDraftQmsManual from "./pages/QMS/Documentation/Manual/EditDraftQmsManual";
-import QMSEditUser from "./pages/QMS/UserManagement/EditUser/QmsEditUser";
+// import QMSEditUser from "./pages/QMS/UserManagement/EditUser/QmsEditUser";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
