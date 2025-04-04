@@ -422,7 +422,7 @@ const ViewQmsManual = () => {
                 {renderUserCorrections()}
 
                 {canReview && (
-                    <div className="flex justify-between mt-5">
+                    <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
                                 <button
