@@ -21,7 +21,7 @@ const Password = () => {
           <img
             src={closeIcon}
             alt="Close"
-            className="absolute top-6 right-6 cursor-pointer close"
+            className="absolute top-6 right-6 cursor-pointer closess"
             onClick={handleClose}
           />
 

@@ -22,6 +22,7 @@ const AddSubscriberErrorModal = ({ showAddSubErrorModal, onClose }) => {
                 >
                     <motion.div
                         className={`add-cmy-error-modal ${theme === "dark" ? "dark" : "light"}`}
+                        style={{ maxWidth: 'calc(100vw - 40px)' }}
                         initial={{ scale: 0.9 }}
                         animate={{ scale: 1 }}
                         exit={{ scale: 0.9 }}

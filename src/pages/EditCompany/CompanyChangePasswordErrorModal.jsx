@@ -1,18 +1,17 @@
 import React from 'react'
-import "./editerrormodal.css"
 import { useTheme } from '../../ThemeContext';
 import { X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion";
 import errors from "../../assets/images/Modal/errorIllustration.svg";
 import errorsdark from "../../assets/images/Modal/errorIllustrationdark.svg"
 
-const EditErrorModal = ({ showEditErrorModal, onClose }) => {
+const CompanyChangePasswordErrorModal = ({ showChangePasswordErrorModal, onClose }) => {
     const { theme } = useTheme();
 
-    if (!showEditErrorModal) return null;
+    if (!showChangePasswordErrorModal) return null;
     return (
         <AnimatePresence>
-            {showEditErrorModal && (
+            {showChangePasswordErrorModal && (
                 <motion.div
                     className="add-cmy-error-modal-overlay"
                     initial={{ opacity: 0 }}
@@ -28,7 +27,7 @@ const EditErrorModal = ({ showEditErrorModal, onClose }) => {
                         exit={{ scale: 0.9 }}
                         transition={{ duration: 0.3 }}
                     >
-                        <div className='w-full justify-end flex'>
+                        <div className='w-full justify-end flex items-center'>
                             <button onClick={onClose} className="add-cmy-error-deleteclosebtns">
                                 <X className='text-[#1C1C24] close' />
                             </button>
@@ -47,4 +46,4 @@ const EditErrorModal = ({ showEditErrorModal, onClose }) => {
     );
 };
 
-export default EditErrorModal
+export default CompanyChangePasswordErrorModal

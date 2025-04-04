@@ -20,6 +20,7 @@ const SubscriberDeleteModal = ({ showDeleteSubscriberModal, onConfirm, onCancel 
           <motion.div
             className={`modals ${theme === "dark" ? "dark" : "light"
               }`}
+              style={{ maxWidth: 'calc(100vw - 40px)' }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
@@ -37,7 +38,9 @@ const SubscriberDeleteModal = ({ showDeleteSubscriberModal, onConfirm, onCancel 
                 <br />
                 this subscriber?
               </h3>
-              <div className="modal-actionss gap-3">
+              <div className="modal-actionss gap-3"
+              style={{ maxWidth: 'calc(100vw - 80px)' }} 
+              >
                 <button onClick={onCancel} className="btn-cancels duration-200 w-[176px] h-[49px]">
                   Cancel
                 </button>

@@ -22,12 +22,13 @@ const AddErrorModal = ({ showAddErrorModal, onClose }) => {
         >
           <motion.div
             className={`add-cmy-error-modal ${theme === "dark" ? "dark" : "light"}`}
+            style={{ maxWidth: 'calc(100vw - 40px)' }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
             transition={{ duration: 0.3 }}
           >
-            <div className='w-full justify-end flex'>
+            <div className='w-full justify-end flex items-center'>
               <button onClick={onClose} className="add-cmy-error-deleteclosebtns">
                <X className='text-[#1C1C24] close'/>
               </button>

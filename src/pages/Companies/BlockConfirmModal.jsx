@@ -27,6 +27,7 @@ const BlockConfirmModal = ({ showBlockConfirmModal, actionType, onConfirm, onCan
           <motion.div
             className={`block-cmy-modal ${theme === "dark" ? "dark" : "light"
               }`}
+              style={{ maxWidth: 'calc(100vw - 40px)' }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
@@ -43,7 +44,9 @@ const BlockConfirmModal = ({ showBlockConfirmModal, actionType, onConfirm, onCan
                 {modalMessage[0]} <br /> {modalMessage[1]}
               </h3>
 
-              <div className="block-cmy-modal-actions gap-3 ">
+              <div className="block-cmy-modal-actions gap-3 "
+              style={{ maxWidth: 'calc(100vw - 80px)' }}
+              >
                 <button onClick={onCancel} className="block-cmy-btn-cancel duration-200  w-[176px] h-[49px]">
                   Cancel
                 </button>

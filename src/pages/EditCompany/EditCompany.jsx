@@ -11,6 +11,8 @@ import "react-advanced-cropper/dist/style.css";
 import { motion, AnimatePresence } from "framer-motion";
 import EditSuccessModal from "./EditSuccessModal";
 import EditErrorModal from "./EditErrorModal";
+import CompanyChangePasswordSuccessModal from "./CompanyChangePasswordSuccessModal";
+import CompanyChangePasswordErrorModal from "./CompanyChangePasswordErrorModal";
 // import Cropper from "react-easy-crop";
 
 const EditCompany = () => {
@@ -36,6 +38,9 @@ const EditCompany = () => {
 
   const [showEditSuccessModal, setShowEditSuccessModal] = useState(false);
   const [showEditErrorModal, setShowEditErrorModal] = useState(false);
+
+  const [showChangePasswordSuccessModal, setShowChangePasswordSuccessModal] = useState(false);
+  const [showChangePasswordErrorModal, setShowChangePasswordErrorModal] = useState(false);
 
   // States for the image crop modal
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
@@ -262,14 +267,21 @@ const EditCompany = () => {
       );
 
       if (response.status === 200) {
-        toast.success("Password changed successfully!");
+        setShowChangePasswordSuccessModal(true);
+        setTimeout(() => {
+          setShowChangePasswordSuccessModal(false);
+          navigate("/admin/companies");
+        }, 1500);
         setIsPasswordModalOpen(false);
         setPasswordData({ newPassword: "", confirmPassword: "" });
       }
     } catch (error) {
       console.error("Error changing password:", error);
+      setShowChangePasswordErrorModal(true);
       setPasswordError(error.response?.data?.error || "Failed to change password");
-      toast.error("Failed to change password. Please try again.");
+      setTimeout(() => {
+        setShowChangePasswordErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -362,6 +374,16 @@ const EditCompany = () => {
       <EditErrorModal
         showEditErrorModal={showEditErrorModal}
         onClose={() => { setShowEditErrorModal(false) }}
+      />
+
+      <CompanyChangePasswordSuccessModal
+        showChangePasswordSuccessModal={showChangePasswordSuccessModal}
+        onClose={() => { setShowChangePasswordSuccessModal(false) }}
+      />
+
+      <CompanyChangePasswordErrorModal
+        showChangePasswordErrorModal={showChangePasswordErrorModal}
+        onClose={() => { setShowChangePasswordErrorModal(false) }}
       />
 
       {/* Left Form Section */}

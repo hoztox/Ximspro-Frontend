@@ -21,6 +21,7 @@ const EditSubscriptionSuccessModal = ({ showEditSubscriptionSuccessModal, onClos
                 >
                     <motion.div
                         className={`success-modal ${theme === "dark" ? "dark" : "light"}`}
+                        style={{ maxWidth: 'calc(100vw - 32px)' }}
                         initial={{ scale: 0.9 }}
                         animate={{ scale: 1 }}
                         exit={{ scale: 0.9 }}

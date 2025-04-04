@@ -21,6 +21,7 @@ const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
             className={`modals ${
                 theme === "dark" ? "dark" : "light"
               }`}
+              style={{ maxWidth: 'calc(100vw - 40px)' }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
@@ -39,7 +40,9 @@ const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
                 <br />
                 this company?
               </h3>
-              <div className="modal-actionss gap-3">
+              <div className="modal-actionss gap-3"
+              style={{ maxWidth: 'calc(100vw - 80px)' }}
+              >
                 <button onClick={onCancel} className="btn-cancels duration-200 w-[176px] h-[49px]">
                   Cancel
                 </button>

@@ -1,18 +1,17 @@
 import React from 'react'
 import { motion, AnimatePresence } from "framer-motion";
-import success from "../../../assets/images/Modal/successIllustration.svg";
-import successdark from "../../../assets/images/Modal/successIllustrationdark.svg";
-import { useTheme } from '../../../ThemeContext';
+import success from "../../assets/images/Modal/successIllustration.svg";
+import successdark from "../../assets/images/Modal/successIllustrationdark.svg";
+import { useTheme } from '../../ThemeContext';
 import { X } from "lucide-react";
 
-
-const AddPlanSuccessModal = ({ showAddPlanSuccessModal, onClose }) => {
+const CompanyChangePasswordSuccessModal = ({ showChangePasswordSuccessModal, onClose }) => {
     const { theme } = useTheme();
 
-    if (!showAddPlanSuccessModal) return null;
+    if (!showChangePasswordSuccessModal) return null;
     return (
         <AnimatePresence>
-            {showAddPlanSuccessModal && (
+            {showChangePasswordSuccessModal && (
                 <motion.div
                     className="success-modal-overlay"
                     initial={{ opacity: 0 }}
@@ -37,7 +36,7 @@ const AddPlanSuccessModal = ({ showAddPlanSuccessModal, onClose }) => {
                             <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
                             <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Subscription Plan Added Successfully</p>
+                            <p className="success-messege">Password Changed Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>
@@ -45,5 +44,4 @@ const AddPlanSuccessModal = ({ showAddPlanSuccessModal, onClose }) => {
         </AnimatePresence>
     );
 };
-
-export default AddPlanSuccessModal
+export default CompanyChangePasswordSuccessModal

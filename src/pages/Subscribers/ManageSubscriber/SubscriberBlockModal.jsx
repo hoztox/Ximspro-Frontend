@@ -26,6 +26,7 @@ const SubscriberBlockModal = ({ showBlockSubscriberModal, actionType, onConfirm,
           <motion.div
             className={`block-sub-modal ${theme === "dark" ? "dark" : "light"
               }`}
+              style={{ maxWidth: 'calc(100vw - 40px)' }}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0.9 }}
@@ -41,7 +42,9 @@ const SubscriberBlockModal = ({ showBlockSubscriberModal, actionType, onConfirm,
               <h3 className="block-sub-confirmation">
               {modalMessage[0]} <br /> {modalMessage[1]}
               </h3>
-              <div className="block-sub-modal-actions gap-3 ">
+              <div className="block-sub-modal-actions gap-3 "
+              style={{ maxWidth: 'calc(100vw - 80px)' }}
+              >
                 <button onClick={onCancel} className="block-sub-btn-cancel duration-200  w-[176px] h-[49px]">
                   Cancel
                 </button>
