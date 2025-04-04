@@ -408,7 +408,7 @@ const handleFileChange = (event) => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Checked by <span className="text-red-500">*</span>
+                                Checked/Review By <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <select
@@ -447,7 +447,7 @@ const handleFileChange = (event) => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Approved by <span className="text-red-500">*</span>
+                                Approved By <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <select
