@@ -60,7 +60,7 @@ const QMSEditUser = () => {
     const fetchUserDetails = async (id) => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/company/users/${id}/`);
+            const response = await axios.get(`${BASE_URL}/company/user/${id}/`);
 
             if (response.status === 200 && response.data) {
                  

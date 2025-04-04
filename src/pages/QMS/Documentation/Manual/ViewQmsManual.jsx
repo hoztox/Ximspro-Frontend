@@ -370,7 +370,7 @@ const ViewQmsManual = () => {
                             </p>
                         </div>
                         <div>
-                            <label className="viewmanuallabels">Checked/Review By</label>
+                            <label className="viewmanuallabels">Checked/Reviewed By</label>
                             <p className="viewmanuasdata">
                                 {manualDetails.checked_by
                                     ? `${manualDetails.checked_by.first_name} ${manualDetails.checked_by.last_name}`

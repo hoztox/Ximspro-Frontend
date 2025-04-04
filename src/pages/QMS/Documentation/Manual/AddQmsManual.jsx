@@ -352,7 +352,7 @@ const AddQmsManual = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Checked/Review By <span className="text-red-500">*</span>
+                                Checked/Reviewed By <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <select

@@ -91,8 +91,8 @@ const QMSListUser = () => {
     navigate(`/company/qms/edituser/${userId}`);
   };
 
-  const handleViewUser = () => {
-    navigate('/company/qms/user-details')
+  const handleViewUser = (userId) => {
+    navigate(`/company/qms/user-details/${userId}`);
   }
 
   const handleDeleteUser = async (userId) => {
@@ -177,7 +177,7 @@ const QMSListUser = () => {
                     <img src={permissions} alt="Permission" className='w-[16px] h-[16px]' />
                   </td>
                   <td className="px-4 add-user-datas text-center">
-                    <button onClick={handleViewUser}>
+                    <button onClick={() => handleViewUser(user.id)}>
                       <img src={views} alt="View" />
                     </button>
                   </td>

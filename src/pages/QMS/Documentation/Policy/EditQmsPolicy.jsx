@@ -20,14 +20,14 @@ import addlinks from "../../../../assets/images/Company Documentation/add-link.s
 import removelinks from "../../../../assets/images/Company Documentation/remove-link.svg"
 import textcolor from "../../../../assets/images/Company Documentation/text-color.svg"
 import textbgcolor from "../../../../assets/images/Company Documentation/bg-color.svg"
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import { BASE_URL } from "../../../../Utils/Config";
 import "./addqmspolicys.css"
 
 const EditQmsPolicy = () => {
   const { id } = useParams(); // Get policy ID from URL
   const navigate = useNavigate();
-    const [qmsPolicies, setQmsPolicies] = useState([]);
+  const [qmsPolicies, setQmsPolicies] = useState([]);
 
   const [formData, setFormData] = useState({
     content: '',
@@ -35,7 +35,7 @@ const EditQmsPolicy = () => {
     newPolicy: null
   });
   const [isLoading, setIsLoading] = useState(true);
- 
+
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
@@ -88,9 +88,9 @@ const EditQmsPolicy = () => {
   const [selectedFontFormat, setSelectedFontFormat] = useState(fontFormats[0].label);
 
 
-    useEffect((id) => {
-      fetchPolicyDetails();
-    }, [id]);
+  useEffect((id) => {
+    fetchPolicyDetails();
+  }, [id]);
 
   const getUserCompanyId = () => {
     // First check if company_id is stored directly
@@ -100,7 +100,7 @@ const EditQmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-     
+
       const userData = localStorage.getItem("user_company_id");
       if (userData) {
         try {
@@ -122,18 +122,28 @@ const EditQmsPolicy = () => {
     return parts[parts.length - 1];
   };
 
+  const handleViewFile = () => {
+    // Check if there's an existing policy with a URL to open
+    if (formData.existingPolicy && formData.existingPolicy.url) {
+      // Open the URL in a new tab
+      window.open(formData.existingPolicy.url, '_blank');
+    } else {
+      toast.error('No file is available to view');
+    }
+  };
+
 
   const fetchPolicyDetails = async () => {
     try {
       console.log('Fetching policy with ID:', id);
- 
+
 
       // Fetch specific policy details using the ID from URL
       const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {
-      
-    });
+
+      });
       const policyData = response.data;
-      console.log("policieeeeeeeeeeeeeee",response.data)
+      console.log("policieeeeeeeeeeeeeee", response.data)
       // Set editor content
       if (editorRef.current && policyData.text) {
         editorRef.current.innerHTML = policyData.text;
@@ -687,22 +697,22 @@ const EditQmsPolicy = () => {
   const handleSave = async () => {
     try {
       const editorContent = editorRef.current ? editorRef.current.innerHTML.trim() : '';
-  
+
       if (!editorContent.length) {
         toast.error('Please enter policy content');
         return;
       }
-  
+
       const apiFormData = new FormData();
       apiFormData.append('text', editorContent);
-  
-       
-  
+
+
+
       // Add policy file if selected
       if (formData.newPolicy) {
         apiFormData.append('energy_policy', formData.newPolicy);
       }
-  
+
       const response = await axios.put(
         `${BASE_URL}/qms/policy/${id}/update/`,
         apiFormData,
@@ -712,7 +722,7 @@ const EditQmsPolicy = () => {
           }
         }
       );
-  
+
       if (response?.status === 200 || response?.status === 201) {
         toast.success('Policy updated successfully');
         navigate('/company/qms/policy');
@@ -724,7 +734,7 @@ const EditQmsPolicy = () => {
       toast.error(error.response?.data?.detail || 'An error occurred. Please try again.');
     }
   };
-  
+
 
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -796,7 +806,7 @@ const EditQmsPolicy = () => {
   };
 
 
-  
+
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
@@ -1003,6 +1013,13 @@ const EditQmsPolicy = () => {
       <div className="flex items-center justify-between mt-8 mb-[23px]">
         <label className="attach-policy-text">Attach Quality Policy:</label>
         <div className="flex items-center ">
+          <button
+            className='flex items-center text-[#1E84AF] gap-2 mr-3 click-view-file-btn'
+            onClick={handleViewFile}
+          >
+            Click to view file
+            <Eye size={18} className='text-[#1E84AF]' />
+          </button>
           <label className="flex justify-center gap-[10px] items-center w-[326px] h-[44px] px-[10px] text-[#AAAAAA] rounded-md border border-[#383840] cursor-pointer transition">
             Choose File
             <img src={files} alt="File Icon" />
@@ -1013,11 +1030,11 @@ const EditQmsPolicy = () => {
               accept=".pdf,.doc,.docx"
             />
           </label>
-          <div className="mt-1 ml-2 text-sm text-[#54545B]">
-  {formData.existingPolicy 
-    ? formData.existingPolicy.name 
-    : "No file chosen"}
-</div>
+          <div className="mt-1 ml-2 text-sm text-white">
+            {formData.existingPolicy
+              ? formData.existingPolicy.name
+              : "No file chosen"}
+          </div>
 
         </div>
       </div>
@@ -1043,7 +1060,7 @@ const EditQmsPolicy = () => {
           className="save-btn duration-200"
           onClick={handleSave}
         >
-          Update Policy
+          Update
         </button>
       </div>
     </div>
