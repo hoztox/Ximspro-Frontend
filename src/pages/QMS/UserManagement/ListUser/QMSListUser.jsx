@@ -86,10 +86,10 @@ const QMSListUser = () => {
     navigate('/company/qms/adduser');
   };
 
-  const handleEditUser = (userId) => {
-    console.log("Edit user with ID:", userId);
-    navigate(`/company/qms/edituser/${userId}`);
-  };
+  // const handleEditUser = (userId) => {
+  //   console.log("Edit user with ID:", userId);
+  //   navigate(`/company/qms/edituser/${userId}`);
+  // };
 
   const handleDeleteUser = async (userId) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this user?");
@@ -178,9 +178,12 @@ const QMSListUser = () => {
                     </button>
                   </td>
                   <td className="px-4 add-user-datas text-center">
-                    <button onClick={() => handleEditUser(user.id)}>
+                    <button>
                       <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
                     </button>
+                    {/* <button onClick={() => handleEditUser(user.id)}>
+                      <img src={edits} alt="Edit" className='w-[16px] h-[16px]' />
+                    </button> */}
                   </td>
                   <td className="px-4 add-user-datas text-center">
                     <button onClick={() => handleDeleteUser(user.id)}>

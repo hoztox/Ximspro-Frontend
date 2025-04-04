@@ -217,7 +217,7 @@ const Navbar = () => {
     >
       {/* Left Section */}
       <div className="flex flex-col -space-y-1">
-        <span className="text-[#677487] span1">Welcome Back,</span>
+        <span className="text-[#677487] span1">Welcome Back,,</span>
         <span
           className={`span2 ${theme === "dark" ? "dark" : "light"} duration-100`}
         >

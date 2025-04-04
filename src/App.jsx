@@ -146,7 +146,7 @@ const ThemedApp = () => {
           {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
-          <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
+          {/* <Route path="qms/edituser/:id" element={<QMSEditUser/>} /> */}
 
 
 
