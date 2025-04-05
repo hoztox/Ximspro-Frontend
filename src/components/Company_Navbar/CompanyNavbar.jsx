@@ -189,8 +189,8 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             setUserEmail(response.data.email);
           }
 
-          if (response.data.name) {
-            setUserName(response.data.name);
+          if (response.data.username) {
+            setUserName(response.data.username);
           }
 
           if (response.data.user_logo) {
@@ -455,8 +455,8 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-[white] text-1 admin-username">{userName || (isUserLogin ? 'User' : 'Company')}</span>
-                <span className="text-[#6D6D6D] text-2">{userEmail || 'email@example.com'}</span>
+                <span className="text-[white] text-1 admin-username">{userName}</span>
+                <span className="text-[#6D6D6D] text-2">{userEmail}</span>
               </div>
 
               {/* Profile Dropdown Menu with Animation */}
