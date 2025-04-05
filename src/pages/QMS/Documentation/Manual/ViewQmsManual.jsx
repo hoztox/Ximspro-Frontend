@@ -538,7 +538,7 @@ const ViewQmsManual = () => {
                                 <button
                                     onClick={ () => {
                                         handleReviewAndSubmit()
-                                        // handleMoveToHistory();
+                                        handleMoveToHistory();
                                     }}
                                     className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
                                     disabled={!canReview}
