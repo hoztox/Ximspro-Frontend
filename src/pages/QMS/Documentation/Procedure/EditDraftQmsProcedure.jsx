@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-const AddQmsProcedure = () => {
-    const navigate = useNavigate()
+const EditDraftQmsProcedure = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
@@ -20,16 +21,18 @@ const AddQmsProcedure = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [procedures, setProcedures] = useState([]);
+    const [previewAttachment, setPreviewAttachment] = useState(null);
+    const [procedureDetails, setProcedureDetails] = useState(null);
+    const { id } = useParams();
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const getUserCompanyId = () => {
-        // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
 
-        // If user data exists with company_id
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-            // Try to get company_id from user data that was stored during login
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
@@ -44,23 +47,80 @@ const AddQmsProcedure = () => {
     };
 
     const companyId = getUserCompanyId();
+    useEffect(() => {
+        if (companyId && id) {
+            fetchProcedureDetails();
+
+        }
+    }, [companyId, id]);
+    useEffect(() => {
+        if (procedureDetails) {
+            setFormData({
+                title: procedureDetails.title || '',
+                written_by: procedureDetails.written_by?.id || null,
+                no: procedureDetails.no || '',
+                checked_by: procedureDetails.checked_by?.id || null,
+                rivision: procedureDetails.rivision || '',
+                approved_by: procedureDetails.approved_by?.id || null,
+                document_type: procedureDetails.document_type || 'System',
+                date: procedureDetails.date || formData.date,
+                review_frequency_year: procedureDetails.review_frequency_year || '',
+                review_frequency_month: procedureDetails.review_frequency_month || '',
+                publish: procedureDetails.publish || false,
+                send_notification: procedureDetails.send_notification || false
+            });
+        }
+    }, [procedureDetails]);
+    const fetchProcedureDetails = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
+            setProcedureDetails(response.data);
+            setIsInitialLoad(false);
+            console.log("Procedure Details:", response.data);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching procedure details:", err);
+            setError("Failed to load procedure details");
+            setIsInitialLoad(false);
+            setLoading(false);
+        }
+    };
+    const renderAttachmentPreview = () => {
+
+        if (previewAttachment) {
+            const attachmentName = selectedFile || procedureDetails?.upload_attachment_name || 'Attachment';
+
+            return (
+                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
+                    <div className="text-white flex items-center space-x-4">
+                        <span>{attachmentName}</span>
+                        <button
+                            onClick={() => window.open(previewAttachment, '_blank')}
+                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
+                        >
+                            View File
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+        return null;
+    };
+
+
     console.log("Stored Company ID:", companyId);
 
     const [formData, setFormData] = useState({
         title: '',
         written_by: null,
         no: '',
-        checked_by: '',
-        checked_by_notify: 'No',
-        checked_by_email: 'No',
-        approved_by: '',
-        approved_by_notify: 'No',
-        approved_by_email: 'No',
+        checked_by: null,
+        rivision: '',
+        approved_by: null,
         document_type: 'System',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
-        relate_format: '',
         publish: false,
         send_notification: false
     });
@@ -69,10 +129,6 @@ const AddQmsProcedure = () => {
         written_by: false,
         checked_by: false,
         approved_by: false,
-        checked_by_notify: false,
-        checked_by_email: false,
-        approved_by_notify: false,
-        approved_by_email: false,
         document_type: false,
         day: false,
         month: false,
@@ -102,7 +158,7 @@ const AddQmsProcedure = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load manuals. Please check your connection and try again.");
+            setError("Failed to load procedures. Please check your connection and try again.");
         }
     };
 
@@ -110,7 +166,7 @@ const AddQmsProcedure = () => {
         return new Date(year, month, 0).getDate();
     };
 
-    // Parse date to get day, month, year
+
     const parseDate = () => {
         const dateObj = new Date(formData.date);
         return {
@@ -127,10 +183,10 @@ const AddQmsProcedure = () => {
         (_, i) => i + 1
     );
 
-    // Generate months (1-12)
+
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    // Generate years (current year - 10 to current year + 10)
+
     const years = Array.from(
         { length: 21 },
         (_, i) => currentYear - 10 + i
@@ -142,8 +198,6 @@ const AddQmsProcedure = () => {
         'External',
         'Work Instruction'
     ];
-
-    const yesNoOptions = ['Yes', 'No'];
 
     const toggleDropdown = (dropdown) => {
         setOpenDropdowns(prev => ({
@@ -168,16 +222,40 @@ const AddQmsProcedure = () => {
         }
     };
 
+    // Comprehensive method to fetch draft procedures details
+
+
+    useEffect(() => {
+
+        const draftProcedureId = localStorage.getItem('selected_draft_procedure_id');
+
+
+        const routeState = location.state?.draftProcedureId;
+
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDraftProcedureId = urlParams.get('draftProcedureId');
+
+        const id = draftProcedureId || routeState || urlDraftProcedureId;
+
+        if (id) {
+            console.log("Draft Procedure ID found:", id);
+            fetchDraftProcedureDetails(id);
+        } else {
+            console.warn("No draft procedure ID found");
+        }
+    }, []);
+
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
 
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
 
-            // Update the appropriate part of the date
+
             dateObj[dropdown] = parseInt(value, 10);
 
-            // Create new date string in YYYY-MM-DD format
+
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
             setFormData(prev => ({
@@ -195,53 +273,15 @@ const AddQmsProcedure = () => {
     };
 
     const handleCancelClick = () => {
-        navigate('/company/qms/procedure')
+        navigate('/company/qms/draftprocedure')
     }
 
-    const handleSaveClick = async () => {
-        try {
-            setLoading(true);
-
-            // Fetch company ID based on role
-            const companyId = getUserCompanyId();
-            if (!companyId) {
-                setError('Company ID not found. Please log in again.');
-                setLoading(false);
-                return;
-            }
-
-            const submitData = new FormData();
-            console.log('adaSD',formData);
-            
-            submitData.append('company', companyId);
-
-            // Add all other form data
-            Object.keys(formData).forEach(key => {
-                submitData.append(key, formData[key]);
-            });
-
-            if (fileObject) {
-                submitData.append('upload_attachment', fileObject);
-            }
-
-            const response = await axios.post(`${BASE_URL}/company/procedures/`, submitData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-
-            setLoading(false);
-            alert('Procedure added successfully!');
-            navigate('/company/qms/procedure');
-        } catch (err) {
-            setLoading(false);
-            setError('Failed to save procedure');
-            console.error('Error saving procedure:', err);
+    useEffect(() => {
+        if (procedureDetails?.upload_attachment) {
+            setPreviewAttachment(procedureDetails.upload_attachment);
         }
-    };
+    }, [procedureDetails]);
 
-
-    // Get month name from number
     const getMonthName = (monthNum) => {
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -250,15 +290,55 @@ const AddQmsProcedure = () => {
         return monthNames[monthNum - 1];
     };
 
-    // Format user name for display
+
     const formatUserName = (user) => {
         return `${user.first_name} ${user.last_name}`;
+    };
+
+    const handleUpdateClick = async () => {
+        try {
+            setLoading(true);
+
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+            submitData.append('company', companyId);
+
+
+            Object.keys(formData).forEach(key => {
+                submitData.append(key, formData[key]);
+            });
+
+
+            if (fileObject) {
+                submitData.append('upload_attachment', fileObject);
+            }
+
+            const response = await axios.put(`${BASE_URL}/qms/procedures/${id}/update/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setLoading(false);
+            alert('Procedure updated successfully!');
+            navigate('/company/qms/procedure');
+        } catch (err) {
+            setLoading(false);
+            setError('Failed to update procedure');
+            console.error('Error updating procedure:', err);
+        }
     };
 
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-                <h1 className="add-manual-sections">Add Procedures</h1>
+                <h1 className="add-manual-sections">Procedure Sections Draft</h1>
 
                 {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
@@ -267,10 +347,10 @@ const AddQmsProcedure = () => {
                 )}
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
-                    <div className="grid md:grid-cols-2 gap-5">
+                    <div className="grid md:grid-cols-2 gap-5 pb-5">
                         <div>
                             <label className="add-qms-manual-label">
-                                Procedure Name/Title
+                                Procedure Name/Title <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -320,75 +400,29 @@ const AddQmsProcedure = () => {
                             />
                         </div>
 
-                        <div className="flex space-x-3">
-                            <div className="w-1/2">
-                                <label className="add-qms-manual-label">
-                                    Checked/Reviewed By <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="checked_by"
-                                        value={formData.checked_by || ''}
-                                        onFocus={() => toggleDropdown('checked_by')}
-                                        onChange={(e) => handleDropdownChange(e, 'checked_by')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map(user => (
-                                            <option key={`checked-${user.id}`} value={user.id}>
-                                                {formatUserName(user)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">System Notify</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="checked_by_notify"
-                                        value={formData.checked_by_notify}
-                                        onFocus={() => toggleDropdown('checked_by_notify')}
-                                        onChange={(e) => handleDropdownChange(e, 'checked_by_notify')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_notify: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={`checked-notify-${option}`} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_notify ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">Email Notify</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="checked_by_email"
-                                        value={formData.checked_by_email}
-                                        onFocus={() => toggleDropdown('checked_by_email')}
-                                        onChange={(e) => handleDropdownChange(e, 'checked_by_email')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_email: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={`checked-email-${option}`} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_email ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Checked/Reviewed By <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    name="checked_by"
+                                    value={formData.checked_by || ''}
+                                    onFocus={() => toggleDropdown('checked_by')}
+                                    onChange={(e) => handleDropdownChange(e, 'checked_by')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
+                                >
+                                    <option value="">Select User</option>
+                                    {users.map(user => (
+                                        <option key={`checked-${user.id}`} value={user.id}>
+                                            {formatUserName(user)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
+                                />
                             </div>
                         </div>
 
@@ -405,75 +439,29 @@ const AddQmsProcedure = () => {
                             />
                         </div>
 
-                        <div className="flex space-x-3">
-                            <div className="w-1/2">
-                                <label className="add-qms-manual-label">
-                                    Approved by <span className="text-red-500">*</span>
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="approved_by"
-                                        value={formData.approved_by || ''}
-                                        onFocus={() => toggleDropdown('approved_by')}
-                                        onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map(user => (
-                                            <option key={`approved-${user.id}`} value={user.id}>
-                                                {formatUserName(user)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">System Notify</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="approved_by_notify"
-                                        value={formData.approved_by_notify}
-                                        onFocus={() => toggleDropdown('approved_by_notify')}
-                                        onChange={(e) => handleDropdownChange(e, 'approved_by_notify')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_notify: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={`approved-notify-${option}`} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_notify ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">Email Notify</label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="approved_by_email"
-                                        value={formData.approved_by_email}
-                                        onFocus={() => toggleDropdown('approved_by_email')}
-                                        onChange={(e) => handleDropdownChange(e, 'approved_by_email')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_email: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={`approved-email-${option}`} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_email ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Approved By <span className="text-red-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    name="approved_by"
+                                    value={formData.approved_by || ''}
+                                    onFocus={() => toggleDropdown('approved_by')}
+                                    onChange={(e) => handleDropdownChange(e, 'approved_by')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
+                                >
+                                    <option value="">Select User</option>
+                                    {users.map(user => (
+                                        <option key={`approved-${user.id}`} value={user.id}>
+                                            {formatUserName(user)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
+                                />
                             </div>
                         </div>
 
@@ -587,9 +575,8 @@ const AddQmsProcedure = () => {
                                 </button>
                                 {!selectedFile && <p className="text-right no-file">No file chosen</p>}
                             </div>
+                            {renderAttachmentPreview()}
                         </div>
-
-
 
                         <div>
                             <label className='add-qms-manual-label'>
@@ -627,29 +614,15 @@ const AddQmsProcedure = () => {
                                 className="w-full add-qms-manual-inputs"
                             />
                         </div>
-
-                        <div className="flex flex-col items-end mt-[35px] justify-center">
-                            {/* <div className='flex gap-[113px] mb-5'>
-                                <div className="flex items-center">
-                                    <span className="mr-3 add-qms-manual-label">Publish?</span>
-                                    <input
-                                        type="checkbox"
-                                        className="qms-manual-form-checkbox"
-                                        checked={formData.publish}
-                                        onChange={() => setFormData(prev => ({ ...prev, publish: !prev.publish }))}
-                                    />
-                                </div>
-                                <div className="flex items-center">
-                                    <span className="mr-3 add-qms-manual-label">Send Notification?</span>
-                                    <input
-                                        type="checkbox"
-                                        className="qms-manual-form-checkbox"
-                                        checked={formData.send_notification}
-                                        onChange={() => setFormData(prev => ({ ...prev, send_notification: !prev.send_notification }))}
-                                    />
-                                </div>
-                            </div> */}
-                            <div className='flex gap-[22px] mb-6'>
+                        <div className="flex items-center mt-[35px] justify-end">
+                            {/* <div className='mb-6'>
+                            <button
+                                className="request-correction-btn duration-200"
+                            >
+                                Save as Draft
+                            </button>
+                        </div> */}
+                            <div className='flex gap-[22px]'>
                                 <button
                                     className="cancel-btn duration-200"
                                     onClick={handleCancelClick}
@@ -659,7 +632,7 @@ const AddQmsProcedure = () => {
                                 </button>
                                 <button
                                     className="save-btn duration-200"
-                                    onClick={handleSaveClick}
+                                    onClick={handleUpdateClick}
                                     disabled={loading}
                                 >
                                     {loading ? 'Saving...' : 'Save'}
@@ -674,4 +647,4 @@ const AddQmsProcedure = () => {
     );
 };
 
-export default AddQmsProcedure
+export default EditDraftQmsProcedure

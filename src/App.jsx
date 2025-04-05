@@ -92,6 +92,10 @@ import DraftQmsManual from "./pages/QMS/Documentation/Manual/DraftQmsManual";
 import EditDraftQmsManual from "./pages/QMS/Documentation/Manual/EditDraftQmsManual";
 import QMSEditUser from "./pages/QMS/UserManagement/EditUser/QMSEditUser";
 import QMSViewUser from "./pages/QMS/UserManagement/ViewUser/QMSViewUser";
+import DraftQmsProcedure from "./pages/QMS/Documentation/Procedure/DraftQmsProcedure";
+import ViewQmsProcedure from "./pages/QMS/Documentation/Procedure/ViewQmsProcedure";
+import EditQmsProcedure from "./pages/QMS/Documentation/Procedure/EditQmsProcedure";
+import EditDraftQmsProcedure from "./pages/QMS/Documentation/Procedure/EditDraftQmsProcedure";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -129,12 +133,16 @@ const ThemedApp = () => {
           <Route path="qms/viewmanual/:id" element={<ViewQmsManual />} />
           <Route path="qms/editmanual/:id" element={<EditQmsmanual />} />
           <Route path="qms/draftmanual" element={<DraftQmsManual/>} />
-          <Route path="notifications" element = {<ViewAllNotifications/>}/>
           <Route path="qms/editdraftmanual/:id" element={<EditDraftQmsManual/>} />
+          <Route path="notifications" element = {<ViewAllNotifications/>}/>
           
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
           <Route path="qms/addprocedure" element={<AddQmsProcedure />} />
+          <Route path="qms/viewprocedure/:id" element={<ViewQmsProcedure/>} />
+          <Route path="qms/editprocedure/:id" element={<EditQmsProcedure/>} />
+          <Route path="qms/draftprocedure" element={<DraftQmsProcedure/>} />
+          <Route path="qms/editdraftprocedure/:id" element={<EditDraftQmsProcedure/>} />
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />

@@ -1,23 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import edits from "../../../../assets/images/Company Documentation/edit.svg"
 import deletes from "../../../../assets/images/Company Documentation/delete.svg"
-import historys from '../../../../assets/images/Company Documentation/history.svg'
+import historys from "../../../../assets/images/Company Documentation/history.svg"
 import { motion, AnimatePresence } from 'framer-motion';
-import "./viewqmsmanual.css"
 import { X, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-const ViewQmsManual = () => {
+const ViewQmsProcedure = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [manualDetails, setManualDetails] = useState(null);
+    const [procedureDetails, setProcedureDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [corrections, setCorrections] = useState([]);
-    const [highlightedCorrection, setHighlightedCorrection] = useState(null);
-    const [historyCorrections, setHistoryCorrections] = useState([]);
+
+    const [messages, setMessages] = useState([
+        {
+            id: 1,
+            from: 'User1',
+            to: 'User2',
+            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
+            timestamp: '20-04-2025, 09:30 am'
+        },
+        {
+            id: 1,
+            from: 'User1',
+            to: 'User2',
+            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
+            timestamp: '20-04-2025, 09:30 am'
+        },
+        {
+            id: 1,
+            from: 'User1',
+            to: 'User2',
+            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
+            timestamp: '20-04-2025, 09:30 am'
+        },
+        {
+            id: 1,
+            from: 'User1',
+            to: 'User2',
+            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
+            timestamp: '20-04-2025, 09:30 am'
+        },
+
+    ]);
+
+    const fetchMessages = () => {
+        // In a real application, you would fetch data here
+        console.log('Fetching messages...');
+    };
+
+    // Demonstrating how to reload history
+    const reloadHistory = () => {
+        fetchMessages();
+    };
+
+
 
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
@@ -96,61 +137,31 @@ const ViewQmsManual = () => {
         return null;
     };
 
-    // Fetch manual details
-    const fetchManualDetails = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}/qms/manual-detail/${id}/`);
-            setManualDetails(response.data);
-            console.log("Manual Details:", response.data);
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching manual details:", err);
-            setError("Failed to load manual details");
-            setLoading(false);
-        }
+    // Fetch procedure details
+    const fetchProcedureDetails = async () => {
+        // try {
+        //     const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
+        //     setProcedureDetails(response.data);
+        //     console.log("Procedure Details:", response.data);
+        //     setLoading(false);
+        // } catch (err) {
+        //     console.error("Error fetching procedure details:", err);
+            
+        //     setLoading(false);
+        // }
     };
-
-    const fetchManualCorrections = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}/qms/manuals/${id}/corrections/`);
-            const allCorrections = response.data;
-            console.log("Fetched Manual Corrections:", allCorrections);
-
-            // Get current user ID and viewed corrections
-            const currentUserId = Number(localStorage.getItem('user_id'));
-            const viewedCorrections = getViewedCorrections();
-
-            // Filter corrections for the current user
-            const userCorrections = allCorrections.filter(
-                correction => correction.to_user?.id === currentUserId
-            ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            setCorrections(allCorrections);
-
-            // Find the latest non-viewed correction
-            const latestUnviewedCorrection = userCorrections.find(
-                correction => !viewedCorrections.includes(correction.id)
-            );
-
-            if (latestUnviewedCorrection) {
-                setHighlightedCorrection(latestUnviewedCorrection);
-                setHistoryCorrections(
-                    userCorrections.filter(correction =>
-                        correction.id !== latestUnviewedCorrection.id
-                    )
-                );
-            } else {
-                setHighlightedCorrection(null);
-                setHistoryCorrections(userCorrections);
-            }
-        } catch (error) {
-            console.error("Error fetching manual corrections:", error);
-        }
+    const fetchProcedureCorrections = async () => {
+        // try {
+        //     const response = await axios.get(`${BASE_URL}/qms/procedures/${id}/corrections/`);
+        //     setCorrections(response.data);
+        //     console.log("Fetched Procedure Corrections:", response.data);
+        // } catch (error) {
+        //     console.error("Error fetching Procedure corrections:", error);
+        // }
     };
-
     useEffect(() => {
-        fetchManualDetails();
-        fetchManualCorrections();
+        fetchProcedureDetails();
+        fetchProcedureCorrections()
     }, [id]);
 
     const handleCorrectionRequest = () => {
@@ -168,7 +179,7 @@ const ViewQmsManual = () => {
     };
 
     const handleCloseViewPage = () => {
-        navigate('/company/qms/manual')
+        navigate('/company/qms/procedure')
     }
 
     const handleCorrectionSubmit = async () => {
@@ -180,7 +191,7 @@ const ViewQmsManual = () => {
             }
 
             const requestData = {
-                manual_id: id,
+                procedure_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
 
@@ -196,37 +207,11 @@ const ViewQmsManual = () => {
             handleCloseCorrectionRequest();
 
             // Refresh data
-            fetchManualDetails();
-            fetchManualCorrections();
+            fetchProcedureDetails();
+            fetchProcedureCorrections();
         } catch (error) {
             console.error('Error submitting correction:', error);
             alert(error.response?.data?.error || 'Failed to submit correction');
-        }
-    };
-
-    const getViewedCorrections = () => {
-        const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
-        const viewedCorrections = localStorage.getItem(storageKey);
-        return viewedCorrections ? JSON.parse(viewedCorrections) : [];
-    };
-
-    const saveViewedCorrection = (correctionId) => {
-        const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
-        const viewedCorrections = getViewedCorrections();
-        if (!viewedCorrections.includes(correctionId)) {
-            viewedCorrections.push(correctionId);
-            localStorage.setItem(storageKey, JSON.stringify(viewedCorrections));
-        }
-    };
-
-    const handleMoveToHistory = () => {
-        if (highlightedCorrection) {
-            // Save this correction as viewed in localStorage
-            saveViewedCorrection(highlightedCorrection.id);
-
-            // Update state
-            setHistoryCorrections(prev => [highlightedCorrection, ...prev]);
-            setHighlightedCorrection(null);
         }
     };
 
@@ -244,50 +229,43 @@ const ViewQmsManual = () => {
     // Format date to display how long ago the correction was made
     const formatCorrectionDate = (dateString) => {
         const date = new Date(dateString);
-        
-        // Format date as DD-MM-YYYY
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        
-        // Format time as HH:MM am/pm
-        let hours = date.getHours();
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'pm' : 'am';
-        
-        // Convert hours to 12-hour format
-        hours = hours % 12;
-        hours = hours ? hours : 12; // Convert 0 to 12
-        const formattedHours = String(hours).padStart(2, '0');
-        
-        return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours} hours ago`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        return `${diffInDays} days ago`;
     };
 
     // Render loading or error states
     if (loading) return <div className="text-white">Loading...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
-    if (!manualDetails) return <div className="text-white">No manual details found</div>;
+    
 
     // Check if current user can review
     const currentUserId = Number(localStorage.getItem('user_id'));
-    const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
+    const isCurrentUserWrittenBy = currentUserId === procedureDetails.written_by?.id;
 
     const canReview = (() => {
         // Exclude the written_by user from requesting corrections
-        if (isCurrentUserWrittenBy) {
-            return false;
+        // if (isCurrentUserWrittenBy) {
+        //     return false;
+        // }
+
+        if (procedureDetails.status === "Pending for Review/Checking") {
+            return currentUserId === procedureDetails.checked_by?.id;
         }
 
-        if (manualDetails.status === "Pending for Review/Checking") {
-            return currentUserId === manualDetails.checked_by?.id;
-        }
-
-        if (manualDetails.status === "Correction Requested") {
+        if (procedureDetails.status === "Correction Requested") {
             return corrections.some(correction => correction.to_user?.id === currentUserId);
         }
 
-        if (manualDetails.status === "Reviewed,Pending for Approval") {
-            return currentUserId === manualDetails.approved_by?.id;
+        if (procedureDetails.status === "Reviewed,Pending for Approval") {
+            return currentUserId === procedureDetails.approved_by?.id;
         }
 
         return false;
@@ -302,18 +280,18 @@ const ViewQmsManual = () => {
             }
 
             const requestData = {
-                manual_id: id,
+                procedure_id: id,
                 current_user_id: currentUser.user_id
             };
 
             const response = await axios.post(
-                `${BASE_URL}/qms/manual-review/`,
+                `${BASE_URL}/qms/procedure-review/`,
                 requestData
             );
 
             alert(response.data.message);
-            fetchManualDetails();
-            fetchManualCorrections();
+            fetchProcedureDetails();
+            fetchProcedureCorrections();
         } catch (error) {
             console.error('Error submitting review:', error);
             const errorMessage = error.response?.data?.error ||
@@ -340,68 +318,44 @@ const ViewQmsManual = () => {
         }
     };
 
-    // Render highlighted correction
-    const renderHighlightedCorrection = () => {
-        if (!highlightedCorrection) return null;
-
-        return (
-            <div className="mt-5 bg-[#1F2937] p-4 rounded-md border-l-4 border-[#3B82F6]">
-                <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                        <AlertCircle size={18} className="text-[#3B82F6]" />
-                        <h2 className="text-white font-medium">Latest Correction Request</h2>
-                    </div>
-                </div>
-                <div className="bg-[#24242D] p-5 rounded-md mt-3">
-                    <div className="flex justify-between items-center mb-2">
-                        <div className="from-to-time text-[#AAAAAA]">
-                            From: {highlightedCorrection.from_user?.first_name} {highlightedCorrection.from_user?.last_name}
-                        </div>
-                        <div className="from-to-time text-[#AAAAAA]">
-                            {formatCorrectionDate(highlightedCorrection.created_at)}
-                        </div>
-                    </div>
-                    <p className="text-white history-content">{highlightedCorrection.correction}</p>
-                </div>
-            </div>
+    // Render corrections specific to the current user
+    const renderUserCorrections = () => {
+        const userSpecificCorrections = corrections.filter(
+            correction => correction.to_user?.id === currentUserId
         );
-    };
 
-    // Render correction history
-    const renderCorrectionHistory = () => {
-        if (historyCorrections.length === 0) return null;
+        if (userSpecificCorrections.length === 0) return null;
 
         return (
-            <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
-                <div className="sticky -top-0 bg-[#1C1C24] z-10 flex items-center text-white mb-5 gap-[6px] pb-2">
-                    <h2 className="history-head">Correction History</h2>
-                    <img src={historys} alt="History" />
+            <div className="mt-5 bg-[#24242D] p-4 rounded-md">
+                <div className="flex items-center text-[#FFA500] mb-3">
+                    <AlertCircle className="mr-2" />
+                    <h2 className="text-lg font-semibold">Correction Requests</h2>
                 </div>
-                {historyCorrections.map((correction, index) => (
+                {userSpecificCorrections.map((correction, index) => (
                     <div
                         key={correction.id}
-                        className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? 'mb-5' : ''}`}
+                        className={`bg-[#383840] p-3 rounded-md mb-3 ${index < userSpecificCorrections.length - 1 ? 'mb-3' : ''}`}
                     >
                         <div className="flex justify-between items-center mb-2">
-                            <div className="from-to-time text-[#AAAAAA]">
+                            <div className="text-sm text-gray-400">
                                 From: {correction.from_user?.first_name} {correction.from_user?.last_name}
                             </div>
-                            <div className="from-to-time text-[#AAAAAA]">
+                            <div className="text-xs text-gray-500">
                                 {formatCorrectionDate(correction.created_at)}
                             </div>
                         </div>
-                        <p className="text-white history-content">{correction.correction}</p>
+                        <p className="text-white">{correction.correction}</p>
                     </div>
                 ))}
             </div>
-
         );
     };
 
     return (
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
-                <h1 className='viewmanualhead'>Review Manual Section</h1>
+                <h1 className='viewmanualhead'>Review Procedure Section</h1>
                 <button
                     className="text-white bg-[#24242D] p-1 rounded-md"
                     onClick={handleCloseViewPage}
@@ -415,35 +369,35 @@ const ViewQmsManual = () => {
                         <div>
                             <label className="viewmanuallabels">Section Name/Title</label>
                             <div className="flex justify-between items-center">
-                                <p className="viewmanuasdata">{manualDetails.title || 'N/A'}</p>
+                                <p className="viewmanuasdata">{procedureDetails.title || 'N/A'}</p>
                             </div>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Section Number</label>
-                            <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{procedureDetails.no || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Revision</label>
-                            <p className="viewmanuasdata">{manualDetails.rivision || 'N/A'}</p>
+                            <p className="viewmanuasdata">{procedureDetails.rivision || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Document Type</label>
-                            <p className="viewmanuasdata">{manualDetails.document_type || 'N/A'}</p>
+                            <p className="viewmanuasdata">{procedureDetails.document_type || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Document</label>
                             <div
                                 className='flex items-center cursor-pointer gap-[8px]'
                                 onClick={() => {
-                                    if (manualDetails.upload_attachment) {
-                                        window.open(manualDetails.upload_attachment, '_blank');
+                                    if (procedureDetails.upload_attachment) {
+                                        window.open(procedureDetails.upload_attachment, '_blank');
                                     }
                                 }}
                             >
                                 <p className="click-view-file-text">
-                                    {manualDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
+                                    {procedureDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
                                 </p>
-                                {manualDetails.upload_attachment && (
+                                {procedureDetails.upload_attachment && (
                                     <Eye size={20} className='text-[#1E84AF]' />
                                 )}
                             </div>
@@ -454,38 +408,37 @@ const ViewQmsManual = () => {
                         <div>
                             <label className="viewmanuallabels">Written/Prepare By</label>
                             <p className="viewmanuasdata">
-                                {manualDetails.written_by
-                                    ? `${manualDetails.written_by.first_name} ${manualDetails.written_by.last_name}`
+                                {procedureDetails.written_by
+                                    ? `${procedureDetails.written_by.first_name} ${procedureDetails.written_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Checked/Reviewed By</label>
                             <p className="viewmanuasdata">
-                                {manualDetails.checked_by
-                                    ? `${manualDetails.checked_by.first_name} ${manualDetails.checked_by.last_name}`
+                                {procedureDetails.checked_by
+                                    ? `${procedureDetails.checked_by.first_name} ${procedureDetails.checked_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Approved By</label>
                             <p className="viewmanuasdata">
-                                {manualDetails.approved_by
-                                    ? `${manualDetails.approved_by.first_name} ${manualDetails.
-                                        approved_by.last_name}`
+                                {procedureDetails.approved_by
+                                    ? `${procedureDetails.approved_by.first_name} ${procedureDetails.approved_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Date</label>
-                            <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p>
+                            <p className="viewmanuasdata">{formatDate(procedureDetails.date)}</p>
                         </div>
                         <div className='flex justify-between items-center'>
                             <div>
                                 <label className="viewmanuallabels">Review Frequency</label>
                                 <p className="viewmanuasdata">
-                                    {manualDetails.review_frequency_year
-                                        ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0} months`
+                                    {procedureDetails.review_frequency_year
+                                        ? `${procedureDetails.review_frequency_year} years, ${procedureDetails.review_frequency_month || 0} months`
                                         : 'N/A'}
                                 </p>
                             </div>
@@ -493,12 +446,7 @@ const ViewQmsManual = () => {
                                 <div className='flex gap-10'>
                                     <div className='flex flex-col justify-center items-center'>
                                         <label className="viewmanuallabels">Edit</label>
-                                        <button
-                                            onClick={() => {
-                                                handleMoveToHistory();
-                                                navigate(`/company/qms/editmanual/${id}`);
-                                            }}
-                                        >
+                                        <button onClick={() => navigate(`/company/qms/editprocedure/${id}`)}>
                                             <img src={edits} alt="Edit Icon" />
                                         </button>
                                     </div>
@@ -514,32 +462,22 @@ const ViewQmsManual = () => {
                     </div>
                 </div>
 
-                {/* Render highlighted correction */}
-                {renderHighlightedCorrection()}
-
-                {/* Render correction history */}
-                {renderCorrectionHistory()}
+                {/* Render user-specific corrections */}
+                {renderUserCorrections()}
 
                 {canReview && (
                     <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
                                 <button
-                                    onClick={() => {
-                                        handleCorrectionRequest();
-                                        handleMoveToHistory();
-
-                                    }}
+                                    onClick={handleCorrectionRequest}
                                     className="request-correction-btn duration-200"
 
                                 >
                                     Request For Correction
                                 </button>
                                 <button
-                                    onClick={ () => {
-                                        handleReviewAndSubmit()
-                                        // handleMoveToHistory();
-                                    }}
+                                    onClick={handleReviewAndSubmit}
                                     className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
                                     disabled={!canReview}
                                 >
@@ -589,8 +527,27 @@ const ViewQmsManual = () => {
                     </div>
                 )}
             </div>
+            <div className="bg-[#24242D] text-white p-5 rounded-md w-full mt-5 max-h-[380px] flex flex-col">
+                <div className="flex justify-start items-center gap-[6px] mb-6">
+                    <h1 className="history-head">Correction History</h1>
+                    <img src={historys} alt="History Icon" />
+                </div>
+
+                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                    <div className="space-y-4">
+                        {messages.map((message) => (
+                            <div key={message.id} className="bg-[#1C1C24] px-4 py-5 rounded-md">
+                                <div className="flex justify-between text-[#AAAAAA] from-to-time mb-2">
+                                    <div>From: {message.from}, To: {message.to}</div>
+                                    <div>{message.timestamp}</div>
+                                </div>
+                                <div className="text-white history-content">{message.content}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
-
-export default ViewQmsManual;
+export default ViewQmsProcedure

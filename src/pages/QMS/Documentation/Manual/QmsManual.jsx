@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search} from 'lucide-react';
 import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import views from "../../../../assets/images/Companies/view.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import publish from "../../../../assets/images/Modal/publish.svg"
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from "react-router-dom";
-import "./qmsmanual.css";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import "./qmsmanual.css";
 
 const QmsManual = () => {
   const [manuals, setManuals] = useState([]);
@@ -20,7 +22,12 @@ const QmsManual = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const manualPerPage = 10;
-  
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState(false);
+  const [selectedManualId, setSelectedManualId] = useState(null);
+  const [sendNotification, setSendNotification] = useState(false);
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -33,7 +40,7 @@ const QmsManual = () => {
 
   const getCurrentUser = () => {
     const role = localStorage.getItem('role');
-    
+
     try {
       if (role === 'company') {
         // Retrieve company user data
@@ -48,13 +55,13 @@ const QmsManual = () => {
               companyData[cleanKey] = localStorage.getItem(key);
             }
           });
-        
+
         // Add additional fields from localStorage
         companyData.role = role;
         companyData.company_id = localStorage.getItem('company_id');
         companyData.company_name = localStorage.getItem('company_name');
         companyData.email_address = localStorage.getItem('email_address');
-        
+
         console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === 'user') {
@@ -70,11 +77,11 @@ const QmsManual = () => {
               userData[cleanKey] = localStorage.getItem(key);
             }
           });
-        
+
         // Add additional fields from localStorage
         userData.role = role;
         userData.user_id = localStorage.getItem('user_id');
-        
+
         console.log("Regular User Data:", userData);
         return userData;
       }
@@ -86,11 +93,10 @@ const QmsManual = () => {
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
-    
+
     if (role === "company") {
       return localStorage.getItem("company_id");
     } else if (role === "user") {
-      
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
         return userCompanyId ? JSON.parse(userCompanyId) : null;
@@ -99,7 +105,7 @@ const QmsManual = () => {
         return null;
       }
     }
-    
+
     return null;
   };
 
@@ -125,10 +131,10 @@ const QmsManual = () => {
         // First, fetch manuals
         const companyId = getUserCompanyId();
         const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-        
+
         // Set manuals first
         setManuals(manualsResponse.data);
-        
+
         // Then fetch corrections for all manuals
         const correctionsPromises = manualsResponse.data.map(async (manual) => {
           try {
@@ -139,18 +145,18 @@ const QmsManual = () => {
             return { manualId: manual.id, corrections: [] };
           }
         });
-        
+
         // Process all corrections
         const correctionResults = await Promise.all(correctionsPromises);
-        
+
         // Transform corrections into the dictionary format
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-        
+
         setCorrections(correctionsByManual);
-        
+
         // Set current user and clear loading state
         setCurrentUser(getCurrentUser());
         setLoading(false);
@@ -160,13 +166,12 @@ const QmsManual = () => {
         setLoading(false);
       }
     };
-  
+
     fetchAllData();
   }, []); // Empty dependency array to run only once on component mount
 
   useEffect(() => {
     fetchManuals();
- 
     setCurrentUser(getCurrentUser());
   }, []);
 
@@ -180,28 +185,45 @@ const QmsManual = () => {
       try {
         await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
         alert("Manual deleted successfully");
-        fetchManuals(); 
+        fetchManuals();
       } catch (err) {
         console.error("Error deleting manual:", err);
         alert("Failed to delete manual");
       }
     }
   };
+
+  
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    
+    if (userRole === "user") {
+        const userId = localStorage.getItem("user_id");
+        if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+};
+
   useEffect(() => {
     const fetchDraftManuals = async () => {
       try {
-        const companyId = getUserCompanyId(); 
-        const response = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${companyId}/`);
+        const id = getRelevantUserId();
+        const response = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
         setDraftCount(response.data.count);
+        console.log("sssssssss",response.data)
       } catch (error) {
         console.error("Error fetching draft manuals:", error);
         setDraftCount(0);
       }
     };
-  
+
     fetchDraftManuals();
   }, []);
- 
+
   const filteredManual = manuals.filter(manual =>
     (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -220,7 +242,7 @@ const QmsManual = () => {
 
   const handlePageClick = (pageNumber) => {
     setCurrentPage(pageNumber);
-    window.scrollTo(0, 0); 
+    window.scrollTo(0, 0);
   };
 
   const handlePrevious = () => {
@@ -253,10 +275,55 @@ const QmsManual = () => {
     navigate('/company/qms/draftmanual')
   }
 
+  const handlePublish = (manual) => {
+    setSelectedManualId(manual.id);
+    setShowPublishModal(true);
+    setPublishSuccess(false);
+    setSendNotification(false);
+  };
+
+  const closePublishModal = () => {
+    if (publishSuccess) {
+      fetchManuals();
+    }
+
+    setShowPublishModal(false);
+    setTimeout(() => {
+      setPublishSuccess(false);
+    }, 300);
+  };
+
+  const handlePublishSave = async () => {
+    try {
+      if (!selectedManualId) {
+        alert("No manual selected for publishing");
+        return;
+      }
+      
+      // The PATCH request code has been removed
+  
+      if (sendNotification) {
+        const companyId = getUserCompanyId();
+        await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
+          company_id: companyId
+        });
+      }
+      
+      setPublishSuccess(true);
+      setTimeout(() => {
+        closePublishModal();
+        fetchManuals(); // Refresh the list
+      }, 1000);
+    } catch (error) {
+      console.error("Error publishing manual:", error);
+      alert("Failed to publish manual. Please try again.");
+    }
+  };
+
   const canReview = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
     const manualCorrections = corrections[manual.id] || [];
-  
+
     console.log('Reviewing Conditions Debug:', {
       currentUserId,
       checkedById: manual.checked_by?.id,
@@ -264,21 +331,21 @@ const QmsManual = () => {
       corrections: manualCorrections,
       toUserId: manualCorrections.length > 0 ? manualCorrections[0].to_user?.id : null,
     });
-  
+
     if (manual.status === "Pending for Review/Checking") {
       return currentUserId === manual.checked_by?.id;
     }
-  
-    if (manual.status === "Correction Requested") {   
-      return manualCorrections.some(correction => 
+
+    if (manual.status === "Correction Requested") {
+      return manualCorrections.some(correction =>
         correction.to_user?.id === currentUserId && currentUserId === correction.to_user?.id
       );
     }
-    
+
     if (manual.status === "Reviewed,Pending for Approval") {
       return currentUserId === manual.approved_by?.id;
     }
-  
+
     return false;
   };
 
@@ -299,7 +366,7 @@ const QmsManual = () => {
               <Search size={18} />
             </div>
           </div>
-          <button 
+          <button
             className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleManualDraft}
           >
@@ -363,32 +430,32 @@ const QmsManual = () => {
                         {manual.status}
                       </td>
                       <td className='px-2 add-manual-datas'>
-                        {manual.status === 'Approved' ? (
-                          <span className="text-[#36DDAE]">No need to change</span>
+                        {manual.status === 'Pending for Publish' ? (
+                          <button className="text-[#36DDAE]" onClick={() => handlePublish(manual)}>Click to Publish</button>
                         ) : canApprove ? (
                           <button
-                            onClick={() => handleClickApprove(manual.id,  
-                              manual.status === 'Pending for Review/Checking'  
-                                ? 'Reviewed,Pending for Approval'  
-                                : (manual.status === 'Correction Requested'  
-                                    ? 'Approved'  
-                                    : 'Approved') 
-                            )} 
-                            className="text-[#1E84AF]" 
-                          > 
-                            {manual.status === 'Pending for Review/Checking'  
-                              ? 'Review'  
-                              : (manual.status === 'Correction Requested' 
-                                  ? 'Click to Approve' 
-                                  : 'Click to Approve')} 
-                          </button> 
-                        ) : ( 
-                          <span className="text-[#858585]">Not Authorized</span> 
+                            onClick={() => handleClickApprove(manual.id,
+                              manual.status === 'Pending for Review/Checking'
+                                ? 'Reviewed,Pending for Approval'
+                                : (manual.status === 'Correction Requested'
+                                  ? 'Pending for Publish'
+                                  : 'Pending for Publish')
+                            )}
+                            className="text-[#1E84AF]"
+                          >
+                            {manual.status === 'Pending for Review/Checking'
+                              ? 'Review'
+                              : (manual.status === 'Correction Requested'
+                                ? 'Click to Approve'
+                                : 'Click to Approve')}
+                          </button>
+                        ) : (
+                          <span className="text-[#858585]">Not Authorized</span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas text-center">
                         <button
-                          onClick={() => handleView(manual.id)}  
+                          onClick={() => handleView(manual.id)}
                           title="View"
                         >
                           <img src={views} alt="" />
@@ -453,6 +520,58 @@ const QmsManual = () => {
           </table>
         )}
       </div>
+      <AnimatePresence>
+        {showPublishModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Overlay with animation */}
+            <motion.div
+              className="absolute inset-0 bg-black bg-opacity-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            />
+
+            {/* Modal with animation */}
+            <motion.div
+              className="bg-[#1C1C24] rounded-md shadow-xl w-auto h-auto relative"
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              transition={{
+                duration: 0.3,
+                type: "spring",
+                stiffness: 300,
+                damping: 30
+              }}
+            >
+              <div className="p-6">
+                <div className='flex flex-col justify-center items-center space-y-7'>
+                  <img src={publish} alt="Publish Icon" className='mt-3' />
+                  <div className='flex gap-[113px] mb-5'>
+                    <div className="flex items-center">
+                      <span className="mr-3 add-qms-manual-label">Send Notification?</span>
+                      <input
+                        type="checkbox"
+                        className="qms-manual-form-checkbox"
+                        checked={sendNotification}
+                        onChange={() => setSendNotification(!sendNotification)}
+                      />
+                    </div>
+                  </div>
+                  {publishSuccess && (
+                    <div className="text-green-500 mb-3">Manual published successfully!</div>
+                  )}
+                  <div className='flex gap-5'>
+                    <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
+                    <button onClick={handlePublishSave} className='save-btn duration-200 text-white'>Publish</button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
