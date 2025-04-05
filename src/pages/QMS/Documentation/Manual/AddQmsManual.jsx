@@ -423,7 +423,7 @@ const AddQmsManual = () => {
                                 </div>
                             </div>
                             <div className="ml-5 w-1/4">
-                                <label className="add-qms-manual-label">Notification</label>
+                                <label className="add-qms-manual-label">System Notify</label>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -445,7 +445,7 @@ const AddQmsManual = () => {
                                 </div>
                             </div>
                             <div className="ml-5 w-1/4">
-                                <label className="add-qms-manual-label">Email</label>
+                                <label className="add-qms-manual-label">Email Notify</label>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -508,7 +508,7 @@ const AddQmsManual = () => {
                                 </div>
                             </div>
                             <div className="ml-5 w-1/4">
-                                <label className="add-qms-manual-label">Notification</label>
+                                <label className="add-qms-manual-label">System Notify</label>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -530,7 +530,7 @@ const AddQmsManual = () => {
                                 </div>
                             </div>
                             <div className="ml-5 w-1/4">
-                                <label className="add-qms-manual-label">Email</label>
+                                <label className="add-qms-manual-label">Email Notify</label>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
