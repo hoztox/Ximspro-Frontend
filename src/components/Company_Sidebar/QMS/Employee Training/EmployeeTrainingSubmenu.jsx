@@ -43,7 +43,7 @@ const EmployeeTrainingSubmenu = (props) => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/record-format",
+            path: "/company/qms/training-evaluation",
         },
         {
             id: "employee-performance-evaluation",

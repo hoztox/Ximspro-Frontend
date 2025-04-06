@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./qmslistusertraining.css";
 
-const QmsListUserTraining = () => {
+const QmsTrainingEvaluation = () => {
     const [selectedUser, setSelectedUser] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isFocused, setIsFocused] = useState(false);
@@ -62,7 +61,7 @@ const QmsListUserTraining = () => {
                 <button
                     key={i}
                     className={`${currentPage === i ? 'pagin-active' : 'pagin-inactive'
-                    }`}
+                        }`}
                     onClick={() => handlePageChange(i)}
                 >
                     {i}
@@ -88,13 +87,13 @@ const QmsListUserTraining = () => {
                     Next
                 </button>
             </div>
-        );        
+        );
     };
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center">
-                <h1 className="list-user-training-head">List User Training</h1>
+                <h1 className="list-user-training-head">Training Evaluation</h1>
                 <div className="flex gap-5">
                     <div className="relative w-[332px] ">
                         <select
@@ -172,4 +171,4 @@ const QmsListUserTraining = () => {
     );
 };
 
-export default QmsListUserTraining;
+export default QmsTrainingEvaluation
