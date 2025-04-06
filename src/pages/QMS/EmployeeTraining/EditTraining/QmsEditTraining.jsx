@@ -80,6 +80,10 @@ const QmsEditTraining = () => {
         // Here you would typically send the data to your backend
     };
 
+    const handleListTraining = () => {
+        navigate('/company/qms/list-training')
+    }
+
     const handleCancel = () => {
         navigate('/company/qms/list-training')
     };
@@ -103,9 +107,10 @@ const QmsEditTraining = () => {
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Training</h1>
                 <button
+                onClick={handleListTraining}
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
                 >
-                    Training Log
+                    List Training
                 </button>
             </div>
 
