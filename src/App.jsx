@@ -100,6 +100,10 @@ import ViewQmsRecordFormat from "./pages/QMS/Documentation/Record Format/ViewQms
 import EditQmsRecordFormat from "./pages/QMS/Documentation/Record Format/EditQmsRecordFormat";
 import DraftQmsRecordFormat from "./pages/QMS/Documentation/Record Format/DraftQmsRecordFormat";
 import EditDraftQmsRecordFormat from "./pages/QMS/Documentation/Record Format/EditDraftQmsRecordFormat";
+import QmsListTraining from "./pages/QMS/EmployeeTraining/ListTraining/QmsListTraining";
+import QmsAddTraining from "./pages/QMS/EmployeeTraining/AddTraining/QmsAddTraining"
+import QmsEditTraining from "./pages/QMS/EmployeeTraining/EditTraining/QmsEditTraining";
+import QmsViewTraining from "./pages/QMS/EmployeeTraining/ViewTraining/QmsViewTraining";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -160,11 +164,24 @@ const ThemedApp = () => {
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
 
+          {/* QMS Employee Training */}
+          <Route path="qms/list-training" element={<QmsListTraining />} />
+          <Route path="qms/add-training" element={<QmsAddTraining />} />
+          <Route path="qms/edit-training" element={<QmsEditTraining/>} />
+          <Route path="qms/view-training" element={<QmsViewTraining/>} />
+
+
           {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
           <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
           <Route path="qms/user-details/:id" element={<QMSViewUser/>} />
+
+
+
+
+
+
 
 
 

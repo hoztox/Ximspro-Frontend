@@ -29,6 +29,8 @@ const DocumentationSubmenu = (props) => {
       relatedPaths: ["/company/qms/addmanual",
                      "/company/qms/draftmanual",
                      "/company/qms/viewmanual",
+                     "/company/qms/editmanual",
+                     "/company/qms/editdraftmanual",
                     ]
     },
     {
@@ -38,7 +40,12 @@ const DocumentationSubmenu = (props) => {
         <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
       ),
       path: "/company/qms/procedure",
-      relatedPaths: ["/company/qms/addprocedure"]
+      relatedPaths: ["/company/qms/addprocedure",
+                     "/company/qms/draftprocedure",
+                     "/company/qms/viewprocedure",
+                     "/company/qms/editprocedure",
+                     "/company/qms/editdraftprocedure",
+                    ]
     },
     {
       id: "record-format",
@@ -47,7 +54,12 @@ const DocumentationSubmenu = (props) => {
         <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
       ),
       path: "/company/qms/record-format",
-      relatedPaths: ["/company/qms/addrecordformat"]
+      relatedPaths: ["/company/qms/addrecordformat",
+                     "/company/qms/draftrecordformat",
+                     "/company/qms/viewrecordformat",
+                     "/company/qms/editrecordformat",
+                     "/company/qms/editdraftrecordformat",
+                    ]
     },
     {
       id: "interested-parties",
@@ -80,9 +92,10 @@ const DocumentationSubmenu = (props) => {
   const isActive = (category) => {
     const currentPath = location.pathname;
     return currentPath === category.path || 
-           (category.relatedPaths && category.relatedPaths.includes(currentPath));
+      (category.relatedPaths &&
+       category.relatedPaths.some(path => currentPath.startsWith(path)));
   };
-
+  
   // Handle clicking on a submenu item
   const handleCategoryClick = (category) => {
     if (props && props.handleItemClick) {

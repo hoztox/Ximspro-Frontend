@@ -8,7 +8,7 @@ import process from "../../../../assets/images/Company-Sidebar/interested partie
 import scope from "../../../../assets/images/Company-Sidebar/record-format.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const EmployeeTrainingSubmenu = () => {
+const EmployeeTrainingSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -17,13 +17,17 @@ const EmployeeTrainingSubmenu = () => {
             id: "add-training",
             label: "Add Training",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/add-training",
         },
         {
             id: "list-training",
             label: "List Training",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/list-training",
+            relatedPaths: [
+                "/company/qms/edit-training",
+                "/company/qms/view-training",
+               ]
         },
         {
             id: "list-user-training",
@@ -70,8 +74,11 @@ const EmployeeTrainingSubmenu = () => {
     ];
 
     const isActive = (category) => {
-        return location.pathname === category.path;
-    };
+        const currentPath = location.pathname;
+        return currentPath === category.path || 
+          (category.relatedPaths &&
+           category.relatedPaths.some(path => currentPath.startsWith(path)));
+      };
 
 
     const handleCategoryClick = (category) => {
