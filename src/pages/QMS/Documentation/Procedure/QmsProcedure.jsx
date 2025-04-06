@@ -231,7 +231,7 @@ const QmsProcedure = () => {
           >
             <span>Drafts</span>
             {draftCount > 0 && (
-              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-60">
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-48">
                 {draftCount}
               </span>
             )}
@@ -240,7 +240,7 @@ const QmsProcedure = () => {
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleQMSAddProcedure}
           >
-            <span>Add Procedure Sections</span>
+            <span>Add Procedure</span>
             <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
           </button>
         </div>

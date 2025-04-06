@@ -96,6 +96,10 @@ import DraftQmsProcedure from "./pages/QMS/Documentation/Procedure/DraftQmsProce
 import ViewQmsProcedure from "./pages/QMS/Documentation/Procedure/ViewQmsProcedure";
 import EditQmsProcedure from "./pages/QMS/Documentation/Procedure/EditQmsProcedure";
 import EditDraftQmsProcedure from "./pages/QMS/Documentation/Procedure/EditDraftQmsProcedure";
+import ViewQmsRecordFormat from "./pages/QMS/Documentation/Record Format/ViewQmsRecordFormat";
+import EditQmsRecordFormat from "./pages/QMS/Documentation/Record Format/EditQmsRecordFormat";
+import DraftQmsRecordFormat from "./pages/QMS/Documentation/Record Format/DraftQmsRecordFormat";
+import EditDraftQmsRecordFormat from "./pages/QMS/Documentation/Record Format/EditDraftQmsRecordFormat";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -146,6 +150,10 @@ const ThemedApp = () => {
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />
+          <Route path="qms/viewrecordformat" element={<ViewQmsRecordFormat />} />
+          <Route path="qms/editrecordformat" element={<EditQmsRecordFormat />} />
+          <Route path="qms/draftrecordformat" element={<DraftQmsRecordFormat />} />
+          <Route path="qms/editdraftrecordformat" element={<EditDraftQmsRecordFormat />} />
 
           <Route path="qms/interested-parties" element={<QmsInterestedParties />} />
           <Route path="qms/processes" element={<QmsProcesses />} />
