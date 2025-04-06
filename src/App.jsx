@@ -106,6 +106,8 @@ import QmsEditTraining from "./pages/QMS/EmployeeTraining/EditTraining/QmsEditTr
 import QmsViewTraining from "./pages/QMS/EmployeeTraining/ViewTraining/QmsViewTraining";
 import QmsListUserTraining from "./pages/QMS/EmployeeTraining/ListUserTraining/QmsListUserTraining";
 import QmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/QmsTrainingEvaluation";
+import QmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsEmployeePerformance";
+import AddQmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/AddQmsEmployeePerformance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -173,6 +175,8 @@ const ThemedApp = () => {
           <Route path="qms/view-training" element={<QmsViewTraining/>} />
           <Route path="qms/listuser-training" element={<QmsListUserTraining/>} />
           <Route path="qms/training-evaluation" element={<QmsTrainingEvaluation/>} />
+          <Route path="qms/employee-performance" element={<QmsEmployeePerformance/>} />
+          <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance/>} />
 
 
           {/* QMS User Management */}

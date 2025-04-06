@@ -55,7 +55,11 @@ const EmployeeTrainingSubmenu = (props) => {
                     className="w-[15px] h-[15px]"
                 />
             ),
-            // path: "/company/qms/interested-parties",
+            path: "/company/qms/employee-performance",
+            relatedPaths: [
+                "/company/qms/add-employee-performance",
+                 
+               ]
         },
         {
             id: "employee-satisfaction-survey",

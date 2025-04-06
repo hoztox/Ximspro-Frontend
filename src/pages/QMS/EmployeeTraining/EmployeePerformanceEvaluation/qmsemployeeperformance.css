@@ -1,0 +1,8 @@
+.employee-performance-head {
+    font-family: 'Switzer Medium';
+    font-size: 26px;
+}
+
+.action-btn {
+    filter: brightness(0) saturate(100%) invert(73%) sepia(10%) saturate(28%) hue-rotate(27deg) brightness(95%) contrast(83%);
+}
