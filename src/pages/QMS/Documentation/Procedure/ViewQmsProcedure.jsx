@@ -1,71 +1,159 @@
 import React, { useState, useEffect } from 'react';
-import edits from "../../../../assets/images/Company Documentation/edit.svg"
-import deletes from "../../../../assets/images/Company Documentation/delete.svg"
-import historys from "../../../../assets/images/Company Documentation/history.svg"
+import edits from "../../../../assets/images/Company Documentation/edit.svg";
+import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import historys from "../../../../assets/images/Company Documentation/history.svg";
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+// Import axios but we'll use demo data instead
 import axios from 'axios';
-import { BASE_URL } from "../../../../Utils/Config";
+// import { BASE_URL } from "../../../../Utils/Config";
 
 const ViewQmsProcedure = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [procedureDetails, setProcedureDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Set to false since we're using demo data
     const [error, setError] = useState(null);
-    const [corrections, setCorrections] = useState([]);
+    
+    // Demo data for procedure details
+    const [procedureDetails, setProcedureDetails] = useState({
+        id: 1,
+        title: "Quality Management Process",
+        no: "QMS-001",
+        rivision: "1.0",
+        document_type: "Procedure",
+        upload_attachment: "https://example.com/document.pdf",
+        written_by: {
+            id: 1,
+            first_name: "John",
+            last_name: "Doe"
+        },
+        checked_by: {
+            id: 2,
+            first_name: "Jane",
+            last_name: "Smith"
+        },
+        approved_by: {
+            id: 3,
+            first_name: "Robert",
+            last_name: "Johnson"
+        },
+        date: "2025-04-01T00:00:00Z",
+        review_frequency_year: 1,
+        review_frequency_month: 6,
+        status: "Pending for Review/Checking",
+        related_record_format: "abc"
+    });
 
+    // Demo data for corrections
+    const [corrections, setCorrections] = useState([
+        {
+            id: 1,
+            procedure_id: 1,
+            correction: "Please revise section 3.2 to include updated ISO standards reference.",
+            from_user: {
+                id: 2,
+                first_name: "Jane",
+                last_name: "Smith"
+            },
+            to_user: {
+                id: 1,
+                first_name: "John",
+                last_name: "Doe"
+            },
+            created_at: "2025-04-04T09:30:00Z"
+        },
+        {
+            id: 2,
+            procedure_id: 1,
+            correction: "Update the process flow diagram to match our current practices.",
+            from_user: {
+                id: 3,
+                first_name: "Robert",
+                last_name: "Johnson"
+            },
+            to_user: {
+                id: 1,
+                first_name: "John",
+                last_name: "Doe"
+            },
+            created_at: "2025-04-05T10:15:00Z"
+        }
+    ]);
+
+    // Demo data for correction history messages
     const [messages, setMessages] = useState([
         {
             id: 1,
-            from: 'User1',
-            to: 'User2',
-            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
-            timestamp: '20-04-2025, 09:30 am'
+            from: 'Jane Smith',
+            to: 'John Doe',
+            content: 'Please update the document to include the latest regulatory requirements from ISO 9001:2024.',
+            timestamp: '05-04-2025, 10:15 am'
         },
         {
-            id: 1,
-            from: 'User1',
-            to: 'User2',
-            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
-            timestamp: '20-04-2025, 09:30 am'
+            id: 2,
+            from: 'Robert Johnson',
+            to: 'John Doe',
+            content: 'The risk assessment section needs more detail on mitigation strategies.',
+            timestamp: '04-04-2025, 02:30 pm'
         },
         {
-            id: 1,
-            from: 'User1',
-            to: 'User2',
-            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
-            timestamp: '20-04-2025, 09:30 am'
+            id: 3,
+            from: 'John Doe',
+            to: 'Jane Smith',
+            content: 'I have updated the document with the requested changes to ISO references.',
+            timestamp: '05-04-2025, 04:45 pm'
         },
         {
-            id: 1,
-            from: 'User1',
-            to: 'User2',
-            content: 'Lorem ipsum dolor sit amet, consectetur sit adipiscing elit.',
-            timestamp: '20-04-2025, 09:30 am'
+            id: 4,
+            from: 'Sarah Williams',
+            to: 'John Doe',
+            content: 'The approval workflow needs to be updated to reflect the new organizational structure.',
+            timestamp: '03-04-2025, 11:20 am'
         },
-
     ]);
 
+    /**
+     * Function to fetch message history (commented out as we're using demo data)
+     */
     const fetchMessages = () => {
         // In a real application, you would fetch data here
         console.log('Fetching messages...');
+        // Actual implementation would be:
+        // const response = await axios.get(`${BASE_URL}/qms/procedure-messages/${id}/`);
+        // setMessages(response.data);
     };
 
-    // Demonstrating how to reload history
+    /**
+     * Function to reload message history
+     */
     const reloadHistory = () => {
         fetchMessages();
+        console.log('History reloaded');
     };
 
-
-
+    // State for correction request modal
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
         text: ''
     });
 
+    /**
+     * Function to get current user data from localStorage
+     * @returns {Object} User data object
+     */
     const getCurrentUser = () => {
+        // For demo purposes, we'll return a mock user
+        return {
+            user_id: 2,
+            first_name: "Jane",
+            last_name: "Smith",
+            role: "user",
+            email: "jane.smith@example.com"
+        };
+        
+        // Original function commented below:
+        /*
         const role = localStorage.getItem('role');
 
         try {
@@ -116,9 +204,19 @@ const ViewQmsProcedure = () => {
             console.error("Error retrieving user data:", error);
             return null;
         }
+        */
     };
 
+    /**
+     * Function to get user's company ID
+     * @returns {string|null} Company ID
+     */
     const getUserCompanyId = () => {
+        // For demo purposes, return a mock company ID
+        return "COMP-001";
+        
+        // Original function commented below:
+        /*
         const role = localStorage.getItem("role");
 
         if (role === "company") {
@@ -135,35 +233,61 @@ const ViewQmsProcedure = () => {
         }
 
         return null;
+        */
     };
 
-    // Fetch procedure details
+    /**
+     * Function to fetch procedure details from API (commented out as we're using demo data)
+     */
     const fetchProcedureDetails = async () => {
-        // try {
-        //     const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
-        //     setProcedureDetails(response.data);
-        //     console.log("Procedure Details:", response.data);
-        //     setLoading(false);
-        // } catch (err) {
-        //     console.error("Error fetching procedure details:", err);
-            
-        //     setLoading(false);
-        // }
+        console.log('Fetching procedure details...');
+        // Original implementation commented below:
+        /*
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
+            setProcedureDetails(response.data);
+            console.log("Procedure Details:", response.data);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching procedure details:", err);
+            setLoading(false);
+        }
+        */
     };
+
+    /**
+     * Function to fetch procedure corrections from API (commented out as we're using demo data)
+     */
     const fetchProcedureCorrections = async () => {
-        // try {
-        //     const response = await axios.get(`${BASE_URL}/qms/procedures/${id}/corrections/`);
-        //     setCorrections(response.data);
-        //     console.log("Fetched Procedure Corrections:", response.data);
-        // } catch (error) {
-        //     console.error("Error fetching Procedure corrections:", error);
-        // }
+        console.log('Fetching procedure corrections...');
+        // Original implementation commented below:
+        /*
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/procedures/${id}/corrections/`);
+            setCorrections(response.data);
+            console.log("Fetched Procedure Corrections:", response.data);
+        } catch (error) {
+            console.error("Error fetching Procedure corrections:", error);
+        }
+        */
     };
+
+    // Load demo data on component mount
     useEffect(() => {
-        fetchProcedureDetails();
-        fetchProcedureCorrections()
+        // Setting a brief timeout to simulate API call
+        setTimeout(() => {
+            console.log("Demo data loaded");
+            setLoading(false);
+        }, 500);
+        
+        // Original API calls commented out:
+        // fetchProcedureDetails();
+        // fetchProcedureCorrections();
     }, [id]);
 
+    /**
+     * Function to open correction request modal
+     */
     const handleCorrectionRequest = () => {
         setCorrectionRequest(prev => ({
             ...prev,
@@ -171,6 +295,9 @@ const ViewQmsProcedure = () => {
         }));
     };
 
+    /**
+     * Function to close correction request modal
+     */
     const handleCloseCorrectionRequest = () => {
         setCorrectionRequest({
             isOpen: false,
@@ -178,10 +305,16 @@ const ViewQmsProcedure = () => {
         });
     };
 
+    /**
+     * Function to navigate back to procedures list
+     */
     const handleCloseViewPage = () => {
-        navigate('/company/qms/procedure')
-    }
+        navigate('/company/qms/procedure');
+    };
 
+    /**
+     * Function to submit correction request (simulated for demo)
+     */
     const handleCorrectionSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -190,32 +323,74 @@ const ViewQmsProcedure = () => {
                 return;
             }
 
+            // Log the request data that would be sent
             const requestData = {
                 procedure_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
-
             };
 
             console.log('Submitting correction request:', requestData);
+            
+            // Simulate successful API response
+            setTimeout(() => {
+                // Add the new correction to our demo data
+                const newCorrection = {
+                    id: corrections.length + 1,
+                    procedure_id: parseInt(id),
+                    correction: correctionRequest.text,
+                    from_user: {
+                        id: currentUser.user_id,
+                        first_name: currentUser.first_name,
+                        last_name: currentUser.last_name
+                    },
+                    to_user: procedureDetails.written_by,
+                    created_at: new Date().toISOString()
+                };
+                
+                setCorrections([...corrections, newCorrection]);
+                
+                // Add to messages history
+                const newMessage = {
+                    id: messages.length + 1,
+                    from: `${currentUser.first_name} ${currentUser.last_name}`,
+                    to: `${procedureDetails.written_by.first_name} ${procedureDetails.written_by.last_name}`,
+                    content: correctionRequest.text,
+                    timestamp: new Date().toLocaleString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).replace(/\//g, '-').replace(',', '')
+                };
+                
+                setMessages([newMessage, ...messages]);
+                
+                alert('Correction submitted successfully');
+                handleCloseCorrectionRequest();
+            }, 500);
 
+            // Original API call commented out:
+            /*
             const response = await axios.post(`${BASE_URL}/qms/submit-correction/`, requestData);
-
             console.log('Correction response:', response.data);
-
             alert('Correction submitted successfully');
             handleCloseCorrectionRequest();
-
-            // Refresh data
             fetchProcedureDetails();
             fetchProcedureCorrections();
+            */
         } catch (error) {
             console.error('Error submitting correction:', error);
-            alert(error.response?.data?.error || 'Failed to submit correction');
+            alert('Failed to submit correction');
         }
     };
 
-    // Format date from ISO to DD-MM-YYYY
+    /**
+     * Function to format ISO date to DD-MM-YYYY
+     * @param {string} dateString - ISO date string
+     * @returns {string} Formatted date string
+     */
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -226,7 +401,11 @@ const ViewQmsProcedure = () => {
         }).replace(/\//g, '-');
     };
 
-    // Format date to display how long ago the correction was made
+    /**
+     * Function to format date to "X time ago" format
+     * @param {string} dateString - ISO date string
+     * @returns {string} Relative time string
+     */
     const formatCorrectionDate = (dateString) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -241,20 +420,34 @@ const ViewQmsProcedure = () => {
         return `${diffInDays} days ago`;
     };
 
-    // Render loading or error states
+    // Show loading state
     if (loading) return <div className="text-white">Loading...</div>;
+    // Show error state
     if (error) return <div className="text-red-500">{error}</div>;
     
-
-    // Check if current user can review
-    const currentUserId = Number(localStorage.getItem('user_id'));
+    // Demo user ID for testing
+    const currentUserId = 2; // Jane Smith (checkUser)
+    // const currentUserId = Number(localStorage.getItem('user_id'));
+    
+    // Check if current user is the author
     const isCurrentUserWrittenBy = currentUserId === procedureDetails.written_by?.id;
 
+    /**
+     * Determine if current user can review the procedure
+     * @returns {boolean} Whether current user can review
+     */
     const canReview = (() => {
+        // For demo purposes - assume user with ID 2 can review
+        if (currentUserId === 2) {
+            return true;
+        }
+        
+        // Original logic commented below:
+        /*
         // Exclude the written_by user from requesting corrections
-        // if (isCurrentUserWrittenBy) {
-        //     return false;
-        // }
+        if (isCurrentUserWrittenBy) {
+            return false;
+        }
 
         if (procedureDetails.status === "Pending for Review/Checking") {
             return currentUserId === procedureDetails.checked_by?.id;
@@ -269,8 +462,12 @@ const ViewQmsProcedure = () => {
         }
 
         return false;
+        */
     })();
 
+    /**
+     * Function to submit review (simulated for demo)
+     */
     const handleReviewAndSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -279,11 +476,27 @@ const ViewQmsProcedure = () => {
                 return;
             }
 
+            // Log what would be sent to API
             const requestData = {
                 procedure_id: id,
                 current_user_id: currentUser.user_id
             };
+            
+            console.log('Submitting review:', requestData);
+            
+            // Simulate successful API response
+            setTimeout(() => {
+                // Update procedure status
+                setProcedureDetails({
+                    ...procedureDetails,
+                    status: "Reviewed,Pending for Approval"
+                });
+                
+                alert('Procedure reviewed successfully');
+            }, 500);
 
+            // Original API call commented out:
+            /*
             const response = await axios.post(
                 `${BASE_URL}/qms/procedure-review/`,
                 requestData
@@ -292,15 +505,14 @@ const ViewQmsProcedure = () => {
             alert(response.data.message);
             fetchProcedureDetails();
             fetchProcedureCorrections();
+            */
         } catch (error) {
             console.error('Error submitting review:', error);
-            const errorMessage = error.response?.data?.error ||
-                error.response?.data?.message ||
-                'Failed to submit review';
-            alert(errorMessage);
+            alert('Failed to submit review');
         }
     };
 
+    // Animation variants for correction request panel
     const correctionVariants = {
         hidden: {
             opacity: 0,
@@ -318,8 +530,12 @@ const ViewQmsProcedure = () => {
         }
     };
 
-    // Render corrections specific to the current user
+    /**
+     * Function to render corrections specific to current user
+     * @returns {JSX.Element|null} User-specific corrections or null
+     */
     const renderUserCorrections = () => {
+        // For demo - filter corrections for current user
         const userSpecificCorrections = corrections.filter(
             correction => correction.to_user?.id === currentUserId
         );
@@ -355,7 +571,7 @@ const ViewQmsProcedure = () => {
     return (
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
-                <h1 className='viewmanualhead'>Review Procedure Section</h1>
+                <h1 className='viewmanualhead'>Procedure Information</h1>
                 <button
                     className="text-white bg-[#24242D] p-1 rounded-md"
                     onClick={handleCloseViewPage}
@@ -367,13 +583,13 @@ const ViewQmsProcedure = () => {
                 <div className="grid grid-cols-2 divide-x divide-[#383840] border-b border-[#383840] pb-5">
                     <div className="grid grid-cols-1 gap-[40px]">
                         <div>
-                            <label className="viewmanuallabels">Section Name/Title</label>
+                            <label className="viewmanuallabels">Procedure Name/Title</label>
                             <div className="flex justify-between items-center">
                                 <p className="viewmanuasdata">{procedureDetails.title || 'N/A'}</p>
                             </div>
                         </div>
                         <div>
-                            <label className="viewmanuallabels">Section Number</label>
+                            <label className="viewmanuallabels">Procedure Number</label>
                             <p className="viewmanuasdata">{procedureDetails.no || 'N/A'}</p>
                         </div>
                         <div>
@@ -401,6 +617,10 @@ const ViewQmsProcedure = () => {
                                     <Eye size={20} className='text-[#1E84AF]' />
                                 )}
                             </div>
+                        </div>
+                        <div>
+                            <label className="viewmanuallabels">Related Record Format</label>
+                            <p className="viewmanuasdata">{procedureDetails.related_record_format || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -442,11 +662,11 @@ const ViewQmsProcedure = () => {
                                         : 'N/A'}
                                 </p>
                             </div>
-                            {isCurrentUserWrittenBy && (
+                            {/* {isCurrentUserWrittenBy && ( */}
                                 <div className='flex gap-10'>
                                     <div className='flex flex-col justify-center items-center'>
                                         <label className="viewmanuallabels">Edit</label>
-                                        <button onClick={() => navigate(`/company/qms/editprocedure/${id}`)}>
+                                        <button onClick={() => navigate(`/company/qms/editprocedure`)}>
                                             <img src={edits} alt="Edit Icon" />
                                         </button>
                                     </div>
@@ -457,8 +677,10 @@ const ViewQmsProcedure = () => {
                                         </button>
                                     </div>
                                 </div>
-                            )}
+                            {/* )} */}
+                             
                         </div>
+                        <div className='h-[51.5px]'></div>
                     </div>
                 </div>
 
@@ -472,7 +694,6 @@ const ViewQmsProcedure = () => {
                                 <button
                                     onClick={handleCorrectionRequest}
                                     className="request-correction-btn duration-200"
-
                                 >
                                     Request For Correction
                                 </button>
@@ -550,4 +771,5 @@ const ViewQmsProcedure = () => {
         </div>
     );
 };
-export default ViewQmsProcedure
+
+export default ViewQmsProcedure;

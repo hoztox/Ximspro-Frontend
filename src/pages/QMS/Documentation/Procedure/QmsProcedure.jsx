@@ -1,33 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
-import views from "../../../../assets/images/Companies/view.svg";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
-import publish from "../../../../assets/images/Modal/publish.svg"
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from "react-router-dom";
-import axios from 'axios';
-import { BASE_URL } from "../../../../Utils/Config";
+import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import viewIcon from "../../../../assets/images/Companies/view.svg";
+import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
+import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
+import publishIcon from "../../../../assets/images/Modal/publish.svg"
+import { useNavigate } from 'react-router-dom';
 
 const QmsProcedure = () => {
-  const [procedures, setProcedures] = useState([]);
-  const [draftCount, setDraftCount] = useState(0);
-  const [corrections, setCorrections] = useState({});
-  const [loading, setLoading] = useState(true);
+   
+  // Demo data instead of fetching from API
+  const demoData = [
+    {
+      id: 1,
+      title: "Quality Control Process",
+      no: "QP-001",
+      approved_by: { id: 1, first_name: "John", last_name: "Doe" },
+      checked_by: { id: 2, first_name: "Jane", last_name: "Smith" },
+      rivision: "1.0",
+      date: "2025-03-15T00:00:00Z",
+      status: "Approved"
+    },
+    {
+      id: 2,
+      title: "Document Control Procedure",
+      no: "QP-002",
+      approved_by: { id: 1, first_name: "John", last_name: "Doe" },
+      checked_by: { id: 3, first_name: "Mike", last_name: "Johnson" },
+      rivision: "2.1",
+      date: "2025-02-20T00:00:00Z",
+      status: "Pending for Review/Checking"
+    },
+  ];
+
+  // Demo corrections data
+  const demoCorrections = {
+    3: [
+      { 
+        id: 1, 
+        to_user: { id: 2, first_name: "Jane", last_name: "Smith" },
+        comment: "Please revise section 3.2"
+      }
+    ]
+  };
+
+  // State variables
+  const [procedures, setProcedures] = useState(demoData);
+  const [corrections, setCorrections] = useState(demoCorrections);
+  const [draftCount, setDraftCount] = useState(2);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const proceduresPerPage = 10;
-
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [publishSuccess, setPublishSuccess] = useState(false);
+  const [selectedProcedure, setSelectedProcedure] = useState(null);
+  const navigate = useNavigate();
+  
+  const proceduresPerPage = 5;
 
-
-
-
+  // Format date helper function
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -38,175 +71,102 @@ const QmsProcedure = () => {
     }).replace(/\//g, '-');
   };
 
+  // Mock user data
   const getCurrentUser = () => {
-    const role = localStorage.getItem('role');
-
-    try {
-      if (role === 'company') {
-        // Retrieve company user data
-        const companyData = {};
-        Object.keys(localStorage)
-          .filter(key => key.startsWith('company_'))
-          .forEach(key => {
-            const cleanKey = key.replace('company_', '');
-            try {
-              companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
-            } catch (e) {
-              companyData[cleanKey] = localStorage.getItem(key);
-            }
-          });
-
-        // Add additional fields from localStorage
-        companyData.role = role;
-        companyData.company_id = localStorage.getItem('company_id');
-        companyData.company_name = localStorage.getItem('company_name');
-        companyData.email_address = localStorage.getItem('email_address');
-
-        console.log("Company User Data:", companyData);
-        return companyData;
-      } else if (role === 'user') {
-        // Retrieve regular user data
-        const userData = {};
-        Object.keys(localStorage)
-          .filter(key => key.startsWith('user_'))
-          .forEach(key => {
-            const cleanKey = key.replace('user_', '');
-            try {
-              userData[cleanKey] = JSON.parse(localStorage.getItem(key));
-            } catch (e) {
-              userData[cleanKey] = localStorage.getItem(key);
-            }
-          });
-
-        // Add additional fields from localStorage
-        userData.role = role;
-        userData.user_id = localStorage.getItem('user_id');
-
-        console.log("Regular User Data:", userData);
-        return userData;
-      }
-    } catch (error) {
-      console.error("Error retrieving user data:", error);
-      return null;
-    }
-  };
-
-  const getUserCompanyId = () => {
-    const role = localStorage.getItem("role");
-
-    if (role === "company") {
-      return localStorage.getItem("company_id");
-    } else if (role === "user") {
-
-      try {
-        const userCompanyId = localStorage.getItem("user_company_id");
-        return userCompanyId ? JSON.parse(userCompanyId) : null;
-      } catch (e) {
-        console.error("Error parsing user company ID:", e);
-        return null;
-      }
-    }
-
-    return null;
-  };
-
-  const fetchProcedures = async () => {
-    try {
-      setLoading(true);
-      const companyId = getUserCompanyId();
-      const response = await axios.get(`${BASE_URL}/qms/procedures/${companyId}/`);
-
-      setProcedures(response.data);
-      console.log("Procedures Data:", response.data);
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching procedures:", err);    
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        // First, fetch procedures
-        const companyId = getUserCompanyId();
-        const proceduresResponse = await axios.get(`${BASE_URL}/qms/procedures/${companyId}/`);
-
-        // Set procedures first
-        setProcedures(proceduresResponse.data);
-
-        // Then fetch corrections for all procedures
-        const correctionsPromises = proceduresResponse.data.map(async (procedure) => {
-          try {
-            const correctionResponse = await axios.get(`${BASE_URL}/qms/procedures/${procedure.id}/corrections/`);
-            return { procedureId: procedure.id, corrections: correctionResponse.data };
-          } catch (correctionError) {
-            console.error(`Error fetching corrections for procedures ${procedure.id}:`, correctionError);
-            return { procedureId: procedure.id, corrections: [] };
-          }
-        });
-
-        // Process all corrections
-        const correctionResults = await Promise.all(correctionsPromises);
-
-        // Transform corrections into the dictionary format
-        const correctionsByProcedure = correctionResults.reduce((acc, result) => {
-          acc[result.procedureId] = result.corrections;
-          return acc;
-        }, {});
-
-        setCorrections(correctionsByProcedure);
-
-        // Set current user and clear loading state
-        setCurrentUser(getCurrentUser());
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching procedures or corrections:", error);
-        setLoading(false);
-      }
+    return {
+      id: 2,
+      role: 'company',
+      company_id: '12345',
+      company_name: 'Demo Company',
+      email_address: 'demo@example.com',
+      first_name: 'Jane',
+      last_name: 'Smith'
     };
+  };
 
-    fetchAllData();
-  }, []); // Empty dependency array to run only once on component mount
+  const currentUser = getCurrentUser();
 
-  useEffect(() => {
-    fetchProcedures();
+  // API mock functions
+  const fetchProcedures = () => {
+    console.log("Fetching procedures...");
+    setLoading(true);
+    
+    // Simulate API delay
+    setTimeout(() => {
+      setProcedures(demoData);
+      setLoading(false);
+    }, 500);
+  };
 
-    setCurrentUser(getCurrentUser());
-  }, []);
+  // CRUD Operations (mocked)
+  const handleDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this procedure?")) {
+      const updatedProcedures = procedures.filter(procedure => procedure.id !== id);
+      setProcedures(updatedProcedures);
+      alert("Procedure deleted successfully");
+    }
+  };
 
-  const handleClickApprove = (id) => {
+  const handleClickApprove = (id, newStatus) => {
+    console.log(`Approving procedure ID: ${id} to status: ${newStatus}`);
     navigate(`/company/qms/viewprocedure/${id}`);
   };
 
-  // Delete procedures
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this procedure?")) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/procedure-detail/${id}/`);
-        alert("Procedure deleted successfully");
-        fetchProcedures();
-      } catch (err) {
-        console.error("Error deleting procedures:", err);
-        alert("Failed to delete procedures");
-      }
-    }
+  const handleEdit = () => {
+    navigate(`/company/qms/editprocedure`);
   };
-  useEffect(() => {
-    const fetchDraftProcedures = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        const response = await axios.get(`${BASE_URL}/qms/procedures/drafts-count/${companyId}/`);
-        setDraftCount(response.data.count);
-      } catch (error) {
-        console.error("Error fetching draft procedures:", error);
-        setDraftCount(0);
-      }
-    };
 
-    fetchDraftProcedures();
-  }, []);
+  const handleView = () => {
+    navigate(`/company/qms/viewprocedure`);
+  };
 
+  const handleQMSAddProcedure = () => {
+    navigate('/company/qms/addprocedure');
+  };
+
+  const handleProcedureDraft = () => {
+    navigate('/company/qms/draftprocedure');
+  };
+
+  const handlePublish = (procedure) => {
+    setSelectedProcedure(procedure);
+    setShowPublishModal(true);
+    setPublishSuccess(false);
+  };
+
+  const closePublishModal = () => {
+    if (publishSuccess) {
+      fetchProcedures();
+    }
+    setShowPublishModal(false);
+    setTimeout(() => {
+      setPublishSuccess(false);
+    }, 300);
+  };
+
+  // Utility functions
+  const canReview = (procedure) => {
+    const currentUserId = currentUser.id;
+    const procedureCorrections = corrections[procedure.id] || [];
+
+    if (procedure.status === "Pending for Review/Checking") {
+      return currentUserId === procedure.checked_by?.id;
+    }
+
+    if (procedure.status === "Correction Requested") {
+      return procedureCorrections.some(correction =>
+        correction.to_user?.id === currentUserId
+      );
+    }
+
+    if (procedure.status === "Reviewed,Pending for Approval") {
+      return currentUserId === procedure.approved_by?.id;
+    }
+
+    return false;
+  };
+
+  // Search and pagination functions
   const filteredProcedure = procedures.filter(procedure =>
     (procedure.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
     (procedure.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -216,7 +176,10 @@ const QmsProcedure = () => {
   );
 
   const totalPages = Math.ceil(filteredProcedure.length / proceduresPerPage);
-  const paginatedProcedure = filteredProcedure.slice((currentPage - 1) * proceduresPerPage, currentPage * proceduresPerPage);
+  const paginatedProcedure = filteredProcedure.slice(
+    (currentPage - 1) * proceduresPerPage, 
+    currentPage * proceduresPerPage
+  );
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -242,73 +205,13 @@ const QmsProcedure = () => {
     }
   };
 
-  const handleQMSAddProcedure = () => {
-    navigate('/company/qms/addprocedure');
-  };
-
-  const handleEdit = () => {
-    navigate(`/company/qms/editprocedure/${id}`);
-  };
-
-  const handleView = (id) => {
-    navigate(`/company/qms/viewprocedure/${id}`);
-  };
-
-  const handleProcedureDraft = () => {
-    navigate('/company/qms/draftprocedure')
-  }
-
-  const handlePublish = (procedure) => {
-
-    setShowPublishModal(true);
-    setPublishSuccess(false);
-  };
-
-  const closePublishModal = () => {
-    if (publishSuccess) {
-      fetchProcedures();
-    }
-
-    setShowPublishModal(false);
-    setTimeout(() => {
-
-      setPublishSuccess(false);
-    }, 300);
-  };
-
-  const canReview = (procedure) => {
-    const currentUserId = Number(localStorage.getItem('user_id'));
-    const procedureCorrections = corrections[procedure.id] || [];
-
-    console.log('Reviewing Conditions Debug:', {
-      currentUserId,
-      checkedById: procedure.checked_by?.id,
-      status: procedure.status,
-      corrections: procedureCorrections,
-      toUserId: procedureCorrections.length > 0 ? procedureCorrections[0].to_user?.id : null,
-    });
-
-    if (procedure.status === "Pending for Review/Checking") {
-      return currentUserId === procedure.checked_by?.id;
-    }
-
-    if (procedure.status === "Correction Requested") {
-      return procedureCorrections.some(correction =>
-        correction.to_user?.id === currentUserId && currentUserId === correction.to_user?.id
-      );
-    }
-
-    if (procedure.status === "Reviewed,Pending for Approval") {
-      return currentUserId === procedure.approved_by?.id;
-    }
-
-    return false;
-  };
+  // Mock images for demonstration
+  
 
   return (
     <div className="bg-[#1C1C24] list-manual-main">
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
-        <h1 className="list-manual-head">List Procedure Sections</h1>
+        <h1 className="list-manual-head">List Procedures</h1>
         <div className="flex space-x-5">
           <div className="relative">
             <input
@@ -328,7 +231,7 @@ const QmsProcedure = () => {
           >
             <span>Drafts</span>
             {draftCount > 0 && (
-              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-56">
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-60">
                 {draftCount}
               </span>
             )}
@@ -338,7 +241,7 @@ const QmsProcedure = () => {
             onClick={handleQMSAddProcedure}
           >
             <span>Add Procedure Sections</span>
-            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+            <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
           </button>
         </div>
       </div>
@@ -372,7 +275,7 @@ const QmsProcedure = () => {
 
                   return (
                     <tr key={procedure.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
-                      <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * procedurePerPage + index + 1}</td>
+                      <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * proceduresPerPage + index + 1}</td>
                       <td className="px-2 add-manual-datas">{procedure.title || 'N/A'}</td>
                       <td className="px-2 add-manual-datas">{procedure.no || 'N/A'}</td>
                       <td className="px-2 add-manual-datas">
@@ -387,7 +290,7 @@ const QmsProcedure = () => {
                       </td>
                       <td className='px-2 add-manual-datas'>
                         {procedure.status === 'Approved' ? (
-                          <button className="text-[#36DDAE]" onClick={handlePublish}>Click to Publish</button>
+                          <button className="text-[#36DDAE]" onClick={() => handlePublish(procedure)}>Click to Publish</button>
                         ) : canApprove ? (
                           <button
                             onClick={() => handleClickApprove(procedure.id,
@@ -411,18 +314,18 @@ const QmsProcedure = () => {
                       </td>
                       <td className="px-2 add-manual-datas text-center">
                         <button
-                          onClick={() =>  handleView(procedure.id)}
+                          onClick={() => handleView(procedure.id)}
                           title="View"
                         >
-                          <img src={views} alt="View icon" />
+                          <img src={viewIcon} alt="View icon" />
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas text-center">
                         <button
-                          onClick={() => handleEdit(procedure.id)}
+                          onClick={() => handleEdit()}
                           title="Edit"
                         >
-                          <img src={edits} alt="" />
+                          <img src={editIcon} alt="Edit icon" />
                         </button>
                       </td>
 
@@ -431,7 +334,7 @@ const QmsProcedure = () => {
                           onClick={() => handleDelete(procedure.id)}
                           title="Delete"
                         >
-                          <img src={deletes} alt="" />
+                          <img src={deleteIcon} alt="Delete icon" />
                         </button>
                       </td>
                     </tr>
@@ -486,7 +389,6 @@ const QmsProcedure = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-            // onClick={closePublishModal}
             />
 
             {/* Modal with animation */}
@@ -504,21 +406,27 @@ const QmsProcedure = () => {
             >
               <div className="p-6">
                 <div className='flex flex-col justify-center items-center space-y-7'>
-                  <img src={publish} alt="Publish Icon" className='mt-3' />
+                  <img src={publishIcon} alt="Publish Icon" className='mt-3' />
                   <div className='flex gap-[113px] mb-5'>
                     <div className="flex items-center">
                       <span className="mr-3 add-qms-manual-label">Send Notification?</span>
                       <input
                         type="checkbox"
                         className="qms-manual-form-checkbox"
-                      // checked={formData.publish}
-                      // onChange={() => setFormData(prev => ({ ...prev, publish: !prev.publish }))}
                       />
                     </div>
                   </div>
                   <div className='flex gap-5'>
                     <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
-                    <button className='save-btn duration-200 text-white'>Save</button>
+                    <button 
+                      onClick={() => {
+                        setPublishSuccess(true);
+                        setTimeout(() => closePublishModal(), 500);
+                      }} 
+                      className='save-btn duration-200 text-white'
+                    >
+                      Save
+                    </button>
                   </div>
                 </div>
               </div>

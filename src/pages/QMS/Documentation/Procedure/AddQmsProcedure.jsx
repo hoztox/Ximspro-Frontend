@@ -211,8 +211,8 @@ const AddQmsProcedure = () => {
             }
 
             const submitData = new FormData();
-            console.log('adaSD',formData);
-            
+            console.log('adaSD', formData);
+
             submitData.append('company', companyId);
 
             // Add all other form data
@@ -628,9 +628,8 @@ const AddQmsProcedure = () => {
                             />
                         </div>
 
-                        <div className="flex flex-col items-end mt-[35px] justify-center">
-                            {/* <div className='flex gap-[113px] mb-5'>
-                                <div className="flex items-center">
+                        <div className='h-[85px]'>
+                            {/* <div className="flex items-center">
                                     <span className="mr-3 add-qms-manual-label">Publish?</span>
                                     <input
                                         type="checkbox"
@@ -647,8 +646,21 @@ const AddQmsProcedure = () => {
                                         checked={formData.send_notification}
                                         onChange={() => setFormData(prev => ({ ...prev, send_notification: !prev.send_notification }))}
                                     />
-                                </div>
-                            </div> */}
+                                </div> */}
+                        </div>
+                        <div className="flex items-end mt-[35px] w-full">
+                            <div className='flex gap-[22px] mb-6'>
+                                <button
+                                    className="request-correction-btn duration-200"
+                                    // onClick={}
+                                    disabled={loading}
+                                >
+                                    Save as Draft
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex items-end mt-[35px] w-full justify-end">
+
                             <div className='flex gap-[22px] mb-6'>
                                 <button
                                     className="cancel-btn duration-200"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -8,8 +8,33 @@ import { BASE_URL } from "../../../../Utils/Config";
 const EditQmsProcedure = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [procedureDetails, setProcedureDetails] = useState(null);
-    const [corrections, setCorrections] = useState([]);
+    // Static data instead of fetched data
+    const [procedureDetails, setProcedureDetails] = useState({
+        id: 1,
+        title: 'Quality Control Procedure',
+        written_by: { id: 2, first_name: 'John', last_name: 'Doe' },
+        no: 'QCP-2023-001',
+        checked_by: { id: 3, first_name: 'Jane', last_name: 'Smith' },
+        checked_by_system_notify: true,
+        checked_by_email_notify: false,
+        rivision: '1.2',
+        approved_by: { id: 4, first_name: 'Michael', last_name: 'Johnson' },
+        approved_by_system_notify: true,
+        approved_by_email_notify: true,
+        document_type: 'System',
+        date: '2023-04-15',
+        review_frequency_year: '1',
+        review_frequency_month: '6',
+        publish: true,
+        send_notification: true,
+        upload_attachment: null,
+        upload_attachment_name: 'quality_procedure.pdf',
+        relate_format: 'QC-FORM-001'
+    });
+    const [corrections, setCorrections] = useState([
+        { id: 1, comment: 'Review section 3.2', status: 'pending' },
+        { id: 2, comment: 'Update references', status: 'completed' }
+    ]);
     const [previewAttachment, setPreviewAttachment] = useState(null);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
@@ -18,24 +43,40 @@ const EditQmsProcedure = () => {
 
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileObject, setFileObject] = useState(null);
-    const [users, setUsers] = useState([]);
+    // Demo users data
+    const [users, setUsers] = useState([
+        { id: 1, first_name: 'Admin', last_name: 'User' },
+        { id: 2, first_name: 'John', last_name: 'Doe' },
+        { id: 3, first_name: 'Jane', last_name: 'Smith' },
+        { id: 4, first_name: 'Michael', last_name: 'Johnson' },
+        { id: 5, first_name: 'Sarah', last_name: 'Williams' }
+    ]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [isInitialLoad, setIsInitialLoad] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(false); // Set to false for demo
 
+    // Define yesNoOptions
+    const yesNoOptions = ['Yes', 'No'];
+
+    // Initialize formData with demo values
     const [formData, setFormData] = useState({
-        title: '',
-        written_by: null,
-        no: '',
-        checked_by: null,
-        rivision: '',
-        approved_by: null,
+        title: 'Quality Control Procedure',
+        written_by: 2,
+        no: 'QCP-2023-001',
+        checked_by: 3,
+        checked_by_system_notify: true,
+        checked_by_email_notify: false,
+        rivision: '1.2',
+        approved_by: 4,
+        approved_by_system_notify: true,
+        approved_by_email_notify: true,
         document_type: 'System',
-        date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
-        review_frequency_year: '',
-        review_frequency_month: '',
-        publish: false,
-        send_notification: false
+        date: '2023-04-15',
+        review_frequency_year: '1',
+        review_frequency_month: '6',
+        publish: true,
+        send_notification: true,
+        relate_format: 'QC-FORM-001'
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -45,144 +86,94 @@ const EditQmsProcedure = () => {
         document_type: false,
         day: false,
         month: false,
-        year: false
+        year: false,
+        checked_by_system_notify: false,
+        checked_by_email_notify: false,
+        approved_by_system_notify: false,
+        approved_by_email_notify: false
     });
-
-
 
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
     };
-    // Add a method to handle attachment preview
+
+    // Handle attachment preview - commented out dynamic functionality
     const handleAttachmentPreview = () => {
-        // If there's an existing attachment from the procedure details
-        if (procedureDetails && procedureDetails.upload_attachment) {
-            setPreviewAttachment(procedureDetails.upload_attachment);
-        }
-        // If a new file is selected
-        else if (fileObject) {
-            // Create a URL for the selected file
-            const fileUrl = URL.createObjectURL(fileObject);
-            setPreviewAttachment(fileUrl);
-        }
+        // Static preview for demo
+        setPreviewAttachment("https://example.com/sample.pdf");
     };
 
-    // You can call this method after file selection or when procedure details are loaded
+    // Comment out effect for procedureDetails
+    /*
     useEffect(() => {
         if (procedureDetails && procedureDetails.upload_attachment) {
             handleAttachmentPreview();
         }
     }, [procedureDetails]);
+    */
 
-    // Modify file change handler to trigger preview
+    // File change handler - simplified for demo
     const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
             setSelectedFile(file.name);
             setFileObject(file);
-            // Create a preview URL for the newly selected file
-            const fileUrl = URL.createObjectURL(file);
-            setPreviewAttachment(fileUrl);
+            // Static URL for demo
+            setPreviewAttachment("https://example.com/sample.pdf");
         }
     };
-    const getUserCompanyId = () => {
-        const storedCompanyId = localStorage.getItem("company_id");
-        if (storedCompanyId) return storedCompanyId;
 
-        const userRole = localStorage.getItem("role");
-        if (userRole === "user") {
-            const userData = localStorage.getItem("user_company_id");
-            if (userData) {
-                try {
-                    return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
-                    return null;
-                }
-            }
-        }
-        return null;
+    // Static company ID for demo
+    const getUserCompanyId = () => {
+        return "12345";
     };
 
     const companyId = getUserCompanyId();
 
-    // Populate form data when procedure details are loaded
+    // Comment out effect for procedureDetails
+    /*
     useEffect(() => {
         if (procedureDetails) {
             setFormData({
-                title: procedureDetails.title || '',
-                written_by: procedureDetails.written_by?.id || null,
-                no: procedureDetails.no || '',
-                checked_by: procedureDetails.checked_by?.id || null,
-                rivision: procedureDetails.rivision || '',
-                approved_by: procedureDetails.approved_by?.id || null,
-                document_type: procedureDetails.document_type || 'System',
-                date: procedureDetails.date || formData.date,
-                review_frequency_year: procedureDetails.review_frequency_year || '',
-                review_frequency_month: procedureDetails.review_frequency_month || '',
-                publish: procedureDetails.publish || false,
-                send_notification: procedureDetails.send_notification || false
+                // ... original code
             });
         }
     }, [procedureDetails]);
+    */
 
+    // Comment out effect for fetching users
+    /*
     useEffect(() => {
         if (companyId) {
             fetchUsers();
         }
-    }, [companyId])
+    }, [companyId]);
+    */
 
+    // Comment out effect for fetching procedure details and corrections
+    /*
     useEffect(() => {
         if (companyId && id) {
             fetchProcedureDetails();
             fetchProcedureCorrections();
         }
     }, [companyId, id]);
+    */
 
+    // Comment out fetch functions
+    /*
     const fetchUsers = async () => {
-        try {
-            if (!companyId) return;
-
-            const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
-
-            if (Array.isArray(response.data)) {
-                setUsers(response.data);
-            } else {
-                setUsers([]);
-                console.error("Unexpected response format:", response.data);
-                setError("Unable to load users");
-            }
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
-            setUsers([]);
-        }
+        // ... original code
     };
 
     const fetchProcedureDetails = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
-            setProcedureDetails(response.data);
-            setIsInitialLoad(false);
-            console.log("Procedure Details:", response.data);
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching procedure details:", err);
-            setError("Failed to load procedure details");
-            setIsInitialLoad(false);
-            setLoading(false);
-        }
+        // ... original code
     };
 
     const fetchProcedureCorrections = async () => {
-        try {
-            const response = await axios.get(`${BASE_URL}/qms/procedures/${id}/corrections/`);
-            setCorrections(response.data);
-            console.log("Fetched Procedure Corrections:", response.data);
-        } catch (error) {
-            console.error("Error fetching procedure corrections:", error);
-        }
+        // ... original code
     };
+    */
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month, 0).getDate();
@@ -233,6 +224,13 @@ const EditQmsProcedure = () => {
         }));
     };
 
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
+        }));
+    };
 
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
@@ -259,10 +257,22 @@ const EditQmsProcedure = () => {
     };
 
     const handleCancelClick = () => {
-        navigate('/company/qms/procedure')
-    }
+        navigate('/company/qms/procedure');
+    };
 
     const handleUpdateClick = async () => {
+        // Simplified for demo
+        setLoading(true);
+
+        // Simulate API call
+        setTimeout(() => {
+            console.log('Update procedure with data:', formData);
+            setLoading(false);
+            alert('Procedure updated successfully! (Demo)');
+            console.log('Would navigate to /company/qms/procedure');
+        }, 1000);
+
+        /* Comment out actual API call
         try {
             setLoading(true);
 
@@ -300,6 +310,7 @@ const EditQmsProcedure = () => {
             setError('Failed to update procedure');
             console.error('Error updating procedure:', err);
         }
+        */
     };
 
     const getMonthName = (monthNum) => {
@@ -314,42 +325,28 @@ const EditQmsProcedure = () => {
         return `${user.first_name} ${user.last_name}`;
     };
 
-    // Render loading state
-    if (isInitialLoad) {
-        return <div className="text-white">Loading...</div>;
-    }
     const renderAttachmentPreview = () => {
-        // If there's a preview attachment from existing Procedure or newly selected file
-        if (previewAttachment) {
-            const attachmentName = selectedFile || procedureDetails?.upload_attachment_name || 'Attachment';
+        // Simplified static preview
+        // if (previewAttachment || procedureDetails?.upload_attachment) {
+        const attachmentName = selectedFile || procedureDetails?.upload_attachment_name || 'Attachment';
 
-            return (
-                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
-                    <div className="text-white flex items-center space-x-4">
-                        <span>{attachmentName}</span>
-                        <button
-                            onClick={() => window.open(previewAttachment, '_blank')}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
-                        >
-                            View File
-                        </button>
-                    </div>
-                </div>
-            );
-        }
+        return (
+            <button
+                onClick={() => window.open(previewAttachment, '_blank')}
+                className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
+            >
+                Click to view File
+                <Eye size={17} />
+            </button>
+        );
+        // }
         return null;
     };
 
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-                <h1 className="add-manual-sections">Edit Procedure Sections</h1>
-
-                {error && (
-                    <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
-                        {error}
-                    </div>
-                )}
+                <h1 className="add-manual-sections">Edit Procedures</h1>
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
@@ -406,31 +403,78 @@ const EditQmsProcedure = () => {
                         </div>
 
                         <div>
-                            <label className="add-qms-manual-label">
-                                Checked/Reviewed By <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <select
-                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="checked_by"
-                                    value={formData.checked_by || ''}
-                                    onFocus={() => toggleDropdown('checked_by')}
-                                    onChange={(e) => handleDropdownChange(e, 'checked_by')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
-                                >
-                                    <option value="">Select User</option>
-                                    {users.map(user => (
-                                        <option key={`checked-${user.id}`} value={user.id}>
-                                            {formatUserName(user)}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
-                                />
+                            <div className="flex space-x-4">
+                                <div className='w-1/2'>
+                                    <label className="add-qms-manual-label">
+                                        Checked/Reviewed By <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative flex-grow">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="checked_by"
+                                            value={formData.checked_by || ''}
+                                            onFocus={() => toggleDropdown('checked_by')}
+                                            onChange={(e) => handleDropdownChange(e, 'checked_by')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
+                                        >
+                                            <option value="">Select User</option>
+                                            {users.map(user => (
+                                                <option key={`checked-${user.id}`} value={user.id}>
+                                                    {formatUserName(user)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="w-1/4">
+                                    <label className="add-qms-manual-label">System Notify</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="checked_by_system_notify"
+                                            value={formData.checked_by_system_notify ? 'Yes' : 'No'}
+                                            onFocus={() => toggleDropdown('checked_by_system_notify')}
+                                            onChange={(e) => handleDropdownChange(e, 'checked_by_system_notify')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_system_notify: false }))}
+                                        >
+                                            {yesNoOptions.map(option => (
+                                                <option key={`checked-notify-${option}`} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_system_notify ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="w-1/4">
+                                    <label className="add-qms-manual-label">Email Notify</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="checked_by_email_notify"
+                                            value={formData.checked_by_email_notify ? 'Yes' : 'No'}
+                                            onFocus={() => toggleDropdown('checked_by_email_notify')}
+                                            onChange={(e) => handleDropdownChange(e, 'checked_by_email_notify')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_email_notify: false }))}
+                                        >
+                                            {yesNoOptions.map(option => (
+                                                <option key={`checked-email-${option}`} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_email_notify ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
-
 
                         <div>
                             <label className="add-qms-manual-label">
@@ -446,28 +490,77 @@ const EditQmsProcedure = () => {
                         </div>
 
                         <div>
-                            <label className="add-qms-manual-label">
-                                Approved By <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <select
-                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="approved_by"
-                                    value={formData.approved_by || ''}
-                                    onFocus={() => toggleDropdown('approved_by')}
-                                    onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
-                                >
-                                    <option value="">Select User</option>
-                                    {users.map(user => (
-                                        <option key={`approved-${user.id}`} value={user.id}>
-                                            {formatUserName(user)}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                />
+                            <div className="flex space-x-4">
+                                <div className='w-1/2'>
+                                    <label className="add-qms-manual-label">
+                                        Approved By <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative flex-grow">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="approved_by"
+                                            value={formData.approved_by || ''}
+                                            onFocus={() => toggleDropdown('approved_by')}
+                                            onChange={(e) => handleDropdownChange(e, 'approved_by')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
+                                        >
+                                            <option value="">Select User</option>
+                                            {users.map(user => (
+                                                <option key={`approved-${user.id}`} value={user.id}>
+                                                    {formatUserName(user)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="w-1/4">
+                                    <label className="add-qms-manual-label">System Notify</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="approved_by_system_notify"
+                                            value={formData.approved_by_system_notify ? 'Yes' : 'No'}
+                                            onFocus={() => toggleDropdown('approved_by_system_notify')}
+                                            onChange={(e) => handleDropdownChange(e, 'approved_by_system_notify')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_system_notify: false }))}
+                                        >
+                                            {yesNoOptions.map(option => (
+                                                <option key={`approved-notify-${option}`} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_system_notify ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="w-1/4">
+                                    <label className="add-qms-manual-label">Email Notify</label>
+                                    <div className="relative">
+                                        <select
+                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                            name="approved_by_email_notify"
+                                            value={formData.approved_by_email_notify ? 'Yes' : 'No'}
+                                            onFocus={() => toggleDropdown('approved_by_email_notify')}
+                                            onChange={(e) => handleDropdownChange(e, 'approved_by_email_notify')}
+                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_email_notify: false }))}
+                                        >
+                                            {yesNoOptions.map(option => (
+                                                <option key={`approved-email-${option}`} value={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <ChevronDown
+                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_email_notify ? 'rotate-180' : ''}`}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -579,10 +672,11 @@ const EditQmsProcedure = () => {
                                     </span>
                                     <img src={file} alt="File Icon" />
                                 </button>
-                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                <div className='flex justify-between items-center'>
+                                    {renderAttachmentPreview()}
+                                    {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                </div>
                             </div>
-                            {renderAttachmentPreview()}
-
                         </div>
 
                         <div>
@@ -627,6 +721,7 @@ const EditQmsProcedure = () => {
                         <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
+                                onClick={() => console.log('Save as Draft clicked')}
                             >
                                 Save as Draft
                             </button>
@@ -654,4 +749,4 @@ const EditQmsProcedure = () => {
     );
 };
 
-export default EditQmsProcedure
+export default EditQmsProcedure;

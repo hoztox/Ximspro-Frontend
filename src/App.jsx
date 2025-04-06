@@ -139,10 +139,10 @@ const ThemedApp = () => {
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
           <Route path="qms/addprocedure" element={<AddQmsProcedure />} />
-          <Route path="qms/viewprocedure/:id" element={<ViewQmsProcedure/>} />
-          <Route path="qms/editprocedure/:id" element={<EditQmsProcedure/>} />
+          <Route path="qms/viewprocedure" element={<ViewQmsProcedure/>} />
+          <Route path="qms/editprocedure" element={<EditQmsProcedure/>} />
           <Route path="qms/draftprocedure" element={<DraftQmsProcedure/>} />
-          <Route path="qms/editdraftprocedure/:id" element={<EditDraftQmsProcedure/>} />
+          <Route path="qms/editdraftprocedure" element={<EditDraftQmsProcedure/>} />
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />

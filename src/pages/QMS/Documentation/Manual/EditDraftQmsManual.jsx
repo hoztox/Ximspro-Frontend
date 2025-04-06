@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import "./addqmsmanual.css"
 
@@ -95,19 +95,15 @@ const EditDraftQmsManual = () => {
         if (previewAttachment) {
             const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
 
-            return (
-                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
-                    <div className="text-white flex items-center space-x-4">
-                        <span>{attachmentName}</span>
-                        <button
-                            onClick={() => window.open(previewAttachment, '_blank')}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
-                        >
-                            View File
-                        </button>
-                    </div>
-                </div>
-            );
+        return (
+            <button
+                onClick={() => window.open(previewAttachment, '_blank')}
+               className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
+            >
+                Click to view File
+                <Eye size={17} />
+            </button>
+        );
         }
         return null;
     };
@@ -128,10 +124,10 @@ const EditDraftQmsManual = () => {
         review_frequency_month: '',
         publish: false,
         send_notification_checked_by: 'No',
-        send_email_checked_by:  'No',
-        send_notification_approved_by:  'No',
-        send_email_approved_by:  'No',
-      
+        send_email_checked_by: 'No',
+        send_notification_approved_by: 'No',
+        send_email_approved_by: 'No',
+
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -546,7 +542,7 @@ const EditDraftQmsManual = () => {
                             </div>
                             <div className="w-1/4">
                                 <label className="add-qms-manual-label">
-                                     System Notify
+                                    System Notify
                                 </label>
                                 <div className="relative">
                                     <select
@@ -567,7 +563,7 @@ const EditDraftQmsManual = () => {
                             </div>
                             <div className="w-1/4">
                                 <label className="add-qms-manual-label">
-                                     Email Notify
+                                    Email Notify
                                 </label>
                                 <div className="relative">
                                     <select
@@ -696,9 +692,11 @@ const EditDraftQmsManual = () => {
                                     </span>
                                     <img src={file} alt="File Icon" />
                                 </button>
-                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                <div className='flex justify-between items-center'>
+                                    {renderAttachmentPreview()}
+                                    {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                </div>
                             </div>
-                            {renderAttachmentPreview()}
                         </div>
 
                         <div>

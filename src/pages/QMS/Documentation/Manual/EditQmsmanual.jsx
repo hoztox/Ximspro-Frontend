@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -10,7 +10,7 @@ const EditQmsmanual = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [manualDetails, setManualDetails] = useState(null);
-    const [corrections, setCorrections] = useState([]); 
+    const [corrections, setCorrections] = useState([]);
     const [previewAttachment, setPreviewAttachment] = useState(null);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
@@ -54,44 +54,44 @@ const EditQmsmanual = () => {
         send_system_checked: false,
         send_system_approved: false
     });
-   
 
-  
+
+
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
     };
-// Add a method to handle attachment preview
-const handleAttachmentPreview = () => {
-    // If there's an existing attachment from the manual details
-    if (manualDetails && manualDetails.upload_attachment) {
-        setPreviewAttachment(manualDetails.upload_attachment);
-    } 
-    // If a new file is selected
-    else if (fileObject) {
-        // Create a URL for the selected file
-        const fileUrl = URL.createObjectURL(fileObject);
-        setPreviewAttachment(fileUrl);
-    }
-};
+    // Add a method to handle attachment preview
+    const handleAttachmentPreview = () => {
+        // If there's an existing attachment from the manual details
+        if (manualDetails && manualDetails.upload_attachment) {
+            setPreviewAttachment(manualDetails.upload_attachment);
+        }
+        // If a new file is selected
+        else if (fileObject) {
+            // Create a URL for the selected file
+            const fileUrl = URL.createObjectURL(fileObject);
+            setPreviewAttachment(fileUrl);
+        }
+    };
 
-// You can call this method after file selection or when manual details are loaded
-useEffect(() => {
-    if (manualDetails && manualDetails.upload_attachment) {
-        handleAttachmentPreview();
-    }
-}, [manualDetails]);
+    // You can call this method after file selection or when manual details are loaded
+    useEffect(() => {
+        if (manualDetails && manualDetails.upload_attachment) {
+            handleAttachmentPreview();
+        }
+    }, [manualDetails]);
 
-// Modify file change handler to trigger preview
-const handleFileChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        setSelectedFile(file.name);
-        setFileObject(file);
-        // Create a preview URL for the newly selected file
-        const fileUrl = URL.createObjectURL(file);
-        setPreviewAttachment(fileUrl);
-    }
-};
+    // Modify file change handler to trigger preview
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setSelectedFile(file.name);
+            setFileObject(file);
+            // Create a preview URL for the newly selected file
+            const fileUrl = URL.createObjectURL(file);
+            setPreviewAttachment(fileUrl);
+        }
+    };
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -246,7 +246,7 @@ const handleFileChange = (event) => {
         }));
     };
 
-   
+
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
 
@@ -335,24 +335,20 @@ const handleFileChange = (event) => {
         // If there's a preview attachment from existing manual or newly selected file
         if (previewAttachment) {
             const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
-            
+
             return (
-                <div className="mt-4 p-4 bg-[#2C2C35] rounded-lg flex flex-col items-center">
-                    <div className="text-white flex items-center space-x-4">
-                        <span>{attachmentName}</span>
-                        <button 
-                            onClick={() => window.open(previewAttachment, '_blank')}
-                            className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition duration-300"
-                        >
-                            View File
-                        </button>
-                    </div>
-                </div>
+                <button
+                    onClick={() => window.open(previewAttachment, '_blank')}
+                    className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
+                >
+                    Click to View File
+                    <Eye size={17} />
+                </button>
             );
         }
         return null;
     };
-    
+
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
@@ -559,7 +555,7 @@ const handleFileChange = (event) => {
                             </div>
                             <div className="w-1/4">
                                 <label className="add-qms-manual-label">
-                                    Email Notify 
+                                    Email Notify
                                 </label>
                                 <div className="relative">
                                     <select
@@ -691,10 +687,12 @@ const handleFileChange = (event) => {
                                     </span>
                                     <img src={file} alt="File Icon" />
                                 </button>
-                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                <div className='flex justify-between items-center'>
+                                    {renderAttachmentPreview()}
+                                    {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                </div>
                             </div>
-                            {renderAttachmentPreview()}
- 
+
                         </div>
 
                         <div>
