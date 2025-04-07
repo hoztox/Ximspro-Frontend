@@ -15,9 +15,6 @@ const AdminLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [showAdminLoginSuccessModal, setShowAdminLoginSuccessModal] = useState(false);
-  const [showAdminLoginErrorModal, setShowAdminLoginErrorModal] = useState(false);
-
 
   useEffect(() => {
     const adminToken = localStorage.getItem('adminAuthToken');
@@ -67,27 +64,14 @@ const AdminLogin = () => {
         localStorage.setItem("logoutTime", logoutTime);
         localStorage.setItem("adminDetails", JSON.stringify(admin)); // Store admin details
         console.log("Stored Admin Details:", JSON.parse(localStorage.getItem("adminDetails")));
-        setShowAdminLoginSuccessModal(true);
-        setTimeout(() => {
-          setShowAdminLoginSuccessModal(false);
           navigate("/admin/dashboard");
-        }, 1500);
       } else {
         throw new Error(response.data.error || "Login failed");
       }
     } catch (error) {
       console.error("Error during login request:", error);
       if (error.response && error.response.status === 400) {
-        setShowAdminLoginErrorModal(true);
-        setTimeout(() => {
-          setShowAdminLoginErrorModal(false);
-        }, 3000);
-        // toast.error("Invalid username or password");
-      } else {
-        setShowAdminLoginErrorModal(true);
-        setTimeout(() => {
-          setShowAdminLoginErrorModal(false);
-        }, 3000);
+        toast.error("Invalid username or password");
       }
     } finally {
       setLoading(false);
@@ -115,17 +99,6 @@ const AdminLogin = () => {
   return (
     <div className="flex flex-col h-screen items-center justify-center adminloginscreen">
       <Toaster position="top-center" />
-
-      <AdminLoginSuccessModal
-        showAdminLoginSuccessModal={showAdminLoginSuccessModal}
-        onClose={() => { setShowAdminLoginSuccessModal(false) }}
-      />
-
-      <AdminLoginErrorModal
-        showAdminLoginErrorModal={showAdminLoginErrorModal}
-        onClose={() => { setShowAdminLoginErrorModal(false) }}
-      />
-
       {/* Logo Section */}
       <div className="adminloginstyle">
         <div className="mb-9 mt-14">
