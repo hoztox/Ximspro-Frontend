@@ -92,8 +92,6 @@ const AdminLogin = () => {
                     console.log("Navigating to /user/dashboard");
                     setTimeout(() => navigate("/company/dashboard"), 100);
                 }
-    
-                toast.success("Successfully Logged In");
             }
         } catch (error) {
             console.error("Login Error:", error.response?.data || error);
