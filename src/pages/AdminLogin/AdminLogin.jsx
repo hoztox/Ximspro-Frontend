@@ -6,8 +6,6 @@ import axios from "axios";
 import { BASE_URL } from "../../Utils/Config";
 import "./adminlogin.css";
 import logo from "../../assets/images/logo.svg";
-import AdminLoginSuccessModal from "./AdminLoginSuccessModal";
-import AdminLoginErrorModal from "./AdminLoginErrorModal";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
