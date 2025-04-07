@@ -4,7 +4,7 @@ import { useTheme } from "../../ThemeContext";
 import logo from "../../assets/images/Company-Navbar/xims-logo.svg";
 import menu from "../../assets/images/Company-Navbar/close-icon.svg";
 import bell from "../../assets/images/Company-Navbar/bell.svg";
-import profile from "../../assets/images/Company-Navbar/No_image_available.svg.png";
+import profile from "../../assets/images/Company-Navbar/no-profile.png";
 import sunIcon from "../../assets/images/Navbar/sun.svg"
 import moonIcon from "../../assets/images/Navbar/moon.svg"
 import imgupload from "../../assets/images/Company-Navbar/img-upload.svg"
