@@ -32,7 +32,8 @@ const QMSViewUser = () => {
         answer: '',
         notes: '',
         status: '',
-        user_logo: ''
+        user_logo: '',
+        permissions: ''
     });
     const [loading, setLoading] = useState(true);
 
@@ -45,7 +46,7 @@ const QMSViewUser = () => {
         try {
             setLoading(true);
             const response = await axios.get(`${BASE_URL}/company/user/${id}/`);
-            console.log("User Data Response:", response.data);
+            console.log("User Data Responseeee:", response.data);
             setUserData(response.data); 
             setLoading(false);
         } catch (error) {
@@ -165,7 +166,7 @@ const QMSViewUser = () => {
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Permissions</label>
-                                {/* <div className="text-white view-user-datas">{userData.permissions || 'N/A'}</div> */}
+                                <div className="text-white view-user-datas">{userData.permissions || 'N/A'}</div>
                             </div>
                         </div>
 

@@ -39,6 +39,87 @@ const QMSAddUser = () => {
     status: 'live',
     user_logo: '',
   });
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameValid, setUsernameValid] = useState(null);
+
+  const [emailError, setEmailError] = useState('');
+  const [emailValid, setEmailValid] = useState(null);
+
+  useEffect(() => {
+    const validateUsername = async () => {
+      if (formData.username) {
+        try {
+          const response = await axios.get(`${BASE_URL}/accounts/validate-userid/`, {
+            params: { username: formData.username },
+          });
+          if (response.data.exists) {
+            setUsernameError('Username already exists!');
+            setUsernameValid(false);
+          } else {
+            setUsernameError('');
+            setUsernameValid(true); // This will trigger the success message
+          }
+        } catch (error) {
+          console.error('Error validating user id:', error);
+          setUsernameError('Error checking user id.');
+          setUsernameValid(false);
+        }
+      } else {
+        setUsernameError('');
+        setUsernameValid(null); // Reset when empty
+      }
+    };
+
+    // Add a small delay to avoid too many requests while typing
+    const timeoutId = setTimeout(() => {
+      validateUsername();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.username]);
+
+  useEffect(() => {
+    const validateEmail = async () => {
+      // Check if email exists
+      if (formData.email) {
+        // Email format validation using regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          setEmailError('Invalid email format!');
+          setEmailValid(false);
+          return; // Stop further validation if format is invalid
+        }
+
+        try {
+          const response = await axios.get(`${BASE_URL}/accounts/validate-email/`, {
+            params: { email: formData.email },
+          });
+          if (response.data.exists) {
+            setEmailError('Email already exists!');
+            setEmailValid(false);
+          } else {
+            setEmailError('');
+            setEmailValid(true); // This will trigger the success message
+          }
+        } catch (error) {
+          console.error('Error validating email:', error);
+          setEmailError('Error checking email.');
+          setEmailValid(false);
+        }
+      } else {
+        setEmailError('');
+        setEmailValid(null); // Reset when empty
+      }
+    };
+
+    // Add a small delay to avoid too many requests while typing
+    const timeoutId = setTimeout(() => {
+      validateEmail();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.email]);
+
 
 
 
@@ -280,7 +361,7 @@ const QMSAddUser = () => {
       <form className="add-user-form" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-[122px] py-[23px]">
           <div>
-            <label className="add-user-label">User Name <span className='required-field'>*</span></label>
+            <label className="add-user-label">Username <span className='required-field'>*</span></label>
             <input
               type="text"
               name="username"
@@ -288,6 +369,22 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {usernameError && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {usernameError}
+              </p>
+            )}
+            {usernameValid === true && formData.username && (
+              <p className="text-green-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Username is available!
+              </p>
+            )}
           </div>
           <div></div> {/* Empty div for alignment */}
 
@@ -487,6 +584,22 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {emailError && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {emailError}
+              </p>
+            )}
+            {emailValid === true && formData.email && (
+              <p className="text-green-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Email is available!
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Confirm Email <span className='required-field'>*</span></label>

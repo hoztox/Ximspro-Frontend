@@ -35,8 +35,13 @@ const QmsEmployeePerformance = () => {
         navigate('/company/qms/add-employee-performance')
     };
 
+    const handleView = () => {
+        navigate('/company/qms/view-employee-performance')
+    }
+
     // Edit employee
-    const handleEdit = (id) => {
+    const handleEdit = () => {
+        navigate('/company/qms/edit-employee-performance')
     };
 
     // Delete employee
@@ -117,17 +122,17 @@ const QmsEmployeePerformance = () => {
                                     <button className="text-[#1E84AF]">Add Questions</button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button>
+                                    <button onClick={() => handleView()}>
                                       <img src={viewIcon} alt="View Icon" className='action-btn' />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button className="text-gray-400 hover:text-white" onClick={() => handleEdit(employee.id)}>
+                                    <button onClick={() => handleEdit()}>
                                        <img src={editIcon} alt="Edit Icon" className='action-btn' />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button className="text-gray-400 hover:text-white" onClick={() => handleDelete(employee.id)}>
+                                    <button onClick={() => handleDelete(employee.id)}>
                                         <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
                                     </button>
                                 </td>

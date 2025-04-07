@@ -58,6 +58,8 @@ const EmployeeTrainingSubmenu = (props) => {
             path: "/company/qms/employee-performance",
             relatedPaths: [
                 "/company/qms/add-employee-performance",
+                "/company/qms/edit-employee-performance",
+                "/company/qms/view-employee-performance",
                  
                ]
         },
