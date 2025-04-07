@@ -47,7 +47,19 @@ const QMSViewUser = () => {
             setLoading(true);
             const response = await axios.get(`${BASE_URL}/company/user/${id}/`);
             console.log("User Data Responseeee:", response.data);
-            setUserData(response.data); 
+
+            // Process the data to ensure we handle any objects correctly
+            const processedData = {};
+            for (const [key, value] of Object.entries(response.data)) {
+                // If the value is an object (but not null), convert it to a string representation
+                if (value && typeof value === 'object') {
+                    processedData[key] = JSON.stringify(value);
+                } else {
+                    processedData[key] = value;
+                }
+            }
+
+            setUserData(processedData);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching user details:", error);
@@ -87,12 +99,27 @@ const QMSViewUser = () => {
             const day = date.getDate().toString().padStart(2, '0');
             const month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth() is 0-indexed
             const year = date.getFullYear();
-            
+
             // Return in DD-MM-YYYY format with hyphens
             return `${day}-${month}-${year}`;
         } catch (e) {
             return dateString;
         }
+    };
+
+    // Helper function to safely render any value
+    const renderValue = (value) => {
+        if (value === null || value === undefined || value === '') {
+            return 'N/A';
+        }
+
+        // If it's already a string, return it directly
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        // Otherwise, convert to string representation
+        return String(value);
     };
 
     return (
@@ -116,57 +143,78 @@ const QMSViewUser = () => {
                         <div className="space-y-[40px] border-r border-[#383840]">
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Username</label>
-                                <div className="text-white view-user-datas">{userData.username || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.username)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">First Name</label>
-                                <div className="text-white view-user-datas">{userData.first_name || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.first_name)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Last Name</label>
-                                <div className="text-white view-user-datas">{userData.last_name || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.last_name)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Address</label>
-                                <div className="text-white view-user-datas">{userData.address || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.address)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Province/State</label>
-                                <div className="text-white view-user-datas">{userData.province_state || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.province_state)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Department/Division</label>
-                                <div className="text-white view-user-datas">{userData.department_division || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.department_division)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Phone</label>
-                                <div className="text-white view-user-datas">{userData.phone || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.phone)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Mobile Phone</label>
-                                <div className="text-white view-user-datas">{userData.mobile_phone || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.mobile_phone)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Secret Question</label>
-                                <div className="text-white view-user-datas">{userData.secret_question || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.secret_question)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Notes</label>
-                                <div className="text-white view-user-datas">{userData.notes || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.notes)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Permissions</label>
-                                <div className="text-white view-user-datas">{userData.permissions || 'N/A'}</div>
+                                <div className="text-white view-user-datas">
+                                    {userData.permissions ?
+                                        (() => {
+                                            try {
+                                                // Parse the permissions if it's a string
+                                                const permissionsArray = typeof userData.permissions === 'string'
+                                                    ? JSON.parse(userData.permissions)
+                                                    : userData.permissions;
+
+                                                // Check if it's an array and map through it
+                                                if (Array.isArray(permissionsArray)) {
+                                                    return permissionsArray.map(perm => perm.name).join(', ');
+                                                }
+                                                return 'N/A';
+                                            } catch (e) {
+                                                console.error("Error parsing permissions:", e);
+                                                return 'Error displaying permissions';
+                                            }
+                                        })()
+                                        : 'N/A'
+                                    }
+                                </div>
                             </div>
                         </div>
 
@@ -174,7 +222,7 @@ const QMSViewUser = () => {
                         <div className="space-y-[40px]">
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Gender</label>
-                                <div className="text-white view-user-datas">{userData.gender || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.gender)}</div>
                             </div>
 
                             <div>
@@ -184,42 +232,42 @@ const QMSViewUser = () => {
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">City</label>
-                                <div className="text-white view-user-datas">{userData.city || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.city)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Zip/P.O. Box</label>
-                                <div className="text-white view-user-datas">{userData.zip_po_box || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.zip_po_box)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Country</label>
-                                <div className="text-white view-user-datas">{userData.country || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.country)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Email</label>
-                                <div className="text-white view-user-datas">{userData.email || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.email)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Office Phone</label>
-                                <div className="text-white view-user-datas">{userData.office_phone || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.office_phone)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Fax</label>
-                                <div className="text-white view-user-datas">{userData.fax || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.fax)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Answer</label>
-                                <div className="text-white view-user-datas">{userData.answer || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.answer)}</div>
                             </div>
 
                             <div>
                                 <label className="block view-user-labels text-[#AAAAAA] mb-[6px]">Status</label>
-                                <div className="text-white view-user-datas">{userData.status || 'N/A'}</div>
+                                <div className="text-white view-user-datas">{renderValue(userData.status)}</div>
                             </div>
 
                             <div className='flex justify-between'>

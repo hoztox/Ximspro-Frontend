@@ -129,7 +129,7 @@ const EditQmsEmployeePerformance = () => {
                                          onChange={handleChange}
                                          onFocus={() => handleFocus("day")}
                                          onBlur={handleBlur}
-                                         className="appearance-none w-full employee-performace-inputs"
+                                         className="appearance-none w-full employee-performace-inputs cursor-pointer"
                                      >
                                          <option value="">dd</option>
                                          {dayOptions}
@@ -149,7 +149,7 @@ const EditQmsEmployeePerformance = () => {
                                          onChange={handleChange}
                                          onFocus={() => handleFocus("month")}
                                          onBlur={handleBlur}
-                                         className="appearance-none w-full employee-performace-inputs"
+                                         className="appearance-none w-full employee-performace-inputs cursor-pointer"
                                      >
                                          <option value="">mm</option>
                                          {monthOptions}
@@ -169,7 +169,7 @@ const EditQmsEmployeePerformance = () => {
                                          onChange={handleChange}
                                          onFocus={() => handleFocus("year")}
                                          onBlur={handleBlur}
-                                         className="appearance-none w-full employee-performace-inputs"
+                                         className="appearance-none w-full employee-performace-inputs cursor-pointer"
                                      >
                                          <option value="">yyyy</option>
                                          {yearOptions}

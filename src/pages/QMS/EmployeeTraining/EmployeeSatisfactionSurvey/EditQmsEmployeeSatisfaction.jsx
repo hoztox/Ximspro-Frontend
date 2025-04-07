@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./addqmsemployeeperformance.css";
-
-const AddQmsEmployeePerformance = () => {
+const EditQmsEmployeeSatisfaction = () => {
     const [formData, setFormData] = useState({
-        evaluationTitle: '',
-        evaluationDescription: '',
+        surveyTitle: 'Test',
+        surveyDescription: 'Test',
         validTill: {
             day: '',
             month: '',
@@ -38,8 +36,8 @@ const AddQmsEmployeePerformance = () => {
         }
     };
 
-    const handleListEmployeePerformance = () => {
-        navigate('/company/qms/employee-performance')
+    const handleListEmployeeSatisfaction = () => {
+        navigate('/company/qms/list-satisfaction-survey')
     }
 
     const handleSubmit = (e) => {
@@ -48,7 +46,7 @@ const AddQmsEmployeePerformance = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/employee-performance')
+        navigate('/company/qms/list-satisfaction-survey')
     };
 
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
@@ -85,11 +83,11 @@ const AddQmsEmployeePerformance = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
+                    <h1 className="add-employee-performance-head">Edit Employee Satisfaction Survey</h1>
                     <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
-                    onClick={handleListEmployeePerformance}
+                        onClick={handleListEmployeeSatisfaction}
                     >
-                        List Employee Performance Evaluation
+                        List Employee Satisfaction Survey
                     </button>
                 </div>
 
@@ -97,12 +95,12 @@ const AddQmsEmployeePerformance = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label className="block employee-performace-label">
-                                Evaluation Title <span className="text-red-500">*</span>
+                                Survey Title <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
-                                name="evaluationTitle"
-                                value={formData.evaluationTitle}
+                                name="surveyTitle"
+                                value={formData.surveyTitle}
                                 onChange={handleChange}
                                 className="w-full employee-performace-inputs"
                                 required
@@ -110,10 +108,10 @@ const AddQmsEmployeePerformance = () => {
                         </div>
 
                         <div className="md:row-span-2">
-                            <label className="block employee-performace-label">Evaluation Description</label>
+                            <label className="block employee-performace-label">Survey Description</label>
                             <textarea
-                                name="evaluationDescription"
-                                value={formData.evaluationDescription}
+                                name="surveyDescription"
+                                value={formData.surveyDescription}
                                 onChange={handleChange}
                                 className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
@@ -199,4 +197,5 @@ const AddQmsEmployeePerformance = () => {
     );
 };
 
-export default AddQmsEmployeePerformance;
+
+export default EditQmsEmployeeSatisfaction

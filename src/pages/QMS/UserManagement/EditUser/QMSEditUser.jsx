@@ -18,8 +18,6 @@ const QMSEditUser = () => {
         username: '',
         first_name: '',
         last_name: '',
-        // password: '',
-        // confirm_password: '',
         gender: '',
         date_of_birth: { day: '', month: '', year: '' },
         address: '',
@@ -44,12 +42,40 @@ const QMSEditUser = () => {
     const { id } = useParams();
     console.log("User ID from params:", id);
 
+  
+    const fetchUserPermissions = async (id) => {
+        try {
+            const response = await axios.get(`${BASE_URL}/company/user/permissions/${id}/`);
+            
+            if (response.status === 200 && response.data) {
+                let userPermissions = [];
+                
+                // Handle different API response formats
+                if (Array.isArray(response.data)) {
+                    userPermissions = response.data.map(p => p.name || p);
+                } else if (response.data.permissions && Array.isArray(response.data.permissions)) {
+                    userPermissions = response.data.permissions.map(p => p.name || p);
+                } else if (typeof response.data === 'object') {
+                    // Try to extract permissions from the object if it has them
+                    const permissionsArr = Object.values(response.data).find(v => Array.isArray(v));
+                    if (permissionsArr) {
+                        userPermissions = permissionsArr.map(p => p.name || p);
+                    }
+                }
+                
+                console.log("Fetched user permissions:", userPermissions);
+                setSelectedPermissions(userPermissions);
+            }
+        } catch (err) {
+            console.error("Error fetching user permissions:", err);
+        }
+    };
+
     useEffect(() => {
         if (id) {
             setUserId(id);
             fetchUserDetails(id);
         } else {
-            // If no ID is provided, redirect back to list users
             toast.error("No user selected for editing");
             navigate('/company/qms/listuser');
         }
@@ -63,22 +89,19 @@ const QMSEditUser = () => {
             const response = await axios.get(`${BASE_URL}/company/user/${id}/`);
 
             if (response.status === 200 && response.data) {
-                 
                 let userData;
                 if (Array.isArray(response.data)) {
-                    // Find the user with the matching ID in the array
                     userData = response.data.find(user => user.id === parseInt(id));
                     if (!userData) {
-                        
                         userData = response.data[0];
                     }
                 } else {
                     userData = response.data;
                 }
 
-                console.log('User data:', userData);
+                console.log('User datasssssssssssssss:', userData);
 
-                // Parse date of birth
+           
                 let day = '';
                 let month = '';
                 let year = '';
@@ -92,13 +115,12 @@ const QMSEditUser = () => {
                     }
                 }
 
-                // Set the form data
+        
                 setFormData({
+                    id: userData.id || '', 
                     username: userData.username || '',
                     first_name: userData.first_name || '',
                     last_name: userData.last_name || '',
-                    // password: '', // Don't set password from API
-                    // confirm_password: '',
                     gender: userData.gender || '',
                     date_of_birth: { day, month, year },
                     address: userData.address || '',
@@ -108,7 +130,7 @@ const QMSEditUser = () => {
                     country: userData.country || '',
                     department_division: userData.department_division || '',
                     email: userData.email || '',
-                    confirm_email: userData.email || '', // Set confirm email to match email
+                    confirm_email: userData.email || '', 
                     phone: userData.phone || '',
                     office_phone: userData.office_phone || '',
                     mobile_phone: userData.mobile_phone || '',
@@ -119,12 +141,19 @@ const QMSEditUser = () => {
                     status: userData.status || 'live',
                     user_logo: userData.user_logo || '',
                 });
-
-                // Fetch user permissions
+                
+           
                 if (userData.permissions && Array.isArray(userData.permissions)) {
+                    const permissionNames = userData.permissions.map(p => p.name);
+                    console.log("Setting permissions from permissions:", permissionNames);
+                    setSelectedPermissions(permissionNames);
+                
+                } else if (userData.permissions && Array.isArray(userData.permissions)) {
+                    console.log("Setting permissions from permissions:", userData.permissions);
                     setSelectedPermissions(userData.permissions);
                 } else {
-                    // If permissions are not in the response, you might need an additional API call
+                
+                    console.log("Fetching user permissions separately...");
                     fetchUserPermissions(id);
                 }
             }
@@ -137,16 +166,7 @@ const QMSEditUser = () => {
         }
     };
 
-    const fetchUserPermissions = async (id) => {
-        try {
-            const response = await axios.get(`${BASE_URL}/company/users/permissions/${id}/`);
-            if (response.status === 200 && response.data && Array.isArray(response.data)) {
-                setSelectedPermissions(response.data);
-            }
-        } catch (err) {
-            console.error("Error fetching user permissions:", err);
-        }
-    };
+ 
 
     const fetchLatestPermissions = async () => {
         try {
@@ -157,6 +177,7 @@ const QMSEditUser = () => {
             }
 
             const response = await axios.get(`${BASE_URL}/accounts/permissions/${companyId}/`);
+            console.log("Company permissions response:", response.data);
 
             if (response.status === 200) {
                 if (response.data && response.data.permissions && Array.isArray(response.data.permissions)) {
@@ -191,11 +212,12 @@ const QMSEditUser = () => {
 
     const handlePermissionChange = (e) => {
         const { value, checked } = e.target;
+        console.log(`Permission ${value} changed to ${checked}`);
 
         if (checked) {
-            setSelectedPermissions([...selectedPermissions, value]);
+            setSelectedPermissions(prev => [...prev, value]);
         } else {
-            setSelectedPermissions(selectedPermissions.filter(permission => permission !== value));
+            setSelectedPermissions(prev => prev.filter(permission => permission !== value));
         }
     };
 
@@ -208,17 +230,15 @@ const QMSEditUser = () => {
     };
 
     const getUserCompanyId = () => {
-        // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
-        // If user data exists with company_id
+        
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-            // Try to get company_id from user data that was stored during login
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
-                    return JSON.parse(userData);  // Ensure it's valid JSON
+                    return JSON.parse(userData);   
                 } catch (e) {
                     console.error("Error parsing user company ID:", e);
                     return null;
@@ -238,43 +258,8 @@ const QMSEditUser = () => {
         }
     };
 
-    // const validateForm = () => {
-    //     // If password is being changed, ensure it matches confirmation
-    //     // if (formData.password && formData.password !== formData.confirm_password) {
-    //     //     setError('Passwords do not match');
-    //     //     return false;
-    //     // }
-
-    //     // Ensure email matches confirmation
-    //     if (formData.email !== formData.confirm_email) {
-    //         setError('Emails do not match');
-    //         return false;
-    //     }
-
-    //     // Check required fields (excluding password as it's optional for updates)
-    //     const requiredFields = ['username', 'first_name', 'last_name', 'country', 'email', 'phone', 'secret_question', 'answer'];
-
-    //     for (const field of requiredFields) {
-    //         if (!formData[field]) {
-    //             setError(`${field.replace('_', ' ')} is required`);
-    //             return false;
-    //         }
-    //     }
-
-    //     // Check if at least one permission is selected
-    //     // if (selectedPermissions.length === 0) {
-    //     //     setError('At least one permission must be selected');
-    //     //     return false;
-    //     // }
-
-    //     return true;
-    // };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // if (!validateForm()) {
-        //     return;
-        // }
         setIsLoading(true);
         setError(null);
         try {
@@ -284,64 +269,82 @@ const QMSEditUser = () => {
                 setIsLoading(false);
                 return;
             }
-
+    
             let formattedDob = "";
             if (formData.date_of_birth.day && formData.date_of_birth.month && formData.date_of_birth.year) {
                 formattedDob = `${formData.date_of_birth.year}-${formData.date_of_birth.month.padStart(2, "0")}-${formData.date_of_birth.day.padStart(2, "0")}`;
             }
-
-            // Create a FormData object
-            const formDataToSubmit = new FormData();
-
-            // Add all the text fields
-            formDataToSubmit.append('company_id', companyId);
-            formDataToSubmit.append('username', formData.username);
-            formDataToSubmit.append('first_name', formData.first_name);
-            formDataToSubmit.append('last_name', formData.last_name);
-
-            // Only include password if it's being changed
-            // if (formData.password) {
-                formDataToSubmit.append('password', formData.password);
-                formDataToSubmit.append('confirm_password', formData.confirm_password);
-            // }
-
-            formDataToSubmit.append('gender', formData.gender);
-            formDataToSubmit.append('date_of_birth', formattedDob);
-            formDataToSubmit.append('address', formData.address);
-            formDataToSubmit.append('city', formData.city);
-            formDataToSubmit.append('zip_po_box', formData.zip_po_box);
-            formDataToSubmit.append('province_state', formData.province_state);
-            formDataToSubmit.append('country', formData.country);
-            formDataToSubmit.append('department_division', formData.department_division);
-            formDataToSubmit.append('email', formData.email);
-            formDataToSubmit.append('confirm_email', formData.confirm_email);
-            formDataToSubmit.append('phone', formData.phone);
-            formDataToSubmit.append('office_phone', formData.office_phone);
-            formDataToSubmit.append('mobile_phone', formData.mobile_phone);
-            formDataToSubmit.append('fax', formData.fax);
-            formDataToSubmit.append('secret_question', formData.secret_question);
-            formDataToSubmit.append('answer', formData.answer);
-            formDataToSubmit.append('notes', formData.notes);
-            formDataToSubmit.append('status', formData.status);
-
-            // Add the permissions as an array
-            selectedPermissions.forEach((permission) => {
-                formDataToSubmit.append('permissions', permission);
-            });
-
-            // Add the file if it exists and is a new file (not a string URL)
-            if (formData.user_logo && typeof formData.user_logo !== 'string') {
-                formDataToSubmit.append('user_logo', formData.user_logo);
+    
+            // Create regular data object first (not FormData)
+            const dataToSubmit = {
+                company_id: companyId,
+                username: formData.username,
+                first_name: formData.first_name,
+                last_name: formData.last_name,
+                gender: formData.gender,
+                date_of_birth: formattedDob,
+                address: formData.address,
+                city: formData.city,
+                zip_po_box: formData.zip_po_box,
+                province_state: formData.province_state,
+                country: formData.country,
+                department_division: formData.department_division,
+                email: formData.email,
+                confirm_email: formData.confirm_email,
+                phone: formData.phone,
+                office_phone: formData.office_phone,
+                mobile_phone: formData.mobile_phone,
+                fax: formData.fax,
+                secret_question: formData.secret_question,
+                answer: formData.answer,
+                notes: formData.notes,
+                status: formData.status,
+                // Add permissions as an array of objects in the format the backend expects
+                permissions: selectedPermissions.map(perm => ({ name: perm }))
+            };
+    
+            if (formData.password) {
+                dataToSubmit.password = formData.password;
+                dataToSubmit.confirm_password = formData.confirm_password;
             }
-
-            const response = await axios.put(`${BASE_URL}/company/users/update/${userId}/`, formDataToSubmit, {
-                headers: { "Content-Type": "multipart/form-data" }  // Important for file uploads
-            });
-
-            if (response.status === 200) {
-                console.log("User updated successfully", response.data);
-                toast.success("User updated successfully!");
-                navigate("/company/qms/listuser");
+    
+            console.log("Data to submit with permissions:", dataToSubmit);
+    
+            // If we have a file to upload, we need to use FormData
+            if (formData.user_logo && typeof formData.user_logo !== 'string') {
+                const formDataToSubmit = new FormData();
+                
+                // Add all regular data
+                Object.keys(dataToSubmit).forEach(key => {
+                    if (key === 'permissions') {
+                        // Handle permissions specially
+                        formDataToSubmit.append('permissions', JSON.stringify(dataToSubmit.permissions));
+                    } else {
+                        formDataToSubmit.append(key, dataToSubmit[key]);
+                    }
+                });
+                
+                // Add the file
+                formDataToSubmit.append('user_logo', formData.user_logo);
+                
+                const response = await axios.put(`${BASE_URL}/company/users/update/${userId}/`, formDataToSubmit, {
+                    headers: { "Content-Type": "multipart/form-data" }
+                });
+                
+                if (response.status === 200) {
+                    console.log("User updated successfully", response.data);
+                    toast.success("User updated successfully!");
+                    navigate("/company/qms/listuser");
+                }
+            } else {
+                // No file to upload, use regular JSON request
+                const response = await axios.put(`${BASE_URL}/company/users/update/${userId}/`, dataToSubmit);
+                
+                if (response.status === 200) {
+                    console.log("User updated successfully", response.data);
+                    toast.success("User updated successfully!");
+                    navigate("/company/qms/listuser");
+                }
             }
         } catch (err) {
             console.error("Error updating user:", err);
@@ -355,13 +358,10 @@ const QMSEditUser = () => {
             setIsLoading(false);
         }
     };
-
-    // Helper function to display the current user logo
     const renderUserLogo = () => {
         if (typeof formData.user_logo === 'string' && formData.user_logo) {
             return (
                 <div className="mt-3 flex items-end">
-
                     <img
                         src={formData.user_logo}
                         alt="User Logo"
@@ -371,6 +371,11 @@ const QMSEditUser = () => {
             );
         }
         return null;
+    };
+
+    // Helper function to check if a permission is selected
+    const isPermissionSelected = (permission) => {
+        return selectedPermissions.includes(permission);
     };
 
     return (
@@ -410,27 +415,6 @@ const QMSEditUser = () => {
                             />
                         </div>
                         <div></div> {/* Empty div for alignment */}
-
-                        {/* <div>
-                            <label className="add-user-label">Password (Leave blank to keep unchanged)</label>
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className="w-full add-user-inputs"
-                            />
-                        </div> */}
-                        {/* <div>
-                            <label className="add-user-label">Confirm Password</label>
-                            <input
-                                type="password"
-                                name="confirm_password"
-                                value={formData.confirm_password}
-                                onChange={handleChange}
-                                className="w-full add-user-inputs"
-                            />
-                        </div> */}
 
                         <div>
                             <label className="add-user-label">First Name <span className='required-field'>*</span></label>
@@ -747,7 +731,7 @@ const QMSEditUser = () => {
                                                 type="checkbox"
                                                 name="permissions"
                                                 value={permission}
-                                                checked={selectedPermissions.includes(permission)}
+                                                checked={isPermissionSelected(permission)}
                                                 onChange={handlePermissionChange}
                                                 className="mr-2 form-checkboxes"
                                             />

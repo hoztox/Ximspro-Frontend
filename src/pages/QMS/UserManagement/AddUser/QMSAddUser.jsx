@@ -49,7 +49,7 @@ const QMSAddUser = () => {
     const validateUsername = async () => {
       if (formData.username) {
         try {
-          const response = await axios.get(`${BASE_URL}/accounts/validate-userid/`, {
+          const response = await axios.get(`${BASE_URL}/company/validate-username/`, {
             params: { username: formData.username },
           });
           if (response.data.exists) {
@@ -57,7 +57,7 @@ const QMSAddUser = () => {
             setUsernameValid(false);
           } else {
             setUsernameError('');
-            setUsernameValid(true); // This will trigger the success message
+            setUsernameValid(true);  
           }
         } catch (error) {
           console.error('Error validating user id:', error);
@@ -66,11 +66,11 @@ const QMSAddUser = () => {
         }
       } else {
         setUsernameError('');
-        setUsernameValid(null); // Reset when empty
+        setUsernameValid(null);  
       }
     };
 
-    // Add a small delay to avoid too many requests while typing
+    
     const timeoutId = setTimeout(() => {
       validateUsername();
     }, 500);
@@ -91,7 +91,7 @@ const QMSAddUser = () => {
         }
 
         try {
-          const response = await axios.get(`${BASE_URL}/accounts/validate-email/`, {
+          const response = await axios.get(`${BASE_URL}/company/validate-email/`, {
             params: { email: formData.email },
           });
           if (response.data.exists) {

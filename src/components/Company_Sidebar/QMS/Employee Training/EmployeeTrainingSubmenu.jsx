@@ -67,7 +67,12 @@ const EmployeeTrainingSubmenu = (props) => {
             id: "employee-satisfaction-survey",
             label: "Employee Satisfaction Survey",
             icon: <img src={process} alt="Processes" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/processes",
+            path: "/company/qms/list-satisfaction-survey",
+            relatedPaths: [
+                "/company/qms/add-satisfaction-survey",
+                "/company/qms/edit-satisfaction-survey",
+                "/company/qms/view-satisfaction-survey",
+               ]
         },
         {
             id: "awareness-training",

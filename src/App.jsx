@@ -110,6 +110,10 @@ import QmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerform
 import AddQmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/AddQmsEmployeePerformance";
 import EditQmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/EditQmsEmployeePerformance";
 import ViewQmsEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/ViewQmsEmployeePerformance";
+import QmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsEmployeeSatisfaction";
+import AddQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/AddQmsEmployeeSatisfaction";
+import EditQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/EditQmsEmployeeSatisfaction";
+import ViewQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/ViewQmsEmployeeSatisfaction";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -181,6 +185,10 @@ const ThemedApp = () => {
           <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance/>} />
           <Route path="qms/edit-employee-performance" element={<EditQmsEmployeePerformance/>} />
           <Route path="qms/view-employee-performance" element={<ViewQmsEmployeePerformance/>} />
+          <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction/>}/>
+          <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction/>}/>
+          <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction/>}/>
+          <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction/>}/>
 
 
           {/* QMS User Management */}
@@ -188,6 +196,11 @@ const ThemedApp = () => {
           <Route path="qms/listuser" element={<QMSListUser />} />
           <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
           <Route path="qms/user-details/:id" element={<QMSViewUser/>} />
+
+
+
+
+
 
 
 
