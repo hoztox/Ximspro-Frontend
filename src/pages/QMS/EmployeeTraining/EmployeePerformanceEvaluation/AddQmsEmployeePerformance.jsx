@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import "./addqmsemployeeperformance.css"
+import { ChevronDown } from 'lucide-react';
+import "./addqmsemployeeperformance.css";
+import { useNavigate } from 'react-router-dom';
 
 const AddQmsEmployeePerformance = () => {
     const [formData, setFormData] = useState({
@@ -11,6 +13,11 @@ const AddQmsEmployeePerformance = () => {
             year: ''
         }
     });
+
+    const [focusedField, setFocusedField] = useState("");
+    const navigate = useNavigate();
+    const handleFocus = (field) => setFocusedField(field);
+    const handleBlur = () => setFocusedField("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -31,25 +38,19 @@ const AddQmsEmployeePerformance = () => {
         }
     };
 
+    const handleListEmployeePerformance = () => {
+        navigate('/company/qms/employee-performance')
+    }
+
     const handleSubmit = (e) => {
         e.preventDefault();
         console.log('Form submitted:', formData);
-        // Here you would typically send the data to your backend
     };
 
     const handleCancel = () => {
-        setFormData({
-            evaluationTitle: '',
-            evaluationDescription: '',
-            validTill: {
-                day: '',
-                month: '',
-                year: ''
-            }
-        });
+        navigate('/company/qms/employee-performance')
     };
 
-    // Generate day options
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
         const day = i + 1;
         return (
@@ -59,11 +60,8 @@ const AddQmsEmployeePerformance = () => {
         );
     });
 
-    // Generate month options
-    const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthOptions = months.map((month, index) => {
         const monthValue = index + 1;
         return (
@@ -73,7 +71,6 @@ const AddQmsEmployeePerformance = () => {
         );
     });
 
-    // Generate year options (current year + 10 years ahead)
     const currentYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: 11 }, (_, i) => {
         const year = currentYear + i;
@@ -89,17 +86,17 @@ const AddQmsEmployeePerformance = () => {
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
-                    <button
-                        className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
+                    <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
+                    onClick={handleListEmployeePerformance}
                     >
                         List Employee Performance Evaluation
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className=' px-[104px] pt-5'>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label className="block mb-2">
+                            <label className="block employee-performace-label">
                                 Evaluation Title <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -107,90 +104,92 @@ const AddQmsEmployeePerformance = () => {
                                 name="evaluationTitle"
                                 value={formData.evaluationTitle}
                                 onChange={handleChange}
-                                className="w-full p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full employee-performace-inputs"
                                 required
                             />
                         </div>
 
                         <div className="md:row-span-2">
-                            <label className="block mb-2">Evaluation Description</label>
+                            <label className="block employee-performace-label">Evaluation Description</label>
                             <textarea
                                 name="evaluationDescription"
                                 value={formData.evaluationDescription}
                                 onChange={handleChange}
-                                className="w-full h-full min-h-32 p-3 rounded bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
                         </div>
 
                         <div>
-                            <label className="block mb-2">Valid Till</label>
-                            <div className="flex gap-2">
+                            <label className="block employee-performace-label">Valid Till</label>
+                            <div className="flex gap-5">
+                                {/* Day */}
                                 <div className="relative w-1/3">
                                     <select
                                         name="validTill.day"
                                         value={formData.validTill.day}
                                         onChange={handleChange}
-                                        className="appearance-none w-full bg-gray-800 border border-gray-700 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={() => handleFocus("day")}
+                                        onBlur={handleBlur}
+                                        className="appearance-none w-full employee-performace-inputs"
                                     >
                                         <option value="">dd</option>
                                         {dayOptions}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                        <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
+                                        <ChevronDown
+                                            className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "day" ? "rotate-180" : ""}`}
+                                        />
                                     </div>
                                 </div>
 
+                                {/* Month */}
                                 <div className="relative w-1/3">
                                     <select
                                         name="validTill.month"
                                         value={formData.validTill.month}
                                         onChange={handleChange}
-                                        className="appearance-none w-full bg-gray-800 border border-gray-700 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={() => handleFocus("month")}
+                                        onBlur={handleBlur}
+                                        className="appearance-none w-full employee-performace-inputs"
                                     >
                                         <option value="">mm</option>
                                         {monthOptions}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                        <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
+                                        <ChevronDown
+                                            className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "month" ? "rotate-180" : ""}`}
+                                        />
                                     </div>
                                 </div>
 
+                                {/* Year */}
                                 <div className="relative w-1/3">
                                     <select
                                         name="validTill.year"
                                         value={formData.validTill.year}
                                         onChange={handleChange}
-                                        className="appearance-none w-full bg-gray-800 border border-gray-700 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        onFocus={() => handleFocus("year")}
+                                        onBlur={handleBlur}
+                                        className="appearance-none w-full employee-performace-inputs"
                                     >
                                         <option value="">yyyy</option>
                                         {yearOptions}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                        <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                                        </svg>
+                                        <ChevronDown
+                                            className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "year" ? "rotate-180" : ""}`}
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-end space-x-4 mt-8">
-                        <button
-                            type="button"
-                            onClick={handleCancel}
-                            className="px-6 py-3 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                        >
+                    <div className="flex justify-end space-x-5 mt-5 pl-[23.5rem]">
+                        <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            className="px-6 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-                        >
+                        <button type="submit" className="save-btn duration-200">
                             Save
                         </button>
                     </div>
@@ -200,4 +199,4 @@ const AddQmsEmployeePerformance = () => {
     );
 };
 
-export default AddQmsEmployeePerformance
+export default AddQmsEmployeePerformance;
