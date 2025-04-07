@@ -83,7 +83,7 @@ const DraftQmsManual = () => {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this manual?")) {
             try {
-                await axios.delete(`${BASE_URL}/company/manuals/${id}/`);
+                await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
                 alert("Manual deleted successfully");
                 fetchManuals();  
             } catch (err) {
