@@ -109,14 +109,50 @@ const QmsManual = () => {
     return null;
   };
 
+  // Centralized function to check if current user is involved with a manual
+  const isUserInvolvedWithManual = (manual) => {
+    const currentUserId = Number(localStorage.getItem('user_id'));
+    
+    // Check if user is the writer, checker, or approver of the manual
+    return (
+      (manual.written_by && manual.written_by.id === currentUserId) ||
+      (manual.checked_by && manual.checked_by.id === currentUserId) ||
+      (manual.approved_by && manual.approved_by.id === currentUserId)
+    );
+  };
+
+  // Centralized function to filter manuals based on visibility rules
+  const filterManualsByVisibility = (manualsData) => {
+    const role = localStorage.getItem('role');
+    
+    return manualsData.filter(manual => {
+      // If manual is published, show to everyone
+      if (manual.status === 'Publish') {
+        return true;
+      }
+      
+      // If user is a company admin, show all
+      if (role === 'company') {
+        return true;
+      }
+      
+      // For other statuses, only show if user is involved with the manual
+      return isUserInvolvedWithManual(manual);
+    });
+  };
+
+  // Fetch manuals using the centralized filter function
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
+      
+      // Apply visibility filtering
+      const filteredManuals = filterManualsByVisibility(response.data);
 
-      setManuals(response.data);
-      console.log("Manuals Data:", response.data);
+      setManuals(filteredManuals);
+      console.log("Filtered Manuals Data:", filteredManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
@@ -126,17 +162,21 @@ const QmsManual = () => {
   };
 
   useEffect(() => {
+    // Fetch all required data in a single useEffect
     const fetchAllData = async () => {
       try {
         // First, fetch manuals
         const companyId = getUserCompanyId();
         const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
+        
+        // Apply visibility filtering using the centralized function
+        const filteredManuals = filterManualsByVisibility(manualsResponse.data);
 
-        // Set manuals first
-        setManuals(manualsResponse.data);
+        // Set filtered manuals
+        setManuals(filteredManuals);
 
-        // Then fetch corrections for all manuals
-        const correctionsPromises = manualsResponse.data.map(async (manual) => {
+        // Then fetch corrections for visible manuals
+        const correctionsPromises = filteredManuals.map(async (manual) => {
           try {
             const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
             return { manualId: manual.id, corrections: correctionResponse.data };
@@ -157,23 +197,37 @@ const QmsManual = () => {
 
         setCorrections(correctionsByManual);
 
+        // Fetch draft count
+        const id = getRelevantUserId();
+        const draftResponse = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
+        setDraftCount(draftResponse.data.count);
+
         // Set current user and clear loading state
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching manuals or corrections:", error);
-        setError("Failed to load manuals and corrections. Please try again.");
+        console.error("Error fetching data:", error);
+        setError("Failed to load data. Please try again.");
         setLoading(false);
       }
     };
 
     fetchAllData();
-  }, []); // Empty dependency array to run only once on component mount
+  }, []);  
 
-  useEffect(() => {
-    fetchManuals();
-    setCurrentUser(getCurrentUser());
-  }, []);
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    
+    if (userRole === "user") {
+        const userId = localStorage.getItem("user_id");
+        if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
 
   const handleClickApprove = (id) => {
     navigate(`/company/qms/viewmanual/${id}`);
@@ -192,37 +246,6 @@ const QmsManual = () => {
       }
     }
   };
-
-  
-  const getRelevantUserId = () => {
-    const userRole = localStorage.getItem("role");
-    
-    if (userRole === "user") {
-        const userId = localStorage.getItem("user_id");
-        if (userId) return userId;
-    }
-
-    const companyId = localStorage.getItem("company_id");
-    if (companyId) return companyId;
-
-    return null;
-};
-
-  useEffect(() => {
-    const fetchDraftManuals = async () => {
-      try {
-        const id = getRelevantUserId();
-        const response = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
-        setDraftCount(response.data.count);
-        console.log("sssssssss",response.data)
-      } catch (error) {
-        console.error("Error fetching draft manuals:", error);
-        setDraftCount(0);
-      }
-    };
-
-    fetchDraftManuals();
-  }, []);
 
   const filteredManual = manuals.filter(manual =>
     (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -300,7 +323,10 @@ const QmsManual = () => {
         return;
       }
       
-      // The PATCH request code has been removed
+      await axios.patch(`${BASE_URL}/qms/manual-detail/${selectedManualId}/`, {
+        status: 'Publish',
+        send_notification: sendNotification
+      });
   
       if (sendNotification) {
         const companyId = getUserCompanyId();
@@ -312,7 +338,7 @@ const QmsManual = () => {
       setPublishSuccess(true);
       setTimeout(() => {
         closePublishModal();
-        fetchManuals(); // Refresh the list
+        fetchManuals(); 
       }, 1000);
     } catch (error) {
       console.error("Error publishing manual:", error);
@@ -434,13 +460,7 @@ const QmsManual = () => {
                           <button className="text-[#36DDAE]" onClick={() => handlePublish(manual)}>Click to Publish</button>
                         ) : canApprove ? (
                           <button
-                            onClick={() => handleClickApprove(manual.id,
-                              manual.status === 'Pending for Review/Checking'
-                                ? 'Reviewed,Pending for Approval'
-                                : (manual.status === 'Correction Requested'
-                                  ? 'Pending for Publish'
-                                  : 'Pending for Publish')
-                            )}
+                            onClick={() => handleClickApprove(manual.id)}
                             className="text-[#1E84AF]"
                           >
                             {manual.status === 'Pending for Review/Checking'
@@ -564,7 +584,7 @@ const QmsManual = () => {
                   )}
                   <div className='flex gap-5'>
                     <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
-                    <button onClick={handlePublishSave} className='save-btn duration-200 text-white'>Publish</button>
+                    <button onClick={handlePublishSave} className='save-btn duration-200 text-white'>Save</button>
                   </div>
                 </div>
               </div>

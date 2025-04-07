@@ -270,12 +270,6 @@ const QmsPolicy = () => {
                   <div className="mt-5">
                     <h2 className="attached-document-head pb-3">Attached Document</h2>
                     <div className="flex justify-between items-center gap-5">
-                      <div className="flex items-center gap-3 bg-[#24242D] px-[10px] py-[8px] rounded-md w-[269px] h-[59px]">
-                        {getFileIcon(selectedPolicy.energy_policy)}
-                        <span className="truncate attached-file-name">
-                          {getFileNameFromUrl(selectedPolicy.energy_policy)}
-                        </span>
-                      </div>
 
                       <div className="flex">
                         <a

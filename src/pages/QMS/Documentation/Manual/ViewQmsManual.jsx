@@ -115,33 +115,40 @@ const ViewQmsManual = () => {
             const response = await axios.get(`${BASE_URL}/qms/manuals/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Manual Corrections:", allCorrections);
-
+    
             // Get current user ID and viewed corrections
             const currentUserId = Number(localStorage.getItem('user_id'));
             const viewedCorrections = getViewedCorrections();
-
-            // Filter corrections for the current user
+    
+            // Store all corrections
+            setCorrections(allCorrections);
+    
+            // Sort all corrections by created_at date (newest first)
+            const sortedCorrections = [...allCorrections].sort(
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+    
+            // Find the latest non-viewed correction for current user
             const userCorrections = allCorrections.filter(
                 correction => correction.to_user?.id === currentUserId
-            ).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            setCorrections(allCorrections);
-
-            // Find the latest non-viewed correction
+            );
+            
             const latestUnviewedCorrection = userCorrections.find(
                 correction => !viewedCorrections.includes(correction.id)
             );
-
+    
             if (latestUnviewedCorrection) {
                 setHighlightedCorrection(latestUnviewedCorrection);
+                // Display all corrections except the highlighted one in history
                 setHistoryCorrections(
-                    userCorrections.filter(correction =>
+                    sortedCorrections.filter(correction => 
                         correction.id !== latestUnviewedCorrection.id
                     )
                 );
             } else {
                 setHighlightedCorrection(null);
-                setHistoryCorrections(userCorrections);
+                // If no highlighted correction, show all corrections in history
+                setHistoryCorrections(sortedCorrections);
             }
         } catch (error) {
             console.error("Error fetching manual corrections:", error);
