@@ -15,6 +15,7 @@ import './qmspolicy.css';
 const QmsPolicy = () => {
   const navigate = useNavigate();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [qmsPolicies, setQmsPolicies] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
@@ -83,15 +84,42 @@ const QmsPolicy = () => {
   const handleEditPolicy = (policyId) => {
     navigate(`/company/qms/editpolicy/${policyId}`);
   };
-  const downloadFile = (url, filename) => {
-    // Create a hidden anchor element
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'policy-document';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+  const handleDownload = async (policyId, filename) => {
+    try {
+      setIsLoading(true);
+      console.log("Downloading policy file:", policyId);
+      const response = await axios.get(`${BASE_URL}/qms/policy-download/${policyId}/`);
+      console.log("Download response:", response.data);
+      if (response.data.download_url) {
+        const link = document.createElement('a');
+        link.href = response.data.download_url;
+        link.target = '_blank';
+        link.download = filename || 'policy_document';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        throw new Error("No download URL received");
+      }
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      const errorMessage = error.response?.data?.error || "Failed to download file. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // const downloadFile = (url, filename) => {
+  //   // Create a hidden anchor element
+  //   const a = document.createElement('a');
+  //   a.href = url;
+  //   a.download = filename || 'policy-document';
+  //   document.body.appendChild(a);
+  //   a.click();
+  //   document.body.removeChild(a);
+  // };
   // Function to extract file name from URL
   const getFileNameFromUrl = (url) => {
     if (!url) return 'document';
@@ -103,22 +131,22 @@ const QmsPolicy = () => {
     return { __html: htmlContent };
   };
   // Function to render file type icon based on file extension
-  const getFileIcon = (url) => {
-    if (!url) return null;
-    const extension = url.split('.').pop().toLowerCase();
+  // const getFileIcon = (url) => {
+  //   if (!url) return null;
+  //   const extension = url.split('.').pop().toLowerCase();
 
-    switch (extension) {
-      case 'pdf':
-        return <FileText className="text-red-400 w-5 h-5" />;
-      case 'png':
-      case 'jpg':
-      case 'jpeg':
-      case 'gif':
-        return <img src={url} alt="Preview" className="w-10 h-10 object-cover rounded" />;
-      default:
-        return <FileText className="text-blue-400 w-5 h-5" />;
-    }
-  };
+  //   switch (extension) {
+  //     case 'pdf':
+  //       return <FileText className="text-red-400 w-5 h-5" />;
+  //     case 'png':
+  //     case 'jpg':
+  //     case 'jpeg':
+  //     case 'gif':
+  //       return <img src={url} alt="Preview" className="w-10 h-10 object-cover rounded" />;
+  //     default:
+  //       return <FileText className="text-blue-400 w-5 h-5" />;
+  //   }
+  // };
   // Filter policies based on search term
   const filteredPolicies = qmsPolicies.filter(policy => {
     const policyText = policy.text || '';
@@ -190,16 +218,6 @@ const QmsPolicy = () => {
                         <p className='view-policy-btn-text'>View Policy</p>
                         <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                       </button>
-
-                      {/* {policy.energy_policy && (
-                        <button 
-                          className='flex justify-center items-center gap-2 text-green-400 hover:text-green-300 transition-colors' 
-                          onClick={() => downloadFile(policy.energy_policy, getFileNameFromUrl(policy.energy_policy))}
-                        >
-                          <p>Download File</p>
-                          <Download className="w-[16px] h-[16px]" />
-                        </button>
-                      )} */}
                     </div>
                   </div>
                 </div>
@@ -283,11 +301,12 @@ const QmsPolicy = () => {
                       </div>
                       <div>
                         <button
-                          onClick={() => downloadFile(selectedPolicy.energy_policy, getFileNameFromUrl(selectedPolicy.energy_policy))}
+                          onClick={() => handleDownload(selectedPolicy.id, getFileNameFromUrl(selectedPolicy.energy_policy))}
                           className="bg-[#24242D] hover:bg-[#17171d] text-white px-4 rounded-md inline-flex items-center gap-[6px] h-[59px] duration-200"
+                          disabled={isLoading}
                         >
                           <img src={downloads} alt="Download" className='w-[24px] h-[24px]' />
-                          <span className='download-btn'>Download</span>
+                          <span className='download-btn'>{isLoading ? "Downloading..." : "Download"}</span>
                         </button>
                       </div>
                     </div>

@@ -16,7 +16,6 @@ const EditQmsmanual = () => {
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileObject, setFileObject] = useState(null);
     const [users, setUsers] = useState([]);
@@ -35,10 +34,10 @@ const EditQmsmanual = () => {
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
-        send_email_checked: 'No',
-        send_system_checked: 'No',
-        send_email_approved: 'No',
-        send_system_approved: 'No'
+        send_notification_to_checked_by: false,
+        send_email_to_checked_by: false,
+        send_notification_to_approved_by: false,
+        send_email_to_approved_by: false
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -48,18 +47,13 @@ const EditQmsmanual = () => {
         document_type: false,
         day: false,
         month: false,
-        year: false,
-        send_email_checked: false,
-        send_email_approved: false,
-        send_system_checked: false,
-        send_system_approved: false
+        year: false
     });
-
-
 
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
     };
+    
     // Add a method to handle attachment preview
     const handleAttachmentPreview = () => {
         // If there's an existing attachment from the manual details
@@ -92,6 +86,7 @@ const EditQmsmanual = () => {
             setPreviewAttachment(fileUrl);
         }
     };
+    
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -114,28 +109,31 @@ const EditQmsmanual = () => {
     const companyId = getUserCompanyId();
 
     // Populate form data when manual details are loaded
-    useEffect(() => {
-        if (manualDetails) {
-            setFormData({
-                title: manualDetails.title || '',
-                written_by: manualDetails.written_by?.id || null,
-                no: manualDetails.no || '',
-                checked_by: manualDetails.checked_by?.id || null,
-                rivision: manualDetails.rivision || '',
-                approved_by: manualDetails.approved_by?.id || null,
-                document_type: manualDetails.document_type || 'System',
-                date: manualDetails.date || formData.date,
-                review_frequency_year: manualDetails.review_frequency_year || '',
-                review_frequency_month: manualDetails.review_frequency_month || '',
-                publish: manualDetails.publish || false,
-                send_notification: manualDetails.send_notification || false,
-                send_email_checked: manualDetails.send_email_checked || 'No',
-                send_email_approved: manualDetails.send_email_approved || 'No',
-                send_system_checked: manualDetails.send_system_checked || 'No',
-                send_system_approved: manualDetails.send_system_approved || 'No',
-            });
-        }
-    }, [manualDetails]);
+    // Modify this useEffect
+useEffect(() => {
+    if (manualDetails) {
+        setFormData({
+            title: manualDetails.title || '',
+            written_by: manualDetails.written_by?.id || null,
+            no: manualDetails.no || '',
+            checked_by: manualDetails.checked_by?.id || null,
+            rivision: manualDetails.rivision || '',
+            approved_by: manualDetails.approved_by?.id || null,
+            document_type: manualDetails.document_type || 'System',
+            date: manualDetails.date || formData.date,
+            review_frequency_year: manualDetails.review_frequency_year || '',
+            review_frequency_month: manualDetails.review_frequency_month || '',
+            publish: manualDetails.publish || false,
+            send_notification: manualDetails.send_notification || false,
+            
+            // Use the direct boolean values from the API response
+            send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
+            send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
+            send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
+            send_email_to_approved_by: manualDetails.send_email_to_approved_by || false
+        });
+    }
+}, [manualDetails]);
 
     useEffect(() => {
         if (companyId) {
@@ -229,8 +227,6 @@ const EditQmsmanual = () => {
         'Work Instruction'
     ];
 
-    const yesNoOptions = ['Yes', 'No'];
-
     const toggleDropdown = (dropdown) => {
         setOpenDropdowns(prev => ({
             ...prev,
@@ -246,6 +242,13 @@ const EditQmsmanual = () => {
         }));
     };
 
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
+        }));
+    };
 
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
@@ -287,11 +290,27 @@ const EditQmsmanual = () => {
             }
 
             const submitData = new FormData();
+            console.log('qqqqqqqqqqqq', submitData);
             submitData.append('company', companyId);
 
+            // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+            const apiFormData = {
+                ...formData,
+                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
+                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
+                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
+                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+            };
+
             // Add all form data
-            Object.keys(formData).forEach(key => {
-                submitData.append(key, formData[key]);
+            Object.keys(apiFormData).forEach(key => {
+                // Skip the checkbox fields with boolean values
+                if (key !== 'send_notification_to_checked_by' && 
+                    key !== 'send_email_to_checked_by' &&
+                    key !== 'send_notification_to_approved_by' &&
+                    key !== 'send_email_to_approved_by') {
+                    submitData.append(key, apiFormData[key]);
+                }
             });
 
             // Add file if new file is selected
@@ -306,12 +325,94 @@ const EditQmsmanual = () => {
             });
 
             setLoading(false);
+            console.log('wwwwwwwww', response);
+            
             alert('Manual updated successfully!');
             navigate('/company/qms/manual');
         } catch (err) {
             setLoading(false);
             setError('Failed to update manual');
             console.error('Error updating manual:', err);
+        }
+    };
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    const handleDraftClick = async () => {
+        try {
+            setLoading(true);
+
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const userId = getRelevantUserId();
+            if (!userId) {
+                setError('User ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+            
+            
+
+            submitData.append('company', companyId);
+            submitData.append('user', userId);
+            submitData.append('is_draft', true);
+
+            // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+            const apiFormData = {
+                ...formData,
+                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
+                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
+                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
+                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+            };
+
+            Object.keys(apiFormData).forEach(key => {
+                if (apiFormData[key] !== null && apiFormData[key] !== '' &&
+                    key !== 'send_notification_to_checked_by' && 
+                    key !== 'send_email_to_checked_by' &&
+                    key !== 'send_notification_to_approved_by' &&
+                    key !== 'send_email_to_approved_by') {
+                    submitData.append(key, apiFormData[key]);
+                }
+            });
+
+            if (fileObject) {
+                submitData.append('upload_attachment', fileObject);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/manuals/draft-create/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setLoading(false);
+            alert('Manual Draft Saved successfully!');
+            navigate('/company/qms/manual');
+
+        } catch (err) {
+            setLoading(false);
+            setError('Failed to save manual');
+            console.error('Error saving manual:', err);
         }
     };
 
@@ -331,6 +432,7 @@ const EditQmsmanual = () => {
     if (isInitialLoad) {
         return <div className="text-white">Loading...</div>;
     }
+    
     const renderAttachmentPreview = () => {
         // If there's a preview attachment from existing manual or newly selected file
         if (previewAttachment) {
@@ -360,7 +462,7 @@ const EditQmsmanual = () => {
                     </div>
                 )}
 
-                <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
+                <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
@@ -414,11 +516,39 @@ const EditQmsmanual = () => {
                             />
                         </div>
 
-                        <div className="flex items-start space-x-4">
-                            <div className="flex-grow w-1/2">
-                                <label className="add-qms-manual-label">
-                                    Checked/Reviewed By <span className="text-red-500">*</span>
-                                </label>
+                        <div className="flex">
+                            <div className="flex-grow">
+                                <div className='flex items-center justify-between h-[24px]'>
+                                    <label className="add-qms-manual-label">
+                                        Checked/Reviewed By <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className='flex items-end justify-end space-y-1'>
+                                        <div className="ml-5 flex items-center h-[24px] ">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_notification_to_checked_by"
+                                                    checked={formData.send_notification_to_checked_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
+                                            </div>
+                                        </div>
+                                        <div className="ml-5 flex items-center h-[24px] ">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_email_to_checked_by"
+                                                    checked={formData.send_email_to_checked_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -440,54 +570,6 @@ const EditQmsmanual = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">
-                                    System Notify
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="send_system_checked"
-                                        value={formData.send_system_checked}
-                                        onFocus={() => toggleDropdown('send_system_checked')}
-                                        onChange={(e) => handleDropdownChange(e, 'send_system_checked')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, send_system_checked: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={option} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.send_system_checked ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">
-                                    Email Notify
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="send_email_checked"
-                                        value={formData.send_email_checked}
-                                        onFocus={() => toggleDropdown('send_email_checked')}
-                                        onChange={(e) => handleDropdownChange(e, 'send_email_checked')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, send_email_checked: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={option} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.send_email_checked ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
                         </div>
 
                         <div>
@@ -503,11 +585,39 @@ const EditQmsmanual = () => {
                             />
                         </div>
 
-                        <div className="flex items-start space-x-4">
-                            <div className="flex-grow w-1/2">
-                                <label className="add-qms-manual-label">
-                                    Approved By <span className="text-red-500">*</span>
-                                </label>
+                        <div className="flex">
+                            <div className="flex-grow">
+                                <div className='flex items-center justify-between h-[24px]'>
+                                    <label className="add-qms-manual-label">
+                                        Approved By <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className='flex items-end justify-end space-y-1'>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_notification_to_approved_by"
+                                                    checked={formData.send_notification_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
+                                            </div>
+                                        </div>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_email_to_approved_by"
+                                                    checked={formData.send_email_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="relative">
                                     <select
                                         className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -526,54 +636,6 @@ const EditQmsmanual = () => {
                                     </select>
                                     <ChevronDown
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">
-                                    System Notify
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="send_system_approved"
-                                        value={formData.send_system_approved}
-                                        onFocus={() => toggleDropdown('send_system_approved')}
-                                        onChange={(e) => handleDropdownChange(e, 'send_system_approved')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, send_system_approved: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={option} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.send_system_approved ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                            <div className="w-1/4">
-                                <label className="add-qms-manual-label">
-                                    Email Notify
-                                </label>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="send_email_approved"
-                                        value={formData.send_email_approved}
-                                        onFocus={() => toggleDropdown('send_email_approved')}
-                                        onChange={(e) => handleDropdownChange(e, 'send_email_approved')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, send_email_approved: false }))}
-                                    >
-                                        {yesNoOptions.map(option => (
-                                            <option key={option} value={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.send_email_approved ? 'rotate-180' : ''}`}
                                     />
                                 </div>
                             </div>
