@@ -49,11 +49,17 @@ const EditQmsmanual = () => {
         month: false,
         year: false
     });
-
+    const [fieldErrors, setFieldErrors] = useState({
+        title: '',
+        written_by: '',
+        no: '',
+        checked_by: '',
+        approved_by: ''
+    });
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
     };
-    
+
     // Add a method to handle attachment preview
     const handleAttachmentPreview = () => {
         // If there's an existing attachment from the manual details
@@ -86,7 +92,7 @@ const EditQmsmanual = () => {
             setPreviewAttachment(fileUrl);
         }
     };
-    
+
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -110,30 +116,30 @@ const EditQmsmanual = () => {
 
     // Populate form data when manual details are loaded
     // Modify this useEffect
-useEffect(() => {
-    if (manualDetails) {
-        setFormData({
-            title: manualDetails.title || '',
-            written_by: manualDetails.written_by?.id || null,
-            no: manualDetails.no || '',
-            checked_by: manualDetails.checked_by?.id || null,
-            rivision: manualDetails.rivision || '',
-            approved_by: manualDetails.approved_by?.id || null,
-            document_type: manualDetails.document_type || 'System',
-            date: manualDetails.date || formData.date,
-            review_frequency_year: manualDetails.review_frequency_year || '',
-            review_frequency_month: manualDetails.review_frequency_month || '',
-            publish: manualDetails.publish || false,
-            send_notification: manualDetails.send_notification || false,
-            
-            // Use the direct boolean values from the API response
-            send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
-            send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
-            send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
-            send_email_to_approved_by: manualDetails.send_email_to_approved_by || false
-        });
-    }
-}, [manualDetails]);
+    useEffect(() => {
+        if (manualDetails) {
+            setFormData({
+                title: manualDetails.title || '',
+                written_by: manualDetails.written_by?.id || null,
+                no: manualDetails.no || '',
+                checked_by: manualDetails.checked_by?.id || null,
+                rivision: manualDetails.rivision || '',
+                approved_by: manualDetails.approved_by?.id || null,
+                document_type: manualDetails.document_type || 'System',
+                date: manualDetails.date || formData.date,
+                review_frequency_year: manualDetails.review_frequency_year || '',
+                review_frequency_month: manualDetails.review_frequency_month || '',
+                publish: manualDetails.publish || false,
+                send_notification: manualDetails.send_notification || false,
+
+                // Use the direct boolean values from the API response
+                send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
+                send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
+                send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
+                send_email_to_approved_by: manualDetails.send_email_to_approved_by || false
+            });
+        }
+    }, [manualDetails]);
 
     useEffect(() => {
         if (companyId) {
@@ -240,6 +246,51 @@ useEffect(() => {
             ...prev,
             [name]: value
         }));
+
+
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...fieldErrors };
+
+        // Validate title
+        if (!formData.title.trim()) {
+            newErrors.title = 'Section Name/Title is required';
+            isValid = false;
+        }
+
+        // Validate written_by
+        if (!formData.written_by) {
+            newErrors.written_by = 'Written/Prepare By is required';
+            isValid = false;
+        }
+
+        // Validate section number
+        if (!formData.no.trim()) {
+            newErrors.no = 'Section Number is required';
+            isValid = false;
+        }
+
+        // Validate checked_by
+        if (!formData.checked_by) {
+            newErrors.checked_by = 'Checked/Reviewed By is required';
+            isValid = false;
+        }
+
+        // Validate approved_by
+        if (!formData.approved_by) {
+            newErrors.approved_by = 'Approved By is required';
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+        return isValid;
     };
 
     const handleCheckboxChange = (e) => {
@@ -269,6 +320,14 @@ useEffect(() => {
                 ...prev,
                 [dropdown]: value
             }));
+
+            // Clear error when dropdown selection changes
+            if (fieldErrors[dropdown]) {
+                setFieldErrors(prev => ({
+                    ...prev,
+                    [dropdown]: ''
+                }));
+            }
         }
 
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
@@ -279,6 +338,10 @@ useEffect(() => {
     }
 
     const handleUpdateClick = async () => {
+        if (!validateForm()) {
+            setError('Please fill in all required fields');
+            return;
+        }
         try {
             setLoading(true);
 
@@ -305,7 +368,7 @@ useEffect(() => {
             // Add all form data
             Object.keys(apiFormData).forEach(key => {
                 // Skip the checkbox fields with boolean values
-                if (key !== 'send_notification_to_checked_by' && 
+                if (key !== 'send_notification_to_checked_by' &&
                     key !== 'send_email_to_checked_by' &&
                     key !== 'send_notification_to_approved_by' &&
                     key !== 'send_email_to_approved_by') {
@@ -326,7 +389,7 @@ useEffect(() => {
 
             setLoading(false);
             console.log('wwwwwwwww', response);
-            
+
             alert('Manual updated successfully!');
             navigate('/company/qms/manual');
         } catch (err) {
@@ -369,8 +432,8 @@ useEffect(() => {
             }
 
             const submitData = new FormData();
-            
-            
+
+
 
             submitData.append('company', companyId);
             submitData.append('user', userId);
@@ -387,7 +450,7 @@ useEffect(() => {
 
             Object.keys(apiFormData).forEach(key => {
                 if (apiFormData[key] !== null && apiFormData[key] !== '' &&
-                    key !== 'send_notification_to_checked_by' && 
+                    key !== 'send_notification_to_checked_by' &&
                     key !== 'send_email_to_checked_by' &&
                     key !== 'send_notification_to_approved_by' &&
                     key !== 'send_email_to_approved_by') {
@@ -432,7 +495,7 @@ useEffect(() => {
     if (isInitialLoad) {
         return <div className="text-white">Loading...</div>;
     }
-    
+
     const renderAttachmentPreview = () => {
         // If there's a preview attachment from existing manual or newly selected file
         if (previewAttachment) {
@@ -450,17 +513,18 @@ useEffect(() => {
         }
         return null;
     };
+    const errorTextClass = "text-red-500 text-sm mt-1";
 
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
                 <h1 className="add-manual-sections">Edit Manual Sections</h1>
 
-                {error && (
+                {/* {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
                         {error}
                     </div>
-                )}
+                )} */}
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
@@ -475,6 +539,8 @@ useEffect(() => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.title && <p className={errorTextClass}>{fieldErrors.title}</p>}
+
                         </div>
 
                         <div>
@@ -501,6 +567,8 @@ useEffect(() => {
                                     className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
                                 />
                             </div>
+                            {fieldErrors.written_by && <p className={errorTextClass}>{fieldErrors.written_by}</p>}
+
                         </div>
 
                         <div>
@@ -514,6 +582,8 @@ useEffect(() => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+
                         </div>
 
                         <div className="flex">
@@ -569,6 +639,8 @@ useEffect(() => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                {fieldErrors.checked_by && <p className={errorTextClass}>{fieldErrors.checked_by}</p>}
+
                             </div>
                         </div>
 
@@ -638,6 +710,8 @@ useEffect(() => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
+
                             </div>
                         </div>
 

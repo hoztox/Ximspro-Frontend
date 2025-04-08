@@ -18,7 +18,7 @@ const AddQmsManual = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
+     
 
     const getUserCompanyId = () => {
         // First check if company_id is stored directly
@@ -139,13 +139,62 @@ const AddQmsManual = () => {
         }));
     };
 
+    const [errors, setErrors] = useState({});
+    const validateForm = () => {
+        const newErrors = {};
+        
+        // Check required fields
+        if (!formData.title.trim()) {
+            newErrors.title = "Section Name/Title is required";
+        }
+        
+        if (!formData.no.trim()) {
+            newErrors.no = "Section Number is required";
+        }
+        
+        if (!formData.written_by) {
+            newErrors.written_by = "Written/Prepare By is required";
+        }
+        
+        if (!formData.checked_by) {
+            newErrors.checked_by = "Checked/Reviewed By is required";
+        }
+        
+        if (!formData.approved_by) {
+            newErrors.approved_by = "Approved By is required";
+        }
+        
+        // Validate review frequency if provided
+        if (formData.review_frequency_year && isNaN(parseInt(formData.review_frequency_year))) {
+            newErrors.review_frequency_year = "Year must be a number";
+        }
+        
+        if (formData.review_frequency_month && isNaN(parseInt(formData.review_frequency_month))) {
+            newErrors.review_frequency_month = "Month must be a number";
+        }
+        
+        setErrors(newErrors);
+        
+        // Return true if no errors
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
         }));
+        
+  
+        if (errors[name]) {
+            setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
+
 
     const handleCheckboxChange = (e) => {
         const { name, checked } = e.target;
@@ -169,9 +218,7 @@ const AddQmsManual = () => {
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
 
-            // Update the appropriate part of the date
             dateObj[dropdown] = parseInt(value, 10);
-
 
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
@@ -184,16 +231,30 @@ const AddQmsManual = () => {
                 ...prev,
                 [dropdown]: value
             }));
+            
+            
+            if (errors[dropdown]) {
+                setErrors(prev => ({
+                    ...prev,
+                    [dropdown]: ''
+                }));
+            }
         }
 
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
+
 
     const handleCancelClick = () => {
         navigate('/company/qms/manual')
     }
 
     const handleSaveClick = async () => {
+        if (!validateForm()) {
+            // Show the form has validation errors
+            setError('Please correct the errors below');
+            return;
+        }
         try {
             setLoading(true);
 
@@ -317,17 +378,24 @@ const AddQmsManual = () => {
     const formatUserName = (user) => {
         return `${user.first_name} ${user.last_name}`;
     };
-
+    const ErrorMessage = ({ message }) => {
+        if (!message) return null;
+        return (
+            <div className="text-red-500 text-sm mt-1">
+                {message}
+            </div>
+        );
+    };
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
                 <h1 className="add-manual-sections">Add Manual Sections</h1>
 
-                {error && (
+                {/* {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
                         {error}
                     </div>
-                )}
+                )} */}
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
@@ -342,6 +410,8 @@ const AddQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                             <ErrorMessage message={errors.title} />
+
                         </div>
 
                         <div>
@@ -368,6 +438,8 @@ const AddQmsManual = () => {
                                     className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
                                 />
                             </div>
+                            <ErrorMessage message={errors.written_by} />
+
                         </div>
 
                         <div>
@@ -381,6 +453,8 @@ const AddQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                             <ErrorMessage message={errors.no} />
+
                         </div>
 
                         <div className="flex">
@@ -436,6 +510,8 @@ const AddQmsManual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                <ErrorMessage message={errors.checked_by} />
+
                             </div>
                         </div>
 
@@ -505,6 +581,7 @@ const AddQmsManual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                <ErrorMessage message={errors.approved_by} />
                             </div>
 
                         </div>

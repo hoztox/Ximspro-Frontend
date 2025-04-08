@@ -10,6 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import toast, { Toaster } from 'react-hot-toast';
 import "./listuser.css";
+import QmsDeleteUserConfirmModal from '../Modals/QmsDeleteUserConfirmModal';
+import QmsDeleteUserSuccessModal from '../Modals/QmsDeleteUserSuccessModal';
+import QmsDeleteUserErrorModal from '../Modals/QmsDeleteUserErrorModal';
 
 const QMSListUser = () => {
   const [users, setUsers] = useState([]);
@@ -17,6 +20,11 @@ const QMSListUser = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const usersPerPage = 10;
+
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteUserSuccessModal, setShowDeleteUserSuccessModal] = useState(false);
+  const [showDeleteUserErrorModal, setShowDeleteUserErrorModal] = useState(false);
 
   const navigate = useNavigate();
 
@@ -95,18 +103,33 @@ const QMSListUser = () => {
     navigate(`/company/qms/user-details/${userId}`);
   }
 
-  const handleDeleteUser = async (userId) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-    if (!confirmDelete) return;
+  const handleDeleteClick = (userId) => {
+    setUserToDelete(userId);
+    setShowDeleteModal(true);
+  };
 
-    try {
-      await axios.delete(`${BASE_URL}/company/users/delete/${userId}/`);
-      setUsers(users.filter(user => user.id !== userId)); // Update UI
-      toast.success("User deleted successfully");
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Failed to delete user. Please try again.");
+  const handleConfirmDelete = async () => {
+    if (userToDelete) {
+      try {
+        await axios.delete(`${BASE_URL}/company/users/delete/${userToDelete}/`);
+        setUsers(users.filter(user => user.id !== userToDelete));
+        setShowDeleteUserSuccessModal(true);
+        setTimeout(() => {
+          setShowDeleteUserSuccessModal(false);
+        }, 3000);
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        setShowDeleteUserErrorModal(true);
+        setTimeout(() => {
+          setShowDeleteUserErrorModal(false);
+        }, 3000);
+      }
     }
+    setShowDeleteModal(false);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   const handlePageClick = (pageNumber) => {
@@ -126,6 +149,23 @@ const QMSListUser = () => {
       <Toaster position="top-center" reverseOrder={false} />
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
         <h1 className="list-users-head">List Users</h1>
+
+        <QmsDeleteUserConfirmModal
+          showDeleteModal={showDeleteModal}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+
+        <QmsDeleteUserSuccessModal
+          showDeleteUserSuccessModal={showDeleteUserSuccessModal}
+          onClose={() => setShowDeleteUserSuccessModal(false)}
+        />
+
+        <QmsDeleteUserErrorModal
+          showDeleteUserErrorModal={showDeleteUserErrorModal}
+          onClose={() => setShowDeleteUserErrorModal(false)}
+        />
+
         <div className="flex space-x-5">
           <div className="relative">
             <input
@@ -190,7 +230,7 @@ const QMSListUser = () => {
                     </button>
                   </td>
                   <td className="px-4 add-user-datas text-center">
-                    <button onClick={() => handleDeleteUser(user.id)}>
+                    <button onClick={() => handleDeleteClick(user.id)}>
                       <img src={deletes} alt="Delete" className='w-[16px] h-[16px]' />
                     </button>
                   </td>
