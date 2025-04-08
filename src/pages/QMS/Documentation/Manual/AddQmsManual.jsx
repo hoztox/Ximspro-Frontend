@@ -5,6 +5,9 @@ import "./addqmsmanual.css"
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import AddQmsManualSuccessModal from './Modals/AddQmsManualSuccessModal';
+import AddQmsManualDraftSuccessModal from './Modals/AddQmsManualDraftSuccessModal';
+import AddQmsManualDraftErrorModal from './Modals/AddQmsManualDraftErrorModal';
 
 
 const AddQmsManual = () => {
@@ -18,7 +21,10 @@ const AddQmsManual = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-     
+
+    const [showAddManualSuccessModal, setShowAddManualSuccessModal] = useState(false);
+    const [showDraftManualSuccessModal, setShowDraftManualSuccessModal] = useState(false);
+    const [showDraftManualErrorModal, setShowDarftManualErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         // First check if company_id is stored directly
@@ -142,39 +148,39 @@ const AddQmsManual = () => {
     const [errors, setErrors] = useState({});
     const validateForm = () => {
         const newErrors = {};
-        
+
         // Check required fields
         if (!formData.title.trim()) {
             newErrors.title = "Section Name/Title is required";
         }
-        
+
         if (!formData.no.trim()) {
             newErrors.no = "Section Number is required";
         }
-        
+
         if (!formData.written_by) {
             newErrors.written_by = "Written/Prepare By is required";
         }
-        
+
         if (!formData.checked_by) {
             newErrors.checked_by = "Checked/Reviewed By is required";
         }
-        
+
         if (!formData.approved_by) {
             newErrors.approved_by = "Approved By is required";
         }
-        
+
         // Validate review frequency if provided
         if (formData.review_frequency_year && isNaN(parseInt(formData.review_frequency_year))) {
             newErrors.review_frequency_year = "Year must be a number";
         }
-        
+
         if (formData.review_frequency_month && isNaN(parseInt(formData.review_frequency_month))) {
             newErrors.review_frequency_month = "Month must be a number";
         }
-        
+
         setErrors(newErrors);
-        
+
         // Return true if no errors
         return Object.keys(newErrors).length === 0;
     };
@@ -185,8 +191,8 @@ const AddQmsManual = () => {
             ...prev,
             [name]: value
         }));
-        
-  
+
+
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -231,8 +237,8 @@ const AddQmsManual = () => {
                 ...prev,
                 [dropdown]: value
             }));
-            
-            
+
+
             if (errors[dropdown]) {
                 setErrors(prev => ({
                     ...prev,
@@ -290,12 +296,16 @@ const AddQmsManual = () => {
             });
 
             setLoading(false);
-            alert('Manual added successfully!');
-            navigate('/company/qms/manual');
+            setShowAddManualSuccessModal(true);
+            setTimeout(() => {
+                setShowAddManualSuccessModal(false);
+                navigate('/company/qms/manual');
+            }, 1500);
+
         } catch (err) {
             setLoading(false);
             setError('Failed to save manual');
-            console.error('Error saving manual:', err);
+            toast.error('Error saving manual');
         }
     };
     const getRelevantUserId = () => {
@@ -354,12 +364,19 @@ const AddQmsManual = () => {
             });
 
             setLoading(false);
-            alert('Manual Draft Saved successfully!');
-            navigate('/company/qms/manual');
+            setShowDraftManualSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftManualSuccessModal(false);
+                navigate('/company/qms/draftmanual');
+            }, 1500);
+
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to save manual');
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
             console.error('Error saving manual:', err);
         }
     };
@@ -397,6 +414,21 @@ const AddQmsManual = () => {
                     </div>
                 )} */}
 
+                <AddQmsManualSuccessModal
+                    showAddManualSuccessModal={showAddManualSuccessModal}
+                    onClose={() => { setShowAddManualSuccessModal(false) }}
+                />
+
+                <AddQmsManualDraftSuccessModal
+                    showDraftManualSuccessModal={showDraftManualSuccessModal}
+                    onClose={() => { setShowDraftManualSuccessModal(false) }}
+                />
+
+                <AddQmsManualDraftErrorModal
+                    showDraftManualErrorModal={showDraftManualErrorModal}
+                    onClose={() => { setShowDarftManualErrorModal(false) }}
+                />
+
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
@@ -410,7 +442,7 @@ const AddQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
-                             <ErrorMessage message={errors.title} />
+                            <ErrorMessage message={errors.title} />
 
                         </div>
 
@@ -453,7 +485,7 @@ const AddQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
-                             <ErrorMessage message={errors.no} />
+                            <ErrorMessage message={errors.no} />
 
                         </div>
 
@@ -544,7 +576,7 @@ const AddQmsManual = () => {
                                                     onChange={handleCheckboxChange}
                                                     className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
                                                 />
-                                            <label className="add-qms-manual-label check-label">System Notify</label>
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
                                             </div>
                                         </div>
                                         <div className="ml-5 flex items-center h-[24px]">
@@ -556,7 +588,7 @@ const AddQmsManual = () => {
                                                     onChange={handleCheckboxChange}
                                                     className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
                                                 />
-                                            <label className="add-qms-manual-label check-label">Email Notify</label>
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
                                             </div>
                                         </div>
                                     </div>
