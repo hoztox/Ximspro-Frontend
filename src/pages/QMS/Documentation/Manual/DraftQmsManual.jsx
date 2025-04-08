@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom";
 import "./qmsmanual.css";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsManualDraftConfirmModal from './Modals/DeleteQmsManualDraftConfirmModal';
+import DeleteQmsManualDraftSucessModal from './Modals/DeleteQmsManualDraftSucessModal';
+import DeleteQmsManualDraftErrorModal from './Modals/DeleteQmsManualDraftErrorModal';
 const DraftQmsManual = () => {
     const [manuals, setManuals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,7 +17,45 @@ const DraftQmsManual = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const manualPerPage = 10;
-    
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [manualToDelete, setManualToDelete] = useState(null);
+    const [showDeleteDraftManualSuccessModal, setShowDeleteDraftManualSuccessModal] = useState(false);
+    const [showDeleteDraftManualErrorModal, setShowDeleteDraftManualErrorModal] = useState(false);
+
+    const handleDeleteClick = (id) => {
+        setManualToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (manualToDelete) {
+            axios
+                .delete(`${BASE_URL}/qms/manual-detail/${manualToDelete}/`)
+                .then((response) => {
+                    // Remove the deleted manual from state
+                    setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
+                    setShowDeleteDraftManualSuccessModal(true);
+                    setTimeout(() => {
+                        setShowDeleteDraftManualSuccessModal(false);
+                    }, 3000);
+                    console.log("Manual deleted successfully:", response.data);
+                })
+                .catch((error) => {
+                    setShowDeleteDraftManualErrorModal(true);
+                    setTimeout(() => {
+                        setShowDeleteDraftManualErrorModal(false);
+                    }, 3000);
+                    console.error("Error deleting manual:", error);
+                });
+        }
+        setShowDeleteModal(false);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -25,9 +66,9 @@ const DraftQmsManual = () => {
         }).replace(/\//g, '-');
     };
     const handleEditDraft = (id) => {
-      
-      navigate(`/company/qms/editdraftmanual/${id}`);
-  }
+
+        navigate(`/company/qms/editdraftmanual/${id}`);
+    }
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -47,21 +88,21 @@ const DraftQmsManual = () => {
     };
     const companyId = getUserCompanyId();
     console.log("Stored Company ID:", companyId);
- 
+
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
-        
+
         if (userRole === "user") {
             const userId = localStorage.getItem("user_id");
             if (userId) return userId;
         }
-    
+
         const companyId = localStorage.getItem("company_id");
         if (companyId) return companyId;
-    
+
         return null;
     };
-    
+
     const fetchManuals = async () => {
         try {
             setLoading(true);
@@ -75,23 +116,11 @@ const DraftQmsManual = () => {
             setLoading(false);
         }
     };
-    
+
     useEffect(() => {
         fetchManuals();
     }, []);
- 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this manual?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
-                alert("Manual deleted successfully");
-                fetchManuals();  
-            } catch (err) {
-                console.error("Error deleting manual:", err);
-                alert("Failed to delete manual");
-            }
-        }
-    };
+
     const filteredManual = manuals.filter(manual =>
         (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -107,7 +136,7 @@ const DraftQmsManual = () => {
     };
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
-        window.scrollTo(0, 0);  
+        window.scrollTo(0, 0);
     };
     const handlePrevious = () => {
         if (currentPage > 1) {
@@ -132,6 +161,22 @@ const DraftQmsManual = () => {
             {/* Header section - kept the same */}
             <div className="flex items-center justify-between px-[14px] pt-[24px]">
                 <h1 className="list-manual-head">Draft Manual Sections</h1>
+
+                <DeleteQmsManualDraftConfirmModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={handleCancelDelete}
+                />
+                <DeleteQmsManualDraftSucessModal
+                    showDeleteDraftManualSuccessModal={showDeleteDraftManualSuccessModal}
+                    onClose={() => setShowDeleteDraftManualSuccessModal(false)}
+                />
+                <DeleteQmsManualDraftErrorModal
+                    showDeleteDraftManualErrorModal={showDeleteDraftManualErrorModal}
+                    onClose={() => setShowDeleteDraftManualErrorModal(false)}
+                />
+
+
                 <div className="flex space-x-5 items-center">
                     <div className="relative">
                         <input
@@ -189,9 +234,9 @@ const DraftQmsManual = () => {
                                         <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                                         <td className='px-2 add-manual-datas'>
-                                        <button className='text-[#1E84AF]'
-                                          
-                                            onClick={() => handleEditDraft(manual.id)}
+                                            <button className='text-[#1E84AF]'
+
+                                                onClick={() => handleEditDraft(manual.id)}
                                             >
                                                 Click to Continue
                                             </button>
@@ -206,7 +251,7 @@ const DraftQmsManual = () => {
                                         </td>
                                         <td className="pl-2 pr-4 add-manual-datas text-center">
                                             <button
-                                                onClick={() => handleDelete(manual.id)}
+                                                onClick={() => handleDeleteClick(manual.id)}
                                                 title="Delete"
                                             >
                                                 <img src={deletes} alt="" />
