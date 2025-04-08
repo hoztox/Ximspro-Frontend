@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search} from 'lucide-react';
+import { Search } from 'lucide-react';
 import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import views from "../../../../assets/images/Companies/view.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
@@ -10,6 +10,9 @@ import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import "./qmsmanual.css";
+import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
+import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
+import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
 
 const QmsManual = () => {
   const [manuals, setManuals] = useState([]);
@@ -27,6 +30,11 @@ const QmsManual = () => {
   const [publishSuccess, setPublishSuccess] = useState(false);
   const [selectedManualId, setSelectedManualId] = useState(null);
   const [sendNotification, setSendNotification] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [manualToDelete, setManualToDelete] = useState(null);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -112,7 +120,7 @@ const QmsManual = () => {
   // Centralized function to check if current user is involved with a manual
   const isUserInvolvedWithManual = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
-    
+
     // Check if user is the writer, checker, or approver of the manual
     return (
       (manual.written_by && manual.written_by.id === currentUserId) ||
@@ -124,18 +132,18 @@ const QmsManual = () => {
   // Centralized function to filter manuals based on visibility rules
   const filterManualsByVisibility = (manualsData) => {
     const role = localStorage.getItem('role');
-    
+
     return manualsData.filter(manual => {
       // If manual is published, show to everyone
       if (manual.status === 'Publish') {
         return true;
       }
-      
+
       // If user is a company admin, show all
       if (role === 'company') {
         return true;
       }
-      
+
       // For other statuses, only show if user is involved with the manual
       return isUserInvolvedWithManual(manual);
     });
@@ -147,7 +155,7 @@ const QmsManual = () => {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-      
+
       // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
 
@@ -168,7 +176,7 @@ const QmsManual = () => {
         // First, fetch manuals
         const companyId = getUserCompanyId();
         const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-        
+
         // Apply visibility filtering using the centralized function
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
 
@@ -213,14 +221,14 @@ const QmsManual = () => {
     };
 
     fetchAllData();
-  }, []);  
+  }, []);
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-    
+
     if (userRole === "user") {
-        const userId = localStorage.getItem("user_id");
-        if (userId) return userId;
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
 
     const companyId = localStorage.getItem("company_id");
@@ -234,17 +242,34 @@ const QmsManual = () => {
   };
 
   // Delete manual
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this manual?")) {
+  const handleDelete = (id) => {
+    setManualToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (manualToDelete) {
       try {
-        await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
-        alert("Manual deleted successfully");
-        fetchManuals();
+        await axios.delete(`${BASE_URL}/qms/manual-detail/${manualToDelete}/`);
+        setShowDeleteModal(false);
+        setShowDeleteManualSuccessModal(true);
+        setTimeout(() => {
+          setShowDeleteManualSuccessModal(false);
+          fetchManuals(); // Refresh the list after deletion
+        }, 2000);
       } catch (err) {
         console.error("Error deleting manual:", err);
-        alert("Failed to delete manual");
+        setShowDeleteModal(false);
+        setShowDeleteManualErrorModal(true);
+        setTimeout(() => {
+          setShowDeleteManualErrorModal(false);
+        }, 2000);
       }
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   const filteredManual = manuals.filter(manual =>
@@ -322,23 +347,23 @@ const QmsManual = () => {
         alert("No manual selected for publishing");
         return;
       }
-      
+
       await axios.patch(`${BASE_URL}/qms/manual-detail/${selectedManualId}/`, {
         status: 'Publish',
         send_notification: sendNotification
       });
-  
+
       if (sendNotification) {
         const companyId = getUserCompanyId();
         await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
           company_id: companyId
         });
       }
-      
+
       setPublishSuccess(true);
       setTimeout(() => {
         closePublishModal();
-        fetchManuals(); 
+        fetchManuals();
       }, 1000);
     } catch (error) {
       console.error("Error publishing manual:", error);
@@ -379,6 +404,22 @@ const QmsManual = () => {
     <div className="bg-[#1C1C24] list-manual-main">
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
         <h1 className="list-manual-head">List Manual Sections</h1>
+
+        <DeleteQmsManualConfirmModal
+          showDeleteModal={showDeleteModal}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+        <DeleteQmsManualsuccessModal
+          showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+          onClose={() => setShowDeleteManualSuccessModal(false)}
+        />
+        <DeleteQmsManualErrorModal
+          showDeleteManualErrorModal={showDeleteManualErrorModal}
+          onClose={() => setShowDeleteManualErrorModal(false)}
+        />
+
+
         <div className="flex space-x-5">
           <div className="relative">
             <input
