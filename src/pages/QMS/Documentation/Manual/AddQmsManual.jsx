@@ -324,8 +324,6 @@ const AddQmsManual = () => {
 
     const handleDraftClick = async () => {
         try {
-            setLoading(true);
-
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');

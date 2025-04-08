@@ -6,6 +6,7 @@ import "./addqmsmanual.css"
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
 
 const EditDraftQmsManual = () => {
     const navigate = useNavigate();
@@ -24,6 +25,8 @@ const EditDraftQmsManual = () => {
     const [manualDetails, setManualDetails] = useState(null);
     const { id } = useParams();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -50,7 +53,7 @@ const EditDraftQmsManual = () => {
             fetchManualDetails();
         }
     }, [companyId, id]);
-    
+
     useEffect(() => {
         if (manualDetails) {
             // Set the form data with properly mapped values from the backend
@@ -72,7 +75,7 @@ const EditDraftQmsManual = () => {
                 send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
                 send_email_to_approved_by: manualDetails.send_email_to_approved_by || false,
             });
-            
+
             console.log("Setting form data with checkbox values:", {
                 send_notification_to_checked_by: manualDetails.send_notification_to_checked_by,
                 send_email_to_checked_by: manualDetails.send_email_to_checked_by,
@@ -81,7 +84,7 @@ const EditDraftQmsManual = () => {
             });
         }
     }, [manualDetails]);
-    
+
     const fetchManualDetails = async () => {
         try {
             setLoading(true);
@@ -97,7 +100,7 @@ const EditDraftQmsManual = () => {
             setLoading(false);
         }
     };
-    
+
     const renderAttachmentPreview = () => {
         if (previewAttachment) {
             const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
@@ -295,17 +298,17 @@ const EditDraftQmsManual = () => {
     const handleUpdateClick = async () => {
         try {
             setLoading(true);
-    
+
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
                 setLoading(false);
                 return;
             }
-    
+
             const submitData = new FormData();
             submitData.append('company', companyId);
-    
+
             // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
             const apiFormData = {
                 ...formData,
@@ -314,31 +317,35 @@ const EditDraftQmsManual = () => {
                 send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
                 send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
             };
-    
+
             // Add all form data except the original checkbox fields
             Object.keys(apiFormData).forEach(key => {
                 // Skip the checkbox fields with boolean values
-                if (key !== 'send_notification_to_checked_by' && 
+                if (key !== 'send_notification_to_checked_by' &&
                     key !== 'send_email_to_checked_by' &&
-                    key !== 'send_notification_to_approved_by' && 
+                    key !== 'send_notification_to_approved_by' &&
                     key !== 'send_email_to_approved_by') {
                     submitData.append(key, apiFormData[key]);
                 }
             });
-    
+
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
-    
+
             const response = await axios.put(`${BASE_URL}/qms/manuals/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-    
+
             setLoading(false);
-            alert('Manual updated successfully!');
-            navigate('/company/qms/manual');
+            setShowEditDraftManualSuccessModal(true)
+            setTimeout(() => {
+                setShowEditDraftManualSuccessModal(false)
+                navigate('/company/qms/manual');
+            }, 2000);
+
         } catch (err) {
             setLoading(false);
             setError('Failed to update manual');
@@ -350,6 +357,11 @@ const EditDraftQmsManual = () => {
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
                 <h1 className="add-manual-sections">Manual Sections Draft</h1>
+
+                <EditDraftQmsManualSuccessModal
+                    showEditDraftManualSuccessModal={showEditDraftManualSuccessModal}
+                    onClose={() => { setShowEditDraftManualSuccessModal(false) }}
+                />
 
                 {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
@@ -676,14 +688,14 @@ const EditDraftQmsManual = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center mt-[22px] justify-between">
-                        <div className='mb-6'>
+                    <div className="flex items-center mt-[22px] justify-end">
+                        {/* <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
                             >
                                 Save as Draft
                             </button>
-                        </div>
+                        </div> */}
                         <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"
