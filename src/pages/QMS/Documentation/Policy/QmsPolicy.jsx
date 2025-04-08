@@ -11,6 +11,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import downloads from "../../../../assets/images/Company Documentation/download.svg"
 import { useNavigate } from "react-router-dom";
 import './qmspolicy.css';
+import DeleteQmsPolicyConfirmModal from './Modals/DeleteQmsPolicyConfirmModal';
+import DeleteQmsPolicySuccessModal from './Modals/DeleteQmsPolicySuccessModal';
+import DeleteQmsPolicyErrorModal from './Modals/DeleteQmsPolicyErrorModal';
 
 const QmsPolicy = () => {
   const navigate = useNavigate();
@@ -19,6 +22,14 @@ const QmsPolicy = () => {
   const [qmsPolicies, setQmsPolicies] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [policyToDelete, setPolicyToDelete] = useState(null);
+
+  const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+  const [showDeleteErrorModal, setShowDeleteErrorModal] = useState(false);
+
+
   const [searchTerm, setSearchTerm] = useState('');
   useEffect(() => {
     fetchPolicies();
@@ -31,19 +42,19 @@ const QmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        // Try to get company_id from user data that was stored during login
-        const userData = localStorage.getItem("user_company_id");
-        if (userData) {
-            try {
-                return JSON.parse(userData);
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
-            }
+      // Try to get company_id from user data that was stored during login
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
         }
+      }
     }
     return null;
-};
+  };
   const companyId = getUserCompanyId();
   console.log("Stored Company ID:", companyId);
 
@@ -69,18 +80,40 @@ const QmsPolicy = () => {
     setShowViewModal(false);
     setSelectedPolicy(null);
   };
-  const handleDeletePolicy = async (policyId) => {
-    if (window.confirm("Are you sure you want to delete this policy?")) {
+
+  const handleDeleteClick = (policyId) => {
+    setPolicyToDelete(policyId);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (policyToDelete) {
       try {
-        await axios.delete(`${BASE_URL}/qms/policy/${policyId}/update/`);
+        await axios.delete(`${BASE_URL}/qms/policy/${policyToDelete}/update/`);
         // Refresh the list after deletion
         fetchPolicies();
+        setShowDeleteSuccessModal(true);
+        setTimeout(() => {
+          setShowDeleteSuccessModal(false);
+        }, 3000);
       } catch (error) {
         console.error("Error deleting policy:", error);
-        alert("Failed to delete policy. Please try again.");
+        setShowDeleteErrorModal(true);
+        setTimeout(() => {
+          setShowDeleteErrorModal(false);
+        }, 3000);
       }
     }
+    setShowDeleteModal(false);
+    setPolicyToDelete(null);
   };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setPolicyToDelete(null);
+  };
+
+
   const handleEditPolicy = (policyId) => {
     navigate(`/company/qms/editpolicy/${policyId}`);
   };
@@ -155,6 +188,24 @@ const QmsPolicy = () => {
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white p-5">
       <h1 className="list-policy-head">List Policy</h1>
+
+      <DeleteQmsPolicyConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <DeleteQmsPolicySuccessModal
+        showDeleteSuccessModal={showDeleteSuccessModal}
+        onClose={() => setShowDeleteSuccessModal(false)}
+      />
+
+      <DeleteQmsPolicyErrorModal
+        showDeleteErrorModal={showDeleteErrorModal}
+        onClose={() => setShowDeleteErrorModal(false)}
+      />
+
+
       <div className="flex items-center gap-3 pb-6 mb-6 border-b border-[#383840]">
         <span className="doc-path-text">Documentation</span>
         <span className="text-gray-400"><img src={arrow} alt="Arrow" /></span>
@@ -231,7 +282,7 @@ const QmsPolicy = () => {
                   </div>
                   <div className="flex flex-col items-center gap-[15px]">
                     <span className="actions-text">Delete</span>
-                    <button onClick={() => handleDeletePolicy(policy.id)}>
+                    <button onClick={() => handleDeleteClick(policy.id)}>
                       <img src={deleteIcon} alt="Delete Icon" className='w-[16px] h-[16px]' />
                     </button>
                   </div>
@@ -296,7 +347,7 @@ const QmsPolicy = () => {
                           rel="noopener noreferrer"
                           className="bg-[#24242D] hover:bg-[#17171d] text-white px-4 rounded-md inline-flex items-center w-[187px] h-[59px] duration-200"
                         >
-                          <span className='flex gap-[6px] items-center view-attachment-text'><Eye/> View Attachment</span>
+                          <span className='flex gap-[6px] items-center view-attachment-text'><Eye /> View Attachment</span>
                         </a>
                       </div>
                       <div>

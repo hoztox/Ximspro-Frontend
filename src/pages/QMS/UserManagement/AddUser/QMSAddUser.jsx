@@ -39,6 +39,20 @@ const QMSAddUser = () => {
     status: 'live',
     user_logo: '',
   });
+  const [permissionError, setPermissionError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    username: '',
+    password: '',
+    confirm_password: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    confirm_email: '',
+    phone: '',
+    country: '',
+    secret_question: '',
+    answer: ''
+  });
   const [usernameError, setUsernameError] = useState('');
   const [usernameValid, setUsernameValid] = useState(null);
 
@@ -57,7 +71,7 @@ const QMSAddUser = () => {
             setUsernameValid(false);
           } else {
             setUsernameError('');
-            setUsernameValid(true);  
+            setUsernameValid(true);
           }
         } catch (error) {
           console.error('Error validating user id:', error);
@@ -66,11 +80,11 @@ const QMSAddUser = () => {
         }
       } else {
         setUsernameError('');
-        setUsernameValid(null);  
+        setUsernameValid(null);
       }
     };
 
-    
+
     const timeoutId = setTimeout(() => {
       validateUsername();
     }, 500);
@@ -80,14 +94,14 @@ const QMSAddUser = () => {
 
   useEffect(() => {
     const validateEmail = async () => {
-      // Check if email exists
+
       if (formData.email) {
-        // Email format validation using regex
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
           setEmailError('Invalid email format!');
           setEmailValid(false);
-          return; // Stop further validation if format is invalid
+          return;
         }
 
         try {
@@ -99,7 +113,7 @@ const QMSAddUser = () => {
             setEmailValid(false);
           } else {
             setEmailError('');
-            setEmailValid(true); // This will trigger the success message
+            setEmailValid(true);
           }
         } catch (error) {
           console.error('Error validating email:', error);
@@ -108,11 +122,11 @@ const QMSAddUser = () => {
         }
       } else {
         setEmailError('');
-        setEmailValid(null); // Reset when empty
+        setEmailValid(null);
       }
     };
 
-    // Add a small delay to avoid too many requests while typing
+
     const timeoutId = setTimeout(() => {
       validateEmail();
     }, 500);
@@ -162,8 +176,15 @@ const QMSAddUser = () => {
       ...formData,
       [name]: value
     });
-  };
 
+    // Clear the error for this field when user changes the value
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: ''
+      });
+    }
+  };
   const handleDobChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -180,8 +201,13 @@ const QMSAddUser = () => {
 
     if (checked) {
       setSelectedPermissions([...selectedPermissions, value]);
+      setPermissionError(''); // Clear the error when permissions are selected
     } else {
       setSelectedPermissions(selectedPermissions.filter(permission => permission !== value));
+      // Set error again if all permissions are deselected
+      if (selectedPermissions.length === 1 && selectedPermissions[0] === value) {
+        setPermissionError('Please select at least one permission');
+      }
     }
   };
 
@@ -194,35 +220,88 @@ const QMSAddUser = () => {
   };
 
   const validateForm = () => {
-    // Check required fields
-    const requiredFields = ['username', 'first_name', 'last_name', 'password', 'confirm_password', 'country', 'email', 'confirm_email', 'phone', 'secret_question', 'answer'];
+    const errors = {};
+    let isValid = true;
 
-    for (const field of requiredFields) {
-      if (!formData[field]) {
-        setError(`${field.replace('_', ' ')} is required`);
-        return false;
-      }
+    // Required fields validation
+    if (!formData.username) {
+      errors.username = 'Username is required';
+      isValid = false;
     }
 
-    // Check password match
-    if (formData.password !== formData.confirm_password) {
-      setError('Passwords do not match');
-      return false;
+    if (!formData.password) {
+      errors.password = 'Password is required';
+      isValid = false;
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+      isValid = false;
     }
 
-    // Check email match
-    if (formData.email !== formData.confirm_email) {
-      setError('Emails do not match');
-      return false;
+    if (!formData.confirm_password) {
+      errors.confirm_password = 'Please confirm your password';
+      isValid = false;
+    } else if (formData.password !== formData.confirm_password) {
+      errors.confirm_password = 'Passwords do not match';
+      isValid = false;
     }
 
-    // Check if at least one permission is selected
+    if (!formData.first_name) {
+      errors.first_name = 'First name is required';
+      isValid = false;
+    }
+
+    if (!formData.last_name) {
+      errors.last_name = 'Last name is required';
+      isValid = false;
+    }
+
+    if (!formData.email) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Email is invalid';
+      isValid = false;
+    }
+
+    if (!formData.confirm_email) {
+      errors.confirm_email = 'Please confirm your email';
+      isValid = false;
+    } else if (formData.email !== formData.confirm_email) {
+      errors.confirm_email = 'Emails do not match';
+      isValid = false;
+    }
+
+    if (!formData.phone) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    }
+
+    if (!formData.country) {
+      errors.country = 'Country is required';
+      isValid = false;
+    }
+
+    if (!formData.secret_question) {
+      errors.secret_question = 'Secret question is required';
+      isValid = false;
+    }
+
+    if (!formData.answer) {
+      errors.answer = 'Answer is required';
+      isValid = false;
+    }
+
     if (selectedPermissions.length === 0) {
-      setError('At least one permission must be selected');
-      return false;
+      setPermissionError('Please select at least one permission');
+      isValid = false;
+    } else {
+      setPermissionError('');
     }
 
-    return true;
+    // Set all field errors
+    setFieldErrors(errors);
+
+    return isValid;
   };
 
   const getUserCompanyId = () => {
@@ -276,10 +355,10 @@ const QMSAddUser = () => {
         formattedDob = `${formData.date_of_birth.year}-${formData.date_of_birth.month.padStart(2, "0")}-${formData.date_of_birth.day.padStart(2, "0")}`;
       }
 
-      // Create a FormData object
+
       const formDataToSubmit = new FormData();
 
-      // Add all the text fields
+
       formDataToSubmit.append('company_id', companyId);
       formDataToSubmit.append('username', formData.username);
       formDataToSubmit.append('first_name', formData.first_name);
@@ -305,20 +384,20 @@ const QMSAddUser = () => {
       formDataToSubmit.append('notes', formData.notes);
       formDataToSubmit.append('status', formData.status);
 
-      // Add the permissions as an array
+
       selectedPermissions.forEach((permission) => {
         formDataToSubmit.append('permissions', permission);
       });
 
-      // Add the file if it exists
+
       if (formData.user_logo) {
         formDataToSubmit.append('user_logo', formData.user_logo);
       }
 
-      console.log("Sending data:", formDataToSubmit); // Debugging
+      console.log("Sending data:", formDataToSubmit);
 
       const response = await axios.post(`${BASE_URL}/company/users/create/`, formDataToSubmit, {
-        headers: { "Content-Type": "multipart/form-data" }  // Important for file uploads
+        headers: { "Content-Type": "multipart/form-data" }
       });
 
       if (response.status === 201) {
@@ -352,11 +431,11 @@ const QMSAddUser = () => {
         </button>
       </div>
 
-      {error && (
+      {/* {error && (
         <div className="mx-[122px] mt-4 p-3 bg-red-500 text-white rounded">
           {error}
         </div>
-      )}
+      )} */}
 
       <form className="add-user-form" onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-[122px] py-[23px]">
@@ -369,6 +448,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.username && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.username}
+              </p>
+            )}
             {usernameError && (
               <p className="text-red-500 text-sm pt-2 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -386,6 +473,7 @@ const QMSAddUser = () => {
               </p>
             )}
           </div>
+
           <div></div> {/* Empty div for alignment */}
 
           <div>
@@ -397,6 +485,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.password && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.password}
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Confirm Password <span className='required-field'>*</span></label>
@@ -407,6 +503,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.confirm_password && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.confirm_password}
+              </p>
+            )}
           </div>
 
           <div>
@@ -418,6 +522,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.first_name && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.first_name}
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Last Name <span className='required-field'>*</span></label>
@@ -428,6 +540,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.last_name && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.last_name}
+              </p>
+            )}
           </div>
 
           <div>
@@ -563,6 +683,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.country && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.country}
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Department / Division</label>
@@ -583,7 +711,14 @@ const QMSAddUser = () => {
               value={formData.email}
               onChange={handleChange}
               className="w-full add-user-inputs"
-            />
+            /> {fieldErrors.email && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.email}
+              </p>
+            )}
             {emailError && (
               <p className="text-red-500 text-sm pt-2 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -610,6 +745,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.confirm_email && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.confirm_email}
+              </p>
+            )}
           </div>
 
           <div>
@@ -621,6 +764,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.phone && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.phone}
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Office Phone</label>
@@ -663,6 +814,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.secret_question && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.secret_question}
+              </p>
+            )}
           </div>
           <div>
             <label className="add-user-label">Answer <span className='required-field'>*</span></label>
@@ -673,6 +832,14 @@ const QMSAddUser = () => {
               onChange={handleChange}
               className="w-full add-user-inputs"
             />
+            {fieldErrors.answer && (
+              <p className="text-red-500 text-sm pt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {fieldErrors.answer}
+              </p>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -727,6 +894,14 @@ const QMSAddUser = () => {
 
           <div className="md:col-span-2">
             <label className="permissions-texts cursor-pointer">Permissions <span className='required-field'>*</span></label>
+            {permissionError && (
+              <p className="text-red-500 text-sm mt-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                {permissionError}
+              </p>
+            )}
             <div className="flex flex-wrap gap-5 mt-3">
               {companyPermissions && companyPermissions.length > 0 ? (
                 companyPermissions.map((permission) => (
@@ -739,13 +914,16 @@ const QMSAddUser = () => {
                       onChange={handlePermissionChange}
                       className="mr-2 form-checkboxes"
                     />
+
                     <span className="permissions-texts cursor-pointer">{permission}</span>
                   </label>
                 ))
               ) : (
                 <p className="text-yellow-500"> </p>
               )}
+
             </div>
+
           </div>
         </div>
 
