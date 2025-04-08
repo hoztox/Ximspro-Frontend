@@ -782,14 +782,14 @@ useEffect(() => {
                         </div>
                     </div>
 
-                    <div className="flex items-center mt-[22px] justify-between">
-                        <div className='mb-6'>
+                    <div className="flex items-center mt-[22px] justify-end">
+                        {/* <div className='mb-6'>
                             <button
                                 className="request-correction-btn duration-200"
                             >
                                 Save as Draft
                             </button>
-                        </div>
+                        </div> */}
                         <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"
