@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import choosefile from "../../../../assets/images/Company User Management/choosefile.svg"
 import "./adduser.css";
+import QmsAddUserSuccessModal from '../Modals/QmsAddUserSuccessModal';
 
 const QMSAddUser = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ const QMSAddUser = () => {
   const [error, setError] = useState(null);
   const [companyPermissions, setCompanyPermissions] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+
+  const [showAddUserSuccessModal, setShowAddUserSuccessModal] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -402,8 +405,11 @@ const QMSAddUser = () => {
 
       if (response.status === 201) {
         console.log("User added successfully", response.data);
-        toast.success("User added successfully!");
-        navigate("/company/qms/listuser");
+        setShowAddUserSuccessModal(true);
+        setTimeout(() => {
+          setShowAddUserSuccessModal(false);
+          navigate("/company/qms/listuser");
+        }, 1500);
       }
     } catch (err) {
       console.error("Error saving user:", err);
@@ -423,6 +429,12 @@ const QMSAddUser = () => {
       <Toaster position="top-center" />
       <div className="flex justify-between items-center add-user-header">
         <h1 className="add-user-text">Add User</h1>
+
+        <QmsAddUserSuccessModal
+          showAddUserSuccessModal={showAddUserSuccessModal}
+          onClose={() => { setShowAddUserSuccessModal(false) }}
+        />
+
         <button
           className="list-user-btn duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           onClick={handleListUsers}

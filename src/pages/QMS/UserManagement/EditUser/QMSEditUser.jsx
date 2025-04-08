@@ -4,6 +4,8 @@ import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
 import choosefile from "../../../../assets/images/Company User Management/choosefile.svg"
+import QmsEditUserSuccessModal from '../Modals/QmsEditUserSuccessModal';
+import QmsEditUserErrorModal from '../Modals/QmsEditUserErrorModal';
 
 const QMSEditUser = () => {
     const navigate = useNavigate();
@@ -13,6 +15,9 @@ const QMSEditUser = () => {
     const [companyPermissions, setCompanyPermissions] = useState([]);
     const [selectedPermissions, setSelectedPermissions] = useState([]);
     const [userId, setUserId] = useState(null);
+
+    const [showEditUserSuccessModal, setShowEditUserSuccessModal] = useState(false);
+    const [showEditUserErrorModal, setShowEditUserErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         username: '',
@@ -42,14 +47,14 @@ const QMSEditUser = () => {
     const { id } = useParams();
     console.log("User ID from params:", id);
 
-  
+
     const fetchUserPermissions = async (id) => {
         try {
             const response = await axios.get(`${BASE_URL}/company/user/permissions/${id}/`);
-            
+
             if (response.status === 200 && response.data) {
                 let userPermissions = [];
-                
+
                 // Handle different API response formats
                 if (Array.isArray(response.data)) {
                     userPermissions = response.data.map(p => p.name || p);
@@ -62,7 +67,7 @@ const QMSEditUser = () => {
                         userPermissions = permissionsArr.map(p => p.name || p);
                     }
                 }
-                
+
                 console.log("Fetched user permissions:", userPermissions);
                 setSelectedPermissions(userPermissions);
             }
@@ -101,7 +106,7 @@ const QMSEditUser = () => {
 
                 console.log('User datasssssssssssssss:', userData);
 
-           
+
                 let day = '';
                 let month = '';
                 let year = '';
@@ -115,9 +120,9 @@ const QMSEditUser = () => {
                     }
                 }
 
-        
+
                 setFormData({
-                    id: userData.id || '', 
+                    id: userData.id || '',
                     username: userData.username || '',
                     first_name: userData.first_name || '',
                     last_name: userData.last_name || '',
@@ -130,7 +135,7 @@ const QMSEditUser = () => {
                     country: userData.country || '',
                     department_division: userData.department_division || '',
                     email: userData.email || '',
-                    confirm_email: userData.email || '', 
+                    confirm_email: userData.email || '',
                     phone: userData.phone || '',
                     office_phone: userData.office_phone || '',
                     mobile_phone: userData.mobile_phone || '',
@@ -141,18 +146,18 @@ const QMSEditUser = () => {
                     status: userData.status || 'live',
                     user_logo: userData.user_logo || '',
                 });
-                
-           
+
+
                 if (userData.permissions && Array.isArray(userData.permissions)) {
                     const permissionNames = userData.permissions.map(p => p.name);
                     console.log("Setting permissions from permissions:", permissionNames);
                     setSelectedPermissions(permissionNames);
-                
+
                 } else if (userData.permissions && Array.isArray(userData.permissions)) {
                     console.log("Setting permissions from permissions:", userData.permissions);
                     setSelectedPermissions(userData.permissions);
                 } else {
-                
+
                     console.log("Fetching user permissions separately...");
                     fetchUserPermissions(id);
                 }
@@ -166,7 +171,7 @@ const QMSEditUser = () => {
         }
     };
 
- 
+
 
     const fetchLatestPermissions = async () => {
         try {
@@ -232,13 +237,13 @@ const QMSEditUser = () => {
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
-        
+
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
-                    return JSON.parse(userData);   
+                    return JSON.parse(userData);
                 } catch (e) {
                     console.error("Error parsing user company ID:", e);
                     return null;
@@ -269,12 +274,12 @@ const QMSEditUser = () => {
                 setIsLoading(false);
                 return;
             }
-    
+
             let formattedDob = "";
             if (formData.date_of_birth.day && formData.date_of_birth.month && formData.date_of_birth.year) {
                 formattedDob = `${formData.date_of_birth.year}-${formData.date_of_birth.month.padStart(2, "0")}-${formData.date_of_birth.day.padStart(2, "0")}`;
             }
-    
+
             // Create regular data object first (not FormData)
             const dataToSubmit = {
                 company_id: companyId,
@@ -302,18 +307,18 @@ const QMSEditUser = () => {
                 // Add permissions as an array of objects in the format the backend expects
                 permissions: selectedPermissions.map(perm => ({ name: perm }))
             };
-    
+
             if (formData.password) {
                 dataToSubmit.password = formData.password;
                 dataToSubmit.confirm_password = formData.confirm_password;
             }
-    
+
             console.log("Data to submit with permissions:", dataToSubmit);
-    
+
             // If we have a file to upload, we need to use FormData
             if (formData.user_logo && typeof formData.user_logo !== 'string') {
                 const formDataToSubmit = new FormData();
-                
+
                 // Add all regular data
                 Object.keys(dataToSubmit).forEach(key => {
                     if (key === 'permissions') {
@@ -323,32 +328,42 @@ const QMSEditUser = () => {
                         formDataToSubmit.append(key, dataToSubmit[key]);
                     }
                 });
-                
+
                 // Add the file
                 formDataToSubmit.append('user_logo', formData.user_logo);
-                
+
                 const response = await axios.put(`${BASE_URL}/company/users/update/${userId}/`, formDataToSubmit, {
                     headers: { "Content-Type": "multipart/form-data" }
                 });
-                
+
                 if (response.status === 200) {
                     console.log("User updated successfully", response.data);
-                    toast.success("User updated successfully!");
-                    navigate("/company/qms/listuser");
+                    setShowEditUserSuccessModal(true)
+                    setTimeout(() => {
+                        setShowEditUserSuccessModal(false)
+                        navigate("/company/qms/listuser");
+                    }, 2000);
+
                 }
             } else {
                 // No file to upload, use regular JSON request
                 const response = await axios.put(`${BASE_URL}/company/users/update/${userId}/`, dataToSubmit);
-                
+
                 if (response.status === 200) {
                     console.log("User updated successfully", response.data);
-                    toast.success("User updated successfully!");
-                    navigate("/company/qms/listuser");
+                    setShowEditUserSuccessModal(true)
+                    setTimeout(() => {
+                        setShowEditUserSuccessModal(false)
+                        navigate("/company/qms/listuser");
+                    }, 2000);
                 }
             }
         } catch (err) {
             console.error("Error updating user:", err);
-            toast.error("Failed to update user");
+            setShowEditUserErrorModal(true);
+            setTimeout(() => {
+                setShowEditUserErrorModal(false);
+            }, 3000);
             if (err.response && err.response.data) {
                 setError(err.response.data.message || "Failed to update user");
             } else {
@@ -383,6 +398,17 @@ const QMSEditUser = () => {
             <Toaster position="top-center" />
             <div className="flex justify-between items-center add-user-header">
                 <h1 className="add-user-text">Edit User</h1>
+
+                <QmsEditUserSuccessModal
+                    showEditUserSuccessModal={showEditUserSuccessModal}
+                    onClose={() => { setShowEditUserSuccessModal(false) }}
+                />
+
+                <QmsEditUserErrorModal
+                    showEditUserErrorModal={showEditUserErrorModal}
+                    onClose={() => { setShowEditUserErrorModal(false) }}
+                />
+
                 <button
                     className="list-user-btn duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                     onClick={handleListUsers}
