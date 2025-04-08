@@ -212,7 +212,9 @@ const QMSListUser = () => {
                   <td className="px-5 add-user-datas">{user.username}</td>
                   <td className="px-5 add-user-datas">{user.last_name}</td>
                   <td className="px-5 add-user-datas">{user.email}</td>
-                  <td className="px-5 add-user-datas">{user.status}</td>
+                  <td className="px-5 add-user-datas">
+                    {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                  </td>
                   <td className="px-4 add-user-datas text-center flex justify-center items-center h-[46px]">
                     <img src={permissions} alt="Permission" className='w-[16px] h-[16px]' />
                   </td>

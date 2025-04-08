@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
 import { Toaster, toast } from 'react-hot-toast';
@@ -9,12 +9,12 @@ import QmsEditUserErrorModal from '../Modals/QmsEditUserErrorModal';
 
 const QMSEditUser = () => {
     const navigate = useNavigate();
-    const location = useLocation();
+    const { id } = useParams();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [companyPermissions, setCompanyPermissions] = useState([]);
     const [selectedPermissions, setSelectedPermissions] = useState([]);
-    const [userId, setUserId] = useState(null);
+    const [userId, setUserId] = useState(id);
 
     const [showEditUserSuccessModal, setShowEditUserSuccessModal] = useState(false);
     const [showEditUserErrorModal, setShowEditUserErrorModal] = useState(false);
@@ -40,17 +40,30 @@ const QMSEditUser = () => {
         secret_question: '',
         answer: '',
         notes: '',
-        status: 'live',
+        status: 'active',
         user_logo: '',
+        // Remove password and confirm_password from initial state
     });
 
-    const { id } = useParams();
+    const [permissionError, setPermissionError] = useState('');
+
+    const [fieldErrors, setFieldErrors] = useState({
+        username: '',
+        first_name: '',
+        last_name: '',
+        email: '',
+        confirm_email: '',
+        phone: '',
+        country: '',
+        secret_question: '',
+        answer: ''
+    });
+
     console.log("User ID from params:", id);
 
-
-    const fetchUserPermissions = async (id) => {
+    const fetchUserPermissions = async (userId) => {
         try {
-            const response = await axios.get(`${BASE_URL}/company/user/permissions/${id}/`);
+            const response = await axios.get(`${BASE_URL}/company/user/permissions/${userId}/`);
 
             if (response.status === 200 && response.data) {
                 let userPermissions = [];
@@ -73,6 +86,7 @@ const QMSEditUser = () => {
             }
         } catch (err) {
             console.error("Error fetching user permissions:", err);
+            toast.error("Failed to load user permissions");
         }
     };
 
@@ -80,23 +94,22 @@ const QMSEditUser = () => {
         if (id) {
             setUserId(id);
             fetchUserDetails(id);
+            fetchLatestPermissions();
         } else {
             toast.error("No user selected for editing");
             navigate('/company/qms/listuser');
         }
+    }, [id]);
 
-        fetchLatestPermissions();
-    }, [location]);
-
-    const fetchUserDetails = async (id) => {
+    const fetchUserDetails = async (userId) => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/company/user/${id}/`);
+            const response = await axios.get(`${BASE_URL}/company/user/${userId}/`);
 
             if (response.status === 200 && response.data) {
                 let userData;
                 if (Array.isArray(response.data)) {
-                    userData = response.data.find(user => user.id === parseInt(id));
+                    userData = response.data.find(user => user.id === parseInt(userId));
                     if (!userData) {
                         userData = response.data[0];
                     }
@@ -104,8 +117,7 @@ const QMSEditUser = () => {
                     userData = response.data;
                 }
 
-                console.log('User datasssssssssssssss:', userData);
-
+                console.log('User data:', userData);
 
                 let day = '';
                 let month = '';
@@ -119,7 +131,6 @@ const QMSEditUser = () => {
                         day = dateParts[2];
                     }
                 }
-
 
                 setFormData({
                     id: userData.id || '',
@@ -143,23 +154,17 @@ const QMSEditUser = () => {
                     secret_question: userData.secret_question || '',
                     answer: userData.answer || '',
                     notes: userData.notes || '',
-                    status: userData.status || 'live',
+                    status: userData.status || 'active',
                     user_logo: userData.user_logo || '',
                 });
 
-
                 if (userData.permissions && Array.isArray(userData.permissions)) {
-                    const permissionNames = userData.permissions.map(p => p.name);
-                    console.log("Setting permissions from permissions:", permissionNames);
+                    const permissionNames = userData.permissions.map(p => p.name || p);
+                    console.log("Setting permissions from user data:", permissionNames);
                     setSelectedPermissions(permissionNames);
-
-                } else if (userData.permissions && Array.isArray(userData.permissions)) {
-                    console.log("Setting permissions from permissions:", userData.permissions);
-                    setSelectedPermissions(userData.permissions);
                 } else {
-
                     console.log("Fetching user permissions separately...");
-                    fetchUserPermissions(id);
+                    fetchUserPermissions(userId);
                 }
             }
         } catch (err) {
@@ -170,8 +175,6 @@ const QMSEditUser = () => {
             setIsLoading(false);
         }
     };
-
-
 
     const fetchLatestPermissions = async () => {
         try {
@@ -193,6 +196,7 @@ const QMSEditUser = () => {
             }
         } catch (err) {
             console.error("Error fetching latest permissions:", err);
+            toast.error("Failed to load permissions");
         }
     };
 
@@ -202,6 +206,14 @@ const QMSEditUser = () => {
             ...formData,
             [name]: value
         });
+
+        // Clear the error for this field when user changes the value
+        if (fieldErrors[name]) {
+            setFieldErrors({
+                ...fieldErrors,
+                [name]: ''
+            });
+        }
     };
 
     const handleDobChange = (e) => {
@@ -217,12 +229,16 @@ const QMSEditUser = () => {
 
     const handlePermissionChange = (e) => {
         const { value, checked } = e.target;
-        console.log(`Permission ${value} changed to ${checked}`);
 
         if (checked) {
-            setSelectedPermissions(prev => [...prev, value]);
+            setSelectedPermissions([...selectedPermissions, value]);
+            setPermissionError(''); // Clear the error when permissions are selected
         } else {
-            setSelectedPermissions(prev => prev.filter(permission => permission !== value));
+            setSelectedPermissions(selectedPermissions.filter(permission => permission !== value));
+            // Set error again if all permissions are deselected
+            if (selectedPermissions.length === 1 && selectedPermissions[0] === value) {
+                setPermissionError('Please select at least one permission');
+            }
         }
     };
 
@@ -263,10 +279,84 @@ const QMSEditUser = () => {
         }
     };
 
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        // Required fields validation
+        if (!formData.username) {
+            errors.username = 'Username is required';
+            isValid = false;
+        }
+
+        if (!formData.first_name) {
+            errors.first_name = 'First name is required';
+            isValid = false;
+        }
+
+        if (!formData.last_name) {
+            errors.last_name = 'Last name is required';
+            isValid = false;
+        }
+
+        if (!formData.email) {
+            errors.email = 'Email is required';
+            isValid = false;
+        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            errors.email = 'Email is invalid';
+            isValid = false;
+        }
+
+        if (!formData.confirm_email) {
+            errors.confirm_email = 'Please confirm your email';
+            isValid = false;
+        } else if (formData.email !== formData.confirm_email) {
+            errors.confirm_email = 'Emails do not match';
+            isValid = false;
+        }
+
+        if (!formData.phone) {
+            errors.phone = 'Phone number is required';
+            isValid = false;
+        }
+
+        if (!formData.country) {
+            errors.country = 'Country is required';
+            isValid = false;
+        }
+
+        if (!formData.secret_question) {
+            errors.secret_question = 'Secret question is required';
+            isValid = false;
+        }
+
+        if (!formData.answer) {
+            errors.answer = 'Answer is required';
+            isValid = false;
+        }
+
+        if (selectedPermissions.length === 0) {
+            setPermissionError('Please select at least one permission');
+            isValid = false;
+        } else {
+            setPermissionError('');
+        }
+
+        // Set all field errors
+        setFieldErrors(errors);
+
+        return isValid;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+        
         setIsLoading(true);
         setError(null);
+        
         try {
             const companyId = getUserCompanyId();
             if (!companyId) {
@@ -308,11 +398,6 @@ const QMSEditUser = () => {
                 permissions: selectedPermissions.map(perm => ({ name: perm }))
             };
 
-            if (formData.password) {
-                dataToSubmit.password = formData.password;
-                dataToSubmit.confirm_password = formData.confirm_password;
-            }
-
             console.log("Data to submit with permissions:", dataToSubmit);
 
             // If we have a file to upload, we need to use FormData
@@ -338,12 +423,11 @@ const QMSEditUser = () => {
 
                 if (response.status === 200) {
                     console.log("User updated successfully", response.data);
-                    setShowEditUserSuccessModal(true)
+                    setShowEditUserSuccessModal(true);
                     setTimeout(() => {
-                        setShowEditUserSuccessModal(false)
+                        setShowEditUserSuccessModal(false);
                         navigate("/company/qms/listuser");
                     }, 2000);
-
                 }
             } else {
                 // No file to upload, use regular JSON request
@@ -351,9 +435,9 @@ const QMSEditUser = () => {
 
                 if (response.status === 200) {
                     console.log("User updated successfully", response.data);
-                    setShowEditUserSuccessModal(true)
+                    setShowEditUserSuccessModal(true);
                     setTimeout(() => {
-                        setShowEditUserSuccessModal(false)
+                        setShowEditUserSuccessModal(false);
                         navigate("/company/qms/listuser");
                     }, 2000);
                 }
@@ -366,13 +450,16 @@ const QMSEditUser = () => {
             }, 3000);
             if (err.response && err.response.data) {
                 setError(err.response.data.message || "Failed to update user");
+                toast.error(err.response.data.message || "Failed to update user");
             } else {
                 setError("Failed to update user. Please try again.");
+                toast.error("Failed to update user. Please try again.");
             }
         } finally {
             setIsLoading(false);
         }
     };
+    
     const renderUserLogo = () => {
         if (typeof formData.user_logo === 'string' && formData.user_logo) {
             return (
@@ -417,11 +504,11 @@ const QMSEditUser = () => {
                 </button>
             </div>
 
-            {error && (
+            {/* {error && (
                 <div className="mx-[122px] mt-4 p-3 bg-red-500 text-white rounded">
                     {error}
                 </div>
-            )}
+            )} */}
 
             {isLoading && !formData.username ? (
                 <div className="flex justify-center items-center h-64">
@@ -439,6 +526,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.username && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.username}
+                                </p>
+                            )}
                         </div>
                         <div></div> {/* Empty div for alignment */}
 
@@ -451,6 +546,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.first_name && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.first_name}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="add-user-label">Last Name <span className='required-field'>*</span></label>
@@ -461,6 +564,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.last_name && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.last_name}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -495,7 +606,7 @@ const QMSEditUser = () => {
                                     >
                                         <option value="">dd</option>
                                         {[...Array(31)].map((_, i) => (
-                                            <option key={i} value={(i + 1).toString()}>{i + 1}</option>
+                                            <option key={i} value={(i + 1).toString().padStart(2, "0")}>{i + 1}</option>
                                         ))}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 top-3 flex items-center px-2 pointer-events-none">
@@ -513,7 +624,7 @@ const QMSEditUser = () => {
                                     >
                                         <option value="">mm</option>
                                         {[...Array(12)].map((_, i) => (
-                                            <option key={i} value={(i + 1).toString()}>{i + 1}</option>
+                                            <option key={i} value={(i + 1).toString().padStart(2, "0")}>{i + 1}</option>
                                         ))}
                                     </select>
                                     <div className="absolute inset-y-0 right-0 top-3 flex items-center px-2 pointer-events-none">
@@ -596,6 +707,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.country && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.country}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="add-user-label">Department / Division</label>
@@ -617,6 +736,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.email && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.email}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="add-user-label">Confirm Email <span className='required-field'>*</span></label>
@@ -627,6 +754,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.confirm_email && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.confirm_email}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -638,6 +773,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.phone && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.phone}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="add-user-label">Office Phone</label>
@@ -680,6 +823,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.secret_question && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.secret_question}
+                                </p>
+                            )}
                         </div>
                         <div>
                             <label className="add-user-label">Answer <span className='required-field'>*</span></label>
@@ -690,6 +841,14 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {fieldErrors.answer && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {fieldErrors.answer}
+                                </p>
+                            )}
                         </div>
 
                         <div className="md:col-span-2">
@@ -712,7 +871,7 @@ const QMSEditUser = () => {
                                     onChange={handleChange}
                                     className="w-full add-user-inputs appearance-none"
                                 >
-                                    <option value="live">Live</option>
+                                    <option value="active">Active</option>
                                     <option value="blocked">Blocked</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 top-3 flex items-center px-2 pointer-events-none">
@@ -749,6 +908,14 @@ const QMSEditUser = () => {
 
                         <div className="md:col-span-2">
                             <label className="permissions-texts cursor-pointer">Permissions <span className='required-field'>*</span></label>
+                            {permissionError && (
+                                <p className="text-red-500 text-sm mt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {permissionError}
+                                </p>
+                            )}
                             <div className="flex flex-wrap gap-5 mt-3">
                                 {companyPermissions && companyPermissions.length > 0 ? (
                                     companyPermissions.map((permission) => (
