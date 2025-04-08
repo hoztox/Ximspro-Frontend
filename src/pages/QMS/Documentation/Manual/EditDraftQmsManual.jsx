@@ -27,7 +27,13 @@ const EditDraftQmsManual = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
-
+  const [fieldErrors, setFieldErrors] = useState({
+        title: '',
+        written_by: '',
+        no: '',
+        checked_by: '',
+        approved_by: ''
+    });
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -217,6 +223,51 @@ const EditDraftQmsManual = () => {
             ...prev,
             [name]: value
         }));
+
+
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...fieldErrors };
+
+        // Validate title
+        if (!formData.title.trim()) {
+            newErrors.title = 'Section Name/Title is required';
+            isValid = false;
+        }
+
+        // Validate written_by
+        if (!formData.written_by) {
+            newErrors.written_by = 'Written/Prepare By is required';
+            isValid = false;
+        }
+
+        // Validate section number
+        if (!formData.no.trim()) {
+            newErrors.no = 'Section Number is required';
+            isValid = false;
+        }
+
+        // Validate checked_by
+        if (!formData.checked_by) {
+            newErrors.checked_by = 'Checked/Reviewed By is required';
+            isValid = false;
+        }
+
+        // Validate approved_by
+        if (!formData.approved_by) {
+            newErrors.approved_by = 'Approved By is required';
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+        return isValid;
     };
 
     const handleCheckboxChange = (e) => {
@@ -256,7 +307,9 @@ const EditDraftQmsManual = () => {
 
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
+
             dateObj[dropdown] = parseInt(value, 10);
+
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
 
             setFormData(prev => ({
@@ -268,11 +321,18 @@ const EditDraftQmsManual = () => {
                 ...prev,
                 [dropdown]: value
             }));
+
+            // Clear error when dropdown selection changes
+            if (fieldErrors[dropdown]) {
+                setFieldErrors(prev => ({
+                    ...prev,
+                    [dropdown]: ''
+                }));
+            }
         }
 
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
-
     const handleCancelClick = () => {
         navigate('/company/qms/draftmanual')
     }
@@ -296,6 +356,10 @@ const EditDraftQmsManual = () => {
     };
 
     const handleUpdateClick = async () => {
+        if (!validateForm()) {
+            setError('Please fill in all required fields');
+            return;
+        }
         try {
             setLoading(true);
 
@@ -352,7 +416,7 @@ const EditDraftQmsManual = () => {
             console.error('Error updating manual:', err);
         }
     };
-
+    const errorTextClass = "text-red-500 text-sm mt-1";
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
@@ -363,11 +427,11 @@ const EditDraftQmsManual = () => {
                     onClose={() => { setShowEditDraftManualSuccessModal(false) }}
                 />
 
-                {error && (
+                {/* {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
                         {error}
                     </div>
-                )}
+                )} */}
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
@@ -382,6 +446,7 @@ const EditDraftQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                             {fieldErrors.title && <p className={errorTextClass}>{fieldErrors.title}</p>}
                         </div>
 
                         <div>
@@ -408,6 +473,7 @@ const EditDraftQmsManual = () => {
                                     className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
                                 />
                             </div>
+                            {fieldErrors.written_by && <p className={errorTextClass}>{fieldErrors.written_by}</p>}
                         </div>
 
                         <div>
@@ -421,6 +487,8 @@ const EditDraftQmsManual = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                             {fieldErrors.no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+
                         </div>
 
                         <div className="flex">
@@ -476,6 +544,8 @@ const EditDraftQmsManual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                {fieldErrors.checked_by && <p className={errorTextClass}>{fieldErrors.checked_by}</p>}
+
                             </div>
                         </div>
 
@@ -545,6 +615,7 @@ const EditDraftQmsManual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
+                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
                             </div>
                         </div>
 
