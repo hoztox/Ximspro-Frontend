@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import "./addqmsmanual.css"
 import { BASE_URL } from "../../../../Utils/Config";
+import EditQmsManualSuccessModal from './Modals/EditQmsManualSuccessModal';
 
 const EditQmsmanual = () => {
     const { id } = useParams();
@@ -22,6 +23,8 @@ const EditQmsmanual = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+    const [showEditManualSuccessModal, setShowEditManualSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -390,8 +393,12 @@ const EditQmsmanual = () => {
             setLoading(false);
             console.log('wwwwwwwww', response);
 
-            alert('Manual updated successfully!');
-            navigate('/company/qms/manual');
+            setShowEditManualSuccessModal(true)
+            setTimeout(() => {
+                setShowEditManualSuccessModal(false)
+                navigate('/company/qms/manual');
+            }, 2000);
+
         } catch (err) {
             setLoading(false);
             setError('Failed to update manual');
@@ -399,85 +406,85 @@ const EditQmsmanual = () => {
         }
     };
 
-    const getRelevantUserId = () => {
-        const userRole = localStorage.getItem("role");
+    // const getRelevantUserId = () => {
+    //     const userRole = localStorage.getItem("role");
 
-        if (userRole === "user") {
-            const userId = localStorage.getItem("user_id");
-            if (userId) return userId;
-        }
+    //     if (userRole === "user") {
+    //         const userId = localStorage.getItem("user_id");
+    //         if (userId) return userId;
+    //     }
 
-        const companyId = localStorage.getItem("company_id");
-        if (companyId) return companyId;
+    //     const companyId = localStorage.getItem("company_id");
+    //     if (companyId) return companyId;
 
-        return null;
-    };
+    //     return null;
+    // };
 
-    const handleDraftClick = async () => {
-        try {
-            setLoading(true);
+    // const handleDraftClick = async () => {
+    //     try {
+    //         setLoading(true);
 
-            const companyId = getUserCompanyId();
-            if (!companyId) {
-                setError('Company ID not found. Please log in again.');
-                setLoading(false);
-                return;
-            }
+    //         const companyId = getUserCompanyId();
+    //         if (!companyId) {
+    //             setError('Company ID not found. Please log in again.');
+    //             setLoading(false);
+    //             return;
+    //         }
 
-            const userId = getRelevantUserId();
-            if (!userId) {
-                setError('User ID not found. Please log in again.');
-                setLoading(false);
-                return;
-            }
+    //         const userId = getRelevantUserId();
+    //         if (!userId) {
+    //             setError('User ID not found. Please log in again.');
+    //             setLoading(false);
+    //             return;
+    //         }
 
-            const submitData = new FormData();
+    //         const submitData = new FormData();
 
 
 
-            submitData.append('company', companyId);
-            submitData.append('user', userId);
-            submitData.append('is_draft', true);
+    //         submitData.append('company', companyId);
+    //         submitData.append('user', userId);
+    //         submitData.append('is_draft', true);
 
-            // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
-            const apiFormData = {
-                ...formData,
-                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
-                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
-                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
-                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
-            };
+    //         // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+    //         const apiFormData = {
+    //             ...formData,
+    //             send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
+    //             send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
+    //             send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
+    //             send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+    //         };
 
-            Object.keys(apiFormData).forEach(key => {
-                if (apiFormData[key] !== null && apiFormData[key] !== '' &&
-                    key !== 'send_notification_to_checked_by' &&
-                    key !== 'send_email_to_checked_by' &&
-                    key !== 'send_notification_to_approved_by' &&
-                    key !== 'send_email_to_approved_by') {
-                    submitData.append(key, apiFormData[key]);
-                }
-            });
+    //         Object.keys(apiFormData).forEach(key => {
+    //             if (apiFormData[key] !== null && apiFormData[key] !== '' &&
+    //                 key !== 'send_notification_to_checked_by' &&
+    //                 key !== 'send_email_to_checked_by' &&
+    //                 key !== 'send_notification_to_approved_by' &&
+    //                 key !== 'send_email_to_approved_by') {
+    //                 submitData.append(key, apiFormData[key]);
+    //             }
+    //         });
 
-            if (fileObject) {
-                submitData.append('upload_attachment', fileObject);
-            }
+    //         if (fileObject) {
+    //             submitData.append('upload_attachment', fileObject);
+    //         }
 
-            const response = await axios.post(`${BASE_URL}/qms/manuals/draft-create/`, submitData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+    //         const response = await axios.post(`${BASE_URL}/qms/manuals/draft-create/`, submitData, {
+    //             headers: {
+    //                 'Content-Type': 'multipart/form-data'
+    //             }
+    //         });
 
-            setLoading(false);
-            alert('Manual Draft Saved successfully!');
-            navigate('/company/qms/manual');
+    //         setLoading(false);
+    //         alert('Manual Draft Saved successfully!');
+    //         navigate('/company/qms/manual');
 
-        } catch (err) {
-            setLoading(false);
-            setError('Failed to save manual');
-            console.error('Error saving manual:', err);
-        }
-    };
+    //     } catch (err) {
+    //         setLoading(false);
+    //         setError('Failed to save manual');
+    //         console.error('Error saving manual:', err);
+    //     }
+    // };
 
     const getMonthName = (monthNum) => {
         const monthNames = [
@@ -525,6 +532,11 @@ const EditQmsmanual = () => {
                         {error}
                     </div>
                 )} */}
+
+                <EditQmsManualSuccessModal
+                    showEditManualSuccessModal={showEditManualSuccessModal}
+                    onClose={() => { setShowEditManualSuccessModal(false) }}
+                />
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
