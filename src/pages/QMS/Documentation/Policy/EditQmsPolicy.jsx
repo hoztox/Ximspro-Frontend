@@ -23,11 +23,15 @@ import textbgcolor from "../../../../assets/images/Company Documentation/bg-colo
 import { ChevronDown, Eye } from 'lucide-react';
 import { BASE_URL } from "../../../../Utils/Config";
 import "./addqmspolicys.css"
+import EditQmsPolicySuccessModal from './Modals/EditQmsPolicySuccessModal';
+import EditQmsPolicyErrorModal from './Modals/EditQmsPolicyErrorModal';
 
 const EditQmsPolicy = () => {
   const { id } = useParams(); // Get policy ID from URL
   const navigate = useNavigate();
   const [qmsPolicies, setQmsPolicies] = useState([]);
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     content: '',
@@ -35,6 +39,9 @@ const EditQmsPolicy = () => {
     newPolicy: null
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  const [showEditPolicySuccessModal, setShowEditPolicySuccessModal] = useState(false);
+  const [showEditPolicyErrorModal, setShowEditPolicyErrorModal] = useState(false);
 
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -696,17 +703,18 @@ const EditQmsPolicy = () => {
 
   const handleSave = async () => {
     try {
+      setIsSubmitting(true); // Set loading state to true when starting the update
+
       const editorContent = editorRef.current ? editorRef.current.innerHTML.trim() : '';
 
       if (!editorContent.length) {
         toast.error('Please enter policy content');
+        setIsSubmitting(false); // Reset loading state on error
         return;
       }
 
       const apiFormData = new FormData();
       apiFormData.append('text', editorContent);
-
-
 
       // Add policy file if selected
       if (formData.newPolicy) {
@@ -724,14 +732,26 @@ const EditQmsPolicy = () => {
       );
 
       if (response?.status === 200 || response?.status === 201) {
-        toast.success('Policy updated successfully');
-        navigate('/company/qms/policy');
+        setShowEditPolicySuccessModal(true)
+        setTimeout(() => {
+          setShowEditPolicySuccessModal(false)
+          navigate('/company/qms/policy');
+        }, 2000);
+
       } else {
-        toast.error('Failed to update policy. Please try again.');
+        setShowEditPolicyErrorModal(true);
+        setTimeout(() => {
+          setShowEditPolicyErrorModal(false);
+        }, 3000);
+        setIsSubmitting(false); // Reset loading state on error
       }
     } catch (error) {
       console.error('Error details:', error.response?.data || error.message);
-      toast.error(error.response?.data?.detail || 'An error occurred. Please try again.');
+      setShowEditPolicyErrorModal(true);
+      setTimeout(() => {
+        setShowEditPolicyErrorModal(false);
+      }, 3000);
+      setIsSubmitting(false); // Reset loading state on error
     }
   };
 
@@ -811,6 +831,16 @@ const EditQmsPolicy = () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
       <h1 className="add-policy-head">Edit Policy</h1>
+
+      <EditQmsPolicySuccessModal
+        showEditPolicySuccessModal={showEditPolicySuccessModal}
+        onClose={() => { setShowEditPolicySuccessModal(false) }}
+      />
+
+      <EditQmsPolicyErrorModal
+        showEditPolicyErrorModal={showEditPolicyErrorModal}
+        onClose={() => { setShowEditPolicyErrorModal(false) }}
+      />
 
       <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
 
@@ -1059,8 +1089,9 @@ const EditQmsPolicy = () => {
         <button
           className="save-btn duration-200"
           onClick={handleSave}
+          disabled={isSubmitting} // Disable button when submitting
         >
-          Update
+          {isSubmitting ? 'Updating...' : 'Update'}
         </button>
       </div>
     </div>

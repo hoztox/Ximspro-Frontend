@@ -23,13 +23,21 @@ import "./addqmspolicys.css"
 import { toast } from 'react-hot-toast';
 import { BASE_URL } from "../../../../Utils/Config";
 import { useNavigate } from 'react-router-dom';
+import AddQmsPolicySuccessModal from './Modals/AddQmsPolicySuccessModal';
+import AddQmsPolicyErrorModal from './Modals/AddQmsPolicyErrorModal';
 
 const AddQmsPolicy = () => {
   const navigate = useNavigate();
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     content: '',
     energyPolicy: null
   });
+
+  const [showAddPolicySuccessModal, setShowAddPolicySuccessModal] = useState(false);
+  const [showAddPolicyErrorModal, setShowAddPolicyErrorModal] = useState(false);
+
+
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
@@ -619,35 +627,39 @@ const AddQmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        // Try to get company_id from user data that was stored during login
-        const userData = localStorage.getItem("user_company_id");
-        if (userData) {
-            try {
-                return JSON.parse(userData);
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
-            }
+      // Try to get company_id from user data that was stored during login
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
         }
+      }
     }
     return null;
-};
+  };
 
-const handleSave = async () => {
-  const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
+  const handleSave = async () => {
+    const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
 
-  if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
+    if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
       toast.error('Please enter policy content');
       return;
-  }
+    }
 
-  try {
+    try {
+      // Set the saving state to true
+      setIsSaving(true);
+
       // Get company ID using getUserCompanyId function
       const companyId = getUserCompanyId();
 
       if (!companyId) {
-          toast.error("Company ID not found.");
-          return;
+        toast.error("Company ID not found.");
+        setIsSaving(false);
+        return;
       }
 
       // Debug company ID
@@ -664,39 +676,51 @@ const handleSave = async () => {
 
       // Add policy file if it exists
       if (formData.energyPolicy) {
-          apiFormData.append('energy_policy', formData.energyPolicy);
+        apiFormData.append('energy_policy', formData.energyPolicy);
       }
 
       console.log("Request data:", Object.fromEntries(apiFormData.entries()));
 
       const response = await axios.post(`${BASE_URL}/qms/policy/`, apiFormData, {
-          headers: {
-              'Content-Type': 'multipart/form-data'
-          }
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       if (response && (response.status === 200 || response.status === 201)) {
-          toast.success('Policy added successfully');
+        setShowAddPolicySuccessModal(true);
+        setTimeout(() => {
+          setShowAddPolicySuccessModal(false);
           navigate('/company/qms/policy');
+        }, 1500);
 
-          // Reset form
-          setFormData({
-              content: '',
-              energyPolicy: null
-          });
+        // Reset form
+        setFormData({
+          content: '',
+          energyPolicy: null
+        });
 
-          // Clear editor
-          if (editorRef.current) {
-              editorRef.current.innerHTML = '\n\n\n\n\n';
-          }
+        // Clear editor
+        if (editorRef.current) {
+          editorRef.current.innerHTML = '\n\n\n\n\n';
+        }
       } else {
-          toast.error('Failed to add policy. Please try again.');
+        setShowAddPolicyErrorModal(true);
+        setTimeout(() => {
+          setShowAddPolicyErrorModal(false);
+        }, 3000);
       }
-  } catch (error) {
+    } catch (error) {
       console.error('Error details:', error.response?.data || error.message);
-      toast.error('An error occurred. Please try again.');
-  }
-};
+      setShowAddPolicyErrorModal(true);
+      setTimeout(() => {
+        setShowAddPolicyErrorModal(false);
+      }, 3000);
+    } finally {
+      // Set the saving state back to false regardless of success or failure
+      setIsSaving(false);
+    }
+  };
 
 
   // Dropdown component to show selected option
@@ -772,6 +796,17 @@ const handleSave = async () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
       <h1 className="add-policy-head">Add Policies</h1>
+
+      <AddQmsPolicySuccessModal
+        showAddPolicySuccessModal={showAddPolicySuccessModal}
+        onClose={() => { setShowAddPolicySuccessModal(false) }}
+      />
+
+      <AddQmsPolicyErrorModal
+        showAddPolicyErrorModal={showAddPolicyErrorModal}
+        onClose={() => { setShowAddPolicyErrorModal(false) }}
+      />
+
 
       <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
 
@@ -1013,8 +1048,9 @@ const handleSave = async () => {
         <button
           className="save-btn duration-200"
           onClick={handleSave}
+          disabled={isSaving}
         >
-          Save Policy
+          {isSaving ? 'Saving...' : 'Save Policy'}
         </button>
       </div>
     </div>
