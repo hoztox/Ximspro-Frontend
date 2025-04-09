@@ -32,6 +32,12 @@
     color: white;
 }
 
+.select-employee-dropdown {
+    font-family: 'Switzer Light'; 
+    font-size: 16px;
+    color: #AAAAAA;
+}
+
 .evaluate-modal-head {
     font-family: 'Switzer Light'; 
     font-size: 16px;
@@ -43,4 +49,10 @@
     font-size: 14px;
     color: #AAAAAA;
     font-weight: 400;
+}
+
+.employee-evaluate-data {
+    font-family: 'Switzer Regular';
+    font-size: 14px;
+    color: white;
 }

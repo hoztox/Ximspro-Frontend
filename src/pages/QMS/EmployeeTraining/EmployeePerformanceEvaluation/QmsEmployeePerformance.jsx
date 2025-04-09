@@ -74,7 +74,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   <div className="flex relative items-center gap-3">
                     <label className="block evaluate-modal-head">Select Employee</label>
                     <select
-                      className="w-[215px] h-[49px] bg-[#24242D] text-gray-300 p-2 rounded-md appearance-none cursor-pointer border-none px-3"
+                      className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none cursor-pointer border-none px-3 select-employee-dropdown"
                       value={selectedEmployee}
                       onChange={(e) => setSelectedEmployee(e.target.value)}
                       onFocus={() => setIsDropdownOpen(true)}
@@ -88,7 +88,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                       ))}
                     </select>
 
-                    <div className="absolute -top-[8px] right-[165px] flex items-center pr-2 pointer-events-none mt-6">
+                    <div className="absolute -top-[8px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
                         className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}
@@ -97,7 +97,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   </div>
                 </div>
 
-                <div className="overflow-hidden">
+                <div className=" ">
                   <table className="min-w-full">
                     <thead className='bg-[#24242D]'>
                       <tr className="h-[48px]">
@@ -112,20 +112,20 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-700 bg-gray-800">
+                    <tbody>
                       {[1, 2, 3, 4].map((num, index) => (
-                        <tr key={index} className="hover:bg-gray-700">
-                          <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                        <tr key={index} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
+                          <td className=" px-4 whitespace-nowrap employee-evaluate-data">
                             {num}
                           </td>
-                          <td className="py-3 px-4 whitespace-nowrap text-sm text-gray-300">
+                          <td className=" px-4 whitespace-nowrap employee-evaluate-data">
                             Anonymous
                           </td>
-                          <td className="py-3 px-4 whitespace-nowrap text-sm text-right">
+                          <td className=" px-4 whitespace-nowrap text-sm text-right">
                             <div className="relative">
                               <button
                                 onClick={() => toggleDropdown(index)}
-                                className="bg-gray-700 rounded px-4 py-1 flex items-center justify-between w-24 ml-auto"
+                                className="bg-gray-700 rounded px-4  flex items-center justify-between w-24 ml-auto"
                               >
                                 <span>{ratings[index]}</span>
                                 <ChevronDown
@@ -135,7 +135,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                               </button>
 
                               {openDropdown === index && (
-                                <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-10 max-h-48 overflow-y-auto">
+                                <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-50 max-h-48">
                                   {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                                     <div
                                       key={rating}
