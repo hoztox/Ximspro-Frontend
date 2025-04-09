@@ -8,8 +8,8 @@ const QmsBlockUserConfirmModal = ({ showBlockConfirmModal, actionType, onConfirm
 
     const modalMessage =
         actionType === "block"
-            ? ["Are you sure you want to block", "this company?"]
-            : ["Are you sure you want to unblock", "this company?"];
+            ? ["Are you sure you want to block", "this user?"]
+            : ["Are you sure you want to unblock", "this user?"];
 
 
     const confirmButtonLabel = actionType === "block" ? "Block" : "Unblock";

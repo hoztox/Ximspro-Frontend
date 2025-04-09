@@ -16,6 +16,7 @@ const QMSAddUser = () => {
 
   const [showAddUserSuccessModal, setShowAddUserSuccessModal] = useState(false);
 
+
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
@@ -39,7 +40,7 @@ const QMSAddUser = () => {
     secret_question: '',
     answer: '',
     notes: '',
-    status: 'live',
+    status: 'active',
     user_logo: '',
   });
   const [permissionError, setPermissionError] = useState('');
@@ -175,11 +176,21 @@ const QMSAddUser = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-
+    
+    // Remove spaces from username field
+    if (name === 'username') {
+      const valueWithoutSpaces = value.replace(/\s/g, '');
+      setFormData({
+        ...formData,
+        [name]: valueWithoutSpaces
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
+  
     // Clear the error for this field when user changes the value
     if (fieldErrors[name]) {
       setFieldErrors({
@@ -429,12 +440,6 @@ const QMSAddUser = () => {
       <Toaster position="top-center" />
       <div className="flex justify-between items-center add-user-header">
         <h1 className="add-user-text">Add User</h1>
-
-        <QmsAddUserSuccessModal
-          showAddUserSuccessModal={showAddUserSuccessModal}
-          onClose={() => { setShowAddUserSuccessModal(false) }}
-        />
-
         <button
           className="list-user-btn duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           onClick={handleListUsers}
@@ -442,6 +447,12 @@ const QMSAddUser = () => {
           List Users
         </button>
       </div>
+
+      <QmsAddUserSuccessModal
+        showAddUserSuccessModal={showAddUserSuccessModal}
+        onClose={() => { setShowAddUserSuccessModal(false) }}
+      />
+
 
       {/* {error && (
         <div className="mx-[122px] mt-4 p-3 bg-red-500 text-white rounded">
@@ -874,7 +885,7 @@ const QMSAddUser = () => {
                 onChange={handleChange}
                 className="w-full add-user-inputs appearance-none"
               >
-                <option value="live">Live</option>
+                <option value="active">Active</option>
                 <option value="blocked">Blocked</option>
               </select>
               <div className="absolute inset-y-0 right-0 top-3 flex items-center px-2 pointer-events-none">

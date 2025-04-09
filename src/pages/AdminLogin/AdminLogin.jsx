@@ -6,12 +6,15 @@ import axios from "axios";
 import { BASE_URL } from "../../Utils/Config";
 import "./adminlogin.css";
 import logo from "../../assets/images/logo.svg";
+import AdminLoginErrorModal from "./Modals/AdminLoginErrorModal";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const [showAdminLoginErrorModal, setShowAdminLoginErrorModal] = useState(false);
 
 
   useEffect(() => {
@@ -62,15 +65,17 @@ const AdminLogin = () => {
         localStorage.setItem("logoutTime", logoutTime);
         localStorage.setItem("adminDetails", JSON.stringify(admin)); // Store admin details
         console.log("Stored Admin Details:", JSON.parse(localStorage.getItem("adminDetails")));
-          navigate("/admin/dashboard");
+        navigate("/admin/dashboard");
       } else {
         throw new Error(response.data.error || "Login failed");
       }
     } catch (error) {
       console.error("Error during login request:", error);
-      if (error.response && error.response.status === 400) {
-        toast.error("Invalid username or password");
-      }
+      setShowAdminLoginErrorModal(true);
+      setTimeout(() => {
+        setShowAdminLoginErrorModal(false);
+      }, 3000);
+
     } finally {
       setLoading(false);
     }
@@ -97,6 +102,12 @@ const AdminLogin = () => {
   return (
     <div className="flex flex-col h-screen items-center justify-center adminloginscreen">
       <Toaster position="top-center" />
+
+      <AdminLoginErrorModal
+        showAdminLoginErrorModal={showAdminLoginErrorModal}
+        onClose={() => { setShowAdminLoginErrorModal(false) }}
+      />
+
       {/* Logo Section */}
       <div className="adminloginstyle">
         <div className="mb-9 mt-14">

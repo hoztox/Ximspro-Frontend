@@ -59,6 +59,7 @@ const QMSEditUser = () => {
         answer: ''
     });
 
+
     console.log("User ID from params:", id);
 
     const fetchUserPermissions = async (userId) => {
@@ -207,6 +208,19 @@ const QMSEditUser = () => {
             [name]: value
         });
 
+        if (name === 'username') {
+            const valueWithoutSpaces = value.replace(/\s/g, '');
+            setFormData({
+                ...formData,
+                [name]: valueWithoutSpaces
+            });
+        } else {
+            setFormData({
+                ...formData,
+                [name]: value
+            });
+        }
+
         // Clear the error for this field when user changes the value
         if (fieldErrors[name]) {
             setFieldErrors({
@@ -278,6 +292,92 @@ const QMSEditUser = () => {
             });
         }
     };
+
+    const [emailError, setEmailError] = useState('');
+    const [emailValid, setEmailValid] = useState(null);
+    useEffect(() => {
+        const validateEmail = async () => {
+            if (formData.email) {
+                // First validate email format
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(formData.email)) {
+                    setEmailError('Invalid email format!');
+                    setEmailValid(false);
+                    return;
+                }
+
+                try {
+                    // Include userId in the request to exclude the current user from the check
+                    const response = await axios.get(`${BASE_URL}/company/validate-email-edit/`, {
+                        params: {
+                            email: formData.email,
+                            id: userId // Add the current user's ID here
+                        },
+                    });
+
+                    if (response.data.exists) {
+                        setEmailError('Email already exists!');
+                        setEmailValid(false);
+                    } else {
+                        setEmailError('');
+                        setEmailValid(true);
+                    }
+                } catch (error) {
+                    console.error('Error validating email:', error);
+                    setEmailError('Error checking email.');
+                    setEmailValid(false);
+                }
+            } else {
+                setEmailError('');
+                setEmailValid(null);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            validateEmail();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [formData.email, userId]); // Add userId to the dependency array
+
+    const [usernameError, setUsernameError] = useState('');
+    const [usernameValid, setUsernameValid] = useState(null);
+    // Add this useEffect hook for username validation
+    useEffect(() => {
+        const validateUsername = async () => {
+            if (formData.username) {
+                try {
+                    const response = await axios.get(`${BASE_URL}/company/validate-username-edit/`, {
+                        params: {
+                            username: formData.username,
+                            id: userId // Add the user ID here
+                        },
+                    });
+
+                    if (response.data.exists) {
+                        setUsernameError('Username already exists!');
+                        setUsernameValid(false);
+                    } else {
+                        setUsernameError('');
+                        setUsernameValid(true);
+                    }
+                } catch (error) {
+                    console.error('Error validating user id:', error);
+                    setUsernameError('Error checking user id.');
+                    setUsernameValid(false);
+                }
+            } else {
+                setUsernameError('');
+                setUsernameValid(null);
+            }
+        };
+
+        const timeoutId = setTimeout(() => {
+            validateUsername();
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [formData.username, userId]); // Add userId to dependency array
 
     const validateForm = () => {
         const errors = {};
@@ -353,10 +453,10 @@ const QMSEditUser = () => {
         if (!validateForm()) {
             return;
         }
-        
+
         setIsLoading(true);
         setError(null);
-        
+
         try {
             const companyId = getUserCompanyId();
             if (!companyId) {
@@ -459,7 +559,7 @@ const QMSEditUser = () => {
             setIsLoading(false);
         }
     };
-    
+
     const renderUserLogo = () => {
         if (typeof formData.user_logo === 'string' && formData.user_logo) {
             return (
@@ -526,6 +626,22 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {usernameError && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {usernameError}
+                                </p>
+                            )}
+                            {usernameValid === true && formData.username && (
+                                <p className="text-green-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Username is available!
+                                </p>
+                            )}
                             {fieldErrors.username && (
                                 <p className="text-red-500 text-sm pt-2 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -736,6 +852,23 @@ const QMSEditUser = () => {
                                 onChange={handleChange}
                                 className="w-full add-user-inputs"
                             />
+                            {emailError && (
+                                <p className="text-red-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    {emailError}
+                                </p>
+                            )}
+                            {emailValid === true && formData.email && (
+                                <p className="text-green-500 text-sm pt-2 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Email is available!
+                                </p>
+                            )}
+
                             {fieldErrors.email && (
                                 <p className="text-red-500 text-sm pt-2 flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

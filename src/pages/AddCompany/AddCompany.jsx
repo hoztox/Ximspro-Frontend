@@ -152,10 +152,21 @@ const AddCompany = () => {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormDataState((prevState) => ({
-      ...prevState,
-      [id]: value,
-    }));
+    
+    // Check if the field is user_id and remove spaces
+    if (id === "user_id") {
+      const valueWithoutSpaces = value.replace(/\s+/g, "");
+      setFormDataState((prevState) => ({
+        ...prevState,
+        [id]: valueWithoutSpaces,
+      }));
+    } else {
+      // For other fields, keep the original value
+      setFormDataState((prevState) => ({
+        ...prevState,
+        [id]: value,
+      }));
+    }
   };
 
   const handleFileChange = (e) => {

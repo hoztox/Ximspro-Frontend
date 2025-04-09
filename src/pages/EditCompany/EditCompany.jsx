@@ -151,10 +151,21 @@ const EditCompany = () => {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormDataState((prevState) => ({
-      ...prevState,
-      [id]: value,
-    }));
+
+    // Check if the field is user_id and remove spaces
+    if (id === "user_id") {
+      const valueWithoutSpaces = value.replace(/\s+/g, "");
+      setFormDataState((prevState) => ({
+        ...prevState,
+        [id]: valueWithoutSpaces,
+      }));
+    } else {
+      // For other fields, keep the original value
+      setFormDataState((prevState) => ({
+        ...prevState,
+        [id]: value,
+      }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -172,6 +183,87 @@ const EditCompany = () => {
       setCompanyLogoPreview(null);
     }
   };
+  const [emailError, setEmailError] = useState('');
+  const [emailValid, setEmailValid] = useState(null);
+  useEffect(() => {
+    const validateEmail = async () => {
+      // Check if email exists
+      if (formDataState.email_address) {
+        // Email format validation using regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formDataState.email_address)) {
+          setEmailError('Invalid email format!');
+          setEmailValid(false);
+          return; // Stop further validation if format is invalid
+        }
+        try {
+          const response = await axios.get(`${BASE_URL}/accounts/validate-edit/`, {
+            params: {
+              email_address: formDataState.email_address,
+              company_id: companyId  // Add the company ID here
+            },
+          });
+          if (response.data.exists) {
+            setEmailError('Email already exists!');
+            setEmailValid(false);
+          } else {
+            setEmailError('');
+            setEmailValid(true); // This will trigger the success message
+          }
+        } catch (error) {
+          console.error('Error validating email:', error);
+          setEmailError('Error checking email.');
+          setEmailValid(false);
+        }
+      } else {
+        setEmailError('');
+        setEmailValid(null); // Reset when empty
+      }
+    };
+    // Add a small delay to avoid too many requests while typing
+    const timeoutId = setTimeout(() => {
+      validateEmail();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formDataState.email_address]);
+
+  const [usernameError, setUsernameError] = useState('');
+  const [usernameValid, setUsernameValid] = useState(null);
+  // Add this useEffect hook for username validation
+  useEffect(() => {
+    const validateUsername = async () => {
+      // Check if username exists
+      if (formDataState.user_id) {
+        try {
+          const response = await axios.get(`${BASE_URL}/accounts/validate-userid-edit/`, {
+            params: {
+              user_id: formDataState.user_id,
+              company_id: companyId  // Add the company ID here
+            },
+          });
+          if (response.data.exists) {
+            setUsernameError('Username already exists!');
+            setUsernameValid(false);
+          } else {
+            setUsernameError('');
+            setUsernameValid(true); // This will trigger the success message
+          }
+        } catch (error) {
+          console.error('Error validating username:', error);
+          setUsernameError('Error checking username.');
+          setUsernameValid(false);
+        }
+      } else {
+        setUsernameError('');
+        setUsernameValid(null); // Reset when empty
+      }
+    };
+    // Add a small delay to avoid too many requests while typing
+    const timeoutId = setTimeout(() => {
+      validateUsername();
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formDataState.user_id]);
 
 
   const handleSubmit = async (e) => {
@@ -358,7 +450,6 @@ const EditCompany = () => {
     }
   }, []);
 
-
   return (
     <div
       className={`flex flex-col md:flex-row w-full border rounded-lg gap-10 maineditcmpy ${theme === "dark" ? "dark" : "light"
@@ -425,6 +516,22 @@ const EditCompany = () => {
                   className="w-full text-sm focus:outline-none editcmpyinput"
                   required
                 />
+                {emailValid === true && formDataState.email_address && (
+                  <p className="text-green-500 text-sm pt-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Email is available!
+                  </p>
+                )}
+                {emailValid === false && formDataState.email_address && (
+                  <p className="text-red-500 text-sm pt-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {emailError}
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="user_id">Company Username *</label>
@@ -436,6 +543,22 @@ const EditCompany = () => {
                   className="w-full text-sm focus:outline-none editcmpyinput"
                   required
                 />
+                {usernameValid === true && formDataState.user_id && (
+                  <p className="text-green-500 text-sm pt-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Username is available!
+                  </p>
+                )}
+                {usernameValid === false && formDataState.user_id && (
+                  <p className="text-red-500 text-sm pt-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {usernameError}
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="phone_no1">Phone No 1</label>
@@ -457,6 +580,7 @@ const EditCompany = () => {
                   className="w-full text-sm focus:outline-none editcmpyinput"
                 />
               </div>
+
               <div className="flex">
                 <div>
                   <label htmlFor="company_logo">Company Logo</label>

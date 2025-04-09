@@ -46,36 +46,50 @@ const Dashboard = () => {
         if (totalCompaniesData && totalCompaniesData.count) {
           setTargetValues((prevValues) => ({
             ...prevValues,
-            totalCompanies: totalCompaniesData.count, // Set the fetched company count
+            totalCompanies: totalCompaniesData.count,
           }));
           console.log('Total Companies', totalCompaniesData.count);
-
         } else {
           console.error("Invalid data format or missing count for totalCompanies");
         }
-
+  
+        // Fetch total users count
+        const totalUsersResponse = await fetch(`${BASE_URL}/accounts/users/count/`);
+        const totalUsersData = await totalUsersResponse.json();
+        if (totalUsersData && typeof totalUsersData.active_user_count === "number") {
+          setTargetValues((prevValues) => ({
+            ...prevValues,
+            totalUsers: totalUsersData.active_user_count,
+          }));
+          console.log('Total Users', totalUsersData.active_user_count);
+        } else {
+          console.error("Invalid data format or missing active_user_count for totalUsers", totalUsersData);
+        }
+        
+  
         // Fetch active companies count
         const activeCompaniesResponse = await fetch(`${BASE_URL}/accounts/active-company-count/`);
         const activeCompaniesData = await activeCompaniesResponse.json();
         console.log("Active Companies Data:", activeCompaniesData);
-
+  
         if (activeCompaniesData && typeof activeCompaniesData.active_company_count === "number") {
           setTargetValues((prevValues) => ({
             ...prevValues,
-            activeCompanies: activeCompaniesData.active_company_count, // Update to match the correct key
+            activeCompanies: activeCompaniesData.active_company_count,
           }));
           console.log('Active Companies', activeCompaniesData.active_company_count);
         } else {
           console.error("Invalid data format or missing active_company_count for activeCompanies", activeCompaniesData);
         }
-
+  
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-
+  
     fetchValues();
-  }, []); // Only run once when the component mounts
+  }, []);
+  
 
   // Animation function to count from 0 to the target value
   useEffect(() => {

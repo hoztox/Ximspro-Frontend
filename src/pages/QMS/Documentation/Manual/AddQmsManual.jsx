@@ -84,7 +84,7 @@ const AddQmsManual = () => {
         try {
             if (!companyId) return;
 
-            const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
 
             console.log("API Response:", response.data);
 

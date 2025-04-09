@@ -13,6 +13,8 @@ import "./qmsmanual.css";
 import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
 import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
 import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
+import PublishSuccessModal from './Modals/PublishSuccessModal';
+import PublishErrorModal from './Modals/PublishErrorModal';
 
 const QmsManual = () => {
   const [manuals, setManuals] = useState([]);
@@ -24,10 +26,11 @@ const QmsManual = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPublishing, setIsPublishing] = useState(false);
   const manualPerPage = 10;
 
   const [showPublishModal, setShowPublishModal] = useState(false);
-  const [publishSuccess, setPublishSuccess] = useState(false);
+  // const [publishSuccess, setPublishSuccess] = useState(false);
   const [selectedManualId, setSelectedManualId] = useState(null);
   const [sendNotification, setSendNotification] = useState(false);
 
@@ -35,6 +38,10 @@ const QmsManual = () => {
   const [manualToDelete, setManualToDelete] = useState(null);
   const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
   const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
+
+  const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
+  const [showPublishErrorModal, setShowPublishErrorModal] = useState(false);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -150,6 +157,7 @@ const QmsManual = () => {
   };
 
   // Fetch manuals using the centralized filter function
+  // Modify the fetchManuals function to sort by creation date in descending order
   const fetchManuals = async () => {
     try {
       setLoading(true);
@@ -159,8 +167,17 @@ const QmsManual = () => {
       // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
 
-      setManuals(filteredManuals);
-      console.log("Filtered Manuals Data:", filteredManuals);
+      // Sort manuals by creation date (newest first)
+      // Assuming there's a 'created_at' or similar field - adjust field name if needed
+      const sortedManuals = filteredManuals.sort((a, b) => {
+        // Use created_at if available, otherwise fall back to date field
+        const dateA = new Date(a.created_at || a.date || 0);
+        const dateB = new Date(b.created_at || b.date || 0);
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      setManuals(sortedManuals);
+      console.log("Filtered and Sorted Manuals Data:", sortedManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
@@ -326,21 +343,19 @@ const QmsManual = () => {
   const handlePublish = (manual) => {
     setSelectedManualId(manual.id);
     setShowPublishModal(true);
-    setPublishSuccess(false);
+    // setPublishSuccess(false);
     setSendNotification(false);
   };
 
   const closePublishModal = () => {
-    if (publishSuccess) {
-      fetchManuals();
-    }
-
+    fetchManuals();
     setShowPublishModal(false);
     setTimeout(() => {
-      setPublishSuccess(false);
+      // setPublishSuccess(false);
     }, 300);
   };
 
+  // Modify the handlePublishSave function to update the manual's status
   const handlePublishSave = async () => {
     try {
       if (!selectedManualId) {
@@ -348,11 +363,15 @@ const QmsManual = () => {
         return;
       }
 
-      await axios.patch(`${BASE_URL}/qms/manual-detail/${selectedManualId}/`, {
-        status: 'Publish',
-        send_notification: sendNotification
+      // Set publishing state to true before API call
+      setIsPublishing(true);
+
+      // First, make API call to update manual status to "Publish"
+      await axios.put(`${BASE_URL}/qms/manual-detail/${selectedManualId}/`, {
+        status: "Publish"
       });
 
+      // Then send notification if checkbox is checked
       if (sendNotification) {
         const companyId = getUserCompanyId();
         await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
@@ -360,14 +379,22 @@ const QmsManual = () => {
         });
       }
 
-      setPublishSuccess(true);
+      setShowPublishSuccessModal(true);
       setTimeout(() => {
+        setShowPublishSuccessModal(false);
         closePublishModal();
-        fetchManuals();
-      }, 1000);
+        fetchManuals(); // Refresh the list
+        navigate("/company/qms/manual");
+      }, 1500);
     } catch (error) {
       console.error("Error publishing manual:", error);
-      alert("Failed to publish manual. Please try again.");
+      setShowPublishErrorModal(true);
+      setTimeout(() => {
+        setShowPublishErrorModal(false);
+      }, 3000);
+    } finally {
+      // Reset publishing state regardless of success or failure
+      setIsPublishing(false);
     }
   };
 
@@ -417,6 +444,14 @@ const QmsManual = () => {
         <DeleteQmsManualErrorModal
           showDeleteManualErrorModal={showDeleteManualErrorModal}
           onClose={() => setShowDeleteManualErrorModal(false)}
+        />
+        <PublishSuccessModal
+          showPublishSuccessModal={showPublishSuccessModal}
+          onClose={() => { setShowPublishSuccessModal(false) }}
+        />
+        <PublishErrorModal
+          showPublishErrorModal={showPublishErrorModal}
+          onClose={() => { setShowPublishErrorModal(false) }}
         />
 
 
@@ -620,12 +655,18 @@ const QmsManual = () => {
                       />
                     </div>
                   </div>
-                  {publishSuccess && (
+                  {/* {publishSuccess && (
                     <div className="text-green-500 mb-3">Manual published successfully!</div>
-                  )}
+                  )} */}
                   <div className='flex gap-5'>
                     <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
-                    <button onClick={handlePublishSave} className='save-btn duration-200 text-white'>Save</button>
+                    <button
+                      onClick={handlePublishSave}
+                      className='save-btn duration-200 text-white'
+                      disabled={isPublishing}
+                    >
+                      {isPublishing ? 'Publishing...' : 'Publish'}
+                    </button>
                   </div>
                 </div>
               </div>

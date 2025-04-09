@@ -8,6 +8,10 @@ import { X, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import ManualCorrectionSuccessModal from './Modals/ManualCorrectionSuccessModal';
+import ManualCorrectionErrorModal from './Modals/ManualCorrectionErrorModal';
+import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
+import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
 
 const ViewQmsManual = () => {
     const navigate = useNavigate();
@@ -18,6 +22,11 @@ const ViewQmsManual = () => {
     const [corrections, setCorrections] = useState([]);
     const [highlightedCorrection, setHighlightedCorrection] = useState(null);
     const [historyCorrections, setHistoryCorrections] = useState([]);
+
+    const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] = useState(false);
+    const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
+    const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
+    const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
 
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
@@ -115,33 +124,33 @@ const ViewQmsManual = () => {
             const response = await axios.get(`${BASE_URL}/qms/manuals/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Manual Corrections:", allCorrections);
-    
+
             // Get current user ID and viewed corrections
             const currentUserId = Number(localStorage.getItem('user_id'));
             const viewedCorrections = getViewedCorrections();
-    
+
             // Store all corrections
             setCorrections(allCorrections);
-    
+
             // Sort all corrections by created_at date (newest first)
             const sortedCorrections = [...allCorrections].sort(
                 (a, b) => new Date(b.created_at) - new Date(a.created_at)
             );
-    
+
             // Find the latest non-viewed correction for current user
             const userCorrections = allCorrections.filter(
                 correction => correction.to_user?.id === currentUserId
             );
-            
+
             const latestUnviewedCorrection = userCorrections.find(
                 correction => !viewedCorrections.includes(correction.id)
             );
-    
+
             if (latestUnviewedCorrection) {
                 setHighlightedCorrection(latestUnviewedCorrection);
                 // Display all corrections except the highlighted one in history
                 setHistoryCorrections(
-                    sortedCorrections.filter(correction => 
+                    sortedCorrections.filter(correction =>
                         correction.id !== latestUnviewedCorrection.id
                     )
                 );
@@ -199,15 +208,22 @@ const ViewQmsManual = () => {
 
             console.log('Correction response:', response.data);
 
-            alert('Correction submitted successfully');
             handleCloseCorrectionRequest();
+            setShowSentCorrectionSuccessModal(true);
+            setTimeout(() => {
+                setShowSentCorrectionSuccessModal(false);
+                navigate("/company/qms/manual");
+            }, 1500);
 
             // Refresh data
             fetchManualDetails();
             fetchManualCorrections();
         } catch (error) {
             console.error('Error submitting correction:', error);
-            alert(error.response?.data?.error || 'Failed to submit correction');
+            setShowSentCorrectionErrorModal(true);
+            setTimeout(() => {
+                setShowSentCorrectionErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -251,22 +267,22 @@ const ViewQmsManual = () => {
     // Format date to display how long ago the correction was made
     const formatCorrectionDate = (dateString) => {
         const date = new Date(dateString);
-        
+
         // Format date as DD-MM-YYYY
         const day = String(date.getDate()).padStart(2, '0');
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const year = date.getFullYear();
-        
+
         // Format time as HH:MM am/pm
         let hours = date.getHours();
         const minutes = String(date.getMinutes()).padStart(2, '0');
         const ampm = hours >= 12 ? 'pm' : 'am';
-        
+
         // Convert hours to 12-hour format
         hours = hours % 12;
         hours = hours ? hours : 12; // Convert 0 to 12
         const formattedHours = String(hours).padStart(2, '0');
-        
+
         return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
@@ -318,7 +334,11 @@ const ViewQmsManual = () => {
                 requestData
             );
 
-            alert(response.data.message);
+            setShowSubmitManualSuccessModal(true);
+            setTimeout(() => {
+                setShowSubmitManualSuccessModal(false);
+                navigate("/company/qms/manual");
+            }, 1500);
             fetchManualDetails();
             fetchManualCorrections();
         } catch (error) {
@@ -326,7 +346,10 @@ const ViewQmsManual = () => {
             const errorMessage = error.response?.data?.error ||
                 error.response?.data?.message ||
                 'Failed to submit review';
-            alert(errorMessage);
+            setShowSubmitManualErrorModal(true);
+            setTimeout(() => {
+                setShowSubmitManualErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -409,6 +432,27 @@ const ViewQmsManual = () => {
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
                 <h1 className='viewmanualhead'>Review Manual Section</h1>
+
+                <ManualCorrectionSuccessModal
+                    showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
+                    onClose={() => { setShowSentCorrectionSuccessModal(false) }}
+                />
+
+                <ManualCorrectionErrorModal
+                    showSentCorrectionErrorModal={showSentCorrectionErrorModal}
+                    onClose={() => { setShowSentCorrectionErrorModal(false) }}
+                />
+
+                <ReviewSubmitSuccessModal
+                    showSubmitManualSuccessModal={showSubmitManualSuccessModal}
+                    onClose={() => { setShowSubmitManualSuccessModal(false) }}
+                />
+
+                <ReviewSubmitErrorModal
+                    showSubmitManualErrorModal={showSubmitManualErrorModal}
+                    onClose={() => { setShowSubmitManualErrorModal(false) }}
+                />
+
                 <button
                     className="text-white bg-[#24242D] p-1 rounded-md"
                     onClick={handleCloseViewPage}
@@ -543,7 +587,7 @@ const ViewQmsManual = () => {
                                     Request For Correction
                                 </button>
                                 <button
-                                    onClick={ () => {
+                                    onClick={() => {
                                         handleReviewAndSubmit()
                                         handleMoveToHistory();
                                     }}

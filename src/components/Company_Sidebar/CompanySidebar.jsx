@@ -3,13 +3,11 @@ import "./companysidebar.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../Utils/Config";
-
 const CompanySidebar = ({ setSelectedMenuItem }) => {
   const [activeItem, setActiveItem] = useState("QMS");
   const [hoveredItem, setHoveredItem] = useState(null);
   const [companyPermissions, setCompanyPermissions] = useState([]);
   const navigate = useNavigate();
-
   // Define menu items
   const menuItems = [
     { id: "QMS", label: "Quality Management System", shortLabel: "QMS", borderColor: "#858585", activeColor: "#858585" },
@@ -20,45 +18,82 @@ const CompanySidebar = ({ setSelectedMenuItem }) => {
     { id: "AMS", label: "Asset Management System", shortLabel: "AMS", borderColor: "#DD6B06", activeColor: "#DD6B06" },
     { id: "IMS", label: "Integrated Management System", shortLabel: "IMS", borderColor: "#CBA301", activeColor: "#CBA301" },
   ];
-
-  const getUserCompanyId = () => {
-    // First check if company_id is stored directly
-    const storedCompanyId = localStorage.getItem("company_id");
-    if (storedCompanyId) return storedCompanyId;
-    // If user data exists with company_id
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      // Try to get company_id from user data that was stored during login
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);  // Ensure it's valid JSON
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
-        }
+  const getCurrentUser = () => {
+    const role = localStorage.getItem('role');
+    try {
+      if (role === 'company') {
+        // Retrieve company user data
+        const companyData = {};
+        Object.keys(localStorage)
+          .filter(key => key.startsWith('company_'))
+          .forEach(key => {
+            const cleanKey = key.replace('company_', '');
+            try {
+              companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+              companyData[cleanKey] = localStorage.getItem(key);
+            }
+          });
+        // Add additional fields from localStorage
+        companyData.role = role;
+        companyData.company_id = localStorage.getItem('company_id');
+        companyData.company_name = localStorage.getItem('company_name');
+        companyData.email_address = localStorage.getItem('email_address');
+        console.log("Company User Data:", companyData);
+        return companyData;
+      } else if (role === 'user') {
+        // Retrieve regular user data
+        const userData = {};
+        Object.keys(localStorage)
+          .filter(key => key.startsWith('user_'))
+          .forEach(key => {
+            const cleanKey = key.replace('user_', '');
+            try {
+              userData[cleanKey] = JSON.parse(localStorage.getItem(key));
+            } catch (e) {
+              userData[cleanKey] = localStorage.getItem(key);
+            }
+          });
+        // Add additional fields from localStorage
+        userData.role = role;
+        userData.user_id = localStorage.getItem('user_id');
+        console.log("Regular User Data:", userData);
+        return userData;
       }
+    } catch (error) {
+      console.error("Error retrieving user data:", error);
+      return null;
     }
-    return null;
   };
-
   // Fetch permissions from API
   const fetchLatestPermissions = async () => {
     try {
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        console.error("Company ID not found");
+      const userData = getCurrentUser();
+      if (!userData) {
+        console.error("User data not found");
         return;
       }
-  
-      const response = await axios.get(`${BASE_URL}/accounts/permissions/${companyId}/`);
+      let endpoint;
+      let id;
+      if (userData.role === 'company') {
+        id = userData.company_id;
+        endpoint = `${BASE_URL}/accounts/permissions/${id}/`;
+      } else if (userData.role === 'user') {
+        id = userData.user_id;
+       console.log("id",id)
+        endpoint = `${BASE_URL}/company/permissions/${id}/`;
+      } else {
+        console.error("Unknown role:", userData.role);
+        return;
+      }
+      console.log(`Fetching permissions for ${userData.role} with ID: ${id}`);
+      const response = await axios.get(endpoint);
       
-      console.log("Company API Response:", response.data);
+      console.log("Permissions API Response:", response.data);
   
       if (response.status === 200) {
         console.log("fetchLatestPermissions response:", response.data);
         
- 
         if (response.data && response.data.permissions && Array.isArray(response.data.permissions)) {
           setCompanyPermissions(response.data.permissions);
           console.log("Permissions set:", response.data.permissions);
@@ -68,17 +103,18 @@ const CompanySidebar = ({ setSelectedMenuItem }) => {
       }
     } catch (err) {
       console.error("Error fetching latest permissions:", err);
+      // Set default permissions or handle error appropriately
+      setCompanyPermissions([]); // Set empty array to prevent errors in UI
     }
   };
-useEffect(() => {
-   
-  fetchLatestPermissions();
- 
-}, []);
-
+  
+  useEffect(() => {
+    fetchLatestPermissions();
+  }, []);
   // Filter menu items based on permissions
-  const filteredMenuItems = menuItems.filter((item) => companyPermissions.includes(item.id));
-
+  const filteredMenuItems = menuItems.filter((item) => 
+    companyPermissions.length === 0 || companyPermissions.includes(item.id)
+  );
   const handleItemClick = (item) => {
     if (activeItem !== item.id) {
       localStorage.setItem("activeMainItem", "dashboard");
@@ -91,13 +127,11 @@ useEffect(() => {
       setSelectedMenuItem({ id: item.id, label: item.label, borderColor: item.borderColor });
     }
   };
-
   return (
     <div className='w-[93px] bg-[#13131A] text-white h-screen flex flex-col gap-[2px] relative'>
       {filteredMenuItems.map((item) => {
         const isActive = activeItem === item.id;
         const isHovered = hoveredItem === item.id;
-
         return (
           <div key={item.id} className="relative"
             onMouseEnter={() => setHoveredItem(item.id)}
@@ -114,7 +148,6 @@ useEffect(() => {
             >
               {item.shortLabel}
             </button>
-
             {isHovered && (
               <div
                 className="absolute left-[0px] top-0 h-[47px] py-0 px-4 bg-[#1C1C24] text-white whitespace-nowrap flex items-center shadow-md cursor-pointer full-form z-50"
@@ -136,5 +169,4 @@ useEffect(() => {
     </div>
   );
 };
-
 export default CompanySidebar;

@@ -189,9 +189,12 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
             setUserEmail(response.data.email);
           }
 
-          if (response.data.username) {
-            setUserName(response.data.username);
+          if (response.data.first_name && response.data.last_name) {
+            setUserName(`${response.data.first_name} ${response.data.last_name}`);
+          } else if (response.data.first_name) {
+            setUserName(response.data.first_name);
           }
+          
 
           if (response.data.user_logo) {
             const logoUrl = response.data.user_logo;
