@@ -37,3 +37,10 @@
     font-size: 16px;
     color: white;
 }
+
+.employee-evaluation-theads {
+    font-family: 'Switzer Light'; 
+    font-size: 14px;
+    color: #AAAAAA;
+    font-weight: 400;
+}

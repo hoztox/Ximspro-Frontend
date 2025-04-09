@@ -101,13 +101,13 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   <table className="min-w-full">
                     <thead className='bg-[#24242D]'>
                       <tr className="h-[48px]">
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-400  w-16">
+                        <th className="px-4 text-left  employee-evaluation-theads w-16">
                           No
                         </th>
-                        <th className="py-3 px-4 text-left text-xs font-medium text-gray-400 ">
+                        <th className="px-4 text-left  employee-evaluation-theads">
                           Question
                         </th>
-                        <th className="py-3 px-4 text-right text-xs font-medium text-gray-400  w-32">
+                        <th className="px-4 text-right employee-evaluation-theads  w-32">
                           Answer
                         </th>
                       </tr>

@@ -403,7 +403,7 @@ const ViewQmsManual = () => {
 
         return (
             <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
-                <div className="sticky -top-0 bg-[#1C1C24] z-10 flex items-center text-white mb-5 gap-[6px] pb-2">
+                <div className="sticky -top-0 bg-[#1C1C24]   flex items-center text-white mb-5 gap-[6px] pb-2">
                     <h2 className="history-head">Correction History</h2>
                     <img src={historys} alt="History" />
                 </div>
