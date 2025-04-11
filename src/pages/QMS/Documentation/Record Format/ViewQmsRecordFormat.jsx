@@ -1,161 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
-import historys from "../../../../assets/images/Company Documentation/history.svg";
+import edits from "../../../../assets/images/Company Documentation/edit.svg"
+import deletes from "../../../../assets/images/Company Documentation/delete.svg"
+import historys from '../../../../assets/images/Company Documentation/history.svg'
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-// Import axios but we'll use demo data instead
 import axios from 'axios';
-// import { BASE_URL } from "../../../../Utils/Config";
+import { BASE_URL } from "../../../../Utils/Config";
+import ManualCorrectionSuccessModal from './Modals/ManualCorrectionSuccessModal';
+import ManualCorrectionErrorModal from './Modals/ManualCorrectionErrorModal';
+import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
+import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
 
 const ViewQmsRecordFormat = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const [loading, setLoading] = useState(false); // Set to false since we're using demo data
+    const [manualDetails, setManualDetails] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [corrections, setCorrections] = useState([]);
+    const [highlightedCorrection, setHighlightedCorrection] = useState(null);
+    const [historyCorrections, setHistoryCorrections] = useState([]);
+    const [usersData, setUsersData] = useState({});
 
-    // Demo data for Record Format details
-    const [recordFormatDetails, setRecordFormatDetails] = useState({
-        id: 1,
-        title: "Quality Management Process",
-        no: "QMS-001",
-        rivision: "1.0",
-        document_type: "Procedure",
-        upload_attachment: "https://example.com/document.pdf",
-        written_by: {
-            id: 1,
-            first_name: "John",
-            last_name: "Doe"
-        },
-        checked_by: {
-            id: 2,
-            first_name: "Jane",
-            last_name: "Smith"
-        },
-        approved_by: {
-            id: 3,
-            first_name: "Robert",
-            last_name: "Johnson"
-        },
-        date: "2025-04-01T00:00:00Z",
-        review_frequency_year: 1,
-        review_frequency_month: 6,
-        status: "Pending for Review/Checking",
-        retention_period: "abc"
-    });
+    const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] = useState(false);
+    const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
+    const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
+    const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
 
-    // Demo data for corrections
-    const [corrections, setCorrections] = useState([
-        {
-            id: 1,
-            recordFormat_id: 1,
-            correction: "Please revise section 3.2 to include updated ISO standards reference.",
-            from_user: {
-                id: 2,
-                first_name: "Jane",
-                last_name: "Smith"
-            },
-            to_user: {
-                id: 1,
-                first_name: "John",
-                last_name: "Doe"
-            },
-            created_at: "2025-04-04T09:30:00Z"
-        },
-        {
-            id: 2,
-            recordFormat_id: 1,
-            correction: "Update the process flow diagram to match our current practices.",
-            from_user: {
-                id: 3,
-                first_name: "Robert",
-                last_name: "Johnson"
-            },
-            to_user: {
-                id: 1,
-                first_name: "John",
-                last_name: "Doe"
-            },
-            created_at: "2025-04-05T10:15:00Z"
-        }
-    ]);
-
-    // Demo data for correction history messages
-    const [messages, setMessages] = useState([
-        {
-            id: 1,
-            from: 'Jane Smith',
-            to: 'John Doe',
-            content: 'Please update the document to include the latest regulatory requirements from ISO 9001:2024.',
-            timestamp: '05-04-2025, 10:15 am'
-        },
-        {
-            id: 2,
-            from: 'Robert Johnson',
-            to: 'John Doe',
-            content: 'The risk assessment section needs more detail on mitigation strategies.',
-            timestamp: '04-04-2025, 02:30 pm'
-        },
-        {
-            id: 3,
-            from: 'John Doe',
-            to: 'Jane Smith',
-            content: 'I have updated the document with the requested changes to ISO references.',
-            timestamp: '05-04-2025, 04:45 pm'
-        },
-        {
-            id: 4,
-            from: 'Sarah Williams',
-            to: 'John Doe',
-            content: 'The approval workflow needs to be updated to reflect the new organizational structure.',
-            timestamp: '03-04-2025, 11:20 am'
-        },
-    ]);
-
-    /**
-     * Function to fetch message history (commented out as we're using demo data)
-     */
-    const fetchMessages = () => {
-        // In a real application, you would fetch data here
-        console.log('Fetching messages...');
-        // Actual implementation would be:
-        // const response = await axios.get(`${BASE_URL}/qms/recordFormat-messages/${id}/`);
-        // setMessages(response.data);
-    };
-
-    /**
-     * Function to reload message history
-     */
-    const reloadHistory = () => {
-        fetchMessages();
-        console.log('History reloaded');
-    };
-
-    // State for correction request modal
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
         text: ''
     });
 
-    /**
-     * Function to get current user data from localStorage
-     * @returns {Object} User data object
-     */
     const getCurrentUser = () => {
-        // For demo purposes, we'll return a mock user
-        return {
-            user_id: 2,
-            first_name: "Jane",
-            last_name: "Smith",
-            role: "user",
-            email: "jane.smith@example.com"
-        };
-
-        // Original function commented below:
-        /*
         const role = localStorage.getItem('role');
- 
+
         try {
             if (role === 'company') {
                 // Retrieve company user data
@@ -170,13 +50,13 @@ const ViewQmsRecordFormat = () => {
                             companyData[cleanKey] = localStorage.getItem(key);
                         }
                     });
- 
+
                 // Add additional fields from localStorage
                 companyData.role = role;
                 companyData.company_id = localStorage.getItem('company_id');
                 companyData.company_name = localStorage.getItem('company_name');
                 companyData.email_address = localStorage.getItem('email_address');
- 
+
                 console.log("Company User Data:", companyData);
                 return companyData;
             } else if (role === 'user') {
@@ -192,11 +72,11 @@ const ViewQmsRecordFormat = () => {
                             userData[cleanKey] = localStorage.getItem(key);
                         }
                     });
- 
+
                 // Add additional fields from localStorage
                 userData.role = role;
                 userData.user_id = localStorage.getItem('user_id');
- 
+
                 console.log("Regular User Data:", userData);
                 return userData;
             }
@@ -204,21 +84,11 @@ const ViewQmsRecordFormat = () => {
             console.error("Error retrieving user data:", error);
             return null;
         }
-        */
     };
 
-    /**
-     * Function to get user's company ID
-     * @returns {string|null} Company ID
-     */
     const getUserCompanyId = () => {
-        // For demo purposes, return a mock company ID
-        return "COMP-001";
-
-        // Original function commented below:
-        /*
         const role = localStorage.getItem("role");
- 
+
         if (role === "company") {
             return localStorage.getItem("company_id");
         } else if (role === "user") {
@@ -231,63 +101,130 @@ const ViewQmsRecordFormat = () => {
                 return null;
             }
         }
- 
+
         return null;
-        */
     };
 
-    /**
-     * Function to fetch recordFormat details from API (commented out as we're using demo data)
-     */
-    const fetchProcedureDetails = async () => {
-        console.log('Fetching Record Format details...');
-        // Original implementation commented below:
-        /*
+    // Fetch manual details
+    const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/recordFormat-detail/${id}/`);
-            setProcedureDetails(response.data);
-            console.log("Procedure Details:", response.data);
+            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            setManualDetails(response.data);
+            console.log("Manual Details:", response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching Record Format details:", err);
+            console.error("Error fetching manual details:", err);
+            setError("Failed to load record format details");
             setLoading(false);
         }
-        */
     };
 
-    /**
-     * Function to fetch Record Format corrections from API (commented out as we're using demo data)
-     */
-    const fetchProcedureCorrections = async () => {
-        console.log('Fetching Record Format corrections...');
-        // Original implementation commented below:
-        /*
+ 
+
+    const getViewedCorrections = () => {
+        const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
+        const viewedCorrections = localStorage.getItem(storageKey);
+        return viewedCorrections ? JSON.parse(viewedCorrections) : [];
+    };
+
+    const saveViewedCorrection = (correctionId) => {
+        const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
+        const viewedCorrections = getViewedCorrections();
+        if (!viewedCorrections.includes(correctionId)) {
+            viewedCorrections.push(correctionId);
+            localStorage.setItem(storageKey, JSON.stringify(viewedCorrections));
+        }
+    };
+
+    const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/recordFormat/${id}/corrections/`);
-            setCorrections(response.data);
-            console.log("Fetched Procedure Corrections:", response.data);
+            const response = await axios.get(`${BASE_URL}/qms/record/${id}/corrections/`);
+            const allCorrections = response.data;
+            console.log("Fetched Record Formats Corrections:", allCorrections);
+
+            // Get viewed corrections for the current user
+            const viewedCorrections = getViewedCorrections();
+
+            // Store all corrections
+            setCorrections(allCorrections);
+
+            // Extract all user IDs from corrections to fetch their details
+            const userIds = new Set();
+            allCorrections.forEach(correction => {
+                if (correction.from_user && typeof correction.from_user === 'number') 
+                    userIds.add(correction.from_user);
+                if (correction.to_user && typeof correction.to_user === 'number') 
+                    userIds.add(correction.to_user);
+            });
+            
+            // Fetch details for all users
+           
+            // Sort all corrections by created_at date (newest first)
+            const sortedCorrections = [...allCorrections].sort(
+                (a, b) => new Date(b.created_at) - new Date(a.created_at)
+            );
+
+            // Always highlight the most recent correction regardless of who it's for
+            if (sortedCorrections.length > 0) {
+                const mostRecent = sortedCorrections[0];
+
+                // Check if the current user has already viewed this correction
+                if (!viewedCorrections.includes(mostRecent.id)) {
+                    // Set the most recent as highlighted
+                    setHighlightedCorrection(mostRecent);
+
+                    // Display all other corrections in the history
+                    setHistoryCorrections(sortedCorrections.slice(1));
+                } else {
+                    // If the user has already viewed the latest correction
+                    // then just show all corrections in history
+                    setHighlightedCorrection(null);
+                    setHistoryCorrections(sortedCorrections);
+                }
+            } else {
+                // No corrections available
+                setHighlightedCorrection(null);
+                setHistoryCorrections([]);
+            }
         } catch (error) {
-            console.error("Error fetching Procedure corrections:", error);
+            console.error("Error fetching record format corrections:", error);
         }
-        */
     };
 
-    // Load demo data on component mount
     useEffect(() => {
-        // Setting a brief timeout to simulate API call
-        setTimeout(() => {
-            console.log("Demo data loaded");
-            setLoading(false);
-        }, 500);
-
-        // Original API calls commented out:
-        // fetchProcedureDetails();
-        // fetchProcedureCorrections();
+        fetchManualDetails();
+        fetchManualCorrections();
     }, [id]);
 
-    /**
-     * Function to open correction request modal
-     */
+    // Get user name from ID or object
+    const getUserName = (user) => {
+        if (!user) return "N/A";
+        
+        // If user is an object with first_name and last_name
+        if (typeof user === 'object' && user.first_name && user.last_name) {
+            return `${user.first_name} ${user.last_name}`;
+        }
+        
+        // If user is an ID and we have fetched data for it
+        if (typeof user === 'number' && usersData[user]) {
+            return `${usersData[user].first_name} ${usersData[user].last_name}`;
+        }
+        
+        // If user is just an email string
+        if (typeof user === 'string' && user.includes('@')) {
+            return user;
+        }
+        
+        // Fallback - use email if available in the correction
+        if (user === highlightedCorrection?.to_user && highlightedCorrection?.to_user_email) {
+            return highlightedCorrection.to_user_email;
+        }
+        
+        // Ultimate fallback
+        return `User ${user}`;
+    };
+
+ 
     const handleCorrectionRequest = () => {
         setCorrectionRequest(prev => ({
             ...prev,
@@ -295,9 +232,6 @@ const ViewQmsRecordFormat = () => {
         }));
     };
 
-    /**
-     * Function to close correction request modal
-     */
     const handleCloseCorrectionRequest = () => {
         setCorrectionRequest({
             isOpen: false,
@@ -305,16 +239,10 @@ const ViewQmsRecordFormat = () => {
         });
     };
 
-    /**
-     * Function to navigate back to recordFormat list
-     */
     const handleCloseViewPage = () => {
-        navigate('/company/qms/record-format');
-    };
+        navigate('/company/qms/record-format')
+    }
 
-    /**
-     * Function to submit correction request (simulated for demo)
-     */
     const handleCorrectionSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -323,74 +251,56 @@ const ViewQmsRecordFormat = () => {
                 return;
             }
 
-            // Log the request data that would be sent
             const requestData = {
-                recordFormat_id: id,
+                manual_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
             };
 
             console.log('Submitting correction request:', requestData);
 
-            // Simulate successful API response
-            setTimeout(() => {
-                // Add the new correction to our demo data
-                const newCorrection = {
-                    id: corrections.length + 1,
-                    recordFormat_id: parseInt(id),
-                    correction: correctionRequest.text,
-                    from_user: {
-                        id: currentUser.user_id,
-                        first_name: currentUser.first_name,
-                        last_name: currentUser.last_name
-                    },
-                    to_user: recordFormatDetails.written_by,
-                    created_at: new Date().toISOString()
-                };
+            const response = await axios.post(`${BASE_URL}/qms/record/submit-correction/`, requestData);
 
-                setCorrections([...corrections, newCorrection]);
-
-                // Add to messages history
-                const newMessage = {
-                    id: messages.length + 1,
-                    from: `${currentUser.first_name} ${currentUser.last_name}`,
-                    to: `${recordFormatDetails.written_by.first_name} ${recordFormatDetails.written_by.last_name}`,
-                    content: correctionRequest.text,
-                    timestamp: new Date().toLocaleString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    }).replace(/\//g, '-').replace(',', '')
-                };
-
-                setMessages([newMessage, ...messages]);
-
-                alert('Correction submitted successfully');
-                handleCloseCorrectionRequest();
-            }, 500);
-
-            // Original API call commented out:
-            /*
-            const response = await axios.post(`${BASE_URL}/qms/submit-correction/`, requestData);
             console.log('Correction response:', response.data);
-            alert('Correction submitted successfully');
+
             handleCloseCorrectionRequest();
-            fetchProcedureDetails();
-            fetchProcedureCorrections();
-            */
+            setShowSentCorrectionSuccessModal(true);
+
+            // Clear any previously viewed corrections from localStorage to ensure
+            // the new correction appears highlighted for the current user
+            const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
+            localStorage.removeItem(storageKey);
+
+            // Refresh data immediately to get the new correction
+            await fetchManualDetails();
+            await fetchManualCorrections();
+
+            setTimeout(() => {
+                setShowSentCorrectionSuccessModal(false);
+                // Don't navigate away - we want to show the highlighted correction
+            }, 1500);
+
         } catch (error) {
             console.error('Error submitting correction:', error);
-            alert('Failed to submit correction');
+            setShowSentCorrectionErrorModal(true);
+            setTimeout(() => {
+                setShowSentCorrectionErrorModal(false);
+            }, 3000);
         }
     };
 
-    /**
-     * Function to format ISO date to DD-MM-YYYY
-     * @param {string} dateString - ISO date string
-     * @returns {string} Formatted date string
-     */
+    const handleMoveToHistory = () => {
+        if (highlightedCorrection) {
+            // Save this correction as viewed in localStorage
+            saveViewedCorrection(highlightedCorrection.id);
+
+            // Update state
+            setHistoryCorrections(prev => [highlightedCorrection, ...prev]);
+            setHighlightedCorrection(null);
+        }
+    };
+
+    // Format date from ISO to DD-MM-YYYY
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -401,73 +311,77 @@ const ViewQmsRecordFormat = () => {
         }).replace(/\//g, '-');
     };
 
-    /**
-     * Function to format date to "X time ago" format
-     * @param {string} dateString - ISO date string
-     * @returns {string} Relative time string
-     */
+    // Format date to display how long ago the correction was made
     const formatCorrectionDate = (dateString) => {
         const date = new Date(dateString);
-        const now = new Date();
-        const diffInSeconds = Math.floor((now - date) / 1000);
 
-        if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-        const diffInMinutes = Math.floor(diffInSeconds / 60);
-        if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`;
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        if (diffInHours < 24) return `${diffInHours} hours ago`;
-        const diffInDays = Math.floor(diffInHours / 24);
-        return `${diffInDays} days ago`;
+        // Format date as DD-MM-YYYY
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+
+        // Format time as HH:MM am/pm
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+
+        // Convert hours to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert 0 to 12
+        const formattedHours = String(hours).padStart(2, '0');
+
+        return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
+    };
+    
+    const handleDeleteProcedure = (recordId) => {
+        // Implement your delete functionality here
+        console.log("Delete record with ID:", recordId);
+        // You can add confirmation dialog and actual deletion logic
     };
 
-    // Show loading state
+    // Render loading or error states
     if (loading) return <div className="text-white">Loading...</div>;
-    // Show error state
     if (error) return <div className="text-red-500">{error}</div>;
+    if (!manualDetails) return <div className="text-white">No manual details found</div>;
 
-    // Demo user ID for testing
-    const currentUserId = 2; // Jane Smith (checkUser)
-    // const currentUserId = Number(localStorage.getItem('user_id'));
+    // Check if current user can review
+    const currentUserId = Number(localStorage.getItem('user_id'));
+    const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
 
-    // Check if current user is the author
-    const isCurrentUserWrittenBy = currentUserId === recordFormatDetails.written_by?.id;
-
-    /**
-     * Determine if current user can review the Record Format
-     * @returns {boolean} Whether current user can review
-     */
     const canReview = (() => {
-        // For demo purposes - assume user with ID 2 can review
-        if (currentUserId === 2) {
-            return true;
-        }
-
-        // Original logic commented below:
-        /*
         // Exclude the written_by user from requesting corrections
         if (isCurrentUserWrittenBy) {
             return false;
         }
- 
-        if (recordFormatDetails.status === "Pending for Review/Checking") {
-            return currentUserId === recordFormatDetails.checked_by?.id;
+    
+        if (manualDetails.status === "Pending for Review/Checking") {
+            return currentUserId === manualDetails.checked_by?.id;
         }
- 
-        if (recordFormatDetails.status === "Correction Requested") {
+        
+        if (manualDetails.status === "Correction Requested") {
+            // Check if there are any pending corrections sent BY the current user
+            const hasSentCorrections = corrections.some(correction => 
+                correction.from_user?.id === currentUserId && 
+                !correction.is_addressed
+            );
+            
+            // If current user has sent corrections that aren't addressed yet,
+            // they shouldn't be able to review/submit
+            if (hasSentCorrections) {
+                return false;
+            }
+            
+            // Otherwise check if they are allowed to review based on the manual's current state
             return corrections.some(correction => correction.to_user?.id === currentUserId);
         }
- 
-        if (recordFormatDetails.status === "Reviewed,Pending for Approval") {
-            return currentUserId === recordFormatDetails.approved_by?.id;
+    
+        if (manualDetails.status === "Reviewed,Pending for Approval") {
+            return currentUserId === manualDetails.approved_by?.id;
         }
- 
+    
         return false;
-        */
     })();
-
-    /**
-     * Function to submit review (simulated for demo)
-     */
+  
     const handleReviewAndSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -476,43 +390,35 @@ const ViewQmsRecordFormat = () => {
                 return;
             }
 
-            // Log what would be sent to API
             const requestData = {
-                recordFormat_id: id,
+                record_id: id,
                 current_user_id: currentUser.user_id
             };
 
-            console.log('Submitting review:', requestData);
-
-            // Simulate successful API response
-            setTimeout(() => {
-                // Update Record Format status
-                setRecordFormatDetails({
-                    ...recordFormatDetails,
-                    status: "Reviewed,Pending for Approval"
-                });
-
-                alert('Procedure reviewed successfully');
-            }, 500);
-
-            // Original API call commented out:
-            /*
             const response = await axios.post(
-                `${BASE_URL}/qms/recordFormat-review/`,
+                `${BASE_URL}/qms/record-review/`,
                 requestData
             );
- 
-            alert(response.data.message);
-            fetchProcedureDetails();
-            fetchProcedureCorrections();
-            */
+
+            setShowSubmitManualSuccessModal(true);
+            setTimeout(() => {
+                setShowSubmitManualSuccessModal(false);
+                navigate("/company/qms/record-format");
+            }, 1500);
+            fetchManualDetails();
+            fetchManualCorrections();
         } catch (error) {
             console.error('Error submitting review:', error);
-            alert('Failed to submit review');
+            const errorMessage = error.response?.data?.error ||
+                error.response?.data?.message ||
+                'Failed to submit review';
+            setShowSubmitManualErrorModal(true);
+            setTimeout(() => {
+                setShowSubmitManualErrorModal(false);
+            }, 3000);
         }
     };
 
-    // Animation variants for correction request panel
     const correctionVariants = {
         hidden: {
             opacity: 0,
@@ -530,38 +436,58 @@ const ViewQmsRecordFormat = () => {
         }
     };
 
-    /**
-     * Function to render corrections specific to current user
-     * @returns {JSX.Element|null} User-specific corrections or null
-     */
-    const renderUserCorrections = () => {
-        // For demo - filter corrections for current user
-        const userSpecificCorrections = corrections.filter(
-            correction => correction.to_user?.id === currentUserId
-        );
-
-        if (userSpecificCorrections.length === 0) return null;
-
+    // Render highlighted correction
+    const renderHighlightedCorrection = () => {
+        if (!highlightedCorrection) return null;
+    
         return (
-            <div className="mt-5 bg-[#24242D] p-4 rounded-md">
-                <div className="flex items-center text-[#FFA500] mb-3">
-                    <AlertCircle className="mr-2" />
-                    <h2 className="text-lg font-semibold">Correction Requests</h2>
+            <div className="mt-5 bg-[#1F2937] p-4 rounded-md border-l-4 border-[#3B82F6]">
+                <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle size={18} className="text-[#3B82F6]" />
+                        <h2 className="text-white font-medium">Latest Correction Request</h2>
+                    </div>
+                    
                 </div>
-                {userSpecificCorrections.map((correction, index) => (
+                <div className="bg-[#24242D] p-5 rounded-md mt-3">
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="from-to-time text-[#AAAAAA]">
+                            From: {getUserName(highlightedCorrection.from_user)}
+                        </div>
+                        <div className="from-to-time text-[#AAAAAA]">
+                            {formatCorrectionDate(highlightedCorrection.created_at)}
+                        </div>
+                    </div>
+                    <p className="text-white history-content">{highlightedCorrection.correction}</p>
+                </div>
+            </div>
+        );
+    };
+
+    // Render correction history
+    const renderCorrectionHistory = () => {
+        if (historyCorrections.length === 0) return null;
+    
+        return (
+            <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
+                <div className="sticky -top-0 bg-[#1C1C24] flex items-center text-white mb-5 gap-[6px] pb-2">
+                    <h2 className="history-head">Correction History</h2>
+                    <img src={historys} alt="History" />
+                </div>
+                {historyCorrections.map((correction, index) => (
                     <div
                         key={correction.id}
-                        className={`bg-[#383840] p-3 rounded-md mb-3 ${index < userSpecificCorrections.length - 1 ? 'mb-3' : ''}`}
+                        className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? 'mb-5' : ''}`}
                     >
                         <div className="flex justify-between items-center mb-2">
-                            <div className="text-sm text-gray-400">
-                                From: {correction.from_user?.first_name} {correction.from_user?.last_name}
+                            <div className="from-to-time text-[#AAAAAA]">
+                            From: {getUserName(correction.from_user)}
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="from-to-time text-[#AAAAAA]">
                                 {formatCorrectionDate(correction.created_at)}
                             </div>
                         </div>
-                        <p className="text-white">{correction.correction}</p>
+                        <p className="text-white history-content">{correction.correction}</p>
                     </div>
                 ))}
             </div>
@@ -572,6 +498,27 @@ const ViewQmsRecordFormat = () => {
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
                 <h1 className='viewmanualhead'>Record Formats Information</h1>
+
+                <ManualCorrectionSuccessModal
+                    showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
+                    onClose={() => { setShowSentCorrectionSuccessModal(false) }}
+                />
+
+                <ManualCorrectionErrorModal
+                    showSentCorrectionErrorModal={showSentCorrectionErrorModal}
+                    onClose={() => { setShowSentCorrectionErrorModal(false) }}
+                />
+
+                <ReviewSubmitSuccessModal
+                    showSubmitManualSuccessModal={showSubmitManualSuccessModal}
+                    onClose={() => { setShowSubmitManualSuccessModal(false) }}
+                />
+
+                <ReviewSubmitErrorModal
+                    showSubmitManualErrorModal={showSubmitManualErrorModal}
+                    onClose={() => { setShowSubmitManualErrorModal(false) }}
+                />
+
                 <button
                     className="text-white bg-[#24242D] p-1 rounded-md"
                     onClick={handleCloseViewPage}
@@ -585,42 +532,42 @@ const ViewQmsRecordFormat = () => {
                         <div>
                             <label className="viewmanuallabels">Record Name/Title</label>
                             <div className="flex justify-between items-center">
-                                <p className="viewmanuasdata">{recordFormatDetails.title || 'N/A'}</p>
+                                <p className="viewmanuasdata">{manualDetails.title || 'N/A'}</p>
                             </div>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Record Number</label>
-                            <p className="viewmanuasdata">{recordFormatDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Revision</label>
-                            <p className="viewmanuasdata">{recordFormatDetails.rivision || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.rivision || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Document Type</label>
-                            <p className="viewmanuasdata">{recordFormatDetails.document_type || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.document_type || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Document</label>
                             <div
                                 className='flex items-center cursor-pointer gap-[8px]'
                                 onClick={() => {
-                                    if (recordFormatDetails.upload_attachment) {
-                                        window.open(recordFormatDetails.upload_attachment, '_blank');
+                                    if (manualDetails.upload_attachment) {
+                                        window.open(manualDetails.upload_attachment, '_blank');
                                     }
                                 }}
                             >
                                 <p className="click-view-file-text">
-                                    {recordFormatDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
+                                    {manualDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
                                 </p>
-                                {recordFormatDetails.upload_attachment && (
+                                {manualDetails.upload_attachment && (
                                     <Eye size={20} className='text-[#1E84AF]' />
                                 )}
                             </div>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Retention Period</label>
-                            <p className="viewmanuasdata">{recordFormatDetails.retention_period || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.retention_period || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -628,77 +575,98 @@ const ViewQmsRecordFormat = () => {
                         <div>
                             <label className="viewmanuallabels">Written/Prepare By</label>
                             <p className="viewmanuasdata">
-                                {recordFormatDetails.written_by
-                                    ? `${recordFormatDetails.written_by.first_name} ${recordFormatDetails.written_by.last_name}`
+                                {manualDetails.written_by
+                                    ? `${manualDetails.written_by.first_name} ${manualDetails.written_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Checked/Reviewed By</label>
                             <p className="viewmanuasdata">
-                                {recordFormatDetails.checked_by
-                                    ? `${recordFormatDetails.checked_by.first_name} ${recordFormatDetails.checked_by.last_name}`
+                                {manualDetails.checked_by
+                                    ? `${manualDetails.checked_by.first_name} ${manualDetails.checked_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Approved By</label>
                             <p className="viewmanuasdata">
-                                {recordFormatDetails.approved_by
-                                    ? `${recordFormatDetails.approved_by.first_name} ${recordFormatDetails.approved_by.last_name}`
+                                {manualDetails.approved_by
+                                    ? `${manualDetails.approved_by.first_name} ${manualDetails.
+                                        approved_by.last_name}`
                                     : 'N/A'}
                             </p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Date</label>
-                            <p className="viewmanuasdata">{formatDate(recordFormatDetails.date)}</p>
+                            <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p>
                         </div>
                         <div className='flex justify-between items-center'>
                             <div>
                                 <label className="viewmanuallabels">Review Frequency</label>
                                 <p className="viewmanuasdata">
-                                    {recordFormatDetails.review_frequency_year
-                                        ? `${recordFormatDetails.review_frequency_year} years, ${recordFormatDetails.review_frequency_month || 0} months`
+                                    {manualDetails.review_frequency_year
+                                        ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0} months`
                                         : 'N/A'}
                                 </p>
                             </div>
-                            {/* {isCurrentUserWrittenBy && ( */}
-                            <div className='flex gap-10'>
-                                <div className='flex flex-col justify-center items-center'>
-                                    <label className="viewmanuallabels">Edit</label>
-                                    <button onClick={() => navigate(`/company/qms/editrecordformat`)}>
-                                        <img src={edits} alt="Edit Icon" />
-                                    </button>
+                            {isCurrentUserWrittenBy && (
+                                <div className='flex gap-10'>
+                                    <div className='flex flex-col justify-center items-center'>
+                                        <label className="viewmanuallabels">Edit</label>
+                                        <button
+                                            onClick={() => {
+                                                handleMoveToHistory();
+                                                navigate(`/company/qms/editrecordformat/${id}`);
+                                            }}
+                                        >
+                                            <img src={edits} alt="Edit Icon" />
+                                        </button>
+                                    </div>
+                                    <div className='flex flex-col justify-center items-center'>
+                                        <label className="viewmanuallabels">Delete</label>
+                                        <button
+                                            onClick={() => {
+                                                handleDeleteProcedure(id);
+                                            }}
+                                        >
+                                            <img src={deletes} alt="Delete Icon" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className='flex flex-col justify-center items-center'>
-                                    <label className="viewmanuallabels">Delete</label>
-                                    <button>
-                                        <img src={deletes} alt="Delete Icon" />
-                                    </button>
-                                </div>
-                            </div>
-                            {/* )} */}
+                            )}
+                        </div>
+
+                        <div className='h-[51.5px]'>
 
                         </div>
-                        <div className='h-[51.5px]'></div>
                     </div>
                 </div>
 
-                {/* Render user-specific corrections */}
-                {renderUserCorrections()}
+                {/* Render highlighted correction */}
+                {renderHighlightedCorrection()}
+
+                {/* Render correction history */}
+                {renderCorrectionHistory()}
 
                 {canReview && (
                     <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
                                 <button
-                                    onClick={handleCorrectionRequest}
+                                    onClick={() => {
+                                        handleMoveToHistory();
+                                        handleCorrectionRequest();        
+                                    }}
                                     className="request-correction-btn duration-200"
                                 >
                                     Request For Correction
                                 </button>
                                 <button
-                                    onClick={handleReviewAndSubmit}
+                                    onClick={() => {
+                                        handleReviewAndSubmit();
+                                        handleMoveToHistory();
+                                    }}
                                     className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
                                     disabled={!canReview}
                                 >
@@ -747,26 +715,6 @@ const ViewQmsRecordFormat = () => {
                         </AnimatePresence>
                     </div>
                 )}
-            </div>
-            <div className="bg-[#24242D] text-white p-5 rounded-md w-full mt-5 max-h-[380px] flex flex-col">
-                <div className="flex justify-start items-center gap-[6px] mb-6">
-                    <h1 className="history-head">Correction History</h1>
-                    <img src={historys} alt="History Icon" />
-                </div>
-
-                <div className="overflow-y-auto flex-1 custom-scrollbar">
-                    <div className="space-y-4">
-                        {messages.map((message) => (
-                            <div key={message.id} className="bg-[#1C1C24] px-4 py-5 rounded-md">
-                                <div className="flex justify-between text-[#AAAAAA] from-to-time mb-2">
-                                    <div>From: {message.from}, To: {message.to}</div>
-                                    <div>{message.timestamp}</div>
-                                </div>
-                                <div className="text-white history-content">{message.content}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </div>
     );

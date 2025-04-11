@@ -305,7 +305,6 @@ const AddQmsManual = () => {
         } catch (err) {
             setLoading(false);
             setError('Failed to save manual');
-            toast.error('Error saving manual');
         }
     };
     const getRelevantUserId = () => {

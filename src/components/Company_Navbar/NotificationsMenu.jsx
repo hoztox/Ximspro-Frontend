@@ -33,11 +33,10 @@ const NotificationsMenu = forwardRef(({
     });
     const [isLoading, setIsLoading] = useState(true);
     const [unreadCount, setUnreadCount] = useState(0);
-
     const navigate = useNavigate();
+    
     const getCurrentUser = () => {
         const role = localStorage.getItem('role');
-
         try {
             if (role === 'company') {
                 const companyData = {};
@@ -51,12 +50,10 @@ const NotificationsMenu = forwardRef(({
                             companyData[cleanKey] = localStorage.getItem(key);
                         }
                     });
-
                 companyData.role = role;
                 companyData.company_id = localStorage.getItem('company_id');
                 companyData.company_name = localStorage.getItem('company_name');
                 companyData.email_address = localStorage.getItem('email_address');
-
                 return companyData;
             } else if (role === 'user') {
                 const userData = {};
@@ -70,10 +67,8 @@ const NotificationsMenu = forwardRef(({
                             userData[cleanKey] = localStorage.getItem(key);
                         }
                     });
-
                 userData.role = role;
                 userData.user_id = localStorage.getItem('user_id');
-
                 return userData;
             }
         } catch (error) {
@@ -84,84 +79,138 @@ const NotificationsMenu = forwardRef(({
 
     const fetchUnreadCount = async (userId) => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
-            setUnreadCount(response.data.unread_count);
+            // Fetch both manual and procedure notification counts
+            const manualResponse = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
+            const procedureResponse = await axios.get(`${BASE_URL}/qms/procedure/count-notifications/${userId}/`);
+            const recordResponse = await axios.get(`${BASE_URL}/qms/record/count-notifications/${userId}/`);
+            
+            // Sum all counts
+            const totalUnread = manualResponse.data.unread_count + 
+                               procedureResponse.data.unread_count + 
+                               recordResponse.data.unread_count;
+            setUnreadCount(totalUnread);
         } catch (error) {
             console.error("Error fetching unread notification count:", error);
         }
     };
 
-    const markNotificationAsRead = async (notificationId) => {
+    const markNotificationAsRead = async (notificationId, type) => {
         try {
-            const response = await axios.patch(
-                `${BASE_URL}/qms/notifications/${notificationId}/read/`
-            );
+            let endpoint;
+            if (type === 'manual') {
+                endpoint = `${BASE_URL}/qms/notifications/${notificationId}/read/`;
+            } else if (type === 'procedure') {
+                endpoint = `${BASE_URL}/qms/notifications-procedure/${notificationId}/read/`;
+            } else if (type === 'record') {
+                endpoint = `${BASE_URL}/qms/notifications-record/${notificationId}/read/`;
+            }
+                
+            const response = await axios.patch(endpoint);
             return response.data; 
         } catch (error) {
-            console.error("Error marking notification as read:", error);
+            console.error(`Error marking ${type} notification as read:`, error);
             return null;
         }
     };
 
     const handleView = async (notification) => {
+        let notificationType, navigationUrl;
+        
+        // Determine notification type and navigation URL
         if (notification.manual && notification.manual.id) {
-            // Mark notification as read
-            const updatedNotification = await markNotificationAsRead(notification.id);
-            
-            // Update local state
-            setNotifications(prev => ({
-                ...prev,
-                QMS: prev.QMS.map(n => 
-                    n.id === notification.id 
-                        ? { ...n, is_read: true } 
-                        : n
-                )
-            }));
-
-            // Decrease notification count if it's an unread notification
-            if (!notification.is_read && onNotificationRead) {
-                onNotificationRead();
-            }
-
-            // Navigate to manual view
-            navigate(`/company/qms/viewmanual/${notification.manual.id}`);
-            
-            if (onClose) {
-                onClose();
-            }
+            notificationType = 'manual';
+            navigationUrl = `/company/qms/viewmanual/${notification.manual.id}`;
+        } else if (notification.procedure && notification.procedure.id) {
+            notificationType = 'procedure';
+            navigationUrl = `/company/qms/viewprocedure/${notification.procedure.id}`;
+        } else if (notification.record && notification.record.id) {
+            notificationType = 'record';
+            navigationUrl = `/company/qms/viewrecord/${notification.record.id}`;
         } else {
-            console.error("Invalid Notification or Manual ID:", notification);
+            console.error("Invalid Notification: Missing manual, procedure, or record data", notification);
+            return;
+        }
+        
+        // Mark notification as read
+        await markNotificationAsRead(notification.id, notificationType);
+        
+        // Update local state to reflect read status
+        setNotifications(prev => ({
+            ...prev,
+            QMS: prev.QMS.map(n => 
+                n.id === notification.id 
+                    ? { ...n, is_read: true } 
+                    : n
+            )
+        }));
+        // Decrease notification count if it was an unread notification
+        if (!notification.is_read && onNotificationRead) {
+            onNotificationRead();
+        }
+        
+        // Navigate to the appropriate page
+        navigate(navigationUrl);
+        
+        if (onClose) {
+            onClose();
         }
     };
-
 
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
                 setIsLoading(true);
-
                 const user = getCurrentUser();
                 if (!user || !user.user_id) {
                     console.error("User not found or not logged in");
                     return;
                 }
-
                 // Fetch unread count
                 await fetchUnreadCount(user.user_id);
-
-                const response = await axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
-                console.log("Notifications Response:", response.data);
-
+                
+                // Fetch all types of notifications
+                const manualNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
+                const procedureNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-procedure/${user.user_id}/`);
+                const recordNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-record/${user.user_id}/`);
+                
+                const [manualResponse, procedureResponse, recordResponse] = await Promise.all([
+                    manualNotificationsPromise, 
+                    procedureNotificationsPromise,
+                    recordNotificationsPromise
+                ]);
+                
+                // Add a type field to distinguish between notification types
+                const manualNotifications = manualResponse.data.map(notification => ({
+                    ...notification,
+                    notificationType: 'manual'
+                }));
+                
+                const procedureNotifications = procedureResponse.data.map(notification => ({
+                    ...notification,
+                    notificationType: 'procedure'
+                }));
+                
+                const recordNotifications = recordResponse.data.map(notification => ({
+                    ...notification,
+                    notificationType: 'record'
+                }));
+                
+                // Combine and sort notifications by creation date (newest first)
+                const combinedNotifications = [
+                    ...manualNotifications, 
+                    ...procedureNotifications,
+                    ...recordNotifications
+                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
                 setNotifications(prev => ({
                     ...prev,
-                    QMS: response.data
+                    QMS: combinedNotifications
                 }));
-
+                
                 if (onNotificationsUpdate) {
-                    onNotificationsUpdate(prev => ({
-                        ...prev,
-                        QMS: response.data
-                    }));
+                    onNotificationsUpdate({
+                        QMS: combinedNotifications
+                    });
                 }
             } catch (error) {
                 console.error("Error fetching notifications:", error);
@@ -173,7 +222,7 @@ const NotificationsMenu = forwardRef(({
                 setIsLoading(false);
             }
         };
-
+        
         fetchNotifications();
     }, [onNotificationsUpdate]);
 
@@ -188,39 +237,56 @@ const NotificationsMenu = forwardRef(({
         }
     }
 
-    const renderNotificationItem = (notification) => (
-        <motion.div
-            key={notification.id}
-            initial={{ opacity: 1, y: 1 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className={`flex items-center justify-between p-5 ${notification.is_read ? 'bg-[#1a1a22]' : 'bg-[#24242D] hover:bg-[#1a1a22]'} h-[108px] cursor-pointer border-b border-[#383840] last:border-b-0`}
-        >
-            <div className='flex items-start w-[81%]'>
-                <img
-                    src={profile}
-                    alt="User"
-                    className="w-10 h-10 rounded-full mr-[20px]"
-                />
-                <div className="flex-grow">
-                    <h2 className="notification-title pb-[2px]">{notification.title}</h2>
-                    <p className="notification-description pb-[3px]">{notification.message}</p>
-                    <span className="notification-time">
-                        {new Date(notification.created_at).toLocaleString()}
-                    </span>
+    const renderNotificationItem = (notification) => {
+        // Determine notification type for the view button
+        let notificationType;
+        if (notification.notificationType === 'manual') {
+            notificationType = 'Manual';
+        } else if (notification.notificationType === 'procedure') {
+            notificationType = 'Procedure';
+        } else if (notification.notificationType === 'record') {
+            notificationType = 'Record';
+        }
+        
+        return (
+            <motion.div
+                key={notification.id}
+                initial={{ opacity: 1, y: 1 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`flex items-center justify-between p-5 ${notification.is_read ? 'bg-[#1a1a22]' : 'bg-[#24242D] hover:bg-[#1a1a22]'} h-[108px] cursor-pointer border-b border-[#383840] last:border-b-0`}
+            >
+                <div className='flex items-start w-[81%]'>
+                    <img
+                        src={profile}
+                        alt="User"
+                        className="w-10 h-10 rounded-full mr-[20px]"
+                    />
+                    <div className="flex-grow">
+                        <h2 className="notification-title pb-[2px]">
+                            {notification.title}
+                            <span className="ml-2 text-xs text-gray-400">
+                                [{notificationType}]
+                            </span>
+                        </h2>
+                        <p className="notification-description pb-[3px]">{notification.message}</p>
+                        <span className="notification-time">
+                            {new Date(notification.created_at).toLocaleString()}
+                        </span>
+                    </div>
                 </div>
-            </div>
-            <div className='h-[108px] py-5 flex items-end'>
-                <button
-                    className="click-view-btn duration-100"
-                    onClick={() => handleView(notification)}
-                >
-                    Click to view
-                </button>
-            </div>
-        </motion.div>
-    );
+                <div className='h-[108px] py-5 flex items-end'>
+                    <button
+                        className="click-view-btn duration-100"
+                        onClick={() => handleView(notification)}
+                    >
+                        Click to view
+                    </button>
+                </div>
+            </motion.div>
+        );
+    };
 
     return (
         <motion.div
@@ -259,7 +325,6 @@ const NotificationsMenu = forwardRef(({
                     );
                 })}
             </div>
-
             {/* Notifications List */}
             <div className="max-h-96 overflow-y-auto text-white">
                 <AnimatePresence>
@@ -275,12 +340,11 @@ const NotificationsMenu = forwardRef(({
                         <motion.div
                             className="text-center py-4 no-notification"
                         >
-                            No QMS Notifications
+                            No {activeTab} Notifications
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
-
             {/* View All Button - Only show if notifications exist */}
             {notifications[activeTab].length > 0 && (
                 <div

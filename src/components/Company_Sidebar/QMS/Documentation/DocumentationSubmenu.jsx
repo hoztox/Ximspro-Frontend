@@ -68,7 +68,7 @@ const DocumentationSubmenu = (props) => {
         <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
       ),
       path: "/company/qms/interested-parties",
-      relatedPaths: []
+      relatedPaths: ["/company/qms/add-interested-parties"]
     },
     {
       id: "processes",

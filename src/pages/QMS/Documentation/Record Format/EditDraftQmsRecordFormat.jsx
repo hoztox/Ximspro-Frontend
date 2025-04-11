@@ -4,6 +4,7 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
 
 const EditDraftQmsRecordFormat = () => {
     const navigate = useNavigate();
@@ -12,22 +13,25 @@ const EditDraftQmsRecordFormat = () => {
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [usersPerPage, setUsersPerPage] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileObject, setFileObject] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [recordFormats, setRecordFormats] = useState([]);
+    const [manuals, setManuals] = useState([]);
     const [previewAttachment, setPreviewAttachment] = useState(null);
-    const [recordFormatDetails, setRecordFormatsDetails] = useState(null);
+    const [manualDetails, setManualDetails] = useState(null);
     const { id } = useParams();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const yesNoOptions = ['Yes', 'No'];
 
+    const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
+    const [fieldErrors, setFieldErrors] = useState({
+        title: '',
+        written_by: '',
+        no: '',
+        checked_by: '',
+        approved_by: ''
+    });
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -50,96 +54,98 @@ const EditDraftQmsRecordFormat = () => {
     const companyId = getUserCompanyId();
     useEffect(() => {
         if (companyId && id) {
-            fetchProcedureDetails();
+            fetchManualDetails();
         }
     }, [companyId, id]);
 
     useEffect(() => {
-        if (recordFormatDetails) {
+        if (manualDetails) {
+            // Set the form data with properly mapped values from the backend
             setFormData({
-                title: recordFormatDetails.title || '',
-                written_by: recordFormatDetails.written_by?.id || null,
-                no: recordFormatDetails.no || '',
-                checked_by: recordFormatDetails.checked_by?.id || null,
-                checked_by_system_notify: recordFormatDetails.checked_by_system_notify || false,
-                checked_by_email_notify: recordFormatDetails.checked_by_email_notify || false,
-                rivision: recordFormatDetails.rivision || '',
-                approved_by: recordFormatDetails.approved_by?.id || null,
-                approved_by_system_notify: recordFormatDetails.approved_by_system_notify || false,
-                approved_by_email_notify: recordFormatDetails.approved_by_email_notify || false,
-                document_type: recordFormatDetails.document_type || 'System',
-                date: recordFormatDetails.date || formData.date,
-                review_frequency_year: recordFormatDetails.review_frequency_year || '',
-                review_frequency_month: recordFormatDetails.review_frequency_month || '',
-                publish: recordFormatDetails.publish || false,
-                send_notification: recordFormatDetails.send_notification || false,
-                retention_period: recordFormatDetails.retention_period || false
+                title: manualDetails.title || '',
+                written_by: manualDetails.written_by?.id || null,
+                no: manualDetails.no || '',
+                checked_by: manualDetails.checked_by?.id || null,
+                rivision: manualDetails.rivision || '',
+                approved_by: manualDetails.approved_by?.id || null,
+                document_type: manualDetails.document_type || 'System',
+                date: manualDetails.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
+                review_frequency_year: manualDetails.review_frequency_year || '',
+                review_frequency_month: manualDetails.review_frequency_month || '',
+                publish: manualDetails.publish || false,
+                // Fix: Use the correct property names from the API response
+                send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
+                send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
+                send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
+                send_email_to_approved_by: manualDetails.send_email_to_approved_by || false,
+                retention_period: manualDetails.retention_period || ''
+            });
+
+            console.log("Setting form data with checkbox values:", {
+                send_notification_to_checked_by: manualDetails.send_notification_to_checked_by,
+                send_email_to_checked_by: manualDetails.send_email_to_checked_by,
+                send_notification_to_approved_by: manualDetails.send_notification_to_approved_by,
+                send_email_to_approved_by: manualDetails.send_email_to_approved_by
             });
         }
-    }, [recordFormatDetails]);
+    }, [manualDetails]);
 
-    const fetchProcedureDetails = async () => {
+    const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/recordFormats-detail/${id}/`);
-            setRecordFormatsDetails(response.data);
+            setLoading(true);
+            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            setManualDetails(response.data);
             setIsInitialLoad(false);
-            console.log("Record Formats Details:", response.data);
+            console.log("Manual Detailssssssssssss:", response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching Record Formats details:", err);
-            setError("Failed to load Record Formats details");
+            console.error("Error fetching procedures details:", err);
+            setError("Failed to load record format details");
             setIsInitialLoad(false);
             setLoading(false);
         }
     };
 
     const renderAttachmentPreview = () => {
-        // if (previewAttachment) {
-        //     const attachmentName = selectedFile || recordFormatDetails?.upload_attachment_name || 'Attachment';
+        if (previewAttachment) {
+            const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
 
-        return (
-            <button
-                onClick={() => window.open(previewAttachment, '_blank')}
-                className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
-            >
-                Click to view File
-                <Eye size={17} />
-            </button>
-        );
-        // }
+            return (
+                <button
+                    onClick={() => window.open(previewAttachment, '_blank')}
+                    className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
+                >
+                    Click to view File
+                    <Eye size={17} />
+                </button>
+            );
+        }
         return null;
     };
-
-    console.log("Stored Company ID:", companyId);
 
     const [formData, setFormData] = useState({
         title: '',
         written_by: null,
         no: '',
         checked_by: null,
-        checked_by_system_notify: false,
-        checked_by_email_notify: false,
         rivision: '',
         approved_by: null,
-        approved_by_system_notify: false,
-        approved_by_email_notify: false,
         document_type: 'System',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
         publish: false,
-        send_notification: false,
-        retention_period: 'abc'
+        send_notification_to_checked_by: false,
+        send_email_to_checked_by: false,
+        send_notification_to_approved_by: false,
+        send_email_to_approved_by: false,
+        retention_period: ''
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
         written_by: false,
         checked_by: false,
-        checked_by_system_notify: false,
-        checked_by_email_notify: false,
         approved_by: false,
-        approved_by_system_notify: false,
-        approved_by_email_notify: false,
         document_type: false,
         day: false,
         month: false,
@@ -158,18 +164,15 @@ const EditDraftQmsRecordFormat = () => {
 
             const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
 
-            console.log("API Response:", response.data);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
-                console.log("Users loaded:", response.data);
             } else {
                 setUsers([]);
                 console.error("Unexpected response format:", response.data);
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load Record Formats. Please check your connection and try again.");
+            setError("Failed to load record format. Please check your connection and try again.");
         }
     };
 
@@ -220,6 +223,59 @@ const EditDraftQmsRecordFormat = () => {
             ...prev,
             [name]: value
         }));
+
+
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
+    };
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { ...fieldErrors };
+
+        // Validate title
+        if (!formData.title.trim()) {
+            newErrors.title = 'Section Name/Title is required';
+            isValid = false;
+        }
+
+        // Validate written_by
+        if (!formData.written_by) {
+            newErrors.written_by = 'Written/Prepare By is required';
+            isValid = false;
+        }
+
+        // Validate section number
+        if (!formData.no.trim()) {
+            newErrors.no = 'Section Number is required';
+            isValid = false;
+        }
+
+        // Validate checked_by
+        if (!formData.checked_by) {
+            newErrors.checked_by = 'Checked/Reviewed By is required';
+            isValid = false;
+        }
+
+        // Validate approved_by
+        if (!formData.approved_by) {
+            newErrors.approved_by = 'Approved By is required';
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+        return isValid;
+    };
+
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: checked
+        }));
     };
 
     const handleFileChange = (event) => {
@@ -231,18 +287,18 @@ const EditDraftQmsRecordFormat = () => {
     };
 
     useEffect(() => {
-        const draftProcedureId = localStorage.getItem('selected_draft_recordFormat_id');
-        const routeState = location.state?.draftProcedureId;
+        const draftManualId = localStorage.getItem('selected_draft_manual_id');
+        const routeState = location.state?.draftManualId;
         const urlParams = new URLSearchParams(window.location.search);
-        const urlDraftProcedureId = urlParams.get('draftProcedureId');
+        const urlDraftManualId = urlParams.get('draftManualId');
 
-        const id = draftProcedureId || routeState || urlDraftProcedureId;
+        const id = draftManualId || routeState || urlDraftManualId;
 
         if (id) {
-            console.log("Draft Procedure ID found:", id);
-            fetchDraftProcedureDetails(id);
+            console.log("Draft Manual ID found:", id);
+            fetchDraftManualDetails(id);
         } else {
-            console.warn("No draft Record Formats ID found");
+            console.warn("No draft manual ID found");
         }
     }, []);
 
@@ -251,37 +307,41 @@ const EditDraftQmsRecordFormat = () => {
 
         if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
             const dateObj = parseDate();
+
             dateObj[dropdown] = parseInt(value, 10);
+
             const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
+
             setFormData(prev => ({
                 ...prev,
                 date: newDate
-            }));
-        } else if (dropdown === 'checked_by_system_notify' || dropdown === 'checked_by_email_notify' ||
-            dropdown === 'approved_by_system_notify' || dropdown === 'approved_by_email_notify') {
-            setFormData(prev => ({
-                ...prev,
-                [dropdown]: value === 'Yes'
             }));
         } else {
             setFormData(prev => ({
                 ...prev,
                 [dropdown]: value
             }));
+
+            // Clear error when dropdown selection changes
+            if (fieldErrors[dropdown]) {
+                setFieldErrors(prev => ({
+                    ...prev,
+                    [dropdown]: ''
+                }));
+            }
         }
 
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
-
     const handleCancelClick = () => {
         navigate('/company/qms/draftrecordformat')
     }
 
     useEffect(() => {
-        if (recordFormatDetails?.upload_attachment) {
-            setPreviewAttachment(recordFormatDetails.upload_attachment);
+        if (manualDetails?.upload_attachment) {
+            setPreviewAttachment(manualDetails.upload_attachment);
         }
-    }, [recordFormatDetails]);
+    }, [manualDetails]);
 
     const getMonthName = (monthNum) => {
         const monthNames = [
@@ -296,6 +356,10 @@ const EditDraftQmsRecordFormat = () => {
     };
 
     const handleUpdateClick = async () => {
+        if (!validateForm()) {
+            setError('Please fill in all required fields');
+            return;
+        }
         try {
             setLoading(true);
 
@@ -309,43 +373,68 @@ const EditDraftQmsRecordFormat = () => {
             const submitData = new FormData();
             submitData.append('company', companyId);
 
-            Object.keys(formData).forEach(key => {
-                submitData.append(key, formData[key]);
+            // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+            const apiFormData = {
+                ...formData,
+                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
+                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
+                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
+                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+            };
+
+            // Add all form data except the original checkbox fields
+            Object.keys(apiFormData).forEach(key => {
+                // Skip the checkbox fields with boolean values
+                if (key !== 'send_notification_to_checked_by' &&
+                    key !== 'send_email_to_checked_by' &&
+                    key !== 'send_notification_to_approved_by' &&
+                    key !== 'send_email_to_approved_by') {
+                    submitData.append(key, apiFormData[key]);
+                }
             });
 
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/recordFormats/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/record/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             setLoading(false);
-            alert('Procedure updated successfully!');
-            navigate('/company/qms/record-format');
+            setShowEditDraftManualSuccessModal(true)
+            setTimeout(() => {
+                setShowEditDraftManualSuccessModal(false)
+                navigate('/company/qms/record-format');
+            }, 2000);
+
         } catch (err) {
             setLoading(false);
-            setError('Failed to update record Formats');
-            console.error('Error updating Record Formats:', err);
+            setError('Failed to update record format');
+            console.error('Error updating record format:', err);
         }
     };
-
+    const errorTextClass = "text-red-500 text-sm mt-1";
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-                <h1 className="add-manual-sections">Record Format Draft</h1>
+                <h1 className="add-manual-sections">Record Formats Draft</h1>
 
-                {error && (
+                <EditDraftQmsManualSuccessModal
+                    showEditDraftManualSuccessModal={showEditDraftManualSuccessModal}
+                    onClose={() => { setShowEditDraftManualSuccessModal(false) }}
+                />
+
+                {/* {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
                         {error}
                     </div>
-                )}
+                )} */}
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
-                    <div className="grid md:grid-cols-2 gap-5 pb-5">
+                    <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
                             Record Name/Title <span className="text-red-500">*</span>
@@ -357,6 +446,7 @@ const EditDraftQmsRecordFormat = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.title && <p className={errorTextClass}>{fieldErrors.title}</p>}
                         </div>
 
                         <div>
@@ -383,6 +473,7 @@ const EditDraftQmsRecordFormat = () => {
                                     className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
                                 />
                             </div>
+                            {fieldErrors.written_by && <p className={errorTextClass}>{fieldErrors.written_by}</p>}
                         </div>
 
                         <div>
@@ -396,81 +487,65 @@ const EditDraftQmsRecordFormat = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+
                         </div>
 
-                        <div>
-                            <div className="flex space-x-4">
-                                <div className='w-1/2'>
+                        <div className="flex">
+                            <div className="flex-grow">
+                                <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
                                         Checked/Reviewed By <span className="text-red-500">*</span>
                                     </label>
-                                    <div>
-                                        <div className="relative flex-grow">
-                                            <select
-                                                className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                                name="checked_by"
-                                                value={formData.checked_by || ''}
-                                                onFocus={() => toggleDropdown('checked_by')}
-                                                onChange={(e) => handleDropdownChange(e, 'checked_by')}
-                                                onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
-                                            >
-                                                <option value="">Select User</option>
-                                                {users.map(user => (
-                                                    <option key={`checked-${user.id}`} value={user.id}>
-                                                        {formatUserName(user)}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown
-                                                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
-                                            />
+                                    <div className='flex items-end justify-end space-y-1'>
+                                        <div className="ml-5 flex items-center h-[24px] ">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_notification_to_checked_by"
+                                                    checked={formData.send_notification_to_checked_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
+                                            </div>
+                                        </div>
+                                        <div className="ml-5 flex items-center h-[24px] ">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_email_to_checked_by"
+                                                    checked={formData.send_email_to_checked_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="w-1/4">
-                                    <label className="add-qms-manual-label">System Notify</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                            name="checked_by_system_notify"
-                                            value={formData.checked_by_system_notify ? 'Yes' : 'No'}
-                                            onFocus={() => toggleDropdown('checked_by_system_notify')}
-                                            onChange={(e) => handleDropdownChange(e, 'checked_by_system_notify')}
-                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_system_notify: false }))}
-                                        >
-                                            {yesNoOptions.map(option => (
-                                                <option key={`checked-notify-${option}`} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown
-                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_system_notify ? 'rotate-180' : ''}`}
-                                        />
-                                    </div>
+                                <div className="relative">
+                                    <select
+                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                        name="checked_by"
+                                        value={formData.checked_by || ''}
+                                        onFocus={() => toggleDropdown('checked_by')}
+                                        onChange={(e) => handleDropdownChange(e, 'checked_by')}
+                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map(user => (
+                                            <option key={`checked-${user.id}`} value={user.id}>
+                                                {formatUserName(user)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
+                                    />
                                 </div>
-                                <div className="w-1/4">
-                                    <label className="add-qms-manual-label">Email Notify</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                            name="checked_by_email_notify"
-                                            value={formData.checked_by_email_notify ? 'Yes' : 'No'}
-                                            onFocus={() => toggleDropdown('checked_by_email_notify')}
-                                            onChange={(e) => handleDropdownChange(e, 'checked_by_email_notify')}
-                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by_email_notify: false }))}
-                                        >
-                                            {yesNoOptions.map(option => (
-                                                <option key={`checked-email-${option}`} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown
-                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by_email_notify ? 'rotate-180' : ''}`}
-                                        />
-                                    </div>
-                                </div>
+                                {fieldErrors.checked_by && <p className={errorTextClass}>{fieldErrors.checked_by}</p>}
+
                             </div>
                         </div>
 
@@ -487,79 +562,60 @@ const EditDraftQmsRecordFormat = () => {
                             />
                         </div>
 
-                        <div>
-                            <div className="flex space-x-4">
-                                <div className='w-1/2'>
+                        <div className="flex">
+                            <div className="flex-grow">
+                                <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
                                         Approved By <span className="text-red-500">*</span>
                                     </label>
-                                    <div>
-                                        <div className="relative flex-grow">
-                                            <select
-                                                className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                                name="approved_by"
-                                                value={formData.approved_by || ''}
-                                                onFocus={() => toggleDropdown('approved_by')}
-                                                onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                                                onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
-                                            >
-                                                <option value="">Select User</option>
-                                                {users.map(user => (
-                                                    <option key={`approved-${user.id}`} value={user.id}>
-                                                        {formatUserName(user)}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown
-                                                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                            />
+                                    <div className='flex items-end justify-end space-y-1'>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_notification_to_approved_by"
+                                                    checked={formData.send_notification_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
+                                            </div>
+                                        </div>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_email_to_approved_by"
+                                                    checked={formData.send_email_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="w-1/4">
-                                    <label className="add-qms-manual-label">System Notify</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                            name="approved_by_system_notify"
-                                            value={formData.approved_by_system_notify ? 'Yes' : 'No'}
-                                            onFocus={() => toggleDropdown('approved_by_system_notify')}
-                                            onChange={(e) => handleDropdownChange(e, 'approved_by_system_notify')}
-                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_system_notify: false }))}
-                                        >
-                                            {yesNoOptions.map(option => (
-                                                <option key={`approved-notify-${option}`} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown
-                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_system_notify ? 'rotate-180' : ''}`}
-                                        />
-                                    </div>
+                                <div className="relative">
+                                    <select
+                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                        name="approved_by"
+                                        value={formData.approved_by || ''}
+                                        onFocus={() => toggleDropdown('approved_by')}
+                                        onChange={(e) => handleDropdownChange(e, 'approved_by')}
+                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map(user => (
+                                            <option key={`approved-${user.id}`} value={user.id}>
+                                                {formatUserName(user)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
+                                    />
                                 </div>
-                                <div className="w-1/4">
-                                    <label className="add-qms-manual-label">Email Notify</label>
-                                    <div className="relative">
-                                        <select
-                                            className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                            name="approved_by_email_notify"
-                                            value={formData.approved_by_email_notify ? 'Yes' : 'No'}
-                                            onFocus={() => toggleDropdown('approved_by_email_notify')}
-                                            onChange={(e) => handleDropdownChange(e, 'approved_by_email_notify')}
-                                            onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by_email_notify: false }))}
-                                        >
-                                            {yesNoOptions.map(option => (
-                                                <option key={`approved-email-${option}`} value={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown
-                                            className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by_email_notify ? 'rotate-180' : ''}`}
-                                        />
-                                    </div>
-                                </div>
+                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
                             </div>
                         </div>
 
@@ -704,7 +760,7 @@ const EditDraftQmsRecordFormat = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                            Retention Period
+                                Retention Period
                             </label>
                             <input
                                 type="text"
@@ -714,41 +770,36 @@ const EditDraftQmsRecordFormat = () => {
                                 className="w-full add-qms-manual-inputs"
                             />
                         </div>
-
-                        <div>
-
-                        </div>
-
-                        <div className='mt-[35px]'>
-                            <button className="request-correction-btn duration-200">
-                                Save as Draft
-                            </button>
-                        </div>
-                        <div className="flex items-center mt-[35px] justify-end">
-                            <div className='flex gap-[22px]'>
-                                <button
-                                    className="cancel-btn duration-200"
-                                    onClick={handleCancelClick}
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="save-btn duration-200"
-                                    onClick={handleUpdateClick}
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </div>
                     </div>
 
+                    <div className="flex items-center mt-[22px] justify-end">
+                        {/* <div className='mb-6'>
+                            <button
+                                className="request-correction-btn duration-200"
+                            >
+                                Save as Draft
+                            </button>
+                        </div> */}
+                        <div className='flex gap-[22px] mb-6'>
+                            <button
+                                className="cancel-btn duration-200"
+                                onClick={handleCancelClick}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="save-btn duration-200"
+                                onClick={handleUpdateClick}
+                                disabled={loading}
+                            >
+                                {loading ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
-
-
 export default EditDraftQmsRecordFormat

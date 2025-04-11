@@ -55,6 +55,19 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
   }, [isNotificationsOpen]);
 
   const [qmsNotificationCount, setQmsNotificationCount] = useState(0);
+  // const fetchUnreadCount = async (userId) => {
+  //   try {
+  //     // Fetch both manual and procedure notification counts
+
+
+  //     // Sum both counts
+  //     const totalUnread = manualResponse.data.unread_count + procedureResponse.data.unread_count;
+  //     setUnreadCount(totalUnread);
+  //   } catch (error) {
+  //     console.error("Error fetching unread notification count:", error);
+  //   }
+  // };
+
   const fetchQmsNotificationCount = async () => {
     try {
       const userId = localStorage.getItem('user_id');
@@ -63,8 +76,11 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         return;
       }
 
-      const response = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
-      setQmsNotificationCount(response.data.unread_count || 0);
+      const manualResponse = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
+      const procedureResponse = await axios.get(`${BASE_URL}/qms/procedure/count-notifications/${userId}/`);
+      const recordResponse = await axios.get(`${BASE_URL}/qms/record/count-notifications/${userId}/`);
+      const totalUnread = manualResponse.data.unread_count + procedureResponse.data.unread_count + recordResponse.data.unread_count;
+      setQmsNotificationCount(totalUnread);
     } catch (error) {
       console.error("Error fetching QMS notification count:", error);
     }
@@ -194,7 +210,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
           } else if (response.data.first_name) {
             setUserName(response.data.first_name);
           }
-          
+
 
           if (response.data.user_logo) {
             const logoUrl = response.data.user_logo;
@@ -434,19 +450,19 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
 
             {/* Notification bell icon with badge */}
             <div
-          className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active" : ""}`}
-          onClick={toggleNotifications}
-        >
-          <div>
-            <img src={bell} alt="notification icon" className="w-[20px] h-[20px] bell" />
-            {/* QMS Notification count badge */}
-            <span
-              className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${qmsNotificationCount > 0 ? 'opacity-100' : 'opacity-0'}`}
+              className={`bell-icon flex justify-center items-center cursor-pointer relative ${isNotificationsOpen ? "notification-active" : ""}`}
+              onClick={toggleNotifications}
             >
-              {qmsNotificationCount}
-            </span>
-          </div>
-        </div>
+              <div>
+                <img src={bell} alt="notification icon" className="w-[20px] h-[20px] bell" />
+                {/* QMS Notification count badge */}
+                <span
+                  className={`absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center ${qmsNotificationCount > 0 ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  {qmsNotificationCount}
+                </span>
+              </div>
+            </div>
 
             {/* Profile section with dropdown */}
             <div className="flex items-center space-x-2 border-l border-[#383840] pl-4 relative">
@@ -515,7 +531,7 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
                       Change Password
                     </li>
                     <li
-                      className="bg-[#24242D] text-[#F9291F] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"  
+                      className="bg-[#24242D] text-[#F9291F] px-5 py-3 rounded-md cursor-pointer flex items-center gap-3 cmpy-nav-menu"
                       onClick={handleLogout}
                     >
                       <img src={logout} alt="logout" />
@@ -551,24 +567,24 @@ const CompanyNavbar = ({ selectedMenuItem, toggleSidebar, collapsed, setCollapse
         />
       )}
       <AnimatePresence>
-  {isNotificationsOpen && (
-    <NotificationsMenu
-      ref={notificationsRef}
-      onClose={handleCloseNotifications}
-      onNotificationRead={() => {
-        // Decrease the QMS notification count
-        setQmsNotificationCount(prevCount => Math.max(0, prevCount - 1));
-      }}
-      onNotificationsUpdate={(notifications) => {
-        const totalCount = Object.values(notifications).reduce(
-          (total, categoryNotifications) => total + categoryNotifications.length,
-          0
-        );
-        setTotalNotificationCount(totalCount);
-      }}
-    />
-  )}
-</AnimatePresence>
+        {isNotificationsOpen && (
+          <NotificationsMenu
+            ref={notificationsRef}
+            onClose={handleCloseNotifications}
+            onNotificationRead={() => {
+              // Decrease the QMS notification count
+              setQmsNotificationCount(prevCount => Math.max(0, prevCount - 1));
+            }}
+            onNotificationsUpdate={(notifications) => {
+              const totalCount = Object.values(notifications).reduce(
+                (total, categoryNotifications) => total + categoryNotifications.length,
+                0
+              );
+              setTotalNotificationCount(totalCount);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };

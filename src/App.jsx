@@ -25,7 +25,7 @@ import QmsPolicy from "./pages/QMS/Documentation/Policy/QmsPolicy";
 import QmsManual from "./pages/QMS/Documentation/Manual/QmsManual";
 import QmsProcedure from "./pages/QMS/Documentation/Procedure/QmsProcedure";
 import QmsRecordFormat from "./pages/QMS/Documentation/Record Format/QmsRecordFormat";
-import QmsInterestedParties from "./pages/QMS/Documentation/Interested Parties/QmsInterestedParties";
+import QmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/QmsInterestedParties";
 import QmsProcesses from "./pages/QMS/Documentation/Processes/QmsProcesses";
 import QmsScopeStatements from "./pages/QMS/Documentation/Scope Statements/QmsScopeStatements";
 import EmsPolicy from "./pages/EMS/Documentation/Policy/EmsPolicy";
@@ -114,6 +114,10 @@ import QmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisf
 import AddQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/AddQmsEmployeeSatisfaction";
 import EditQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/EditQmsEmployeeSatisfaction";
 import ViewQmsEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/ViewQmsEmployeeSatisfaction";
+import QmsListAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsListAwarenessTraining";
+import QmsAddAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsAddAwarenessTraining";
+import QmsListCompliance from "./pages/QMS/Compliance/QmsListCompliance";
+import AddQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/AddQmsInterestedParties";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -157,19 +161,23 @@ const ThemedApp = () => {
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
           <Route path="qms/addprocedure" element={<AddQmsProcedure />} />
-          <Route path="qms/viewprocedure" element={<ViewQmsProcedure/>} />
-          <Route path="qms/editprocedure" element={<EditQmsProcedure/>} />
+          <Route path="qms/viewprocedure/:id" element={<ViewQmsProcedure/>} />
+          <Route path="qms/editprocedure/:id" element={<EditQmsProcedure/>} />
           <Route path="qms/draftprocedure" element={<DraftQmsProcedure/>} />
-          <Route path="qms/editdraftprocedure" element={<EditDraftQmsProcedure/>} />
+          <Route path="qms/editdraftprocedure/:id" element={<EditDraftQmsProcedure/>} />
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />
-          <Route path="qms/viewrecordformat" element={<ViewQmsRecordFormat />} />
-          <Route path="qms/editrecordformat" element={<EditQmsRecordFormat />} />
+          <Route path="qms/viewrecordformat/:id" element={<ViewQmsRecordFormat />} />
+          <Route path="qms/editrecordformat/:id" element={<EditQmsRecordFormat />} />
           <Route path="qms/draftrecordformat" element={<DraftQmsRecordFormat />} />
-          <Route path="qms/editdraftrecordformat" element={<EditDraftQmsRecordFormat />} />
+          <Route path="qms/editdraftrecordformat/:id" element={<EditDraftQmsRecordFormat />} />
 
           <Route path="qms/interested-parties" element={<QmsInterestedParties />} />
+          <Route path="qms/add-interested-parties" element={<AddQmsInterestedParties />} />
+
+
+
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
@@ -189,6 +197,12 @@ const ThemedApp = () => {
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction/>}/>
           <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction/>}/>
           <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction/>}/>
+          <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining/>} />
+          <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining/>} />
+
+           {/* QMS Compliance*/}
+           <Route path="qms/list-compliance" element={<QmsListCompliance />} />
+           <Route path="qms/add-compliance" element={<AddQmsInterestedParties />} />
 
 
           {/* QMS User Management */}

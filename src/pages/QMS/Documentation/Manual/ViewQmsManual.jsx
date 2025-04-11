@@ -431,7 +431,7 @@ const ViewQmsManual = () => {
     return (
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
-                <h1 className='viewmanualhead'>Review Manual Section</h1>
+                <h1 className='viewmanualhead'>Manual Section Information</h1>
 
                 <ManualCorrectionSuccessModal
                     showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}

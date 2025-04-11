@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit2, Trash2, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
-import { ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import "./qmsemployeeperformance.css"
 import { useNavigate } from 'react-router-dom';
@@ -62,7 +61,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
           >
 
             <div className="bg-[#1C1C24] text-white flex items-start justify-center rounded-lg">
-              <div className="w-[528px] overflow-hidden">
+              <div className="w-[528px]">
                 <div className="px-[8px] pt-5 pb-6 border-b border-[#383840] mx-3">
                   <p className="evaluate-modal-head">
                     Please respond to each question on a scale of 1-10, 1<br />
@@ -88,26 +87,26 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                       ))}
                     </select>
 
-                    <div className="absolute -top-[8px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
+                    <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? 'rotate-180' : ''}`}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className=" ">
+                <div className="max-h-[320px]">
                   <table className="min-w-full">
                     <thead className='bg-[#24242D]'>
                       <tr className="h-[48px]">
-                        <th className="px-4 text-left  employee-evaluation-theads w-16">
+                        <th className="px-4 text-left employee-evaluation-theads w-16">
                           No
                         </th>
-                        <th className="px-4 text-left  employee-evaluation-theads">
+                        <th className="px-4 text-left employee-evaluation-theads">
                           Question
                         </th>
-                        <th className="px-4 text-right employee-evaluation-theads  w-32">
+                        <th className="px-4 text-right employee-evaluation-theads w-32">
                           Answer
                         </th>
                       </tr>
@@ -115,17 +114,17 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                     <tbody>
                       {[1, 2, 3, 4].map((num, index) => (
                         <tr key={index} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
-                          <td className=" px-4 whitespace-nowrap employee-evaluate-data">
+                          <td className="px-4 whitespace-nowrap employee-evaluate-data">
                             {num}
                           </td>
-                          <td className=" px-4 whitespace-nowrap employee-evaluate-data">
+                          <td className="px-4 whitespace-nowrap employee-evaluate-data">
                             Anonymous
                           </td>
-                          <td className=" px-4 whitespace-nowrap text-sm text-right">
+                          <td className="px-4 whitespace-nowrap text-right">
                             <div className="relative">
                               <button
                                 onClick={() => toggleDropdown(index)}
-                                className="bg-gray-700 rounded px-4  flex items-center justify-between w-24 ml-auto"
+                                className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
                               >
                                 <span>{ratings[index]}</span>
                                 <ChevronDown
@@ -135,7 +134,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                               </button>
 
                               {openDropdown === index && (
-                                <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-50 max-h-48">
+                                <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-[100]">
                                   {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                                     <div
                                       key={rating}
@@ -155,20 +154,18 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   </table>
                 </div>
 
-                <div className="p-4 flex justify-center space-x-4">
-                  <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded w-36"
+                <div className="p-4 flex justify-end space-x-4">
+                  <button className="cancel-btn duration-200"
                     onClick={onClose}
                   >
                     Cancel
                   </button>
-                  <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded w-36">
+                  <button className="save-btn duration-200">
                     Save
                   </button>
                 </div>
               </div>
             </div>
-
-
           </motion.div>
         </motion.div>
       )}
@@ -218,7 +215,6 @@ const QuestionsModal = ({ isOpen, onClose }) => {
     setFormData({ question: '' });
     setError('');
   };
-
 
   return (
     <AnimatePresence>
@@ -275,9 +271,9 @@ const QuestionsModal = ({ isOpen, onClose }) => {
             </form>
 
             {questions.length > 0 && (
-              <div className="overflow-x-auto pb-1">
+              <div className="mb-4">
                 <table className="w-full text-left">
-                  <thead className="bg-[#24242D] sticky top-0 z-10">
+                  <thead className="bg-[#24242D]">
                     <tr className='h-[48px]'>
                       <th className="px-4 add-question-theads text-left w-[10%]">No</th>
                       <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
@@ -285,7 +281,7 @@ const QuestionsModal = ({ isOpen, onClose }) => {
                     </tr>
                   </thead>
                 </table>
-                <div className=" max-h-[148px] overflow-y-auto">
+                <div className="max-h-[148px] overflow-y-auto">
                   <table className="w-full text-left">
                     <tbody>
                       {questions.map((question) => (
@@ -309,7 +305,6 @@ const QuestionsModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
             )}
-
           </motion.div>
         </motion.div>
       )}

@@ -8,7 +8,7 @@ import process from "../../../../assets/images/Company-Sidebar/interested partie
 import scope from "../../../../assets/images/Company-Sidebar/record-format.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const ComplianceSubmenu = () => {
+const ComplianceSubmenu = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -17,7 +17,7 @@ const ComplianceSubmenu = () => {
       id: "compliance",
       label: "Compliance",
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-      // path: "/company/qms/policy",
+      path: "/company/qms/list-compliance",
     },
     {
       id: "legal-other-requirements",

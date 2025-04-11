@@ -27,7 +27,7 @@ const EmployeeTrainingSubmenu = (props) => {
             relatedPaths: [
                 "/company/qms/edit-training",
                 "/company/qms/view-training",
-               ]
+            ]
         },
         {
             id: "list-user-training",
@@ -60,8 +60,8 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/add-employee-performance",
                 "/company/qms/edit-employee-performance",
                 "/company/qms/view-employee-performance",
-                 
-               ]
+
+            ]
         },
         {
             id: "employee-satisfaction-survey",
@@ -72,7 +72,7 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/add-satisfaction-survey",
                 "/company/qms/edit-satisfaction-survey",
                 "/company/qms/view-satisfaction-survey",
-               ]
+            ]
         },
         {
             id: "awareness-training",
@@ -80,16 +80,19 @@ const EmployeeTrainingSubmenu = (props) => {
             icon: (
                 <img src={scope} alt="Scope Statements" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/scope-statements",
+            path: "/company/qms/list-awareness-training",
+            relatedPaths: [
+                "/company/qms/add-awareness-training",
+            ]
         },
     ];
 
     const isActive = (category) => {
         const currentPath = location.pathname;
-        return currentPath === category.path || 
-          (category.relatedPaths &&
-           category.relatedPaths.some(path => currentPath.startsWith(path)));
-      };
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
+    };
 
 
     const handleCategoryClick = (category) => {

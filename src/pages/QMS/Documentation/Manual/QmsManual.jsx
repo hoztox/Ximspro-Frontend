@@ -189,27 +189,35 @@ const QmsManual = () => {
   useEffect(() => {
     // Fetch all required data in a single useEffect
     const fetchAllData = async () => {
+  try {
+    // First, fetch manuals
+    const companyId = getUserCompanyId();
+    const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
+
+    // Apply visibility filtering using the centralized function
+    const filteredManuals = filterManualsByVisibility(manualsResponse.data);
+
+    // Sort manuals by creation date (newest first)
+    const sortedManuals = filteredManuals.sort((a, b) => {
+      // Use created_at if available, otherwise fall back to date field
+      const dateA = new Date(a.created_at || a.date || 0);
+      const dateB = new Date(b.created_at || b.date || 0);
+      return dateB - dateA; // Descending order (newest first)
+    });
+
+    // Set sorted manuals
+    setManuals(sortedManuals);
+
+    // Then fetch corrections for visible manuals
+    const correctionsPromises = sortedManuals.map(async (manual) => {
       try {
-        // First, fetch manuals
-        const companyId = getUserCompanyId();
-        const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-
-        // Apply visibility filtering using the centralized function
-        const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-
-        // Set filtered manuals
-        setManuals(filteredManuals);
-
-        // Then fetch corrections for visible manuals
-        const correctionsPromises = filteredManuals.map(async (manual) => {
-          try {
-            const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
-            return { manualId: manual.id, corrections: correctionResponse.data };
-          } catch (correctionError) {
-            console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
-            return { manualId: manual.id, corrections: [] };
-          }
-        });
+        const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
+        return { manualId: manual.id, corrections: correctionResponse.data };
+      } catch (correctionError) {
+        console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+        return { manualId: manual.id, corrections: [] };
+      }
+    });
 
         // Process all corrections
         const correctionResults = await Promise.all(correctionsPromises);
@@ -350,54 +358,52 @@ const QmsManual = () => {
   const closePublishModal = () => {
     fetchManuals();
     setShowPublishModal(false);
+    setIsPublishing(false); // Reset publishing state when modal is closed
     setTimeout(() => {
       // setPublishSuccess(false);
     }, 300);
   };
 
-  // Modify the handlePublishSave function to update the manual's status
   const handlePublishSave = async () => {
     try {
       if (!selectedManualId) {
         alert("No manual selected for publishing");
         return;
       }
-
-      // Set publishing state to true before API call
+      
+      // Set isPublishing to true at the start of the operation
       setIsPublishing(true);
-
-      // First, make API call to update manual status to "Publish"
-      await axios.put(`${BASE_URL}/qms/manual-detail/${selectedManualId}/`, {
-        status: "Publish"
-      });
-
-      // Then send notification if checkbox is checked
-      if (sendNotification) {
-        const companyId = getUserCompanyId();
-        await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
-          company_id: companyId
-        });
+      
+      const userId = localStorage.getItem('user_id');
+      if (!userId) {
+        alert("User information not found. Please log in again.");
+        setIsPublishing(false); // Reset if there's an error
+        return;
       }
-
+      
+      await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
+        company_id: getUserCompanyId(),
+        published_by: userId,  
+        send_notification: sendNotification
+      });
+      
       setShowPublishSuccessModal(true);
       setTimeout(() => {
         setShowPublishSuccessModal(false);
         closePublishModal();
         fetchManuals(); // Refresh the list
         navigate("/company/qms/manual");
+        setIsPublishing(false); // Reset the publishing state after success
       }, 1500);
     } catch (error) {
       console.error("Error publishing manual:", error);
       setShowPublishErrorModal(true);
+      setIsPublishing(false); // Reset if there's an error
       setTimeout(() => {
         setShowPublishErrorModal(false);
       }, 3000);
-    } finally {
-      // Reset publishing state regardless of success or failure
-      setIsPublishing(false);
     }
   };
-
   const canReview = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
     const manualCorrections = corrections[manual.id] || [];
@@ -426,7 +432,6 @@ const QmsManual = () => {
 
     return false;
   };
-
   return (
     <div className="bg-[#1C1C24] list-manual-main">
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
