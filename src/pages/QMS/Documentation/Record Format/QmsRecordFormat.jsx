@@ -355,11 +355,11 @@ const QmsRecordFormat = () => {
   const closePublishModal = () => {
     fetchManuals();
     setShowPublishModal(false);
+    setIsPublishing(false); // Reset loading state when modal is closed
     setTimeout(() => {
       // setPublishSuccess(false);
     }, 300);
   };
-
   // Modify the handlePublishSave function to update the manual's status
   const handlePublishSave = async () => {
     try {
@@ -368,13 +368,15 @@ const QmsRecordFormat = () => {
         return;
       }
       
+      // Set publishing loading state to true when starting
+      setIsPublishing(true);
       
       const userId = localStorage.getItem('user_id');
       if (!userId) {
         alert("User information not found. Please log in again.");
+        setIsPublishing(false); // Reset loading state on error
         return;
       }
-      
       
       await axios.post(`${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`, {
         company_id: getUserCompanyId(),
@@ -388,13 +390,15 @@ const QmsRecordFormat = () => {
         closePublishModal();
         fetchManuals(); // Refresh the list
         navigate("/company/qms/record-format");
+        setIsPublishing(false); // Reset loading state after completion
       }, 1500);
     } catch (error) {
       console.error("Error publishing record format:", error);
       setShowPublishErrorModal(true);
-          setTimeout(() => {
-            setShowPublishErrorModal(false);
-          }, 3000);
+      setIsPublishing(false); // Reset loading state on error
+      setTimeout(() => {
+        setShowPublishErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -547,7 +551,7 @@ const QmsRecordFormat = () => {
                                 : 'Click to Approve')}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">Not Authorized</span>
+                          <span className="text-[#858585]">Not Action Required</span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas text-center">

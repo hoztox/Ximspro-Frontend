@@ -27,11 +27,11 @@ const DocumentationSubmenu = (props) => {
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
       path: "/company/qms/manual",
       relatedPaths: ["/company/qms/addmanual",
-                     "/company/qms/draftmanual",
-                     "/company/qms/viewmanual",
-                     "/company/qms/editmanual",
-                     "/company/qms/editdraftmanual",
-                    ]
+        "/company/qms/draftmanual",
+        "/company/qms/viewmanual",
+        "/company/qms/editmanual",
+        "/company/qms/editdraftmanual",
+      ]
     },
     {
       id: "procedure",
@@ -41,11 +41,11 @@ const DocumentationSubmenu = (props) => {
       ),
       path: "/company/qms/procedure",
       relatedPaths: ["/company/qms/addprocedure",
-                     "/company/qms/draftprocedure",
-                     "/company/qms/viewprocedure",
-                     "/company/qms/editprocedure",
-                     "/company/qms/editdraftprocedure",
-                    ]
+        "/company/qms/draftprocedure",
+        "/company/qms/viewprocedure",
+        "/company/qms/editprocedure",
+        "/company/qms/editdraftprocedure",
+      ]
     },
     {
       id: "record-format",
@@ -55,11 +55,11 @@ const DocumentationSubmenu = (props) => {
       ),
       path: "/company/qms/record-format",
       relatedPaths: ["/company/qms/addrecordformat",
-                     "/company/qms/draftrecordformat",
-                     "/company/qms/viewrecordformat",
-                     "/company/qms/editrecordformat",
-                     "/company/qms/editdraftrecordformat",
-                    ]
+        "/company/qms/draftrecordformat",
+        "/company/qms/viewrecordformat",
+        "/company/qms/editrecordformat",
+        "/company/qms/editdraftrecordformat",
+      ]
     },
     {
       id: "interested-parties",
@@ -68,14 +68,18 @@ const DocumentationSubmenu = (props) => {
         <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
       ),
       path: "/company/qms/interested-parties",
-      relatedPaths: ["/company/qms/add-interested-parties"]
+      relatedPaths: ["/company/qms/add-interested-parties",
+        "/company/qms/edit-interested-parties",
+        "/company/qms/view-interested-parties",
+
+      ]
     },
     {
       id: "processes",
       label: "Processes",
       icon: <img src={process} alt="Processes" className="w-[15px] h-[15px]" />,
       path: "/company/qms/processes",
-      relatedPaths: []
+      relatedPaths: ["/company/qms/add-processes"]
     },
     {
       id: "scope-statements",
@@ -91,11 +95,11 @@ const DocumentationSubmenu = (props) => {
   // Check if a category is active, including related paths
   const isActive = (category) => {
     const currentPath = location.pathname;
-    return currentPath === category.path || 
+    return currentPath === category.path ||
       (category.relatedPaths &&
-       category.relatedPaths.some(path => currentPath.startsWith(path)));
+        category.relatedPaths.some(path => currentPath.startsWith(path)));
   };
-  
+
   // Handle clicking on a submenu item
   const handleCategoryClick = (category) => {
     if (props && props.handleItemClick) {
@@ -119,9 +123,8 @@ const DocumentationSubmenu = (props) => {
               {category.icon}
             </div>
             <span
-              className={`text-center ${
-                active ? "text-white" : "text-[#5B5B5B]"
-              } documentation-submenu-label duration-200`}
+              className={`text-center ${active ? "text-white" : "text-[#5B5B5B]"
+                } documentation-submenu-label duration-200`}
             >
               {category.label}
             </span>

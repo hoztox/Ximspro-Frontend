@@ -356,6 +356,7 @@ const QmsProcedure = () => {
   const closePublishModal = () => {
     fetchManuals();
     setShowPublishModal(false);
+    setIsPublishing(false); // Reset loading state when closing the modal
     setTimeout(() => {
       // setPublishSuccess(false);
     }, 300);
@@ -369,13 +370,15 @@ const QmsProcedure = () => {
         return;
       }
       
+      // Set loading state to true when starting the publish operation
+      setIsPublishing(true);
       
       const userId = localStorage.getItem('user_id');
       if (!userId) {
         alert("User information not found. Please log in again.");
+        setIsPublishing(false); // Reset loading state if there's an error
         return;
       }
-      
       
       await axios.post(`${BASE_URL}/qms/procedure/${selectedManualId}/publish-notification/`, {
         company_id: getUserCompanyId(),
@@ -389,13 +392,15 @@ const QmsProcedure = () => {
         closePublishModal();
         fetchManuals(); // Refresh the list
         navigate("/company/qms/procedure");
+        setIsPublishing(false); // Reset loading state after completion
       }, 1500);
     } catch (error) {
       console.error("Error publishing procedure:", error);
+      setIsPublishing(false); // Reset loading state if there's an error
       setShowPublishErrorModal(true);
-          setTimeout(() => {
-            setShowPublishErrorModal(false);
-          }, 3000);
+      setTimeout(() => {
+        setShowPublishErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -548,7 +553,7 @@ const QmsProcedure = () => {
                                 : 'Click to Approve')}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">Not Authorized</span>
+                          <span className="text-[#858585]">Not Action Required</span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas text-center">

@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import "./addqmsinterestedparties.css"
+import { useNavigate } from 'react-router-dom';
 
 const AddQmsInterestedParties = () => {
   const [selectedFile, setSelectedFile] = useState(null);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     category: 'Internal',
@@ -57,25 +59,15 @@ const AddQmsInterestedParties = () => {
   };
 
   const handleCancel = () => {
-    // Reset form or navigate away
-    setFormData({
-      name: '',
-      category: 'Internal',
-      needs: '',
-      expectations: '',
-      specialRequirements: '',
-      legalRequirements: '',
-      file: null,
-    });
-    setFileName('No file chosen');
+    navigate('/company/qms/interested-parties')
   };
 
   return (
-    <div className="bg-[#1C1C24] p-5 rounded-lg text-white px-[122px]">
-      <h1 className="text-2xl font-bold mb-6">Add Interested Parties</h1>
+    <div className="bg-[#1C1C24] p-5 rounded-lg text-white ">
+      <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">Add Interested Parties</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div className="border-t border-gray-800 pt-6">
+      <form onSubmit={handleSubmit} className='px-[122px]'>
+        <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
               <label className="block mb-3 add-qms-manual-label">Name</label>
@@ -174,18 +166,6 @@ const AddQmsInterestedParties = () => {
                   <option value="SOX">SOX</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
-                  <svg
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legalRequirements ? 'rotate-180' : ''
-                      }`}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
                   <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legalRequirements ? 'rotate-180' : ''
                     }`} />
                 </div>

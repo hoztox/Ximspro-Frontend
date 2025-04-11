@@ -118,6 +118,9 @@ import QmsListAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTrai
 import QmsAddAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsAddAwarenessTraining";
 import QmsListCompliance from "./pages/QMS/Compliance/QmsListCompliance";
 import AddQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/AddQmsInterestedParties";
+import EditQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/EditQmsInterestedParties";
+import ViewQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/ViewQmsInterestedParties";
+import AddQmsProcesses from "./pages/QMS/Documentation/Processes/AddQmsProcesses";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -175,10 +178,17 @@ const ThemedApp = () => {
 
           <Route path="qms/interested-parties" element={<QmsInterestedParties />} />
           <Route path="qms/add-interested-parties" element={<AddQmsInterestedParties />} />
+          <Route path="qms/edit-interested-parties" element={<EditQmsInterestedParties />} />
+          <Route path="qms/view-interested-parties" element={<ViewQmsInterestedParties />} />
 
 
 
           <Route path="qms/processes" element={<QmsProcesses />} />
+          <Route path="qms/add-processes" element={<AddQmsProcesses/>} />
+
+
+
+
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
 

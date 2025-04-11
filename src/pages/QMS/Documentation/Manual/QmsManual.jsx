@@ -551,7 +551,7 @@ const QmsManual = () => {
                                 : 'Click to Approve')}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">Not Authorized</span>
+                          <span className="text-[#858585]">Not Action Required</span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas text-center">

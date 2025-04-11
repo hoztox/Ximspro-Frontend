@@ -4,7 +4,7 @@ import plusicon from '../../../../assets/images/Company Documentation/plus icon.
 import edits from "../../../../assets/images/Company Documentation/edit.svg"
 import deletes from '../../../../assets/images/Company Documentation/delete.svg'
 import views from "../../../../assets/images/Company Documentation/view.svg"
-import { Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QmsInterestedParties = () => {
@@ -33,6 +33,14 @@ const QmsInterestedParties = () => {
   const handleDelete = (id) => {
     setFormData(formData.filter(item => item.id !== id));
   };
+
+  const handleEditinterestedParties = () => {
+    navigate('/company/qms/edit-interested-parties')
+  }
+
+  const handleViewinterestedParties = () => {
+    navigate('/company/qms/view-interested-parties')
+  }
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -128,12 +136,16 @@ const QmsInterestedParties = () => {
                   <td className="px-4 text-left">{item.expectations}</td>
                   <td className="px-4 text-left">{item.date}</td>
                   <td className="px-4 text-center">
-                    <button className="text-gray-300 hover:text-white">
+                    <button className="text-gray-300 hover:text-white"
+                      onClick={handleViewinterestedParties}
+                    >
                       <img src={views} alt="View Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
                   <td className="px-4 text-center">
-                    <button className="text-gray-300 hover:text-white">
+                    <button className="text-gray-300 hover:text-white"
+                      onClick={handleEditinterestedParties}
+                    >
                       <img src={edits} alt="Edit Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>

@@ -34,8 +34,8 @@ const NotificationItem = ({ notification, onView }) => {
             completed: !!manual.written_at
         });
         
-        // Only include Checked By if checked_by exists
-        if (manual.checked_by || manual.checked_at) {
+        // Only include Checked By if checked_at exists
+        if (manual.checked_at) {
             stages.push({
                 status: 'Checked By',
                 user: formatUser(manual.checked_by),
@@ -44,8 +44,8 @@ const NotificationItem = ({ notification, onView }) => {
             });
         }
         
-        // Only include Approved By if approved_by exists
-        if (manual.approved_by || manual.approved_at) {
+        // Only include Approved By if approved_at exists
+        if (manual.approved_at) {
             stages.push({
                 status: 'Approved By',
                 user: formatUser(manual.approved_by),
@@ -54,8 +54,8 @@ const NotificationItem = ({ notification, onView }) => {
             });
         }
         
-        // Add Published stage
-        if (manual.status === 'Published' || manual.published_at) {
+        // Add Published stage only if published_at exists or status is 'Published'
+        if (manual.published_at || manual.status === 'Published') {
             stages.push({
                 status: 'Published',
                 user: formatUser(manual.published_user),
