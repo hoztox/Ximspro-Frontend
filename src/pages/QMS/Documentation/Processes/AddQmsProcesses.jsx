@@ -46,6 +46,10 @@ const AddQmsProcesses = () => {
         }
     };
 
+    const handleDraftProcesses = () => {
+        navigate('/company/qms/draft-processes')
+    }
+
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -187,7 +191,30 @@ const AddQmsProcesses = () => {
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-4 mt-8">
+                        <div className='flex items-end justify-end'>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="send_notification"
+                                    className="mr-2 form-checkboxes"
+                                    checked={formData.send_notification}
+                                    onChange={handleInputChange}
+                                />
+
+
+                                <span className="permissions-texts cursor-pointer">Send Notification</span>
+                            </label>
+                        </div>
+                        <div>
+                            <button
+                                className="request-correction-btn duration-200"
+                                onClick={handleDraftProcesses}
+                            >
+                                Save as Draft
+                            </button>
+                        </div>
+
+                        <div className="flex justify-end space-x-5">
                             <button
                                 type="button"
                                 onClick={handleCancel}

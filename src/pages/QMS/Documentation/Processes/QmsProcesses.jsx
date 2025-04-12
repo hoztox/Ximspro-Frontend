@@ -14,6 +14,7 @@ const QmsProcesses = () => {
   ]);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [draftCount, setDraftCount] = useState();
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const recordsPerPage = 10;
@@ -25,6 +26,9 @@ const QmsProcesses = () => {
   const totalRecords = filteredData.length;
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
 
+  // const draftResponse = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
+  // setDraftCount(draftResponse.data.count);
+
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -33,6 +37,10 @@ const QmsProcesses = () => {
 
   const handleAddProcesses = () => {
     navigate('/company/qms/add-processes')
+  }
+
+  const handleDraftProcesses = () => {
+    navigate('/company/qms/draft-processes')
   }
 
   const handleViewProcesses = () => {
@@ -46,7 +54,7 @@ const QmsProcesses = () => {
   const handleDelete = (id) => {
     setFormData(formData.filter(item => item.id !== id));
   };
- 
+
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -101,6 +109,17 @@ const QmsProcesses = () => {
             </div>
           </div>
           <button
+            className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+            onClick={handleDraftProcesses}
+          >
+            <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-56">
+                {draftCount}
+              </span>
+            )}
+          </button>
+          <button
             onClick={handleAddProcesses}
             className="flex items-center justify-center add-manual-btn gap-[10px] !w-[186px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           >
@@ -135,14 +154,14 @@ const QmsProcesses = () => {
                   <td className="px-4 text-left qms-interested-parties-data">{item.date}</td>
                   <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
-                     onClick={() => handleViewProcesses()}
+                      onClick={() => handleViewProcesses()}
                     >
                       <img src={views} alt="View Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
                   <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
-                    onClick={() => handleEditProcesses()}
+                      onClick={() => handleEditProcesses()}
                     >
                       <img src={edits} alt="Edit Icon" className="w-[16px] h-[16px]" />
                     </button>

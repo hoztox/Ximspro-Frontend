@@ -196,8 +196,21 @@ const EditQmsProcesses = () => {
                                 </div>
                             </div>
                         </div>
+                        <div className='flex items-end justify-end'>
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="send_notification"
+                                    className="mr-2 form-checkboxes"
+                                    checked={formData.send_notification}
+                                    onChange={handleInputChange}
+                                />
+                                <span className="permissions-texts cursor-pointer">Send Notification</span>
+                            </label>
+                        </div>
+                        <div></div>
 
-                        <div className="flex justify-end space-x-4 mt-8">
+                        <div className="flex justify-end space-x-5">
                             <button
                                 type="button"
                                 onClick={handleCancel}

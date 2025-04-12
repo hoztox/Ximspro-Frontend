@@ -124,6 +124,11 @@ import AddQmsProcesses from "./pages/QMS/Documentation/Processes/AddQmsProcesses
 import ViewQmsProcesses from "./pages/QMS/Documentation/Processes/ViewQmsProcesses";
 import EditQmsProcesses from "./pages/QMS/Documentation/Processes/EditQmsProcesses";
 import QmsAddCompliance from "./pages/QMS/Compliance/QmsAddCompliance";
+import DraftQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/DraftQmsInterestedParties";
+import EditDraftQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/EditDraftQmsInterestedParties";
+import DraftQmsProcesses from "./pages/QMS/Documentation/Processes/DraftQmsProcesses";
+import EditQmsDraftProcesses from "./pages/QMS/Documentation/Processes/EditQmsDraftProcesses";
+import ViewQmsDraftInterestedParties from "./pages/QMS/Documentation/InterestedParties/ViewQmsDraftInterestedParties";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -181,8 +186,11 @@ const ThemedApp = () => {
 
           <Route path="qms/interested-parties" element={<QmsInterestedParties />} />
           <Route path="qms/add-interested-parties" element={<AddQmsInterestedParties />} />
-          <Route path="qms/edit-interested-parties" element={<EditQmsInterestedParties />} />
-          <Route path="qms/view-interested-parties" element={<ViewQmsInterestedParties />} />
+          <Route path="qms/edit-interested-parties/:id" element={<EditQmsInterestedParties />} />
+          <Route path="qms/view-interested-parties/:id" element={<ViewQmsInterestedParties />} />
+          <Route path="qms/draft-interested-parties" element={<DraftQmsInterestedParties />} />
+          <Route path="qms/edit-draft-interested-parties/:id" element={<EditDraftQmsInterestedParties />} />
+          <Route path="qms/view-draft-interested-parties/:id" element={<ViewQmsDraftInterestedParties />} />
 
 
 
@@ -190,6 +198,8 @@ const ThemedApp = () => {
           <Route path="qms/add-processes" element={<AddQmsProcesses/>} />
           <Route path="qms/view-processes" element={<ViewQmsProcesses/>} />
           <Route path="qms/edit-processes" element={<EditQmsProcesses/>} />
+          <Route path="qms/draft-processes" element={<DraftQmsProcesses/>} />
+          <Route path="qms/edit-draft-processes" element={<EditQmsDraftProcesses/>} />
 
 
 

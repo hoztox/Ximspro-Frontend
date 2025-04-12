@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import file from "../../../assets/images/Company Documentation/file-icon.svg"
 import "./qmsaddcompliance.css";
 
 const QmsAddCompliance = () => {
@@ -17,6 +18,8 @@ const QmsAddCompliance = () => {
         relatedDocument: '',
         revision: ''
     });
+
+        const [selectedFile, setSelectedFile] = useState(null);
 
     const [dropdowns, setDropdowns] = useState({
         type: false,
@@ -89,15 +92,17 @@ const QmsAddCompliance = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
                 <h2 className="add-compliance-head">Add Compliance / Obligation</h2>
-                <button className="border border-gray-600 px-4 py-2 rounded-md text-sm">
-                    List Compliance / Obligation
+                <button
+                    className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                >
+                    <span>List Compliance / Obligation</span>
                 </button>
             </div>
             <form onSubmit={handleSubmit} className='px-[122px]'>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* Name/Title */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">
+                        <label className="add-compliance-label">
                             Compliance/Obligation Name/Title
                         </label>
                         <input
@@ -105,13 +110,13 @@ const QmsAddCompliance = () => {
                             name="name"
                             value={formData.name}
                             onChange={handleInputChange}
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs"
                         />
                     </div>
 
                     {/* Number */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">
+                        <label className="add-compliance-label">
                             Compliance/Obligation Number <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -120,13 +125,13 @@ const QmsAddCompliance = () => {
                             value={formData.number}
                             onChange={handleInputChange}
                             required
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs"
                         />
                     </div>
 
                     {/* Type */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">
+                        <label className="add-compliance-label">
                             Compliance/Obligation Type
                         </label>
                         <div className="relative">
@@ -136,7 +141,7 @@ const QmsAddCompliance = () => {
                                 onChange={handleInputChange}
                                 onFocus={() => handleDropdownFocus('type')}
                                 onBlur={() => handleDropdownBlur('type')}
-                                className="appearance-none w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                                className="appearance-none w-full add-compliance-inputs"
                             >
                                 <option value="">Select Compliance/Obligation Type</option>
                                 <option value="legal">Legal</option>
@@ -148,7 +153,7 @@ const QmsAddCompliance = () => {
                                 className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 transition-transform duration-300 ${dropdowns.type ? 'rotate-180' : ''
                                     }`}
                             >
-                               <ChevronDown size={20}/>
+                                <ChevronDown size={20} />
                             </div>
                         </div>
 
@@ -156,7 +161,7 @@ const QmsAddCompliance = () => {
 
                     {/* Date */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">Date</label>
+                        <label className="add-compliance-label">Date</label>
                         <div className="grid grid-cols-3 gap-2">
                             <div className="relative">
                                 <select
@@ -165,7 +170,7 @@ const QmsAddCompliance = () => {
                                     onChange={handleInputChange}
                                     onFocus={() => handleDropdownFocus('day')}
                                     onBlur={() => handleDropdownBlur('day')}
-                                    className="appearance-none w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                                    className="appearance-none w-full add-compliance-inputs"
                                 >
                                     <option value="">dd</option>
                                     {[...Array(31)].map((_, i) => (
@@ -176,7 +181,7 @@ const QmsAddCompliance = () => {
                                     className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 transition-transform duration-300 ${dropdowns.day ? 'rotate-180' : ''
                                         }`}
                                 >
-                                   <ChevronDown size={20}/>
+                                    <ChevronDown size={20} />
                                 </div>
                             </div>
 
@@ -187,7 +192,7 @@ const QmsAddCompliance = () => {
                                     onChange={handleInputChange}
                                     onFocus={() => handleDropdownFocus('month')}
                                     onBlur={() => handleDropdownBlur('month')}
-                                    className="appearance-none w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                                    className="appearance-none w-full add-compliance-inputs"
                                 >
                                     <option value="">mm</option>
                                     {[...Array(12)].map((_, i) => (
@@ -198,7 +203,7 @@ const QmsAddCompliance = () => {
                                     className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 transition-transform duration-300 ${dropdowns.month ? 'rotate-180' : ''
                                         }`}
                                 >
-                                   <ChevronDown size={20}/>
+                                    <ChevronDown size={20} />
                                 </div>
                             </div>
 
@@ -209,7 +214,7 @@ const QmsAddCompliance = () => {
                                     onChange={handleInputChange}
                                     onFocus={() => handleDropdownFocus('year')}
                                     onBlur={() => handleDropdownBlur('year')}
-                                    className="appearance-none w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                                    className="appearance-none w-full add-compliance-inputs"
                                 >
                                     <option value="">yyyy</option>
                                     {[...Array(10)].map((_, i) => (
@@ -220,7 +225,7 @@ const QmsAddCompliance = () => {
                                     className={`pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 transition-transform duration-300 ${dropdowns.year ? 'rotate-180' : ''
                                         }`}
                                 >
-                                   <ChevronDown size={20}/>
+                                    <ChevronDown size={20} />
                                 </div>
                             </div>
                         </div>
@@ -228,7 +233,7 @@ const QmsAddCompliance = () => {
 
                     {/* Attach Document */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">Attach Document</label>
+                        <label className="add-compliance-label">Attach Document</label>
                         <div className="relative">
                             <input
                                 type="file"
@@ -236,68 +241,65 @@ const QmsAddCompliance = () => {
                                 className="hidden"
                                 onChange={handleFileChange}
                             />
-                            <div className="flex">
-                                <label
-                                    htmlFor="document"
-                                    className="bg-gray-800 border border-gray-700 text-gray-300 w-full py-2.5 px-4 rounded-md cursor-pointer truncate flex justify-between items-center"
-                                >
-                                    <span>Choose File</span>
-                                    <span className="text-gray-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fillRule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clipRule="evenodd" />
-                                        </svg>
-                                    </span>
-                                </label>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">{fileName}</p>
+                            <button
+                                type="button"
+                                className="w-full add-qmsmanual-attach"
+                                onClick={() => document.getElementById('fileInput').click()}
+                            >
+                                <span className="file-input">
+                                    {selectedFile ? selectedFile : "Choose File"}
+                                </span>
+                                <img src={file} alt="File Icon" />
+                            </button>
+                            {!selectedFile && <p className="text-right no-file">No file chosen</p>}
                         </div>
                     </div>
 
                     {/* Relate Business Process */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">Relate Business Process</label>
+                        <label className="add-compliance-label">Relate Business Process</label>
                         <input
                             type="text"
                             name="businessProcess"
                             value={formData.businessProcess}
                             onChange={handleInputChange}
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs"
                         />
                     </div>
 
                     {/* Remarks */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">Compliance/Obligation Remarks</label>
+                        <label className="add-compliance-label">Compliance/Obligation Remarks</label>
                         <textarea
                             name="remarks"
                             value={formData.remarks}
                             onChange={handleInputChange}
                             rows="4"
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs !h-[98px]"
                         ></textarea>
                     </div>
 
                     {/* Related Document */}
                     <div>
-                        <label className="block mb-2 text-sm font-medium">Relate Document/ Process</label>
+                        <label className="add-compliance-label">Relate Document/ Process</label>
                         <textarea
                             name="relatedDocument"
                             value={formData.relatedDocument}
                             onChange={handleInputChange}
                             rows="4"
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs !h-[98px]"
                         ></textarea>
                     </div>
 
                     {/* Revision */}
                     <div className="md:col-span-2">
-                        <label className="block mb-2 text-sm font-medium">Revision</label>
+                        <label className="add-compliance-label">Revision</label>
                         <input
                             type="text"
                             name="revision"
                             value={formData.revision}
                             onChange={handleInputChange}
-                            className="w-full bg-gray-800 rounded-md p-2.5 border border-gray-700 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full add-compliance-inputs"
                         />
                     </div>
                 </div>

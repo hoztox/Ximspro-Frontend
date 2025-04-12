@@ -6,9 +6,10 @@ import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-const ViewQmsInterestedParties = () => {
+
+const ViewQmsDraftInterestedParties = () => {
     const navigate = useNavigate();
-    const { id } = useParams();  
+    const { id } = useParams();
     const [formData, setFormData] = useState(null);
     const handleClose = () => {
         navigate('/company/qms/interested-parties');
@@ -16,13 +17,13 @@ const ViewQmsInterestedParties = () => {
     const handleDelete = () => {
         setFormData(null);
     };
-    
+
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
                 setFormData(response.data);
-                console.log("sssssssssssss",response.data)
+                console.log("sssssssssssss", response.data)
             } catch (error) {
                 console.error("Failed to fetch interested party data", error);
             }
@@ -80,20 +81,11 @@ const ViewQmsInterestedParties = () => {
                             <label className="block view-interested-parties-label mb-[6px]">Applicable Legal/Regulatory Requirements</label>
                             <div className="text-white view-interested-parties-data">{formData.legal_requirements}</div>
                         </div>
-                        <div className="flex justify-end space-x-10">
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]">
-                                <span>Edit</span>
-                                <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
-                            </button>
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]" onClick={handleDelete}>
-                                <span>Delete</span>
-                                <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-export default ViewQmsInterestedParties;
+
+export default ViewQmsDraftInterestedParties

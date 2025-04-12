@@ -71,7 +71,8 @@ const DocumentationSubmenu = (props) => {
       relatedPaths: ["/company/qms/add-interested-parties",
         "/company/qms/edit-interested-parties",
         "/company/qms/view-interested-parties",
-
+        "/company/qms/draft-interested-parties",
+        "/company/qms/edit-draft-interested-parties",
       ]
     },
     {
