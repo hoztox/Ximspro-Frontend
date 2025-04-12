@@ -18,8 +18,14 @@ const QmsInterestedParties = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const recordsPerPage = 10;
-  const totalRecords = 31; // This would normally come from your API
-  const totalPages = Math.ceil(totalRecords / recordsPerPage);
+  const filteredData = formData.filter(item =>
+    Object.values(item).some(
+      value => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+  const totalRecords = filteredData.length;
+const totalPages = Math.ceil(totalRecords / recordsPerPage);
+
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -71,11 +77,6 @@ const QmsInterestedParties = () => {
   };
 
   // Filter data based on search term
-  const filteredData = formData.filter(item =>
-    Object.values(item).some(
-      value => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
 
   // Get current records for the current page
   const currentRecords = filteredData.slice(

@@ -14,6 +14,7 @@ const AddQmsInterestedParties = () => {
     expectations: '',
     specialRequirements: '',
     legalRequirements: '',
+    customLegalRequirements: '', // Added for custom N/A input
     file: null,
   });
 
@@ -22,13 +23,15 @@ const AddQmsInterestedParties = () => {
     legalRequirements: false,
   });
 
+  // State to control the visibility of the custom text area
+  const [showCustomField, setShowCustomField] = useState(false);
+
   const toggleDropdown = (field) => {
     setDropdownRotation((prev) => ({
       ...prev,
       [field]: !prev[field],
     }));
   };
-
 
   const [fileName, setFileName] = useState('No file chosen');
 
@@ -38,6 +41,11 @@ const AddQmsInterestedParties = () => {
       ...formData,
       [name]: value
     });
+    
+    // Check if the legal requirements dropdown is set to N/A to show the custom field
+    if (name === 'legalRequirements') {
+      setShowCustomField(value === 'N/A');
+    }
   };
 
   const handleFileChange = (e) => {
@@ -94,15 +102,12 @@ const AddQmsInterestedParties = () => {
                 >
                   <option value="Internal">Internal</option>
                   <option value="External">External</option>
-                  <option value="Vendor">Vendor</option>
-                  <option value="Client">Client</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
                   <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.category ? 'rotate-180' : ''
                     }`} />
                 </div>
               </div>
-
             </div>
           </div>
 
@@ -149,7 +154,7 @@ const AddQmsInterestedParties = () => {
             </div>
 
             <div>
-              <label className="block  mb-3 add-qms-manual-label">Applicable Legal/Regulatory Requirements</label>
+              <label className="block mb-3 add-qms-manual-label">Applicable Legal/Regulatory Requirements</label>
               <div className="relative">
                 <select
                   name="legalRequirements"
@@ -164,17 +169,32 @@ const AddQmsInterestedParties = () => {
                   <option value="HIPAA">HIPAA</option>
                   <option value="CCPA">CCPA</option>
                   <option value="SOX">SOX</option>
+                  <option value="N/A">N/A</option>
                 </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legalRequirements ? 'rotate-180' : ''
                     }`} />
                 </div>
               </div>
-
+              
+              {/* Animated container for the custom field */}
+              <div 
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                  showCustomField ? 'h-32 mt-3 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <textarea
+                  name="customLegalRequirements"
+                  placeholder="Please specify"
+                  value={formData.customLegalRequirements}
+                  onChange={handleInputChange}
+                  className="w-full add-qms-intertested-inputs !h-[118px]"
+                />
+              </div>
             </div>
 
-            <div className="mb-6">
-              <label className="block  mb-3 add-qms-manual-label">Upload File</label>
+            <div className="">
+              <label className="block mb-3 add-qms-manual-label">Upload File</label>
               <div className="relative">
                 <input
                   type="file"
@@ -218,4 +238,4 @@ const AddQmsInterestedParties = () => {
   );
 };
 
-export default AddQmsInterestedParties
+export default AddQmsInterestedParties;
