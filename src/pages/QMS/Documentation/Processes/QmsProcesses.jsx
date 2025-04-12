@@ -17,8 +17,14 @@ const QmsProcesses = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
   const recordsPerPage = 10;
-  const totalRecords = 31; // This would normally come from your API
+  const filteredData = formData.filter(item =>
+    Object.values(item).some(
+      value => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+  const totalRecords = filteredData.length;
   const totalPages = Math.ceil(totalRecords / recordsPerPage);
+
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -29,18 +35,18 @@ const QmsProcesses = () => {
     navigate('/company/qms/add-processes')
   }
 
+  const handleViewProcesses = () => {
+    navigate('/company/qms/view-processes')
+  }
+
+  const handleEditProcesses = () => {
+    navigate('/company/qms/edit-processes')
+  }
+
   const handleDelete = (id) => {
     setFormData(formData.filter(item => item.id !== id));
   };
-
-  const handleEditinterestedParties = () => {
-    navigate('/company/qms/edit-interested-parties')
-  }
-
-  const handleViewinterestedParties = () => {
-    navigate('/company/qms/view-interested-parties')
-  }
-
+ 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -70,11 +76,6 @@ const QmsProcesses = () => {
   };
 
   // Filter data based on search term
-  const filteredData = formData.filter(item =>
-    Object.values(item).some(
-      value => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
 
   // Get current records for the current page
   const currentRecords = filteredData.slice(
@@ -101,7 +102,7 @@ const QmsProcesses = () => {
           </div>
           <button
             onClick={handleAddProcesses}
-            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+            className="flex items-center justify-center add-manual-btn gap-[10px] !w-[186px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           >
             <span>Add Processes</span>
             <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
@@ -126,27 +127,27 @@ const QmsProcesses = () => {
           <tbody>
             {currentRecords.length > 0 ? (
               currentRecords.map((item) => (
-                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px]">
-                  <td className="px-4 text-left">{item.id}</td>
-                  <td className="px-4 text-left">{item.name}</td>
-                  <td className="px-4 text-left">{item.identification}</td>
-                  <td className="px-4 text-left">{item.type}</td>
-                  <td className="px-4 text-left">{item.date}</td>
-                  <td className="px-4 text-center">
+                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                  <td className="px-4 text-left qms-interested-parties-data">{item.id}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.name}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.identification}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.type}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.date}</td>
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
-                      onClick={handleViewinterestedParties}
+                     onClick={() => handleViewProcesses()}
                     >
                       <img src={views} alt="View Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
-                  <td className="px-4 text-center">
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
-                      onClick={handleEditinterestedParties}
+                    onClick={() => handleEditProcesses()}
                     >
                       <img src={edits} alt="Edit Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
-                  <td className="px-4 text-center">
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button
                       className="text-gray-300 hover:text-white"
                       onClick={() => handleDelete(item.id)}
@@ -211,5 +212,6 @@ const QmsProcesses = () => {
     </div>
   );
 }
+
 
 export default QmsProcesses

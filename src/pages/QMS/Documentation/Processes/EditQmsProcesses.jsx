@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate } from 'react-router-dom';
 
-const AddQmsProcesses = () => {
+const EditQmsProcesses = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -12,7 +12,7 @@ const AddQmsProcesses = () => {
         identifications: '',
         specialRequirements: '',
         related_procedures: '',
-        custom_related_procedures: '', // Added for custom N/A input
+        custom_related_procedures: '',
         file: null,
     });
 
@@ -21,7 +21,7 @@ const AddQmsProcesses = () => {
         related_procedures: false,
     });
 
-    // State to control the visibility of the custom text area
+
     const [showCustomField, setShowCustomField] = useState(false);
 
     const toggleDropdown = (field) => {
@@ -40,7 +40,7 @@ const AddQmsProcesses = () => {
             [name]: value
         });
 
-        // Check if the legal requirements dropdown is set to N/A to show the custom field
+
         if (name === 'related_procedures') {
             setShowCustomField(value === 'N/A');
         }
@@ -59,9 +59,9 @@ const AddQmsProcesses = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // You can process the form data here
+
         console.log('Form submitted:', formData);
-        // Then you might want to reset the form or redirect
+
     };
 
     const handleCancel = () => {
@@ -70,7 +70,7 @@ const AddQmsProcesses = () => {
 
     return (
         <div className="bg-[#1C1C24] p-5 rounded-lg text-white ">
-            <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">Add Processes</h1>
+            <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">Edit Processes</h1>
 
             <form onSubmit={handleSubmit} className='px-[122px]'>
                 <div className="pt-6">
@@ -176,14 +176,24 @@ const AddQmsProcesses = () => {
                                 <button
                                     type="button"
                                     className="w-full add-qmsmanual-attach"
-                                    onClick={() => document.getElementById('fileInput').click()}
+                                    onClick={() => document.getElementById("fileInput").click()}
                                 >
                                     <span className="file-input">
                                         {selectedFile ? selectedFile : "Choose File"}
                                     </span>
                                     <img src={file} alt="File Icon" />
                                 </button>
-                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                <div className="flex justify-between items-center">
+                                    <button className="flex items-center mt-[10.65px] gap-[8px]">
+                                        <p className="click-view-file-btn text-[#1E84AF] ">
+                                            Click to view file
+                                        </p>
+                                        <Eye size={16} className="text-[#1E84AF] " />
+                                    </button>
+                                    {!selectedFile && (
+                                        <p className="text-right no-file">No file chosen</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -209,5 +219,4 @@ const AddQmsProcesses = () => {
     );
 };
 
-
-export default AddQmsProcesses
+export default EditQmsProcesses

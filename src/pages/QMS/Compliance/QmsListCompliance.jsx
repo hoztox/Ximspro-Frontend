@@ -5,6 +5,7 @@ import edits from '../../../assets/images/Company Documentation/edit.svg'
 import deletes from '../../../assets/images/Company Documentation/delete.svg'
 import view from '../../..//assets/images/Company Documentation/view.svg'
 import "./qmslistcompliance.css";
+import { useNavigate } from 'react-router-dom';
 
 
 const QmsListCompliance = () => {
@@ -15,41 +16,13 @@ const QmsListCompliance = () => {
 
     // State for form data management
     const [complianceData, setComplianceData] = useState(initialData);
-    const [formData, setFormData] = useState({
-        title: "",
-        complianceNo: "",
-        revision: "",
-        date: new Date().toISOString().split('T')[0]
-    });
     const [searchQuery, setSearchQuery] = useState("");
-    const [showAddForm, setShowAddForm] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const navigate = useNavigate();
     const [itemsPerPage] = useState(10);
 
-    // Form handlers
-    const handleFormChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
     const handleAddCompliance = () => {
-        const newId = complianceData.length > 0 ? Math.max(...complianceData.map(item => item.id)) + 1 : 1;
-        const newEntry = {
-            id: newId,
-            title: formData.title || "Anonymous",
-            complianceNo: formData.complianceNo || "Anonymous",
-            revision: formData.revision || "Revision",
-            date: formData.date || new Date().toLocaleDateString('en-GB').split('/').join('-')
-        };
-
-        setComplianceData([...complianceData, newEntry]);
-        setFormData({
-            title: "",
-            complianceNo: "",
-            revision: "",
-            date: new Date().toISOString().split('T')[0]
-        });
-        setShowAddForm(false);
+        navigate('/company/qms/add-compliance')
     };
 
     const handleSearch = (e) => {
@@ -85,7 +58,7 @@ const QmsListCompliance = () => {
                                 placeholder="Search..."
                                 value={searchQuery}
                                 onChange={handleSearch}
-                                className="serach-input-manual focus:outline-none bg-transparent"
+                                className="serach-input-manual focus:outline-none bg-transparent !w-[361px]"
                             />
                             <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
                                 <Search size={18} />
@@ -93,6 +66,7 @@ const QmsListCompliance = () => {
                         </div>
                         <button
                            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                           onClick={() => handleAddCompliance()}
                         >
                             <span>Add Compliance</span>
                             <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
@@ -148,20 +122,18 @@ const QmsListCompliance = () => {
                         </table>
                     </div>
 
-                    <div className="px-4 py-3 flex items-center justify-between">
-                        <div className="text-sm text-gray-400">
+                    <div className="px-4 pt-3 flex items-center justify-between">
+                        <div className="text-white total-text">
                             Total-{filteredData.length}
                         </div>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex items-center gap-5">
                             <button
                                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                 disabled={currentPage === 1}
-                                className={`px-2 py-1 rounded ${currentPage === 1 ? 'text-gray-600' : 'text-gray-400 hover:text-white'}`}
+                                className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                             >
-                                <ChevronLeft className="h-5 w-5" />
+                                Previous
                             </button>
-
-                            <span className="text-gray-400">Previous</span>
 
                             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                                 const pageNum = i + 1;
@@ -169,22 +141,19 @@ const QmsListCompliance = () => {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 text-sm rounded-md flex items-center justify-center ${currentPage === pageNum ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700'
-                                            }`}
+                                          className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
                                     >
                                         {pageNum}
                                     </button>
                                 );
                             })}
 
-                            <span className="text-gray-400">Next</span>
-
                             <button
                                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                 disabled={currentPage === totalPages || totalPages === 0}
-                                className={`px-2 py-1 rounded ${currentPage === totalPages || totalPages === 0 ? 'text-gray-600' : 'text-gray-400 hover:text-white'}`}
+                                className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
                             >
-                                <ChevronRight className="h-5 w-5" />
+                                Next
                             </button>
                         </div>
                     </div>

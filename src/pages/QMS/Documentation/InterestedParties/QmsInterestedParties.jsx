@@ -129,28 +129,28 @@ const totalPages = Math.ceil(totalRecords / recordsPerPage);
           <tbody>
             {currentRecords.length > 0 ? (
               currentRecords.map((item) => (
-                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px]">
-                  <td className="px-4 text-left">{item.id}</td>
-                  <td className="px-4 text-left">{item.name}</td>
-                  <td className="px-4 text-left">{item.category}</td>
-                  <td className="px-4 text-left">{item.needs}</td>
-                  <td className="px-4 text-left">{item.expectations}</td>
-                  <td className="px-4 text-left">{item.date}</td>
-                  <td className="px-4 text-center">
+                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                  <td className="px-4 text-left qms-interested-parties-data">{item.id}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.name}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.category}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.needs}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.expectations}</td>
+                  <td className="px-4 text-left qms-interested-parties-data">{item.date}</td>
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
                       onClick={handleViewinterestedParties}
                     >
                       <img src={views} alt="View Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
-                  <td className="px-4 text-center">
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button className="text-gray-300 hover:text-white"
                       onClick={handleEditinterestedParties}
                     >
                       <img src={edits} alt="Edit Icon" className="w-[16px] h-[16px]" />
                     </button>
                   </td>
-                  <td className="px-4 text-center">
+                  <td className="px-4 text-center qms-interested-parties-data">
                     <button
                       className="text-gray-300 hover:text-white"
                       onClick={() => handleDelete(item.id)}

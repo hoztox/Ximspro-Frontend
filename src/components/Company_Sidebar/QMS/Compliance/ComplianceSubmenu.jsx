@@ -18,6 +18,8 @@ const ComplianceSubmenu = (props) => {
       label: "Compliance",
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
       path: "/company/qms/list-compliance",
+      relatedPaths: ["/company/qms/add-compliance",
+      ]
     },
     {
       id: "legal-other-requirements",

@@ -79,7 +79,10 @@ const DocumentationSubmenu = (props) => {
       label: "Processes",
       icon: <img src={process} alt="Processes" className="w-[15px] h-[15px]" />,
       path: "/company/qms/processes",
-      relatedPaths: ["/company/qms/add-processes"]
+      relatedPaths: ["/company/qms/add-processes",
+        "/company/qms/view-processes",
+        "/company/qms/edit-processes",
+      ]
     },
     {
       id: "scope-statements",

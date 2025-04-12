@@ -121,6 +121,9 @@ import AddQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties
 import EditQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/EditQmsInterestedParties";
 import ViewQmsInterestedParties from "./pages/QMS/Documentation/InterestedParties/ViewQmsInterestedParties";
 import AddQmsProcesses from "./pages/QMS/Documentation/Processes/AddQmsProcesses";
+import ViewQmsProcesses from "./pages/QMS/Documentation/Processes/ViewQmsProcesses";
+import EditQmsProcesses from "./pages/QMS/Documentation/Processes/EditQmsProcesses";
+import QmsAddCompliance from "./pages/QMS/Compliance/QmsAddCompliance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -185,6 +188,8 @@ const ThemedApp = () => {
 
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/add-processes" element={<AddQmsProcesses/>} />
+          <Route path="qms/view-processes" element={<ViewQmsProcesses/>} />
+          <Route path="qms/edit-processes" element={<EditQmsProcesses/>} />
 
 
 
@@ -212,7 +217,7 @@ const ThemedApp = () => {
 
            {/* QMS Compliance*/}
            <Route path="qms/list-compliance" element={<QmsListCompliance />} />
-           <Route path="qms/add-compliance" element={<AddQmsInterestedParties />} />
+           <Route path="qms/add-compliance" element={<QmsAddCompliance />} />
 
 
           {/* QMS User Management */}
