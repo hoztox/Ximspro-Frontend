@@ -1,29 +1,91 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import file from "../../../../assets/images/Company Documentation/file-icon.svg"
-import { useNavigate } from 'react-router-dom';
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 
+import { useNavigate, useParams } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from 'axios';
 const AddQmsProcesses = () => {
-    const [selectedFile, setSelectedFile] = useState(null);
+    const { id } = useParams();
+    const isEditing = !!id;
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(isEditing);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
+    // Add state for compliance options
+    const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
     const [formData, setFormData] = useState({
         name: '',
-        processes_type: 'Internal',
-        identifications: '',
-        specialRequirements: '',
-        related_procedures: '',
-        custom_related_procedures: '', // Added for custom N/A input
+        type: 'Stratgic',
+        no: '',
+        legal_requirements: '',
+        custom_legal_requirements: '',
         file: null,
+        company: null,
+        send_notification: false,
     });
-
     const [dropdownRotation, setDropdownRotation] = useState({
-        processes_type: false,
-        related_procedures: false,
+        type: false,
+        legal_requirements: false,
     });
-
-    // State to control the visibility of the custom text area
     const [showCustomField, setShowCustomField] = useState(false);
-
+    const [fileName, setFileName] = useState('No file chosen');
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+    const companyId = getUserCompanyId();
+    useEffect(() => {
+        if (companyId) {
+            setFormData(prev => ({
+                ...prev,
+                company: companyId
+            }));
+            fetchComplianceData();
+        }
+    }, [companyId]);
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+    const fetchComplianceData = async () => {
+        try {
+            if (!companyId) {
+                console.error("Company ID not found");
+                return;
+            }
+            const response = await axios.get(`${BASE_URL}/qms/procedure/${companyId}/`);
+            setLegalRequirementOptions(response.data);
+            console.log("Fetched compliance data:", response.data);
+        } catch (err) {
+            console.error("Error fetching compliance data:", err);
+            setLegalRequirementOptions([
+                { compliance_name: 'GDPR' },
+                { compliance_name: 'HIPAA' },
+                { compliance_name: 'CCPA' },
+                { compliance_name: 'SOX' }
+            ]);
+        }
+    };
     const toggleDropdown = (field) => {
         setDropdownRotation((prev) => ({
             ...prev,
@@ -31,25 +93,16 @@ const AddQmsProcesses = () => {
         }));
     };
 
-    const [fileName, setFileName] = useState('No file chosen');
-
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value,
         });
-
-        // Check if the legal requirements dropdown is set to N/A to show the custom field
-        if (name === 'related_procedures') {
+        if (name === 'legal_requirements') {
             setShowCustomField(value === 'N/A');
         }
     };
-
-    const handleDraftProcesses = () => {
-        navigate('/company/qms/draft-processes')
-    }
-
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -61,21 +114,128 @@ const AddQmsProcesses = () => {
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // You can process the form data here
-        console.log('Form submitted:', formData);
-        // Then you might want to reset the form or redirect
+        setSubmitting(true);
+        setError(null);
+        const submitData = new FormData();
+        // Only include the specific fields requested
+        submitData.append('name', formData.name);
+        submitData.append('type', formData.type);
+        submitData.append('no', formData.no);
+        submitData.append('legal_requirements', formData.legal_requirements);
+
+        // Only add custom_legal_requirements if it has a value
+        if (formData.custom_legal_requirements) {
+            submitData.append('custom_legal_requirements', formData.custom_legal_requirements);
+        }
+        // Add file if it exists
+        if (formData.file instanceof File) {
+            submitData.append('file', formData.file);
+        }
+        // Add company ID
+        if (formData.company) {
+            submitData.append('company', formData.company);
+        }
+
+        submitData.append('send_notification', formData.send_notification);
+        console.log("Data being sent:", Object.fromEntries(submitData.entries()));
+        try {
+            const response = await axios.post(`${BASE_URL}/qms/processes/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            console.log("Response from server:", response.data);
+            navigate('/company/qms/processes');
+        } catch (err) {
+            setError("Failed to save. Please check your inputs and try again.");
+            console.error("Error submitting form:", err);
+            console.error("Error details:", err.response?.data);
+            setSubmitting(false);
+        }
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/processes')
+        navigate('/company/qms/processes');
     };
 
-    return (
-        <div className="bg-[#1C1C24] p-5 rounded-lg text-white ">
-            <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">Add Processes</h1>
+    if (loading) {
+        return (
+            <div className="bg-[#1C1C24] p-5 rounded-lg text-white flex justify-center items-center h-64">
+                <p>Loading...</p>
+            </div>
+        );
+    }
+    const handleSaveAsDraft = async () => {
+        try {
+            setLoading(true);
 
+            const companyId = getUserCompanyId();
+            const userId = getRelevantUserId();
+
+            if (!companyId || !userId) {
+                setError('Company ID or User ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+
+            submitData.append('company', companyId);
+            submitData.append('user', userId);
+            submitData.append('is_draft', true);
+
+            // Add the specific fields requested
+            submitData.append('name', formData.name);
+            submitData.append('type', formData.type);
+            submitData.append('no', formData.no);
+            submitData.append('legal_requirements', formData.legal_requirements);
+
+            if (formData.custom_legal_requirements) {
+                submitData.append('custom_legal_requirements', formData.custom_legal_requirements);
+            }
+
+            // Corrected file handling
+            if (formData.file) {
+                submitData.append('file', formData.file);
+            }
+
+            submitData.append('send_notification', formData.send_notification);
+
+            console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+
+            const response = await axios.post(
+                `${BASE_URL}/qms/processes/draft-create/`,
+                submitData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            setLoading(false);
+            alert('Draft saved successfully!');
+            navigate('/company/qms/processes');
+
+        } catch (err) {
+            setLoading(false);
+            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+            setError(errorMessage);
+            console.error('Error saving Draft:', err.response?.data || err);
+        }
+    };
+    return (
+        <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
+            <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
+                Add Processes
+            </h1>
+            {error && (
+                <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
+                    {error}
+                </div>
+            )}
             <form onSubmit={handleSubmit} className='px-[122px]'>
                 <div className="pt-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -88,87 +248,89 @@ const AddQmsProcesses = () => {
                                 value={formData.name}
                                 onChange={handleInputChange}
                                 className="w-full add-qms-intertested-inputs"
+                                required
                             />
                         </div>
 
+
                         <div>
-                            <label className="block mb-3 add-qms-manual-label">Processes No/Identification</label>
+                            <label className="block mb-3 add-qms-manual-label">Process No/Identification</label>
                             <input
-                                type="text"
-                                name="identifications"
-                                placeholder="Enter Processes No/identification"
-                                value={formData.identifications}
+                                type='text'
+                                name="no"
+                                placeholder="Enter Process Number"
+                                value={formData.no}
                                 onChange={handleInputChange}
                                 className="w-full add-qms-intertested-inputs"
-                                rows="3"
                             />
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label className="block  mb-3 add-qms-manual-label">Processes Type</label>
+                            <label className="block mb-3 add-qms-manual-label">Process Type</label>
                             <div className="relative">
                                 <select
-                                    name="processes_type"
-                                    value={formData.processes_type}
+                                    name="type"
+                                    value={formData.type}
                                     onChange={handleInputChange}
-                                    onFocus={() => toggleDropdown('processes_type')}
-                                    onBlur={() => toggleDropdown('processes_type')}
+                                    onFocus={() => toggleDropdown('type')}
+                                    onBlur={() => toggleDropdown('type')}
                                     className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
+                                    required
                                 >
-                                    <option value="Internal">Internal</option>
-                                    <option value="External">External</option>
+                                    <option value="Stratgic">Strategic</option>
+                                    <option value="Operational">Operational</option>
+                                    <option value="Support">Support</option>
+                                    <option value="Monitoring/Measurment">Monitoring/Measurment</option>
+                                    <option value="Outsource">Outsource</option>
+
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
-                                    <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.processes_type ? 'rotate-180' : ''
-                                        }`} />
+                                    <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.type ? 'rotate-180' : ''}`} />
                                 </div>
                             </div>
                         </div>
-
                         <div>
-                            <label className="block mb-3 add-qms-manual-label">Related Procedures</label>
+                            <label className="block mb-3 add-qms-manual-label">Related Procedure</label>
                             <div className="relative">
                                 <select
-                                    name="related_procedures"
-                                    value={formData.related_procedures}
+                                    name="legal_requirements"
+                                    value={formData.legal_requirements}
                                     onChange={handleInputChange}
-                                    onFocus={() => toggleDropdown('related_procedures')}
-                                    onBlur={() => toggleDropdown('related_procedures')}
+                                    onFocus={() => toggleDropdown('legal_requirements')}
+                                    onBlur={() => toggleDropdown('legal_requirements')}
                                     className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                                 >
                                     <option value="">Choose</option>
-                                    <option value="GDPR">GDPR</option>
-                                    <option value="HIPAA">HIPAA</option>
-                                    <option value="CCPA">CCPA</option>
-                                    <option value="SOX">SOX</option>
+                                    {legalRequirementOptions
+                                        .filter(option =>
+                                            !['GDPR', 'HIPAA', 'CCPA', 'SOX'].includes(option.compliance_name))
+                                        .map((option, index) => (
+                                            <option key={index} value={option.title}>
+                                                {option.title}
+                                            </option>
+                                        ))}
                                     <option value="N/A">N/A</option>
                                 </select>
                                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                    <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.related_procedures ? 'rotate-180' : ''
-                                        }`} />
+                                    <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? 'rotate-180' : ''}`} />
                                 </div>
                             </div>
-
-                            {/* Animated container for the custom field */}
                             <div
-                                className={`overflow-hidden transition-all duration-300 ease-in-out ${showCustomField ? 'h-32 mt-3 opacity-100' : 'max-h-0 opacity-0'
-                                    }`}
+                                className={`overflow-hidden transition-all duration-300 ease-in-out ${showCustomField ? 'h-32 mt-3 opacity-100' : 'max-h-0 opacity-0'}`}
                             >
                                 <textarea
-                                    name="custom_related_procedures"
+                                    name="custom_legal_requirements"
                                     placeholder="Please specify"
-                                    value={formData.custom_related_procedures}
+                                    value={formData.custom_legal_requirements}
                                     onChange={handleInputChange}
                                     className="w-full add-qms-intertested-inputs !h-[118px]"
                                 />
                             </div>
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div className="">
+                        <div>
                             <label className="block mb-3 add-qms-manual-label">Upload File</label>
                             <div className="relative">
                                 <input
@@ -183,14 +345,13 @@ const AddQmsProcesses = () => {
                                     onClick={() => document.getElementById('fileInput').click()}
                                 >
                                     <span className="file-input">
-                                        {selectedFile ? selectedFile : "Choose File"}
+                                        {fileName !== "No file chosen" ? fileName : "Choose File"}
                                     </span>
                                     <img src={file} alt="File Icon" />
                                 </button>
-                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                                {fileName === "No file chosen" && <p className="text-right no-file">No file chosen</p>}
                             </div>
                         </div>
-
                         <div className='flex items-end justify-end'>
                             <label className="flex items-center">
                                 <input
@@ -200,33 +361,33 @@ const AddQmsProcesses = () => {
                                     checked={formData.send_notification}
                                     onChange={handleInputChange}
                                 />
-
-
                                 <span className="permissions-texts cursor-pointer">Send Notification</span>
                             </label>
                         </div>
                         <div>
                             <button
+                                type="button"
+                                onClick={handleSaveAsDraft}
                                 className="request-correction-btn duration-200"
-                                onClick={handleDraftProcesses}
                             >
                                 Save as Draft
                             </button>
                         </div>
-
                         <div className="flex justify-end space-x-5">
                             <button
                                 type="button"
                                 onClick={handleCancel}
                                 className="cancel-btn duration-200"
+                                disabled={submitting}
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 className="save-btn duration-200"
+                                disabled={submitting}
                             >
-                                Save
+                                {submitting ? 'Saving...' : 'Save & Publish'}
                             </button>
                         </div>
                     </div>
@@ -235,6 +396,4 @@ const AddQmsProcesses = () => {
         </div>
     );
 };
-
-
-export default AddQmsProcesses
+export default AddQmsProcesses;

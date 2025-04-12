@@ -10,6 +10,13 @@ const DraftQmsInterestedParties = ({ userId }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
+
+    // const [showDeleteInterestedDraftModal, setShowDeleteInterestedDraftModal] = useState(false);
+    // const [interestedDraftToDelete, setInterestedDraftToDelete] = useState(null);
+    // const [showDeleteInterestedDraftSuccessModal, setShowDeleteInterestedDraftSuccessModal] = useState(false);
+    // const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] = useState(false);
+
+
     const navigate = useNavigate();
     const recordsPerPage = 10;
     const getUserCompanyId = () => {
@@ -40,7 +47,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
         return null;
     };
 
-    
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -67,15 +74,15 @@ const DraftQmsInterestedParties = ({ userId }) => {
         setCurrentPage(1);
     };
     const handleDelete = async (id) => {
-      try {
-        await axios.delete(`${BASE_URL}/qms/interested-parties-get/${id}/`);
-        setFormData(prev => prev.filter(item => item.id !== id));
-      } catch (err) {
-        console.error("Error deleting interested party:", err);
-        alert("Failed to delete the interested party. Please try again.");
-      }
+        try {
+            await axios.delete(`${BASE_URL}/qms/interested-parties-get/${id}/`);
+            setFormData(prev => prev.filter(item => item.id !== id));
+        } catch (err) {
+            console.error("Error deleting interested party:", err);
+            alert("Failed to delete the interested party. Please try again.");
+        }
     };
-    
+
     const handleEdit = (id) => {
         navigate(`/company/qms/edit-draft-interested-parties/${id}`);
     };

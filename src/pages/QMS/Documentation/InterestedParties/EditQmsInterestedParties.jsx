@@ -4,11 +4,18 @@ import { ChevronDown, Eye } from "lucide-react";
 import axios from "axios";
 import fileIcon from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { BASE_URL } from "../../../../Utils/Config";
+import EditQmsInterestedSuccessModal from "./Modals/EditQmsInterestedSuccessModal";
+import EditQmsInterestedErrorModal from "./Modals/EditQmsInterestedErrorModal";
 const EditQmsInterestedParties = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   // Define legal requirement options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
+
+  const [showEditInterestedSuccessModal, setShowEditInterestedSuccessModal] = useState(false);
+  const [showEditQmsInterestedErrorModal, setShowEditQmsInterestedErrorModal] = useState(false);
+
+
   const [formData, setFormData] = useState({
     name: "",
     category: "Internal",
@@ -150,8 +157,17 @@ const EditQmsInterestedParties = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      navigate("/company/qms/interested-parties");
+      setShowEditInterestedSuccessModal(true)
+      setTimeout(() => {
+        setShowEditInterestedSuccessModal(false)
+        navigate("/company/qms/interested-parties");
+      }, 2000);
+
     } catch (err) {
+      setShowEditQmsInterestedErrorModal(true);
+      setTimeout(() => {
+        setShowEditQmsInterestedErrorModal(false);
+      }, 3000);
       console.error("Error updating party:", err);
     }
   };
@@ -163,6 +179,18 @@ const EditQmsInterestedParties = () => {
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
         Edit Interested Parties
       </h1>
+
+      <EditQmsInterestedSuccessModal
+        showEditInterestedSuccessModal={showEditInterestedSuccessModal}
+        onClose={() => { setShowEditInterestedSuccessModal(false) }}
+      />
+
+      <EditQmsInterestedErrorModal
+        showEditQmsInterestedErrorModal={showEditQmsInterestedErrorModal}
+        onClose={() => { setShowEditQmsInterestedErrorModal(false) }}
+      />
+
+
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">

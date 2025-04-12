@@ -196,10 +196,10 @@ const ThemedApp = () => {
 
           <Route path="qms/processes" element={<QmsProcesses />} />
           <Route path="qms/add-processes" element={<AddQmsProcesses/>} />
-          <Route path="qms/view-processes" element={<ViewQmsProcesses/>} />
-          <Route path="qms/edit-processes" element={<EditQmsProcesses/>} />
+          <Route path="qms/view-processes/:id" element={<ViewQmsProcesses/>} />
+          <Route path="qms/edit-processes/:id" element={<EditQmsProcesses/>} />
           <Route path="qms/draft-processes" element={<DraftQmsProcesses/>} />
-          <Route path="qms/edit-draft-processes" element={<EditQmsDraftProcesses/>} />
+          <Route path="qms/edit-draft-processes/:id" element={<EditQmsDraftProcesses/>} />
 
 
 

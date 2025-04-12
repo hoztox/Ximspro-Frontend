@@ -8,6 +8,10 @@ import { Search } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsInterestedConfirmModal from "./Modals/DeleteQmsInterestedConfirmModal";
+import DeleteQmsInterestedSuccessModal from "./Modals/deleteQmsInterestedSuccessModal";
+import DeleteQmsInterestedErrorModal from "./Modals/DeleteQmsInterestedErrorModal";
+
 const QmsInterestedParties = () => {
   const [formData, setFormData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +22,13 @@ const QmsInterestedParties = () => {
   const navigate = useNavigate();
   const { company_id } = useParams();
   const recordsPerPage = 10;
+
+  const [showDeleteInterestedModal, setShowDeleteInterestedModal] = useState(false);
+  const [interestedToDelete, setInterestedToDelete] = useState(null);
+  const [showDeleteInterestedSuccessModal, setShowDeleteInterestedSuccessModal] = useState(false);
+  const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] = useState(false);
+
+
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
     if (role === "company") {
@@ -86,41 +97,64 @@ const QmsInterestedParties = () => {
     navigate(`/company/qms/add-interested-parties/`);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
+    setInterestedToDelete(id);
+    setShowDeleteInterestedModal(true);
+  };
+
+  const confirmDelete = async () => {
     try {
-      await axios.delete(`${BASE_URL}/qms/interested-parties-get/${id}/`);
-      setFormData(prev => prev.filter(item => item.id !== id));
+      await axios.delete(`${BASE_URL}/qms/interested-parties-get/${interestedToDelete}/`);
+      setFormData(prev => prev.filter(item => item.id !== interestedToDelete));
+      setShowDeleteInterestedModal(false);
+      setShowDeleteInterestedSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteInterestedSuccessModal(false);
+        fetchManuals(); // Refresh the list after deletion
+      }, 2000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
-      alert("Failed to delete the interested party. Please try again.");
+      setShowDeleteInterestedModal(false);
+      setShowDeleteInterestedErrorModal(true);
+
+      // Auto-close error modal after 3 seconds
+      setTimeout(() => {
+        setShowDeleteInterestedErrorModal(false);
+      }, 2000);
     }
   };
+
+  const cancelDelete = () => {
+    setShowDeleteInterestedModal(false);
+    setInterestedToDelete(null);
+  };
+
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        const userId = localStorage.getItem("user_id");
-        if (userId) return userId;
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
     const companyId = localStorage.getItem("company_id");
     if (companyId) return companyId;
     return null;
-};
-
-  useEffect(() => {
-  const fetchDraftCount = async () => {
-    try {
-      const Id = getRelevantUserId();
-      const draftResponse = await axios.get(`${BASE_URL}/qms/interst/drafts-count/${Id}/`);
-      setDraftCount(draftResponse.data.count);
-    } catch (err) {
-      console.error("Error fetching draft count:", err);
-      setDraftCount(0);
-    }
   };
 
-  fetchDraftCount();
-}, []);
+  useEffect(() => {
+    const fetchDraftCount = async () => {
+      try {
+        const Id = getRelevantUserId();
+        const draftResponse = await axios.get(`${BASE_URL}/qms/interst/drafts-count/${Id}/`);
+        setDraftCount(draftResponse.data.count);
+      } catch (err) {
+        console.error("Error fetching draft count:", err);
+        setDraftCount(0);
+      }
+    };
+
+    fetchDraftCount();
+  }, []);
 
 
   const handleEditInterestedParties = (id) => {
@@ -161,6 +195,24 @@ const QmsInterestedParties = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-5">
         <h1 className="interested-parties-head">Interested Parties</h1>
+
+        <DeleteQmsInterestedConfirmModal
+          showDeleteInterestedModal={showDeleteInterestedModal}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+
+        <DeleteQmsInterestedSuccessModal
+          showDeleteInterestedSuccessModal={showDeleteInterestedSuccessModal}
+          onClose={() => setShowDeleteInterestedSuccessModal(false)}
+        />
+
+        <DeleteQmsInterestedErrorModal
+          showDeleteInterestedErrorModal={showDeleteInterestedErrorModal}
+          onClose={() => setShowDeleteInterestedErrorModal(false)}
+        />
+
+
         <div className="flex space-x-5">
           <div className="relative">
             <input

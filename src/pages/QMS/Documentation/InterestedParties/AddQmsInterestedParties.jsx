@@ -5,6 +5,10 @@ import "./addqmsinterestedparties.css";
 import { useNavigate, useParams } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import AddQmsInterestedSuccessModal from './Modals/AddQmsInterestedSuccessModal';
+import AddQmsInterestedErrorModal from './Modals/AddQmsInterestedErrorModal';
+import AddQmsInterestedDraftSuccessModal from './Modals/AddQmsInterestedDraftSuccessModal';
+import AddQmsInterestedDraftErrorModal from "./Modals/AddQmsInterestedDraftErrorModal";
 const AddQmsInterestedParties = () => {
   const { id } = useParams(); // Get ID from URL if editing
   const isEditing = !!id;
@@ -13,8 +17,11 @@ const AddQmsInterestedParties = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-    const [showAddSuccessModal, setShowAddSuccessModal] = useState(false);
-    
+  const [showAddManualSuccessModal, setShowAddManualSuccessModal] = useState(false);
+  const [showAddQmsInterestedErrorModal, setShowAddQmsInterestedErrorModal] = useState(false);
+  const [showDraftInterestedSuccessModal, setShowDraftInterestedSuccessModal] = useState(false);
+  const [showDraftInterestedErrorModal, setShowDraftInterestedErrorModal] = useState(false);
+
   // Add state for compliance options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
   const [formData, setFormData] = useState({
@@ -65,13 +72,13 @@ const AddQmsInterestedParties = () => {
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        const userId = localStorage.getItem("user_id");
-        if (userId) return userId;
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
     const companyId = localStorage.getItem("company_id");
     if (companyId) return companyId;
     return null;
-};
+  };
   const fetchComplianceData = async () => {
     try {
       if (!companyId) {
@@ -149,10 +156,18 @@ const AddQmsInterestedParties = () => {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log("Response from server:", response.data);
-      navigate('/company/qms/interested-parties');
+      setShowAddManualSuccessModal(true);
+      setTimeout(() => {
+        setShowAddManualSuccessModal(false);
+        navigate('/company/qms/interested-parties');
+      }, 1500)
+
     } catch (err) {
       setError("Failed to save. Please check your inputs and try again.");
+      setShowAddQmsInterestedErrorModal(true);
+      setTimeout(() => {
+        setShowAddQmsInterestedErrorModal(false);
+      }, 3000);
       console.error("Error submitting form:", err);
       console.error("Error details:", err.response?.data);
       setSubmitting(false);
@@ -171,63 +186,92 @@ const AddQmsInterestedParties = () => {
   const handleSaveAsDraft = async () => {
     try {
       setLoading(true);
-  
+
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-  
+
       if (!companyId || !userId) {
         setError('Company ID or User ID not found. Please log in again.');
         setLoading(false);
         return;
       }
-  
+
       const submitData = new FormData();
-  
+
       submitData.append('company', companyId);
       submitData.append('user', userId);
       submitData.append('is_draft', true);
-  
+
       Object.keys(formData).forEach((key) => {
         if (formData[key] !== null && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
-  
+
       // Corrected file handling
       if (formData.file) {
         submitData.append('upload_attachment', formData.file);
       }
-  
+
       console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
-  
+
       const response = await axios.post(
-        `${BASE_URL}/qms/interst/draft-create/`,  
+        `${BASE_URL}/qms/interst/draft-create/`,
         submitData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-           
+
           },
         }
       );
-  
+
       setLoading(false);
-      alert('Draft saved successfully!');
-      // navigate('/company/qms/manual'); // Optional redirect
-  
+      setShowDraftInterestedSuccessModal(true);
+      setTimeout(() => {
+        setShowDraftInterestedSuccessModal(false);
+        navigate('/company/qms/draft-interested-parties');
+      }, 1500);
+
+
     } catch (err) {
       setLoading(false);
+      setShowDraftInterestedErrorModal(true);
+      setTimeout(() => {
+        setShowDraftInterestedErrorModal(false);
+      }, 3000);
       const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
       setError(errorMessage);
       console.error('Error saving Draft:', err.response?.data || err);
     }
   };
-  
+
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
         {isEditing ? 'Edit' : 'Add'} Interested Parties
       </h1>
+
+      <AddQmsInterestedSuccessModal
+        showAddManualSuccessModal={showAddManualSuccessModal}
+        onClose={() => { setShowAddManualSuccessModal(false) }}
+      />
+
+      <AddQmsInterestedErrorModal
+        showAddQmsInterestedErrorModal={showAddQmsInterestedErrorModal}
+        onClose={() => { setShowAddQmsInterestedErrorModal(false) }}
+      />
+
+      <AddQmsInterestedDraftSuccessModal
+        showDraftInterestedSuccessModal={showDraftInterestedSuccessModal}
+        onClose={() => { setShowDraftInterestedSuccessModal(false) }}
+      />
+
+      <AddQmsInterestedDraftErrorModal
+        showDraftInterestedErrorModal={showDraftInterestedErrorModal}
+        onClose={() => { setShowDraftInterestedErrorModal(false) }}
+      />
+
       {error && (
         <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
           {error}
