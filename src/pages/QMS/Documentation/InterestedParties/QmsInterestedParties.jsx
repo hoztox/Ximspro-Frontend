@@ -20,7 +20,7 @@ const QmsInterestedParties = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const { company_id } = useParams();
+  // const { company_id } = useParams();
   const recordsPerPage = 10;
 
   const [showDeleteInterestedModal, setShowDeleteInterestedModal] = useState(false);
