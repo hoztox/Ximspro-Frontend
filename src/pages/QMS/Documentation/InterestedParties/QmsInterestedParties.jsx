@@ -9,7 +9,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import DeleteQmsInterestedConfirmModal from "./Modals/DeleteQmsInterestedConfirmModal";
-import DeleteQmsInterestedSuccessModal from "./Modals/deleteQmsInterestedSuccessModal";
+import DeleteQmsInterestedSuccessModal from "./Modals/DeleteQmsInterestedSuccessModal";
 import DeleteQmsInterestedErrorModal from "./Modals/DeleteQmsInterestedErrorModal";
 
 const QmsInterestedParties = () => {
@@ -20,7 +20,7 @@ const QmsInterestedParties = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  // const { company_id } = useParams();
+  const { company_id } = useParams();
   const recordsPerPage = 10;
 
   const [showDeleteInterestedModal, setShowDeleteInterestedModal] = useState(false);
