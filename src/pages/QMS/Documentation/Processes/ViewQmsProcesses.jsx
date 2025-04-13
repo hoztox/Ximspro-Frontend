@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
- 
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { X, Eye } from "lucide-react";
@@ -70,14 +69,13 @@ const ViewQmsProcesses = () => {
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Related Procedure</label>
-                            <div className="text-white view-interested-parties-data">{formData.legal_requirements || "None"}</div>
-                        </div>
-                        {formData.custom_legal_requirements && (
-                            <div>
-                                <label className="block view-interested-parties-label mb-[6px]">Custom Legal Requirements</label>
-                                <div className="text-white view-interested-parties-data">{formData.custom_legal_requirements}</div>
+                            <div className="text-white view-interested-parties-data">
+                                {formData.legal_requirements === 'N/A'
+                                    ? formData.custom_legal_requirements
+                                    : formData.legal_requirements}
                             </div>
-                        )}
+
+                        </div>
                         <div className="flex justify-end space-x-10">
                             <button className="flex flex-col items-center view-interested-parties-label gap-[8px]">
                                 <span>Edit</span>

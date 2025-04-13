@@ -279,7 +279,7 @@ const AddQmsProcesses = () => {
                                     required
                                 >
                                     <option value="Stratgic">Strategic</option>
-                                    <option value="Operational">Operational</option>
+                                    <option value="Core">Core</option>
                                     <option value="Support">Support</option>
                                     <option value="Monitoring/Measurment">Monitoring/Measurment</option>
                                     <option value="Outsource">Outsource</option>
@@ -331,7 +331,7 @@ const AddQmsProcesses = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label className="block mb-3 add-qms-manual-label">Upload File</label>
+                            <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
                             <div className="relative">
                                 <input
                                     type="file"

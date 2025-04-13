@@ -164,7 +164,7 @@ const EditQmsProcesses = () => {
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
-        Edit {formData.is_draft ? "Draft " : ""}Process
+        Edit Processes
       </h1>
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
@@ -221,7 +221,7 @@ const EditQmsProcesses = () => {
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">
-                Applicable Legal/Regulatory Requirements
+               Related Procedure
               </label>
               <div className="relative">
                 <select
@@ -266,7 +266,7 @@ const EditQmsProcesses = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Upload File</label>
+              <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
               <div className="relative">
                 <input
                   type="file"

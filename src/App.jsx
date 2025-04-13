@@ -129,6 +129,7 @@ import QmsAddCompliance from "./pages/QMS/Compliance/QmsAddCompliance";
 import DraftQmsProcesses from "./pages/QMS/Documentation/Processes/DraftQmsProcesses";
 import EditQmsDraftProcesses from "./pages/QMS/Documentation/Processes/EditQmsDraftProcesses";
 import ViewQmsDraftInterestedParties from "./pages/QMS/Documentation/InterestedParties/ViewQmsDraftInterestedParties";
+import ViewQmsDraftProcesses from "./pages/QMS/Documentation/Processes/ViewQmsDraftProcesses";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -200,6 +201,7 @@ const ThemedApp = () => {
           <Route path="qms/edit-processes/:id" element={<EditQmsProcesses/>} />
           <Route path="qms/draft-processes" element={<DraftQmsProcesses/>} />
           <Route path="qms/edit-draft-processes/:id" element={<EditQmsDraftProcesses/>} />
+          <Route path="qms/view-draft-processes/:id" element={<ViewQmsDraftProcesses/>} />
 
 
 

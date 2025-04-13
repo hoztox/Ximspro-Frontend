@@ -329,7 +329,7 @@ const EditDraftQmsInterestedParties = () => {
             </div>
 
             <div>
-              <label className="block mb-3 add-qms-manual-label">Upload File</label>
+              <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
               <div className="relative">
                 <input
                   type="file"

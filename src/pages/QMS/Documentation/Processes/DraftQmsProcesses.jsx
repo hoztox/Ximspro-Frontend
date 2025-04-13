@@ -71,7 +71,7 @@ const DraftQmsProcesses = ({ userId }) => {
         navigate(`/company/qms/edit-draft-processes/${id}`);
     };
     const handleView = (id) => {
-        navigate(`/company/qms/view-processes/${id}`);
+        navigate(`/company/qms/view-draft-processes/${id}`);
     };
     const handleClose = () => {
         navigate('/company/qms/processes');

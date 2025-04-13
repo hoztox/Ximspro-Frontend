@@ -110,7 +110,7 @@ const QmsInterestedParties = () => {
       setShowDeleteInterestedSuccessModal(true);
       setTimeout(() => {
         setShowDeleteInterestedSuccessModal(false);
-        fetchManuals(); // Refresh the list after deletion
+        fetchInterestedParties(); // Fixed: was fetchManuals, now correctly calls fetchInterestedParties
       }, 2000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
@@ -250,6 +250,10 @@ const QmsInterestedParties = () => {
         <div className="text-center py-8">Loading interested parties data...</div>
       ) : error ? (
         <div className="text-center py-8 text-red-500">{error}</div>
+      ) : filteredData.length === 0 ? (
+        <div>
+          <p className="text-center not-found py-5">No interested parties found</p>
+        </div>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -298,7 +302,6 @@ const QmsInterestedParties = () => {
                 disabled={currentPage === 1}
                 className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
               >
-
                 <span>Previous</span>
               </button>
 
