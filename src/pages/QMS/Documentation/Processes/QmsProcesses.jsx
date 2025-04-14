@@ -7,6 +7,9 @@ import { Search } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsProcessesConfirmModal from "./Modals/DeleteQmsProcessesConfirmModal";
+import DeleteQmsProcessesSuccessModal from "./Modals/DeleteQmsProcessesSuccessModal";
+import DeleteQmsProcessesErrorModal from "./Modals/DeleteQmsProcessesErrorModal";
 
 const QmsProcesses = () => {
   const [formData, setFormData] = useState([]);
@@ -18,6 +21,11 @@ const QmsProcesses = () => {
   const navigate = useNavigate();
   const { company_id } = useParams();
   const recordsPerPage = 10;
+
+  const [showDeleteProcessesModal, setShowDeleteProcessesModal] = useState(false);
+  const [processesToDelete, setProcessesToDelete] = useState(null);
+  const [showDeleteProcessesSuccessModal, setShowDeleteProcessesSuccessModal] = useState(false);
+  const [showDeleteProcessesErrorModal, setShowDeleteProcessesErrorModal] = useState(false);
   
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -112,13 +120,47 @@ const QmsProcesses = () => {
     navigate(`/company/qms/add-processes/`);
   };
   
-  const handleDelete = async (id) => {
+  const openDeleteModal = (id, name) => {
+    setProcessesToDelete({ id, name });
+    setShowDeleteProcessesModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteProcessesModal(false);
+    setProcessesToDelete(null);
+  };
+
+  const closeSuccessModal = () => {
+    setShowDeleteProcessesSuccessModal(false);
+  };
+
+  const closeErrorModal = () => {
+    setShowDeleteProcessesErrorModal(false);
+  };
+  
+  const handleDelete = async () => {
+    if (!processesToDelete) return;
+    
     try {
-      await axios.delete(`${BASE_URL}/qms/processes-get/${id}/`);
-      setFormData(prev => prev.filter(item => item.id !== id));
+      await axios.delete(`${BASE_URL}/qms/processes-get/${processesToDelete.id}/`);
+      setFormData(prev => prev.filter(item => item.id !== processesToDelete.id));
+      closeDeleteModal();
+      setShowDeleteProcessesSuccessModal(true);
+      
+      // Close success modal after 3 seconds
+      setTimeout(() => {
+        setShowDeleteProcessesSuccessModal(false);
+      }, 3000);
+      
     } catch (err) {
       console.error("Error deleting process:", err);
-      alert("Failed to delete the process. Please try again.");
+      closeDeleteModal();
+      setShowDeleteProcessesErrorModal(true);
+      
+      // Close error modal after 3 seconds
+      setTimeout(() => {
+        setShowDeleteProcessesErrorModal(false);
+      }, 3000);
     }
   };
   
@@ -228,7 +270,12 @@ const QmsProcesses = () => {
                       <img src={edits} alt="Edit" className="cursor-pointer mx-auto" onClick={() => handleEditProcess(item.id)} />
                     </td>
                     <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={deletes} alt="Delete" className="cursor-pointer mx-auto" onClick={() => handleDelete(item.id)} />
+                      <img 
+                        src={deletes} 
+                        alt="Delete" 
+                        className="cursor-pointer mx-auto" 
+                        onClick={() => openDeleteModal(item.id, item.name)} 
+                      />
                     </td>
                   </tr>
                 ))}
@@ -279,6 +326,26 @@ const QmsProcesses = () => {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteQmsProcessesConfirmModal
+          showDeleteProcessesModal={showDeleteProcessesModal}
+          onConfirm={handleDelete}
+          onCancel={closeDeleteModal}
+        />
+
+      {/* Success Modal */}
+      <DeleteQmsProcessesSuccessModal
+          showDeleteProcessesSuccessModal={showDeleteProcessesSuccessModal}
+          onClose={() => setShowDeleteProcessesSuccessModal(false)}
+        />
+
+      {/* Error Modal */}
+      <DeleteQmsProcessesErrorModal
+          showDeleteProcessesErrorModal={showDeleteProcessesErrorModal}
+          onClose={() => setShowDeleteProcessesErrorModal(false)}
+      />
+
     </div>
   );
 };
