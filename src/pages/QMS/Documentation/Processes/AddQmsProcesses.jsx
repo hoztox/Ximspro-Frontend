@@ -6,6 +6,8 @@ import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 import AddQmsProcessesSuccessModal from "./Modals/AddQmsProcessesSuccessModal";
 import AddQmsProcessesErrorModal from "./Modals/AddQmsProcessesErrorModal";
+import AddQmsProcessesDraftSucessesModal from "./Modals/AddQmsProcessesDraftSucessesModal";
+import AddQmsProcessesDraftErrorModal from "./Modals/AddQmsProcessesDraftErrorModal";
 
 const AddQmsProcesses = () => {
   const { id } = useParams();
@@ -18,6 +20,10 @@ const AddQmsProcesses = () => {
   const [showAddProcessesSuccessModal, setShowAddProcessesSuccessModal] =
     useState(false);
   const [showAddQmsProcessesErrorModal, setShowAddQmsProcessesErrorModal] =
+    useState(false);
+  const [showDraftProcessesSuccessModal, setShowDraftProcessesSuccessModal] =
+    useState(false);
+  const [showDraftProcessesErrorModal, setShowDraftProcessesErrorModal] =
     useState(false);
 
   // Add state for compliance options
@@ -194,7 +200,7 @@ const AddQmsProcesses = () => {
   }
   const handleSaveAsDraft = async () => {
     try {
-      setLoading(true);
+      //   setLoading(true);
 
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
@@ -247,10 +253,17 @@ const AddQmsProcesses = () => {
       );
 
       setLoading(false);
-      alert("Draft saved successfully!");
-      navigate("/company/qms/processes");
+      setShowDraftProcessesSuccessModal(true);
+      setTimeout(() => {
+        setShowDraftProcessesSuccessModal(false);
+        navigate("/company/qms/draft-processes");
+      }, 1500);
     } catch (err) {
       setLoading(false);
+      setShowDraftProcessesErrorModal(true);
+      setTimeout(() => {
+        setShowDraftProcessesErrorModal(false);
+      }, 3000);
       const errorMessage = err.response?.data?.detail || "Failed to save Draft";
       setError(errorMessage);
       console.error("Error saving Draft:", err.response?.data || err);
@@ -272,7 +285,21 @@ const AddQmsProcesses = () => {
       <AddQmsProcessesErrorModal
         showAddQmsProcessesErrorModal={showAddQmsProcessesErrorModal}
         onClose={() => {
-            setShowAddQmsProcessesErrorModal(false);
+          setShowAddQmsProcessesErrorModal(false);
+        }}
+      />
+
+      <AddQmsProcessesDraftSucessesModal
+        showDraftProcessesSuccessModal={showDraftProcessesSuccessModal}
+        onClose={() => {
+          setShowDraftProcessesSuccessModal(false);
+        }}
+      />
+
+      <AddQmsProcessesDraftErrorModal
+        showDraftProcessesErrorModal={showDraftProcessesErrorModal}
+        onClose={() => {
+          setShowDraftProcessesErrorModal(false);
         }}
       />
 
