@@ -4,9 +4,14 @@ import { ChevronDown, Eye } from "lucide-react";
 import axios from "axios";
 import fileIcon from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { BASE_URL } from "../../../../Utils/Config";
+import EditQmsProcessesSuccessModal from "./Modals/EditQmsProcessesSuccessModal";
+import EditQmsProcessesErrorModal from "./Modals/EditQmsProcessesErrorModal";
 const EditQmsProcesses = () => {
   const { id } = useParams();  
   const navigate = useNavigate();
+
+  const [showEditProcessesSuccessModal, setShowEditProcessesSuccessModal] = useState(false);
+  const [showEditQmsProcessesErrorModal, setShowEditQmsProcessesErrorModal] = useState(false);
   
   // Define legal requirement options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
@@ -153,8 +158,17 @@ const EditQmsProcesses = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      navigate("/company/qms/processes");
+      setShowEditProcessesSuccessModal(true)
+      setTimeout(() => {
+        setShowEditProcessesSuccessModal(false)
+        navigate("/company/qms/processes");
+      }, 2000);
+      
     } catch (err) {
+      setShowEditQmsProcessesErrorModal(true);
+      setTimeout(() => {
+        setShowEditQmsProcessesErrorModal(false);
+      }, 3000);
       console.error("Error updating process:", err);
     }
   };
@@ -166,6 +180,17 @@ const EditQmsProcesses = () => {
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
         Edit Processes
       </h1>
+
+      <EditQmsProcessesSuccessModal
+        showEditProcessesSuccessModal={showEditProcessesSuccessModal}
+        onClose={() => { setShowEditProcessesSuccessModal(false) }}
+      />
+
+      <EditQmsProcessesErrorModal
+        showEditQmsProcessesErrorModal={showEditQmsProcessesErrorModal}
+        onClose={() => { setShowEditQmsProcessesErrorModal(false) }}
+      />
+
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">

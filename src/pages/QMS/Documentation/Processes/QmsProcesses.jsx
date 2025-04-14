@@ -235,19 +235,48 @@ const QmsProcesses = () => {
               </tbody>
             </table>
           </div>
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-5 space-x-2">
+          <div className="flex justify-between items-center mt-4 text-sm">
+            <div className="text-white total-text">Total: {filteredData.length}</div>
+            <div className="flex items-center space-x-5">
+              <button
+                onClick={() => goToPage(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+              >
+                <span>Previous</span>
+              </button>
+
               {getPageNumbers().map(page => (
                 <button
                   key={page}
                   onClick={() => goToPage(page)}
-                  className={`px-3 py-1 border ${page === currentPage ? "bg-[#858585] text-white" : "text-[#858585] border-[#858585]"} rounded-md`}
+                  className={`${currentPage === page ? 'pagin-active' : 'pagin-inactive'}`}
                 >
                   {page}
                 </button>
               ))}
+
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <>
+                  {currentPage < totalPages - 3 && <span className="px-1">...</span>}
+                  <button
+                    onClick={() => goToPage(totalPages)}
+                    className="px-3 py-1 rounded pagin-inactive"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+
+              <button
+                onClick={() => goToPage(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
+              >
+                <span>Next</span>
+              </button>
             </div>
-          )}
+          </div>
         </>
       )}
     </div>
