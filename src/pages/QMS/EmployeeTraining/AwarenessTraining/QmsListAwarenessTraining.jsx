@@ -58,6 +58,14 @@ const QmsListAwarenessTraining = () => {
         navigate('/company/qms/add-awareness-training')
     }
 
+    const handleEditAwarenessTraining = () => {
+        navigate('/company/qms/edit-awareness-training')
+    }
+
+    const handleViewAwarenessTraining = () => {
+        navigate('/company/qms/view-awareness-training')
+    }
+
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
@@ -110,14 +118,18 @@ const QmsListAwarenessTraining = () => {
                                 </td>
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button>
+                                        <button
+                                        onClick={handleViewAwarenessTraining}
+                                        >
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
                                 </td>
                                 <td className="list-awareness-training-datas text-center">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button>
+                                        <button
+                                        onClick={handleEditAwarenessTraining}
+                                        >
                                             <img src={edits} alt=" Edit Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>

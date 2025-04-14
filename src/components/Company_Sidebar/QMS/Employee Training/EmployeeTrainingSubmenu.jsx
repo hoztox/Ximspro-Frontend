@@ -83,6 +83,8 @@ const EmployeeTrainingSubmenu = (props) => {
             path: "/company/qms/list-awareness-training",
             relatedPaths: [
                 "/company/qms/add-awareness-training",
+                "/company/qms/edit-awareness-training",
+                "/company/qms/view-awareness-training",
             ]
         },
     ];
