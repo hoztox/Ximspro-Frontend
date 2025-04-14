@@ -264,10 +264,10 @@ const QmsProcesses = () => {
                     <td className="px-4 qms-interested-parties-data">{item.type}</td>
                     <td className="px-4 qms-interested-parties-data">{formatDate(item.created_at)}</td>
                     <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={views} alt="View" className="cursor-pointer mx-auto" onClick={() => handleViewProcess(item.id)} />
+                      <img src={views} alt="View" className="cursor-pointer mx-auto w-[16px] h-[16px]" onClick={() => handleViewProcess(item.id)} />
                     </td>
                     <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={edits} alt="Edit" className="cursor-pointer mx-auto" onClick={() => handleEditProcess(item.id)} />
+                      <img src={edits} alt="Edit" className="cursor-pointer mx-auto w-[16px] h-[16px]" onClick={() => handleEditProcess(item.id)} />
                     </td>
                     <td className="px-4 qms-interested-parties-data text-center">
                       <img 
