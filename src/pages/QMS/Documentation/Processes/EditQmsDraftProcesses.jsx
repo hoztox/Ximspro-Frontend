@@ -4,12 +4,23 @@ import { ChevronDown, Eye } from "lucide-react";
 import axios from "axios";
 import fileIcon from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { BASE_URL } from "../../../../Utils/Config";
+import EditQmsProcessesDraftSuccessModal from "./Modals/EditQmsProcessesDraftSuccessModal";
+import EditQmsProcessesDraftErrorModal from "./Modals/EditQmsProcessesDraftErrorModal";
 const EditQmsDraftProcesses = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   // Define legal requirement options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
+
+  const [
+    showEditDraftProcessesSuccessModal,
+    setShowEditDraftProcessesSuccessModal,
+  ] = useState(false);
+  const [
+    showEditDraftProcessesErrorModal,
+    setShowEditDraftProcessesErrorModal,
+  ] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -59,20 +70,21 @@ const EditQmsDraftProcesses = () => {
       return;
     }
 
-    axios.get(`${BASE_URL}/qms/procedure/${companyId}/`)
-      .then(response => {
+    axios
+      .get(`${BASE_URL}/qms/procedure/${companyId}/`)
+      .then((response) => {
         setLegalRequirementOptions(response.data || []);
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error fetching legal requirements:", error);
       });
   };
 
   useEffect(() => {
     if (companyId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        company: companyId
+        company: companyId,
       }));
       fetchComplianceData();
     }
@@ -82,7 +94,8 @@ const EditQmsDraftProcesses = () => {
     if (!id) return;
     console.log("Fetching data for id:", id);
 
-    axios.get(`${BASE_URL}/qms/processes-get/${id}/`)
+    axios
+      .get(`${BASE_URL}/qms/processes-get/${id}/`)
       .then((res) => {
         const data = res.data;
         setFormData({
@@ -130,11 +143,11 @@ const EditQmsDraftProcesses = () => {
   };
   const handleViewFile = () => {
     if (fileUrl && !selectedFile) {
-      window.open(fileUrl, '_blank');
+      window.open(fileUrl, "_blank");
     } else if (selectedFile) {
       // If there's a newly selected file, create a temporary URL to view it
       const tempUrl = URL.createObjectURL(selectedFile);
-      window.open(tempUrl, '_blank');
+      window.open(tempUrl, "_blank");
     }
   };
   const handleSubmit = async (e) => {
@@ -153,8 +166,16 @@ const EditQmsDraftProcesses = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-      navigate("/company/qms/processes");
+      setShowEditDraftProcessesSuccessModal(true);
+      setTimeout(() => {
+        setShowEditDraftProcessesSuccessModal(false);
+        navigate("/company/qms/processes");
+      }, 2000);
     } catch (err) {
+      setShowEditDraftProcessesErrorModal(true);
+      setTimeout(() => {
+        setShowEditDraftProcessesErrorModal(false);
+      }, 3000);
       console.error("Error updating process:", err);
     }
   };
@@ -166,11 +187,28 @@ const EditQmsDraftProcesses = () => {
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
         Edit Draft Processes
       </h1>
+
+      <EditQmsProcessesDraftSuccessModal
+        showEditDraftProcessesSuccessModal={showEditDraftProcessesSuccessModal}
+        onClose={() => {
+          setShowEditDraftProcessesSuccessModal(false);
+        }}
+      />
+
+      <EditQmsProcessesDraftErrorModal
+        showEditDraftProcessesErrorModal={showEditDraftProcessesErrorModal}
+        onClose={() => {
+          setShowEditDraftProcessesErrorModal(false);
+        }}
+      />
+
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name/Title</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Name/Title
+              </label>
               <input
                 type="text"
                 name="name"
@@ -181,7 +219,9 @@ const EditQmsDraftProcesses = () => {
               />
             </div>
             <div>
-              <label className="block mb-3 add-qms-manual-label">Process No/Identification</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Process No/Identification
+              </label>
               <input
                 type="text"
                 name="no"
@@ -194,7 +234,9 @@ const EditQmsDraftProcesses = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Process Type</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Process Type
+              </label>
               <div className="relative">
                 <select
                   name="type"
@@ -207,13 +249,16 @@ const EditQmsDraftProcesses = () => {
                   <option value="Stratgic">Stratgic</option>
                   <option value="Core">Core</option>
                   <option value="Support">Support</option>
-                  <option value="Monitoring/Measurment">Monitoring/Measurment</option>
+                  <option value="Monitoring/Measurment">
+                    Monitoring/Measurment
+                  </option>
                   <option value="Outsource">Outsource</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.type ? "rotate-180" : ""
-                      }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.type ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -227,26 +272,31 @@ const EditQmsDraftProcesses = () => {
                   name="legal_requirements"
                   value={formData.legal_requirements}
                   onChange={handleInputChange}
-                  onFocus={() => toggleDropdown('legal_requirements')}
-                  onBlur={() => toggleDropdown('legal_requirements')}
+                  onFocus={() => toggleDropdown("legal_requirements")}
+                  onBlur={() => toggleDropdown("legal_requirements")}
                   className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                 >
                   <option value="">Choose</option>
 
                   {legalRequirementOptions
-                    .filter(option =>
-                      !['GDPR', 'HIPAA', 'CCPA', 'SOX'].includes(option.title))
+                    .filter(
+                      (option) =>
+                        !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.title)
+                    )
                     .map((option, index) => (
-                      <option key={index} value={option.title  }>
-                        {option.title }
+                      <option key={index} value={option.title}>
+                        {option.title}
                       </option>
                     ))}
 
                   <option value="N/A">N/A</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? 'rotate-180' : ''
-                    }`} />
+                  <ChevronDown
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.legal_requirements ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </div>
               {showCustomField && (
@@ -264,7 +314,9 @@ const EditQmsDraftProcesses = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Browse / Upload File
+              </label>
               <div className="relative">
                 <input
                   type="file"
@@ -287,7 +339,9 @@ const EditQmsDraftProcesses = () => {
                       onClick={handleViewFile}
                       className="flex items-center mt-[10.65px] gap-[8px]"
                     >
-                      <p className="click-view-file-btn text-[#1E84AF]">Click to view file</p>
+                      <p className="click-view-file-btn text-[#1E84AF]">
+                        Click to view file
+                      </p>
                       <Eye size={16} className="text-[#1E84AF]" />
                     </button>
                   )}
@@ -297,20 +351,21 @@ const EditQmsDraftProcesses = () => {
                 </div>
               </div>
             </div>
-            
-              <div className='flex items-end justify-end'>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="send_notification"
-                    className="mr-2 form-checkboxes"
-                    checked={formData.send_notification}
-                    onChange={handleInputChange}
-                  />
-                  <span className="permissions-texts cursor-pointer">Send Notification</span>
-                </label>
-              </div>
-             
+
+            <div className="flex items-end justify-end">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="send_notification"
+                  className="mr-2 form-checkboxes"
+                  checked={formData.send_notification}
+                  onChange={handleInputChange}
+                />
+                <span className="permissions-texts cursor-pointer">
+                  Send Notification
+                </span>
+              </label>
+            </div>
           </div>
           <div className="flex justify-end space-x-4 mt-8">
             <button
