@@ -19,6 +19,7 @@ const ComplianceSubmenu = (props) => {
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
       path: "/company/qms/list-compliance",
       relatedPaths: ["/company/qms/add-compliance",
+        "/company/qms/edit-compliance",
       ]
     },
     {
@@ -82,7 +83,10 @@ const ComplianceSubmenu = (props) => {
   ];
 
   const isActive = (category) => {
-    return location.pathname === category.path;
+    const currentPath = location.pathname;
+    return currentPath === category.path ||
+      (category.relatedPaths &&
+        category.relatedPaths.some(path => currentPath.startsWith(path)));
   };
 
   // Handle clicking on a submenu item
