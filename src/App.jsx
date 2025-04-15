@@ -138,6 +138,12 @@ import QmsListLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequir
 import QmsAddLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsAddLegalRequirements";
 import QmsEditLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsEditLegalRequirements";
 import QmsViewLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsViewLegalRequirements";
+import QmsListEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsListEvaluationCompliance";
+import QmsAddEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsAddEvaluationCompliance";
+import QmsEditEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsEditEvaluationCompliance";
+import QmsViewEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsViewEvaluationCompliance";
+import QmsDraftEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsDraftEvaluationCompliance";
+import QmsEditDraftEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsEditDraftEvaluationCompliance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -254,6 +260,13 @@ const ThemedApp = () => {
            <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements/>} />
            <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements/>} />
            <Route path="qms/view-legal-requirements" element={<QmsViewLegalRequirements/>} />
+
+           <Route path="qms/list-evaluation-compliance" element={<QmsListEvaluationCompliance />} />
+           <Route path="qms/add-evaluation-compliance" element={<QmsAddEvaluationCompliance />} />
+           <Route path="qms/edit-evaluation-compliance" element={<QmsEditEvaluationCompliance />} />
+           <Route path="qms/view-evaluation-compliance" element={<QmsViewEvaluationCompliance />} />
+           <Route path="qms/draft-evaluation-compliance" element={<QmsDraftEvaluationCompliance />} />
+           <Route path="qms/edit-draft-evaluation-compliance" element={<QmsEditDraftEvaluationCompliance />} />
 
 
           {/* QMS User Management */}

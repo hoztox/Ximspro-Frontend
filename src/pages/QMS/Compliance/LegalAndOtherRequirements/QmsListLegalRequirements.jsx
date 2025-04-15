@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Eye, Pencil, Trash2, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 import plusicon from '../../../../assets/images/Company Documentation/plus icon.svg'
 import edits from '../../../../assets/images/Company Documentation/edit.svg'
 import deletes from '../../../../assets/images/Company Documentation/delete.svg'

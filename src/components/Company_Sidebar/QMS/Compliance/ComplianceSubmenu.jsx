@@ -39,7 +39,13 @@ const ComplianceSubmenu = (props) => {
       icon: (
         <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
       ),
-      // path: "/company/qms/procedure",
+      path: "/company/qms/list-evaluation-compliance",
+      relatedPaths: ["/company/qms/add-evaluation-compliance",
+        "/company/qms/edit-evaluation-compliance",
+        "/company/qms/view-evaluation-compliance",
+        "/company/qms/draft-evaluation-compliance",
+        "/company/qms/edit-draft-evaluation-compliance",
+      ]
     },
     {
       id: "Management-of-change",
