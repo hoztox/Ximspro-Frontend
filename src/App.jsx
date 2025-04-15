@@ -133,6 +133,7 @@ import ViewQmsDraftProcesses from "./pages/QMS/Documentation/Processes/ViewQmsDr
 import QmsEditAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsEditAwarenessTraining";
 import QmsViewAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewAwarenessTraining";
 import QmsEditCompliance from "./pages/QMS/Compliance/QmsEditCompliance";
+import QmsViewCompliance from "./pages/QMS/Compliance/QmsViewCompliance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -242,6 +243,7 @@ const ThemedApp = () => {
            <Route path="qms/list-compliance" element={<QmsListCompliance />} />
            <Route path="qms/add-compliance" element={<QmsAddCompliance />} />
            <Route path="qms/edit-compliance" element={<QmsEditCompliance />} />
+           <Route path="qms/view-compliance" element={<QmsViewCompliance />} />
 
 
           {/* QMS User Management */}

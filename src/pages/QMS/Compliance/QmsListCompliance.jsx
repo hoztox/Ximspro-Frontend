@@ -34,6 +34,10 @@ const QmsListCompliance = () => {
         navigate('/company/qms/edit-compliance')
     }
 
+    const handleViewCompliance = () => {
+        navigate('/company/qms/view-compliance')
+    }
+
     const handleDelete = (id) => {
         setComplianceData(complianceData.filter(item => item.id !== id));
     };
@@ -104,7 +108,9 @@ const QmsListCompliance = () => {
                                         </td>
                                         <td className="px-4 qms-list-compliance-data">{item.date}</td>
                                         <td className="px-4 qms-list-compliance-data text-center">
-                                            <button>
+                                            <button
+                                            onClick={handleViewCompliance}
+                                            >
                                                <img src={view} alt="View Icon"  className='w-[16px] h-[16px]'/>
                                             </button>
                                         </td>
