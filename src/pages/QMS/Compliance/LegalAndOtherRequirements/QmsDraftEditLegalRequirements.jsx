@@ -3,7 +3,8 @@ import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from "react-router-dom";
 
-const QmsEditLegalRequirements = () => {
+
+const QmsDraftEditLegalRequirements = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: "",
@@ -78,7 +79,7 @@ const QmsEditLegalRequirements = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
-                <h2 className="add-compliance-head">Edit Legal and Other Requirements</h2>
+                <h2 className="add-compliance-head">Edit Draft Legal and Other Requirements</h2>
                 <button className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                     onClick={handleListLegalRequirements}
                 >
@@ -316,5 +317,4 @@ const QmsEditLegalRequirements = () => {
     );
 };
 
-
-export default QmsEditLegalRequirements
+export default QmsDraftEditLegalRequirements

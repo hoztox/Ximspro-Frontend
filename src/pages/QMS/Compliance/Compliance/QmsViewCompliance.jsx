@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Eye } from 'lucide-react';
-import edits from "../../../assets/images/Company Documentation/edit.svg"
-import deletes from '../../../assets/images/Company Documentation/delete.svg'
+import edits from "../../../../assets/images/Company Documentation/edit.svg"
+import deletes from '../../../../assets/images/Company Documentation/delete.svg'
 import { useNavigate } from 'react-router-dom';
 
 const QmsViewCompliance = () => {

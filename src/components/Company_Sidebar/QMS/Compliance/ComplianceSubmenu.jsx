@@ -21,6 +21,9 @@ const ComplianceSubmenu = (props) => {
       relatedPaths: ["/company/qms/add-compliance",
         "/company/qms/edit-compliance",
         "/company/qms/view-compliance",
+        "/company/qms/draft-compliance",
+        "/company/qms/edit-draft-compliance",
+        "/company/qms/view-draft-compliance",
       ]
     },
     {
@@ -31,6 +34,9 @@ const ComplianceSubmenu = (props) => {
       relatedPaths: ["/company/qms/add-legal-requirements",
         "/company/qms/edit-legal-requirements",
         "/company/qms/view-legal-requirements",
+        "/company/qms/draft-legal-requirements",
+        "/company/qms/view-draft-legal-requirements",
+        "/company/qms/edit-draft-legal-requirements",
       ]
     },
     {
@@ -51,21 +57,27 @@ const ComplianceSubmenu = (props) => {
       id: "Management-of-change",
       label: (
         <>
-            Management of <br /> Change
+          Management of <br /> Change
         </>
-    ),
+      ),
       icon: (
         <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
       ),
-      // path: "/company/qms/record-format",
+      path: "/company/qms/list-management-change",
+      relatedPaths: ["/company/qms/add-management-change",
+        "/company/qms/edit-management-change",
+        "/company/qms/view-management-change",
+        // "/company/qms/draft-evaluation-compliance",
+        // "/company/qms/edit-draft-evaluation-compliance",
+      ]
     },
     {
       id: "management-of-change-log",
       label: (
         <>
-            Management of <br /> Change Log
+          Management of <br /> Change Log
         </>
-    ),
+      ),
       icon: (
         <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
       ),

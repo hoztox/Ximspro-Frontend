@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Eye } from "lucide-react";
-import file from "../../../assets/images/Company Documentation/file-icon.svg";
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from "react-router-dom";
 
 const QmsEditCompliance = () => {
@@ -141,9 +141,8 @@ const QmsEditCompliance = () => {
                 <option value="internal">Internal</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                  dropdowns.type ? "rotate-180" : ""
-                }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.type ? "rotate-180" : ""
+                  }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -171,9 +170,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.day ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -196,9 +194,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.month ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -221,9 +218,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.year ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -253,9 +249,9 @@ const QmsEditCompliance = () => {
               </button>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px]">
-                    Click to view file
-                    <Eye size={17}/>
-                    </div>
+                  Click to view file
+                  <Eye size={17} />
+                </div>
                 {!selectedFile && (
                   <p className="text-right no-file">No file chosen</p>
                 )}
@@ -316,6 +312,21 @@ const QmsEditCompliance = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
+          <div className="flex items-end justify-end">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="send_notification"
+                className="mr-2 form-checkboxes"
+                checked={formData.send_notification}
+                onChange={handleInputChange}
+              />
+              <span className="permissions-texts cursor-pointer">
+                Send Notification
+              </span>
+            </label>
+          </div>
+          <div></div>
           <div className="flex items-end gap-5">
             <button
               type="button"

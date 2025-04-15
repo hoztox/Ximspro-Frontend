@@ -3,17 +3,19 @@ import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from "react-router-dom";
 
-const QmsEditLegalRequirements = () => {
+const QmsEditDraftCompliance = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        title: "",
+        name: "",
         number: "",
         type: "",
         day: "",
         month: "",
         year: "",
         document: null,
-        related_record_format: "",
+        businessProcess: "",
+        remarks: "",
+        relatedDocument: "",
         revision: "",
     });
 
@@ -47,13 +49,13 @@ const QmsEditLegalRequirements = () => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setSelectedFile(file.name); // set the file name to selectedFile
+            setFileName(file.name);
             setFormData({
                 ...formData,
                 document: file,
             });
         } else {
-            setSelectedFile(null);
+            setFileName("No file chosen");
             setFormData({
                 ...formData,
                 document: null,
@@ -67,22 +69,23 @@ const QmsEditLegalRequirements = () => {
         // Here you would typically send the data to your backend
     };
 
-    const handleListLegalRequirements = () => {
-        navigate('/company/qms/list-legal-requirements')
-    }
+    const handleListCompliance = () => {
+        navigate("/company/qms/draft-compliance");
+    };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-legal-requirements')
+        navigate("/company/qms/draft-compliance");
     };
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
-                <h2 className="add-compliance-head">Edit Legal and Other Requirements</h2>
-                <button className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                    onClick={handleListLegalRequirements}
+                <h2 className="add-compliance-head">Edit Draft Compliance / Obligation</h2>
+                <button
+                    className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                    onClick={handleListCompliance}
                 >
-                    <span>List Legal and Other Requirements</span>
+                    <span>List Draft Compliance / Obligation</span>
                 </button>
             </div>
             <form onSubmit={handleSubmit} className="px-[122px]">
@@ -90,12 +93,12 @@ const QmsEditLegalRequirements = () => {
                     {/* Name/Title */}
                     <div>
                         <label className="add-compliance-label">
-                            Legal / Law Name / Title
+                            Compliance/Obligation Name/Title
                         </label>
                         <input
                             type="text"
-                            name="title"
-                            value={formData.title}
+                            name="name"
+                            value={formData.name}
                             onChange={handleInputChange}
                             className="w-full add-compliance-inputs"
                         />
@@ -104,7 +107,7 @@ const QmsEditLegalRequirements = () => {
                     {/* Number */}
                     <div>
                         <label className="add-compliance-label">
-                            Legal / Law Number{" "}
+                            Compliance/Obligation Number{" "}
                             <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -120,7 +123,7 @@ const QmsEditLegalRequirements = () => {
                     {/* Type */}
                     <div>
                         <label className="add-compliance-label">
-                            Document Type
+                            Compliance/Obligation Type
                         </label>
                         <div className="relative">
                             <select
@@ -131,11 +134,11 @@ const QmsEditLegalRequirements = () => {
                                 onBlur={() => handleDropdownBlur("type")}
                                 className="appearance-none w-full add-compliance-inputs cursor-pointer"
                             >
-                                <option value="">Select Document Type</option>
-                                <option value="system">System</option>
-                                <option value="paper">Paper</option>
-                                <option value="external">External</option>
-                                <option value="workinstruction">Work Instruction</option>
+                                <option value="">Select Compliance/Obligation Type</option>
+                                <option value="legal">Legal</option>
+                                <option value="regulatory">Regulatory</option>
+                                <option value="contractual">Contractual</option>
+                                <option value="internal">Internal</option>
                             </select>
                             <div
                                 className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.type ? "rotate-180" : ""
@@ -149,7 +152,7 @@ const QmsEditLegalRequirements = () => {
                     {/* Date */}
                     <div>
                         <label className="add-compliance-label">Date</label>
-                        <div className="grid grid-cols-3 gap-5">
+                        <div className="grid grid-cols-3 gap-2">
                             <div className="relative">
                                 <select
                                     name="day"
@@ -224,34 +227,6 @@ const QmsEditLegalRequirements = () => {
                         </div>
                     </div>
 
-                    {/* Revision */}
-                    <div>
-                        <label className="add-compliance-label">Revision</label>
-                        <input
-                            type="text"
-                            name="revision"
-                            value={formData.revision}
-                            onChange={handleInputChange}
-                            className="w-full add-compliance-inputs"
-                        />
-                    </div>
-
-
-
-                    {/* Relate Business Process */}
-                    <div>
-                        <label className="add-compliance-label">
-                            Relate Record Format
-                        </label>
-                        <input
-                            type="text"
-                            name="related_record_format"
-                            value={formData.related_record_format}
-                            onChange={handleInputChange}
-                            className="w-full add-compliance-inputs"
-                        />
-                    </div>
-
                     {/* Attach Document */}
                     <div>
                         <label className="add-compliance-label">Attach Document</label>
@@ -265,7 +240,7 @@ const QmsEditLegalRequirements = () => {
                             <button
                                 type="button"
                                 className="w-full add-qmsmanual-attach"
-                                onClick={() => document.getElementById("document").click()}
+                                onClick={() => document.getElementById("fileInput").click()}
                             >
                                 <span className="file-input">
                                     {selectedFile ? selectedFile : "Choose File"}
@@ -273,12 +248,69 @@ const QmsEditLegalRequirements = () => {
                                 <img src={file} alt="File Icon" />
                             </button>
                             <div className="flex items-center justify-between">
-                                <button className="flex items-center gap-2 mt-[10.65px] text-[#1E84AF] click-view-file-text !text-[14px]">Click to view file <Eye size={17} /></button>
+                                <div className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px]">
+                                    Click to view file
+                                    <Eye size={17} />
+                                </div>
                                 {!selectedFile && (
                                     <p className="text-right no-file">No file chosen</p>
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Relate Business Process */}
+                    <div>
+                        <label className="add-compliance-label">
+                            Relate Business Process
+                        </label>
+                        <input
+                            type="text"
+                            name="businessProcess"
+                            value={formData.businessProcess}
+                            onChange={handleInputChange}
+                            className="w-full add-compliance-inputs"
+                        />
+                    </div>
+
+                    {/* Remarks */}
+                    <div>
+                        <label className="add-compliance-label">
+                            Compliance/Obligation Remarks
+                        </label>
+                        <textarea
+                            name="remarks"
+                            value={formData.remarks}
+                            onChange={handleInputChange}
+                            rows="4"
+                            className="w-full add-compliance-inputs !py-3 !h-[98px]"
+                        ></textarea>
+                    </div>
+
+                    {/* Related Document */}
+                    <div>
+                        <label className="add-compliance-label">
+                            Relate Document/ Process
+                        </label>
+                        <textarea
+                            name="relatedDocument"
+                            value={formData.relatedDocument}
+                            onChange={handleInputChange}
+                            rows="4"
+                            className="w-full add-compliance-inputs !py-3 !h-[98px]"
+                        ></textarea>
+                    </div>
+
+                    {/* Revision */}
+                    <div>
+                        <label className="add-compliance-label">Revision</label>
+                        <input
+                            type="text"
+                            name="revision"
+                            value={formData.revision}
+                            onChange={handleInputChange}
+                            className="w-full add-compliance-inputs"
+                        />
                     </div>
                     <div className="flex items-end justify-end">
                         <label className="flex items-center">
@@ -303,10 +335,7 @@ const QmsEditLegalRequirements = () => {
                         >
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            className="save-btn duration-200 !w-full"
-                        >
+                        <button type="submit" className="save-btn duration-200 !w-full">
                             Save
                         </button>
                     </div>
@@ -316,5 +345,4 @@ const QmsEditLegalRequirements = () => {
     );
 };
 
-
-export default QmsEditLegalRequirements
+export default QmsEditDraftCompliance

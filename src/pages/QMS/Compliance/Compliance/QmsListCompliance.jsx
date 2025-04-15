@@ -4,12 +4,14 @@ import plusicon from '../../../../assets/images/Company Documentation/plus icon.
 import edits from '../../../../assets/images/Company Documentation/edit.svg'
 import deletes from '../../../../assets/images/Company Documentation/delete.svg'
 import view from '../../../../assets/images/Company Documentation/view.svg'
+import "./qmslistcompliance.css";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListLegalRequirements = () => {
+
+const QmsListCompliance = () => {
     const initialData = [
-        { id: 1, title: "Safety Protocol 2025", legalNo: "SP-2025-001", revision: "Revision", date: "03-12-2024" },
-        { id: 2, title: "Environmental Compliance", legalNo: "EC-2025-042", revision: "Revision", date: "03-12-2024" },
+        { id: 1, title: "Safety Protocol 2025", complianceNo: "SP-2025-001", revision: "Revision", date: "03-12-2024" },
+        { id: 2, title: "Environmental Compliance", complianceNo: "EC-2025-042", revision: "Revision", date: "03-12-2024" },
     ];
 
     // State for form data management
@@ -19,25 +21,25 @@ const QmsListLegalRequirements = () => {
     const navigate = useNavigate();
     const [itemsPerPage] = useState(10);
 
-    const handleAddLegalRequirements = () => {
-        navigate('/company/qms/add-legal-requirements')
-    };
-
-    const handleDraftLegalRequirements = () => {
-        navigate('/company/qms/draft-legal-requirements')
+    const handleDraftCompliance =() => {
+        navigate('/company/qms/draft-compliance')
     }
+
+    const handleAddCompliance = () => {
+        navigate('/company/qms/add-compliance')
+    };
 
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
         setCurrentPage(1);
     };
 
-    const handleEditLegalRequirements = () => {
-        navigate('/company/qms/edit-legal-requirements')
+    const handleEditCompliance = () => {
+        navigate('/company/qms/edit-compliance')
     }
 
-    const handleViewLegalRequirements = () => {
-        navigate('/company/qms/view-legal-requirements')
+    const handleViewCompliance = () => {
+        navigate('/company/qms/view-compliance')
     }
 
     const handleDelete = (id) => {
@@ -47,7 +49,7 @@ const QmsListLegalRequirements = () => {
     // Filter and pagination
     const filteredData = complianceData.filter(item =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.legalNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.complianceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.revision.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -60,7 +62,7 @@ const QmsListLegalRequirements = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div>
                 <div className="flex justify-between items-center mb-6">
-                    <h1 className="list-compliance-head">List Legal and Other Requirements</h1>
+                    <h1 className="list-compliance-head">List Compliance</h1>
                     <div className="flex gap-4">
                         <div className="relative">
                             <input
@@ -68,7 +70,7 @@ const QmsListLegalRequirements = () => {
                                 placeholder="Search..."
                                 value={searchQuery}
                                 onChange={handleSearch}
-                                className="serach-input-manual focus:outline-none bg-transparent !w-[230px]"
+                                className="serach-input-manual focus:outline-none bg-transparent !w-[361px]"
                             />
                             <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
                                 <Search size={18} />
@@ -76,15 +78,15 @@ const QmsListLegalRequirements = () => {
                         </div>
                         <button
                            className="flex items-center justify-center !px-5 add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                           onClick={handleDraftLegalRequirements}
+                           onClick={() => handleDraftCompliance()}
                         >
                             <span>Drafts</span>
                         </button>
                         <button
-                            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                            onClick={() => handleAddLegalRequirements()}
+                           className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                           onClick={() => handleAddCompliance()}
                         >
-                            <span>Add Legal and Other Requirements</span>
+                            <span>Add Compliance</span>
                             <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
                         </button>
                     </div>
@@ -97,7 +99,7 @@ const QmsListLegalRequirements = () => {
                                 <tr className="h-[48px]">
                                     <th className="px-4 qms-list-compliance-thead text-left w-24">No</th>
                                     <th className="px-4 qms-list-compliance-thead text-left">Title</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Legal No</th>
+                                    <th className="px-4 qms-list-compliance-thead text-left">Compliance No</th>
                                     <th className="px-4 qms-list-compliance-thead text-left">Revision</th>
                                     <th className="px-4 qms-list-compliance-thead text-left">Date</th>
                                     <th className="px-4 qms-list-compliance-thead text-center">View</th>
@@ -110,30 +112,30 @@ const QmsListLegalRequirements = () => {
                                     <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                         <td className="px-4 qms-list-compliance-data">{item.id}</td>
                                         <td className="px-4 qms-list-compliance-data">{item.title}</td>
-                                        <td className="px-4 qms-list-compliance-data">{item.legalNo}</td>
+                                        <td className="px-4 qms-list-compliance-data">{item.complianceNo}</td>
                                         <td className="px-4 qms-list-compliance-data">
                                             <span className="text-[#1E84AF]">{item.revision}</span>
                                         </td>
                                         <td className="px-4 qms-list-compliance-data">{item.date}</td>
                                         <td className="px-4 qms-list-compliance-data text-center">
                                             <button
-                                                onClick={handleViewLegalRequirements}
+                                            onClick={handleViewCompliance}
                                             >
-                                                <img src={view} alt="View Icon" className='w-[16px] h-[16px] mt-1' />
+                                               <img src={view} alt="View Icon"  className='w-[16px] h-[16px]'/>
                                             </button>
                                         </td>
                                         <td className="px-4 qms-list-compliance-data text-center">
                                             <button
-                                                onClick={handleEditLegalRequirements}
+                                            onClick={handleEditCompliance}
                                             >
-                                                <img src={edits} alt="Edit icon" className='w-[16px] h-[16px]' />
+                                               <img src={edits} alt="Edit icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </td>
                                         <td className="px-4 qms-list-compliance-data text-center">
-                                            <button
+                                            <button     
                                                 onClick={() => handleDelete(item.id)}
                                             >
-                                                <img src={deletes} alt="Deletes icon" className='w-[16px] h-[16px]' />
+                                               <img src={deletes} alt="Deletes icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </td>
                                     </tr>
@@ -161,7 +163,7 @@ const QmsListLegalRequirements = () => {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
+                                          className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
                                     >
                                         {pageNum}
                                     </button>
@@ -183,4 +185,4 @@ const QmsListLegalRequirements = () => {
     );
 }
 
-export default QmsListLegalRequirements
+export default QmsListCompliance

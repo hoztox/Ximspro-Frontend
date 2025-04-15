@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import file from "../../../assets/images/Company Documentation/file-icon.svg";
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import "./qmsaddcompliance.css";
 import { useNavigate } from "react-router-dom";
 
@@ -309,6 +309,25 @@ const QmsAddCompliance = () => {
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
+          </div>
+          <div className="flex items-end justify-end">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="send_notification"
+                  className="mr-2 form-checkboxes"
+                  checked={formData.send_notification}
+                  onChange={handleInputChange}
+                />
+                <span className="permissions-texts cursor-pointer">
+                  Send Notification
+                </span>
+              </label>
+            </div>
+          <div>
+            <button className="request-correction-btn duration-200">
+              Save as Draft
+            </button>
           </div>
           <div className="flex items-end gap-5">
             <button
