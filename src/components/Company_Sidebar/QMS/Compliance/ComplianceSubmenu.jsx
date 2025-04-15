@@ -30,7 +30,7 @@ const ComplianceSubmenu = (props) => {
       path: "/company/qms/list-legal-requirements",
       relatedPaths: ["/company/qms/add-legal-requirements",
         "/company/qms/edit-legal-requirements",
-        // "/company/qms/view-compliance",
+        "/company/qms/view-legal-requirements",
       ]
     },
     {

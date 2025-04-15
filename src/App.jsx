@@ -137,6 +137,7 @@ import QmsViewCompliance from "./pages/QMS/Compliance/QmsViewCompliance";
 import QmsListLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsListLegalRequirements";
 import QmsAddLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsAddLegalRequirements";
 import QmsEditLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsEditLegalRequirements";
+import QmsViewLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsViewLegalRequirements";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -252,6 +253,7 @@ const ThemedApp = () => {
            <Route path="qms/list-legal-requirements" element={<QmsListLegalRequirements/>} />
            <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements/>} />
            <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements/>} />
+           <Route path="qms/view-legal-requirements" element={<QmsViewLegalRequirements/>} />
 
 
           {/* QMS User Management */}
