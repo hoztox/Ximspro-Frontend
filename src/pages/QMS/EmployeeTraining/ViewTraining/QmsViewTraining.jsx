@@ -20,7 +20,7 @@ const QmsViewTraining = () => {
         start: '1 hour, 10 minute',
         end: '1 hour, 10 minute',
         venue: 'Test',
-        document: 'Click to view file',
+        document: ' ',
         trainingEvaluation: 'Test',
         evaluationDate: '20-03-2024',
         evaluationBy: 'Test'
@@ -85,7 +85,8 @@ const QmsViewTraining = () => {
                         <div>
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Document</p>
                             <button className="text-[#1E84AF] flex items-center gap-2 click-view-file-btn !text-[18px]">
-                                {formData.document} <Eye size={20} className='text-[#1E84AF]' />
+                                 Click to view file <Eye size={20} className='text-[#1E84AF]' />
+                                 {formData.document}
                             </button>
                         </div>
 
