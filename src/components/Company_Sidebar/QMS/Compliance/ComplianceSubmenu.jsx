@@ -27,7 +27,11 @@ const ComplianceSubmenu = (props) => {
       id: "legal-other-requirements",
       label: "Legal and Other Requirements",
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-      // path: "/company/qms/manual",
+      path: "/company/qms/list-legal-requirements",
+      relatedPaths: ["/company/qms/add-legal-requirements",
+        "/company/qms/edit-legal-requirements",
+        // "/company/qms/view-compliance",
+      ]
     },
     {
       id: "evaluation-of-compliance",

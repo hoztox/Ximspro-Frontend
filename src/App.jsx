@@ -134,6 +134,9 @@ import QmsEditAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTrai
 import QmsViewAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewAwarenessTraining";
 import QmsEditCompliance from "./pages/QMS/Compliance/QmsEditCompliance";
 import QmsViewCompliance from "./pages/QMS/Compliance/QmsViewCompliance";
+import QmsListLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsListLegalRequirements";
+import QmsAddLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsAddLegalRequirements";
+import QmsEditLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsEditLegalRequirements";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -208,8 +211,6 @@ const ThemedApp = () => {
           <Route path="qms/view-draft-processes/:id" element={<ViewQmsDraftProcesses/>} />
 
 
-
-
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
 
 
@@ -239,11 +240,18 @@ const ThemedApp = () => {
           <Route path="qms/edit-awareness-training" element={<QmsEditAwarenessTraining/>} />
           <Route path="qms/view-awareness-training" element={<QmsViewAwarenessTraining/>} />
 
+
+
+
            {/* QMS Compliance*/}
            <Route path="qms/list-compliance" element={<QmsListCompliance />} />
            <Route path="qms/add-compliance" element={<QmsAddCompliance />} />
            <Route path="qms/edit-compliance" element={<QmsEditCompliance />} />
            <Route path="qms/view-compliance" element={<QmsViewCompliance />} />
+
+           <Route path="qms/list-legal-requirements" element={<QmsListLegalRequirements/>} />
+           <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements/>} />
+           <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements/>} />
 
 
           {/* QMS User Management */}
