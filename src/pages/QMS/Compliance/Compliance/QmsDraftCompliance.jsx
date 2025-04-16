@@ -5,6 +5,9 @@ import view from '../../../../assets/images/Company Documentation/view.svg';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsDeleteComplinaceConfirmModal from './Modals/QmsDeleteComplinaceConfirmModal';
+import QmsDeleteComplianceSuccessModal from './Modals/QmsDeleteComplianceSuccessModal';
+import QmsDeleteComplianceErrorModal from './Modals/QmsDeleteComplianceErrorModal';
 
 
 const QmsDraftCompliance = ({ userId }) => {
@@ -17,8 +20,13 @@ const QmsDraftCompliance = ({ userId }) => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    
- 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [complianceToDelete, setComplianceToDelete] = useState(null);
+    const [showDeleteComplianceSuccessModal, setShowDeleteComplianceSuccessModal] = useState(false);
+    const [showDeleteComplianceErrorModal, setShowDeleteComplianceErrorModal] = useState(false);
+
+
+
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
@@ -29,56 +37,56 @@ const QmsDraftCompliance = ({ userId }) => {
         if (companyId) return companyId;
         return null;
     };
- // Check the API response structure in your browser's dev tools
-useEffect(() => {
-    const fetchData = async () => {
-        try {
-            const id = getRelevantUserId();
-            console.log("Fetching data for ID:", id); // Debug log
-            const response = await axios.get(`${BASE_URL}/qms/compliance-draft/${id}/`);
-            console.log("API Response:", response.data); // Debug log
-            
-            const data = response.data;
-            if (Array.isArray(data)) {
-                // Transform the data to match your frontend's expected structure
-                const formattedData = data.map(item => ({
-                    id: item.id,
-                    title: item.compliance_name || "Untitled",
-                    complianceNo: item.compliance_no || "N/A",
-                    complianceType: item.compliance_type || "N/A",
-                    revision: item.rivision || "N/A", 
-                    date: item.date ? formatDate(item.date) : "N/A"
-                }));
-                setComplianceData(formattedData);
-            } else if (data?.data && Array.isArray(data.data)) {
-                // Handle nested data structure
-                const formattedData = data.data.map(item => ({
-                    id: item.id,
-                    title: item.compliance_name || "Untitled",
-                    complianceNo: item.compliance_no || "N/A",
-                    complianceType: item.compliance_type || "N/A",
-                    revision: item.rivision || "N/A",
-                    date: item.date ? formatDate(item.date) : "N/A"
-                }));
-                setComplianceData(formattedData);
-            } else {
-                console.error("Unexpected data format:", data);
-                setComplianceData([]);
+    // Check the API response structure in your browser's dev tools
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const id = getRelevantUserId();
+                console.log("Fetching data for ID:", id); // Debug log
+                const response = await axios.get(`${BASE_URL}/qms/compliance-draft/${id}/`);
+                console.log("API Response:", response.data); // Debug log
+
+                const data = response.data;
+                if (Array.isArray(data)) {
+                    // Transform the data to match your frontend's expected structure
+                    const formattedData = data.map(item => ({
+                        id: item.id,
+                        title: item.compliance_name || "Untitled",
+                        complianceNo: item.compliance_no || "N/A",
+                        complianceType: item.compliance_type || "N/A",
+                        revision: item.rivision || "N/A",
+                        date: item.date ? formatDate(item.date) : "N/A"
+                    }));
+                    setComplianceData(formattedData);
+                } else if (data?.data && Array.isArray(data.data)) {
+                    // Handle nested data structure
+                    const formattedData = data.data.map(item => ({
+                        id: item.id,
+                        title: item.compliance_name || "Untitled",
+                        complianceNo: item.compliance_no || "N/A",
+                        complianceType: item.compliance_type || "N/A",
+                        revision: item.rivision || "N/A",
+                        date: item.date ? formatDate(item.date) : "N/A"
+                    }));
+                    setComplianceData(formattedData);
+                } else {
+                    console.error("Unexpected data format:", data);
+                    setComplianceData([]);
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error("Failed to fetch draft compliance:", error);
+                setError("Failed to load compliance data. Please try again.");
+                setLoading(false);
             }
-            setLoading(false);
-        } catch (error) {
-            console.error("Failed to fetch draft compliance:", error);
-            setError("Failed to load compliance data. Please try again.");
-            setLoading(false);
-        }
-    };
-    fetchData();
-}, [userId]);
+        };
+        fetchData();
+    }, [userId]);
 
     // Format date from YYYY-MM-DD to DD-MM-YYYY
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
-        
+
         try {
             const date = new Date(dateString);
             return date.toLocaleDateString('en-GB', {
@@ -108,20 +116,39 @@ useEffect(() => {
         navigate(`/company/qms/view-draft-compliance/${id}`);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this compliance record?")) {
-            try {
-                const token = localStorage.getItem('token');
-                
-                await axios.delete(`${BASE_URL}/qms/compliances-get/${id}/`, {
-                   
-                });
-                navigate('/company/qms/list-compliance');
-            } catch (err) {
-                console.error("Error deleting compliance:", err);
-                alert("Failed to delete compliance record");
-            }
+    // Updated to use modals
+    const initiateDelete = (id) => {
+        setComplianceToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleDelete = async () => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/compliances-get/${complianceToDelete}/`);
+            setShowDeleteModal(false);
+            setShowDeleteComplianceSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteComplianceSuccessModal(false);
+            }, 2000);
+            setComplianceData(complianceData.filter(item => item.id !== complianceToDelete));
+        } catch (err) {
+            console.error("Error deleting compliance:", err);
+            setShowDeleteModal(false);
+            setShowDeleteComplianceErrorModal(true);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setComplianceToDelete(null);
+    };
+
+    const closeSuccessModal = () => {
+        setShowDeleteComplianceSuccessModal(false);
+    };
+
+    const closeErrorModal = () => {
+        setShowDeleteComplianceErrorModal(false);
     };
 
     // Filter and pagination
@@ -218,7 +245,7 @@ useEffect(() => {
                                                 </td>
                                                 <td className="px-4 qms-list-compliance-data text-center">
                                                     <button
-                                                        onClick={() => handleDelete(item.id)}
+                                                        onClick={() => initiateDelete(item.id)}
                                                         className="cursor-pointer"
                                                     >
                                                         <img src={deletes} alt="Delete icon" className='w-[16px] h-[16px]' />
@@ -271,6 +298,25 @@ useEffect(() => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <QmsDeleteComplinaceConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleDelete}
+                onCancel={handleCancelDelete}
+            />
+
+            {/* Success Modal */}
+            <QmsDeleteComplianceSuccessModal
+                showDeleteComplianceSuccessModal={showDeleteComplianceSuccessModal}
+                onClose={() => setShowDeleteComplianceSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <QmsDeleteComplianceErrorModal
+                showDeleteComplianceErrorModal={showDeleteComplianceErrorModal}
+                onClose={() => setShowDeleteComplianceErrorModal(false)}
+            />
         </div>
     );
 };

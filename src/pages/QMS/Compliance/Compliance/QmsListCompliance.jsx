@@ -8,17 +8,25 @@ import axios from 'axios';
 import "./qmslistcompliance.css";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsDeleteComplinaceConfirmModal from './Modals/QmsDeleteComplinaceConfirmModal';
+import QmsDeleteComplianceSuccessModal from './Modals/QmsDeleteComplianceSuccessModal';
+import QmsDeleteComplianceErrorModal from './Modals/QmsDeleteComplianceErrorModal';
 
 const QmsListCompliance = () => {
 
     const [complianceData, setComplianceData] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
-      const [draftCount, setDraftCount] = useState(0);
+    const [draftCount, setDraftCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [complianceToDelete, setComplianceToDelete] = useState(null);
+    const [showDeleteComplianceSuccessModal, setShowDeleteComplianceSuccessModal] = useState(false);
+    const [showDeleteComplianceErrorModal, setShowDeleteComplianceErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -66,30 +74,30 @@ const QmsListCompliance = () => {
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-          const userId = localStorage.getItem("user_id");
-          if (userId) return userId;
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
         }
         const companyId = localStorage.getItem("company_id");
         if (companyId) return companyId;
         return null;
-      };
+    };
 
     const fetchDraftCount = async () => {
         try {
-          const id = getRelevantUserId();
-          const draftResponse = await axios.get(`${BASE_URL}/qms/compliance/drafts-count/${id}/`);
-          setDraftCount(draftResponse.data.count);
-          console.log('Compliance Draft Count:', draftResponse.data.count);
-          
+            const id = getRelevantUserId();
+            const draftResponse = await axios.get(`${BASE_URL}/qms/compliance/drafts-count/${id}/`);
+            setDraftCount(draftResponse.data.count);
+            console.log('Compliance Draft Count:', draftResponse.data.count);
+
         } catch (err) {
-          console.error("Error fetching draft count:", err);
-          setDraftCount(0);
+            console.error("Error fetching draft count:", err);
+            setDraftCount(0);
         }
-      };
-      
-      useEffect(() => {
+    };
+
+    useEffect(() => {
         fetchDraftCount();
-      }, []);
+    }, []);
 
     // Format date from YYYY-MM-DD to DD-MM-YYYY
     const formatDate = (dateString) => {
@@ -123,16 +131,32 @@ const QmsListCompliance = () => {
         navigate(`/company/qms/view-compliance/${id}`);
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this compliance?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/compliances-get/${id}/`);
-                setComplianceData(complianceData.filter(item => item.id !== id));
-            } catch (err) {
-                alert('Failed to delete compliance');
-                console.error('Error deleting compliance:', err);
-            }
+    // Updated to use modals
+    const initiateDelete = (id) => {
+        setComplianceToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleDelete = async () => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/compliances-get/${complianceToDelete}/`);
+            setComplianceData(complianceData.filter(item => item.id !== complianceToDelete));
+            setShowDeleteModal(false);
+            setShowDeleteComplianceSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteComplianceSuccessModal(false);
+            }, 2000);
+            fetchDraftCount();
+        } catch (err) {
+            console.error('Error deleting compliance:', err);
+            setShowDeleteModal(false);
+            setShowDeleteComplianceErrorModal(true);
         }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+        setComplianceToDelete(null);
     };
 
     // Filter by search query
@@ -235,7 +259,7 @@ const QmsListCompliance = () => {
                                                     </button>
                                                 </td>
                                                 <td className="px-4 qms-list-compliance-data text-center">
-                                                    <button onClick={() => handleDelete(item.id)}>
+                                                    <button onClick={() => initiateDelete(item.id)}>
                                                         <img src={deleteIcon} alt="Delete icon" className='w-[16px] h-[16px]' />
                                                     </button>
                                                 </td>
@@ -290,6 +314,25 @@ const QmsListCompliance = () => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <QmsDeleteComplinaceConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleDelete}
+                onCancel={handleCancelDelete}
+            />
+
+            {/* Success Modal */}
+            <QmsDeleteComplianceSuccessModal
+                showDeleteComplianceSuccessModal={showDeleteComplianceSuccessModal}
+                onClose={() => setShowDeleteComplianceSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <QmsDeleteComplianceErrorModal
+                showDeleteComplianceErrorModal={showDeleteComplianceErrorModal}
+                onClose={() => setShowDeleteComplianceErrorModal(false)}
+            />
         </div>
     );
 };
