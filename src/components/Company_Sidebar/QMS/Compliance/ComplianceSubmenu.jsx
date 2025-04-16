@@ -103,7 +103,14 @@ const ComplianceSubmenu = (props) => {
       id: "sustainability",
       label: "Sustainability",
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-      // path: "/company/qms/policy",
+      path: "/company/qms/list-sustainability",
+      relatedPaths: ["/company/qms/add-sustainability",
+        "/company/qms/edit-sustainability",
+        "/company/qms/view-sustainability",
+        "/company/qms/draft-sustainability",
+        "/company/qms/edit-draft-sustainability",
+        "/company/qms/view-draft-sustainability",
+      ]
     },
   ];
 

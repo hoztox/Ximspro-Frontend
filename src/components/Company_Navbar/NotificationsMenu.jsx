@@ -5,7 +5,6 @@ import "./notificationmenu.css"
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../Utils/Config";
-
 const TABS = [
     { name: 'QMS', activeColor: 'border-[#858585] text-[#858585]' },
     { name: 'EMS', activeColor: 'border-[#38E76C] text-[#38E76C]' },
@@ -15,7 +14,6 @@ const TABS = [
     { name: 'AMS', activeColor: 'border-[#DD6B06] text-[#DD6B06]' },
     { name: 'IMS', activeColor: 'border-[#CBA301] text-[#CBA301]' }
 ];
-
 const NotificationsMenu = forwardRef(({
     onNotificationsUpdate,
     onClose,
@@ -76,34 +74,24 @@ const NotificationsMenu = forwardRef(({
             return null;
         }
     };
-
     const fetchUnreadCount = async (userId) => {
         try {
-            // Fetch both manual and procedure notification counts
+         
             const manualResponse = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
             const procedureResponse = await axios.get(`${BASE_URL}/qms/procedure/count-notifications/${userId}/`);
-            const recordResponse = await axios.get(`${BASE_URL}/qms/record/count-notifications/${userId}/`);
             
-            // Sum all counts
-            const totalUnread = manualResponse.data.unread_count + 
-                               procedureResponse.data.unread_count + 
-                               recordResponse.data.unread_count;
+            
+            const totalUnread = manualResponse.data.unread_count + procedureResponse.data.unread_count;
             setUnreadCount(totalUnread);
         } catch (error) {
             console.error("Error fetching unread notification count:", error);
         }
     };
-
     const markNotificationAsRead = async (notificationId, type) => {
         try {
-            let endpoint;
-            if (type === 'manual') {
-                endpoint = `${BASE_URL}/qms/notifications/${notificationId}/read/`;
-            } else if (type === 'procedure') {
-                endpoint = `${BASE_URL}/qms/notifications-procedure/${notificationId}/read/`;
-            } else if (type === 'record') {
-                endpoint = `${BASE_URL}/qms/notifications-record/${notificationId}/read/`;
-            }
+            let endpoint = type === 'manual' 
+                ? `${BASE_URL}/qms/notifications/${notificationId}/read/`
+                : `${BASE_URL}/qms/notifications-procedure/${notificationId}/read/`;
                 
             const response = await axios.patch(endpoint);
             return response.data; 
@@ -112,29 +100,25 @@ const NotificationsMenu = forwardRef(({
             return null;
         }
     };
-
     const handleView = async (notification) => {
         let notificationType, navigationUrl;
         
-        // Determine notification type and navigation URL
+  
         if (notification.manual && notification.manual.id) {
             notificationType = 'manual';
             navigationUrl = `/company/qms/viewmanual/${notification.manual.id}`;
         } else if (notification.procedure && notification.procedure.id) {
             notificationType = 'procedure';
             navigationUrl = `/company/qms/viewprocedure/${notification.procedure.id}`;
-        } else if (notification.record && notification.record.id) {
-            notificationType = 'record';
-            navigationUrl = `/company/qms/viewrecord/${notification.record.id}`;
         } else {
-            console.error("Invalid Notification: Missing manual, procedure, or record data", notification);
+            console.error("Invalid Notification: Missing manual or procedure data", notification);
             return;
         }
         
-        // Mark notification as read
+        
         await markNotificationAsRead(notification.id, notificationType);
         
-        // Update local state to reflect read status
+       
         setNotifications(prev => ({
             ...prev,
             QMS: prev.QMS.map(n => 
@@ -143,19 +127,18 @@ const NotificationsMenu = forwardRef(({
                     : n
             )
         }));
-        // Decrease notification count if it was an unread notification
+       
         if (!notification.is_read && onNotificationRead) {
             onNotificationRead();
         }
         
-        // Navigate to the appropriate page
+ 
         navigate(navigationUrl);
         
         if (onClose) {
             onClose();
         }
     };
-
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
@@ -165,21 +148,17 @@ const NotificationsMenu = forwardRef(({
                     console.error("User not found or not logged in");
                     return;
                 }
-                // Fetch unread count
+       
                 await fetchUnreadCount(user.user_id);
-                
-                // Fetch all types of notifications
+              
                 const manualNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
                 const procedureNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-procedure/${user.user_id}/`);
-                const recordNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-record/${user.user_id}/`);
                 
-                const [manualResponse, procedureResponse, recordResponse] = await Promise.all([
+                const [manualResponse, procedureResponse] = await Promise.all([
                     manualNotificationsPromise, 
-                    procedureNotificationsPromise,
-                    recordNotificationsPromise
+                    procedureNotificationsPromise
                 ]);
-                
-                // Add a type field to distinguish between notification types
+      
                 const manualNotifications = manualResponse.data.map(notification => ({
                     ...notification,
                     notificationType: 'manual'
@@ -189,28 +168,18 @@ const NotificationsMenu = forwardRef(({
                     ...notification,
                     notificationType: 'procedure'
                 }));
-                
-                const recordNotifications = recordResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'record'
-                }));
-                
-                // Combine and sort notifications by creation date (newest first)
-                const combinedNotifications = [
-                    ...manualNotifications, 
-                    ...procedureNotifications,
-                    ...recordNotifications
-                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                
+ 
+                const combinedNotifications = [...manualNotifications, ...procedureNotifications]
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 setNotifications(prev => ({
                     ...prev,
                     QMS: combinedNotifications
                 }));
-                
                 if (onNotificationsUpdate) {
-                    onNotificationsUpdate({
+                    onNotificationsUpdate(prev => ({
+                        ...prev,
                         QMS: combinedNotifications
-                    });
+                    }));
                 }
             } catch (error) {
                 console.error("Error fetching notifications:", error);
@@ -222,31 +191,20 @@ const NotificationsMenu = forwardRef(({
                 setIsLoading(false);
             }
         };
-        
         fetchNotifications();
     }, [onNotificationsUpdate]);
-
     const handleTabChange = (tab) => {
         setActiveTab(tab);
     };
-
     const handleViewAll = () => {
         navigate('/company/notifications');
         if (onClose) {
             onClose();
         }
     }
-
     const renderNotificationItem = (notification) => {
-        // Determine notification type for the view button
-        let notificationType;
-        if (notification.notificationType === 'manual') {
-            notificationType = 'Manual';
-        } else if (notification.notificationType === 'procedure') {
-            notificationType = 'Procedure';
-        } else if (notification.notificationType === 'record') {
-            notificationType = 'Record';
-        }
+        // Determine what type of notification we're dealing with for the view button
+        const notificationType = notification.notificationType === 'manual' ? 'Manual' : 'Procedure';
         
         return (
             <motion.div
@@ -287,7 +245,6 @@ const NotificationsMenu = forwardRef(({
             </motion.div>
         );
     };
-
     return (
         <motion.div
             ref={ref}
@@ -361,5 +318,4 @@ const NotificationsMenu = forwardRef(({
         </motion.div>
     );
 });
-
 export default NotificationsMenu;

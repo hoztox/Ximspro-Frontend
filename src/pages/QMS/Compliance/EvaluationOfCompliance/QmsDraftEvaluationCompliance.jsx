@@ -153,7 +153,7 @@ const QmsDraftEvaluationCompliance = () => {
     navigate('/company/qms/list-evaluation-compliance');
   };
   const handleView = (id) => {
-    navigate(`/company/qms/viewrecordformat/${id}`);
+    navigate(`/company/qms/view-draft-evaluation-compliance`);
   };
   return (
     <div className="bg-[#1C1C24] list-manual-main">

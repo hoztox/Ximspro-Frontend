@@ -158,6 +158,13 @@ import QmsDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/
 import QmsEditDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsEditDraftManagementChange";
 import QmsViewDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsViewDraftManagementChange";
 import QmsViewDraftEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsViewDraftEvaluationCompliance";
+import QmsListSustainability from "./pages/QMS/Compliance/Sustainability/QmsListSustainability";
+import QmsAddSustainability from "./pages/QMS/Compliance/Sustainability/QmsAddSustainability";
+import QmsEditSustainability from "./pages/QMS/Compliance/Sustainability/QmsEditSustainability";
+import QmsViewSustainability from "./pages/QMS/Compliance/Sustainability/QmsViewSustainability";
+import QmsDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsDraftSustainability";
+import QmsEditDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsEditDraftSustainability";
+import QmsViewDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsViewDraftSustainability";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -296,6 +303,14 @@ const ThemedApp = () => {
            <Route path="qms/draft-management-change" element={<QmsDraftManagementChange/>}/>
            <Route path="qms/edit-draft-management-change" element={<QmsEditDraftManagementChange/>}/>
            <Route path="qms/view-draft-management-change" element={<QmsViewDraftManagementChange/>}/>
+
+           <Route path="qms/list-sustainability" element={<QmsListSustainability/>} />
+           <Route path="qms/add-sustainability" element={<QmsAddSustainability/>} />
+           <Route path="qms/edit-sustainability" element={<QmsEditSustainability/>} />
+           <Route path="qms/view-sustainability" element={<QmsViewSustainability/>} />
+           <Route path="qms/draft-sustainability" element={<QmsDraftSustainability/>} />
+           <Route path="qms/edit-draft-sustainability" element={<QmsEditDraftSustainability/>} />
+           <Route path="qms/view-draft-sustainability" element={<QmsViewDraftSustainability/>} />
 
 
           {/* QMS User Management */}
