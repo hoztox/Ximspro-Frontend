@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from 'lucide-react';
 import edits from "../../../../assets/images/Company Documentation/edit.svg"
 import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import view from "../../../../assets/images/Company Documentation/view.svg"
 import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
 
-const QmsListAwarenessTraining = () => {
+const QmsDraftAwarenessTraining = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
@@ -46,26 +45,22 @@ const QmsListAwarenessTraining = () => {
         setTrainingItems(trainingItems.filter(item => item.id !== id));
     };
 
-    const handleAddAwarenessTraining = () => {
-        navigate('/company/qms/add-awareness-training')
+    const handleCloseDraftAwarenessTraining = () => {
+        navigate('/company/qms/list-awareness-training')
     }
 
-    const handleDraftAwarenessTraining = () => {
-        navigate('/company/qms/draft-awareness-training')
+    const handleEditDraftAwarenessTraining = () => {
+        navigate('/company/qms/edit-draft-awareness-training')
     }
 
-    const handleEditAwarenessTraining = () => {
-        navigate('/company/qms/edit-awareness-training')
-    }
-
-    const handleViewAwarenessTraining = () => {
-        navigate('/company/qms/view-awareness-training')
+    const handleViewDraftAwarenessTraining = () => {
+        navigate('/company/qms/view-draft-awareness-training')
     }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">List Awareness Training</h1>
+                <h1 className="list-awareness-training-head">Draft Awareness Training</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -80,17 +75,10 @@ const QmsListAwarenessTraining = () => {
                         </div>
                     </div>
                     <button
-                        className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftAwarenessTraining}
+                        className="text-white bg-[#24242D] px-2 rounded-md"
+                        onClick={handleCloseDraftAwarenessTraining}
                     >
-                        <span>Draft</span>
-                    </button>
-                    <button
-                        className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddAwarenessTraining}
-                    >
-                        <span>Add Awareness Training</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+                        <X className='text-white' />
                     </button>
                 </div>
             </div>
@@ -102,8 +90,8 @@ const QmsListAwarenessTraining = () => {
                             <th className="px-3 text-left list-awareness-training-thead">Title</th>
                             <th className="px-3 text-left list-awareness-training-thead">Description</th>
                             <th className="px-3 text-left list-awareness-training-thead">Link</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Action</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Edit</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
                     </thead>
@@ -118,21 +106,17 @@ const QmsListAwarenessTraining = () => {
                                         {item.link}
                                     </a>
                                 </td>
+                                <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
+                                    <button onClick={handleEditDraftAwarenessTraining}>
+                                        Click to Continue
+                                    </button>
+                                </td>
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
                                         <button
-                                            onClick={handleViewAwarenessTraining}
+                                            onClick={handleViewDraftAwarenessTraining}
                                         >
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button
-                                            onClick={handleEditAwarenessTraining}
-                                        >
-                                            <img src={edits} alt=" Edit Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
                                 </td>
@@ -187,5 +171,4 @@ const QmsListAwarenessTraining = () => {
         </div >
     );
 }
-
-export default QmsListAwarenessTraining
+export default QmsDraftAwarenessTraining

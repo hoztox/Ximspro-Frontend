@@ -95,6 +95,9 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/add-awareness-training",
                 "/company/qms/edit-awareness-training",
                 "/company/qms/view-awareness-training",
+                "/company/qms/draft-awareness-training",
+                "/company/qms/edit-draft-awareness-training",
+                "/company/qms/view-draft-awareness-training",
             ]
         },
     ];

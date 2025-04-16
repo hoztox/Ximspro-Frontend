@@ -174,6 +174,9 @@ import QmsViewDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/Employ
 import QmsDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsDraftEmployeeSatisfaction";
 import QmsEditDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsEditDraftEmployeeSatisfaction";
 import QmsViewDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsViewDraftEmployeeSatisfaction";
+import QmsDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsDraftAwarenessTraining";
+import QmsEditDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsEditDraftAwarenessTraining";
+import QmsViewDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewDraftAwarenessTraining";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -285,6 +288,9 @@ const ThemedApp = () => {
           <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining/>} />
           <Route path="qms/edit-awareness-training" element={<QmsEditAwarenessTraining/>} />
           <Route path="qms/view-awareness-training" element={<QmsViewAwarenessTraining/>} />
+          <Route path="qms/draft-awareness-training" element={<QmsDraftAwarenessTraining/>} />
+          <Route path="qms/edit-draft-awareness-training" element={<QmsEditDraftAwarenessTraining/>} />
+          <Route path="qms/view-draft-awareness-training" element={<QmsViewDraftAwarenessTraining/>} />
 
 
 
