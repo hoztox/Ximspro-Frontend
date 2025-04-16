@@ -1,32 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsEditCompliance = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get the compliance ID from URL params
+  
   const [formData, setFormData] = useState({
-    name: "",
-    number: "",
-    type: "",
+    compliance_name: "",
+    compliance_no: "",
+    compliance_type: "",
+    date: null,
     day: "",
     month: "",
     year: "",
-    document: null,
-    businessProcess: "",
-    remarks: "",
-    relatedDocument: "",
-    revision: "",
+    attach_document: null,
+    relate_business_process: "",
+    compliance_remarks: "",
+    relate_document: "",
+    rivision: "",
+    send_notification: false,
   });
 
   const [selectedFile, setSelectedFile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [dropdowns, setDropdowns] = useState({
-    type: false,
+    compliance_type: false,
     day: false,
     month: false,
     year: false,
   });
+
+ 
+  useEffect(() => {
+    const fetchComplianceData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${BASE_URL}/qms/compliances-get/${id}/`);
+        const data = response.data;
+        
+      
+        let day = "", month = "", year = "";
+        if (data.date) {
+          const dateObj = new Date(data.date);
+          day = dateObj.getDate().toString();
+          month = (dateObj.getMonth() + 1).toString();
+          year = dateObj.getFullYear().toString();
+        }
+        
+        setFormData({
+          ...data,
+          day,
+          month,
+          year,
+        });
+        
+        if (data.attach_document) {
+          setSelectedFile(data.attach_document.split('/').pop()); 
+        }
+        
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load compliance data");
+        setLoading(false);
+        console.error("Error fetching compliance data:", err);
+      }
+    };
+
+    if (id) {
+      fetchComplianceData();
+    }
+  }, [id]);
 
   const handleDropdownFocus = (key) => {
     setDropdowns((prev) => ({ ...prev, [key]: true }));
@@ -36,38 +85,60 @@ const QmsEditCompliance = () => {
     setDropdowns((prev) => ({ ...prev, [key]: false }));
   };
 
-  const [fileName, setFileName] = useState("No file chosen");
-
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFileName(file.name);
+      setSelectedFile(file.name);
       setFormData({
         ...formData,
-        document: file,
+        attach_document: file,
       });
     } else {
-      setFileName("No file chosen");
+      setSelectedFile(null);
       setFormData({
         ...formData,
-        document: null,
+        attach_document: null,
       });
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Here you would typically send the data to your backend
-  };
+    const submitData = new FormData();
+    if (formData.day && formData.month && formData.year) {
+      const formattedDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`;
+      submitData.append('date', formattedDate);
+    }
+    if (formData.attach_document && typeof formData.attach_document === 'object') {
+      submitData.append('attach_document', formData.attach_document);
+    }
+    Object.keys(formData).forEach(key => {
+      if (!['day', 'month', 'year', 'attach_document'].includes(key) && formData[key] !== null) {
+        submitData.append(key, formData[key]);
+      }
+    });
+    try {
+        const response = await axios.put(`${BASE_URL}/qms/compliances/${id}/edit/`, submitData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log("Compliance updated successfully:", response.data);
+      navigate("/company/qms/list-compliance");
+    } catch (err) {
+      console.error("Error updating compliance:", err);
+      setError("Failed to update compliance");
+    }
+};
+
 
   const handleListCompliance = () => {
     navigate("/company/qms/list-compliance");
@@ -76,6 +147,21 @@ const QmsEditCompliance = () => {
   const handleCancel = () => {
     navigate("/company/qms/list-compliance");
   };
+
+  const handleViewFile = () => {
+    // Only attempt to view if there's a file to view
+    if (formData.attach_document && typeof formData.attach_document === 'string') {
+      window.open(formData.attach_document, '_blank');
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-5">{error}</div>;
+  }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -97,8 +183,8 @@ const QmsEditCompliance = () => {
             </label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="compliance_name"
+              value={formData.compliance_name || ""}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -112,8 +198,8 @@ const QmsEditCompliance = () => {
             </label>
             <input
               type="text"
-              name="number"
-              value={formData.number}
+              name="compliance_no"
+              value={formData.compliance_no || ""}
               onChange={handleInputChange}
               required
               className="w-full add-compliance-inputs"
@@ -127,22 +213,23 @@ const QmsEditCompliance = () => {
             </label>
             <div className="relative">
               <select
-                name="type"
-                value={formData.type}
+                name="compliance_type"
+                value={formData.compliance_type || ""}
                 onChange={handleInputChange}
-                onFocus={() => handleDropdownFocus("type")}
-                onBlur={() => handleDropdownBlur("type")}
+                onFocus={() => handleDropdownFocus("compliance_type")}
+                onBlur={() => handleDropdownBlur("compliance_type")}
                 className="appearance-none w-full add-compliance-inputs cursor-pointer"
               >
                 <option value="">Select Compliance/Obligation Type</option>
-                <option value="legal">Legal</option>
-                <option value="regulatory">Regulatory</option>
-                <option value="contractual">Contractual</option>
-                <option value="internal">Internal</option>
+                <option value="Legal">Legal</option>
+                <option value="Business">Business</option>
+                <option value="Client">Client</option>
+                <option value="Process/Specification">Process/Specification</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.type ? "rotate-180" : ""
-                  }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                  dropdowns.compliance_type ? "rotate-180" : ""
+                }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -156,7 +243,7 @@ const QmsEditCompliance = () => {
               <div className="relative">
                 <select
                   name="day"
-                  value={formData.day}
+                  value={formData.day || ""}
                   onChange={handleInputChange}
                   onFocus={() => handleDropdownFocus("day")}
                   onBlur={() => handleDropdownBlur("day")}
@@ -164,14 +251,15 @@ const QmsEditCompliance = () => {
                 >
                   <option value="">dd</option>
                   {[...Array(31)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
+                    <option key={i + 1} value={(i + 1).toString()}>
                       {i + 1}
                     </option>
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.day ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -180,7 +268,7 @@ const QmsEditCompliance = () => {
               <div className="relative">
                 <select
                   name="month"
-                  value={formData.month}
+                  value={formData.month || ""}
                   onChange={handleInputChange}
                   onFocus={() => handleDropdownFocus("month")}
                   onBlur={() => handleDropdownBlur("month")}
@@ -188,14 +276,15 @@ const QmsEditCompliance = () => {
                 >
                   <option value="">mm</option>
                   {[...Array(12)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
+                    <option key={i + 1} value={(i + 1).toString()}>
                       {i + 1}
                     </option>
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.month ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -204,7 +293,7 @@ const QmsEditCompliance = () => {
               <div className="relative">
                 <select
                   name="year"
-                  value={formData.year}
+                  value={formData.year || ""}
                   onChange={handleInputChange}
                   onFocus={() => handleDropdownFocus("year")}
                   onBlur={() => handleDropdownBlur("year")}
@@ -212,14 +301,15 @@ const QmsEditCompliance = () => {
                 >
                   <option value="">yyyy</option>
                   {[...Array(10)].map((_, i) => (
-                    <option key={2020 + i} value={2020 + i}>
+                    <option key={2020 + i} value={(2020 + i).toString()}>
                       {2020 + i}
                     </option>
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.year ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -233,7 +323,7 @@ const QmsEditCompliance = () => {
             <div className="relative">
               <input
                 type="file"
-                id="document"
+                id="fileInput"
                 className="hidden"
                 onChange={handleFileChange}
               />
@@ -248,10 +338,15 @@ const QmsEditCompliance = () => {
                 <img src={file} alt="File Icon" />
               </button>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px]">
-                  Click to view file
-                  <Eye size={17} />
-                </div>
+                {(typeof formData.attach_document === 'string' || selectedFile) && (
+                  <div 
+                    onClick={handleViewFile}
+                    className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
+                  >
+                    Click to view file
+                    <Eye size={17} />
+                  </div>
+                )}
                 {!selectedFile && (
                   <p className="text-right no-file">No file chosen</p>
                 )}
@@ -266,8 +361,8 @@ const QmsEditCompliance = () => {
             </label>
             <input
               type="text"
-              name="businessProcess"
-              value={formData.businessProcess}
+              name="relate_business_process"
+              value={formData.relate_business_process || ""}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -279,8 +374,8 @@ const QmsEditCompliance = () => {
               Compliance/Obligation Remarks
             </label>
             <textarea
-              name="remarks"
-              value={formData.remarks}
+              name="compliance_remarks"
+              value={formData.compliance_remarks || ""}
               onChange={handleInputChange}
               rows="4"
               className="w-full add-compliance-inputs !py-3 !h-[98px]"
@@ -293,8 +388,8 @@ const QmsEditCompliance = () => {
               Relate Document/ Process
             </label>
             <textarea
-              name="relatedDocument"
-              value={formData.relatedDocument}
+              name="relate_document"
+              value={formData.relate_document || ""}
               onChange={handleInputChange}
               rows="4"
               className="w-full add-compliance-inputs !py-3 !h-[98px]"
@@ -306,8 +401,8 @@ const QmsEditCompliance = () => {
             <label className="add-compliance-label">Revision</label>
             <input
               type="text"
-              name="revision"
-              value={formData.revision}
+              name="rivision"
+              value={formData.rivision || ""}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -318,7 +413,7 @@ const QmsEditCompliance = () => {
                 type="checkbox"
                 name="send_notification"
                 className="mr-2 form-checkboxes"
-                checked={formData.send_notification}
+                checked={formData.send_notification || false}
                 onChange={handleInputChange}
               />
               <span className="permissions-texts cursor-pointer">

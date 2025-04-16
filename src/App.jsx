@@ -207,23 +207,23 @@ const ThemedApp = () => {
           {/* QMS Documentation */}
           <Route path="qms/policy" element={<QmsPolicy />} />
           <Route path="qms/addpolicy" element={<AddQmsPolicy />} />
-          <Route path="qms/editpolicy/:id" element={<EditQmsPolicy/>} />
+          <Route path="qms/editpolicy/:id" element={<EditQmsPolicy />} />
 
           <Route path="qms/manual" element={<QmsManual />} />
           <Route path="qms/addmanual" element={<AddQmsManual />} />
           <Route path="qms/viewmanual/:id" element={<ViewQmsManual />} />
           <Route path="qms/editmanual/:id" element={<EditQmsmanual />} />
-          <Route path="qms/draftmanual" element={<DraftQmsManual/>} />
-          <Route path="qms/editdraftmanual/:id" element={<EditDraftQmsManual/>} />
-          <Route path="notifications" element = {<ViewAllNotifications/>}/>
-          
+          <Route path="qms/draftmanual" element={<DraftQmsManual />} />
+          <Route path="qms/editdraftmanual/:id" element={<EditDraftQmsManual />} />
+          <Route path="notifications" element={<ViewAllNotifications />} />
+
 
           <Route path="qms/procedure" element={<QmsProcedure />} />
           <Route path="qms/addprocedure" element={<AddQmsProcedure />} />
-          <Route path="qms/viewprocedure/:id" element={<ViewQmsProcedure/>} />
-          <Route path="qms/editprocedure/:id" element={<EditQmsProcedure/>} />
-          <Route path="qms/draftprocedure" element={<DraftQmsProcedure/>} />
-          <Route path="qms/editdraftprocedure/:id" element={<EditDraftQmsProcedure/>} />
+          <Route path="qms/viewprocedure/:id" element={<ViewQmsProcedure />} />
+          <Route path="qms/editprocedure/:id" element={<EditQmsProcedure />} />
+          <Route path="qms/draftprocedure" element={<DraftQmsProcedure />} />
+          <Route path="qms/editdraftprocedure/:id" element={<EditDraftQmsProcedure />} />
 
           <Route path="qms/record-format" element={<QmsRecordFormat />} />
           <Route path="qms/addrecordformat" element={<AddQmsRecordFormat />} />
@@ -243,12 +243,12 @@ const ThemedApp = () => {
 
 
           <Route path="qms/processes" element={<QmsProcesses />} />
-          <Route path="qms/add-processes" element={<AddQmsProcesses/>} />
-          <Route path="qms/view-processes/:id" element={<ViewQmsProcesses/>} />
-          <Route path="qms/edit-processes/:id" element={<EditQmsProcesses/>} />
-          <Route path="qms/draft-processes" element={<DraftQmsProcesses/>} />
-          <Route path="qms/edit-draft-processes/:id" element={<EditQmsDraftProcesses/>} />
-          <Route path="qms/view-draft-processes/:id" element={<ViewQmsDraftProcesses/>} />
+          <Route path="qms/add-processes" element={<AddQmsProcesses />} />
+          <Route path="qms/view-processes/:id" element={<ViewQmsProcesses />} />
+          <Route path="qms/edit-processes/:id" element={<EditQmsProcesses />} />
+          <Route path="qms/draft-processes" element={<DraftQmsProcesses />} />
+          <Route path="qms/edit-draft-processes/:id" element={<EditQmsDraftProcesses />} />
+          <Route path="qms/view-draft-processes/:id" element={<ViewQmsDraftProcesses />} />
 
 
           <Route path="qms/scope-statements" element={<QmsScopeStatements />} />
@@ -256,92 +256,92 @@ const ThemedApp = () => {
 
           {/* QMS Employee Training */}
           <Route path="qms/add-training" element={<QmsAddTraining />} />
-          
+
           <Route path="qms/list-training" element={<QmsListTraining />} />
-          <Route path="qms/edit-training" element={<QmsEditTraining/>} />
-          <Route path="qms/view-training" element={<QmsViewTraining/>} />
-          <Route path="qms/draft-training" element={<QmsDraftListTraining/>} />
-          <Route path="qms/edit-draft-training" element={<QmsEditDraftListTraining/>} />
-          <Route path="qms/view-draft-training" element={<QmsViewDraftTraining/>} />
+          <Route path="qms/edit-training" element={<QmsEditTraining />} />
+          <Route path="qms/view-training" element={<QmsViewTraining />} />
+          <Route path="qms/draft-training" element={<QmsDraftListTraining />} />
+          <Route path="qms/edit-draft-training" element={<QmsEditDraftListTraining />} />
+          <Route path="qms/view-draft-training" element={<QmsViewDraftTraining />} />
 
-          <Route path="qms/listuser-training" element={<QmsListUserTraining/>} />
+          <Route path="qms/listuser-training" element={<QmsListUserTraining />} />
 
-          <Route path="qms/training-evaluation" element={<QmsTrainingEvaluation/>} />
+          <Route path="qms/training-evaluation" element={<QmsTrainingEvaluation />} />
 
-          <Route path="qms/employee-performance" element={<QmsEmployeePerformance/>} />
-          <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance/>} />
-          <Route path="qms/edit-employee-performance" element={<EditQmsEmployeePerformance/>} />
-          <Route path="qms/view-employee-performance" element={<ViewQmsEmployeePerformance/>} />
-          <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance/>} />
-          <Route path="qms/edit-draft-employee-performance" element={<QmsEditDraftEmployeePerformance/>} />
-          <Route path="qms/view-draft-employee-performance" element={<QmsViewDraftEmployeePerformance/>} />
+          <Route path="qms/employee-performance" element={<QmsEmployeePerformance />} />
+          <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance />} />
+          <Route path="qms/edit-employee-performance" element={<EditQmsEmployeePerformance />} />
+          <Route path="qms/view-employee-performance" element={<ViewQmsEmployeePerformance />} />
+          <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance />} />
+          <Route path="qms/edit-draft-employee-performance" element={<QmsEditDraftEmployeePerformance />} />
+          <Route path="qms/view-draft-employee-performance" element={<QmsViewDraftEmployeePerformance />} />
 
-          <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction/>}/>
-          <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction/>}/>
-          <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction/>}/>
-          <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction/>}/>
-          <Route path="qms/draft-satisfaction-survey" element={<QmsDraftEmployeeSatisfaction/>}/>
-          <Route path="qms/edit-draft-satisfaction-survey" element={<QmsEditDraftEmployeeSatisfaction/>}/>
-          <Route path="qms/view-draft-satisfaction-survey" element={<QmsViewDraftEmployeeSatisfaction/>}/>
+          <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction />} />
+          <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction />} />
+          <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction />} />
+          <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction />} />
+          <Route path="qms/draft-satisfaction-survey" element={<QmsDraftEmployeeSatisfaction />} />
+          <Route path="qms/edit-draft-satisfaction-survey" element={<QmsEditDraftEmployeeSatisfaction />} />
+          <Route path="qms/view-draft-satisfaction-survey" element={<QmsViewDraftEmployeeSatisfaction />} />
 
-          <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining/>} />
-          <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining/>} />
-          <Route path="qms/edit-awareness-training" element={<QmsEditAwarenessTraining/>} />
-          <Route path="qms/view-awareness-training" element={<QmsViewAwarenessTraining/>} />
-          <Route path="qms/draft-awareness-training" element={<QmsDraftAwarenessTraining/>} />
-          <Route path="qms/edit-draft-awareness-training" element={<QmsEditDraftAwarenessTraining/>} />
-          <Route path="qms/view-draft-awareness-training" element={<QmsViewDraftAwarenessTraining/>} />
-
-
+          <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining />} />
+          <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining />} />
+          <Route path="qms/edit-awareness-training" element={<QmsEditAwarenessTraining />} />
+          <Route path="qms/view-awareness-training" element={<QmsViewAwarenessTraining />} />
+          <Route path="qms/draft-awareness-training" element={<QmsDraftAwarenessTraining />} />
+          <Route path="qms/edit-draft-awareness-training" element={<QmsEditDraftAwarenessTraining />} />
+          <Route path="qms/view-draft-awareness-training" element={<QmsViewDraftAwarenessTraining />} />
 
 
-           {/* QMS Compliance*/}
-           <Route path="qms/list-compliance" element={<QmsListCompliance />} />
-           <Route path="qms/add-compliance" element={<QmsAddCompliance />} />
-           <Route path="qms/edit-compliance" element={<QmsEditCompliance />} />
-           <Route path="qms/view-compliance" element={<QmsViewCompliance />} />
-           <Route path="qms/draft-compliance" element={<QmsDraftCompliance />} />
-           <Route path="qms/edit-draft-compliance" element={<QmsEditDraftCompliance />} />
-           <Route path="qms/view-draft-compliance" element={<QmsDraftViewCompliance />} />
 
-           <Route path="qms/list-legal-requirements" element={<QmsListLegalRequirements/>} />
-           <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements/>} />
-           <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements/>} />
-           <Route path="qms/view-legal-requirements" element={<QmsViewLegalRequirements/>} />
-           <Route path="qms/draft-legal-requirements" element={<QmsDraftLegalRequirements/>} />
-           <Route path="qms/view-draft-legal-requirements" element={<QmsDraftViewLegalRequirements/>} />
-           <Route path="qms/edit-draft-legal-requirements" element={<QmsDraftEditLegalRequirements/>} />
 
-           <Route path="qms/list-evaluation-compliance" element={<QmsListEvaluationCompliance />} />
-           <Route path="qms/add-evaluation-compliance" element={<QmsAddEvaluationCompliance />} />
-           <Route path="qms/edit-evaluation-compliance" element={<QmsEditEvaluationCompliance />} />
-           <Route path="qms/view-evaluation-compliance" element={<QmsViewEvaluationCompliance />} />
-           <Route path="qms/draft-evaluation-compliance" element={<QmsDraftEvaluationCompliance />} />
-           <Route path="qms/edit-draft-evaluation-compliance" element={<QmsEditDraftEvaluationCompliance />} />
-           <Route path="qms/view-draft-evaluation-compliance" element={<QmsViewDraftEvaluationCompliance />} />
+          {/* QMS Compliance*/}
+          <Route path="qms/list-compliance" element={<QmsListCompliance />} />
+          <Route path="qms/add-compliance" element={<QmsAddCompliance />} />
+          <Route path="qms/edit-compliance/:id" element={<QmsEditCompliance />} />
+          <Route path="qms/draft-compliance" element={<QmsDraftCompliance />} />
+          <Route path="qms/view-compliance/:id" element={<QmsViewCompliance />} />
+          <Route path="qms/edit-draft-compliance/:id" element={<QmsEditDraftCompliance />} />
+          <Route path="qms/view-draft-compliance/:id" element={<QmsDraftViewCompliance />} />
 
-           <Route path="qms/list-management-change" element={<QmsListManagementChange/>} />
-           <Route path="qms/add-management-change" element={<QmsAddmanagementChange/>} />
-           <Route path="qms/edit-management-change" element={<QmsEditManagementChange/>} />
-           <Route path="qms/view-management-change" element={<QmsViewManagementChange/>} />
-           <Route path="qms/draft-management-change" element={<QmsDraftManagementChange/>}/>
-           <Route path="qms/edit-draft-management-change" element={<QmsEditDraftManagementChange/>}/>
-           <Route path="qms/view-draft-management-change" element={<QmsViewDraftManagementChange/>}/>
+          <Route path="qms/list-legal-requirements" element={<QmsListLegalRequirements />} />
+          <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements />} />
+          <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements />} />
+          <Route path="qms/view-legal-requirements" element={<QmsViewLegalRequirements />} />
+          <Route path="qms/draft-legal-requirements" element={<QmsDraftLegalRequirements />} />
+          <Route path="qms/view-draft-legal-requirements" element={<QmsDraftViewLegalRequirements />} />
+          <Route path="qms/edit-draft-legal-requirements" element={<QmsDraftEditLegalRequirements />} />
 
-           <Route path="qms/list-sustainability" element={<QmsListSustainability/>} />
-           <Route path="qms/add-sustainability" element={<QmsAddSustainability/>} />
-           <Route path="qms/edit-sustainability" element={<QmsEditSustainability/>} />
-           <Route path="qms/view-sustainability" element={<QmsViewSustainability/>} />
-           <Route path="qms/draft-sustainability" element={<QmsDraftSustainability/>} />
-           <Route path="qms/edit-draft-sustainability" element={<QmsEditDraftSustainability/>} />
-           <Route path="qms/view-draft-sustainability" element={<QmsViewDraftSustainability/>} />
+          <Route path="qms/list-evaluation-compliance" element={<QmsListEvaluationCompliance />} />
+          <Route path="qms/add-evaluation-compliance" element={<QmsAddEvaluationCompliance />} />
+          <Route path="qms/edit-evaluation-compliance" element={<QmsEditEvaluationCompliance />} />
+          <Route path="qms/view-evaluation-compliance" element={<QmsViewEvaluationCompliance />} />
+          <Route path="qms/draft-evaluation-compliance" element={<QmsDraftEvaluationCompliance />} />
+          <Route path="qms/edit-draft-evaluation-compliance" element={<QmsEditDraftEvaluationCompliance />} />
+          <Route path="qms/view-draft-evaluation-compliance" element={<QmsViewDraftEvaluationCompliance />} />
+
+          <Route path="qms/list-management-change" element={<QmsListManagementChange />} />
+          <Route path="qms/add-management-change" element={<QmsAddmanagementChange />} />
+          <Route path="qms/edit-management-change" element={<QmsEditManagementChange />} />
+          <Route path="qms/view-management-change" element={<QmsViewManagementChange />} />
+          <Route path="qms/draft-management-change" element={<QmsDraftManagementChange />} />
+          <Route path="qms/edit-draft-management-change" element={<QmsEditDraftManagementChange />} />
+          <Route path="qms/view-draft-management-change" element={<QmsViewDraftManagementChange />} />
+
+          <Route path="qms/list-sustainability" element={<QmsListSustainability />} />
+          <Route path="qms/add-sustainability" element={<QmsAddSustainability />} />
+          <Route path="qms/edit-sustainability" element={<QmsEditSustainability />} />
+          <Route path="qms/view-sustainability" element={<QmsViewSustainability />} />
+          <Route path="qms/draft-sustainability" element={<QmsDraftSustainability />} />
+          <Route path="qms/edit-draft-sustainability" element={<QmsEditDraftSustainability />} />
+          <Route path="qms/view-draft-sustainability" element={<QmsViewDraftSustainability />} />
 
 
           {/* QMS User Management */}
           <Route path="qms/adduser" element={<QMSAddUser />} />
           <Route path="qms/listuser" element={<QMSListUser />} />
-          <Route path="qms/edituser/:id" element={<QMSEditUser/>} />
-          <Route path="qms/user-details/:id" element={<QMSViewUser/>} />
+          <Route path="qms/edituser/:id" element={<QMSEditUser />} />
+          <Route path="qms/user-details/:id" element={<QMSViewUser />} />
 
 
 

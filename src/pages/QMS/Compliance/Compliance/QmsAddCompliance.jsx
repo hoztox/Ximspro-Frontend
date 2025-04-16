@@ -1,29 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import "./qmsaddcompliance.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
+ 
 
 const QmsAddCompliance = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: "",
-    number: "",
-    type: "",
+    compliance_name: "",
+    compliance_no: "",
+    compliance_type: "",
+    date: null,
     day: "",
     month: "",
     year: "",
-    document: null,
-    businessProcess: "",
-    remarks: "",
-    relatedDocument: "",
-    revision: "",
+    attach_document: null,
+    relate_business_process: "",
+    compliance_remarks: "",
+    relate_document: "",
+    rivision: "",
+    send_notification: false,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
   const [dropdowns, setDropdowns] = useState({
-    type: false,
+    compliance_type: false,
     day: false,
     month: false,
     year: false,
@@ -37,53 +44,180 @@ const QmsAddCompliance = () => {
     setDropdowns((prev) => ({ ...prev, [key]: false }));
   };
 
-  const [fileName, setFileName] = useState("No file chosen");
-
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     });
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFileName(file.name);
+      setSelectedFile(file.name);
       setFormData({
         ...formData,
-        document: file,
+        attach_document: file,
       });
     } else {
-      setFileName("No file chosen");
+      setSelectedFile(null);
       setFormData({
         ...formData,
-        document: null,
+        attach_document: null,
       });
     }
   };
+  const getUserCompanyId = () => {
+    // First check if company_id is stored directly
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
 
-  const handleSubmit = (e) => {
+    // If user data exists with company_id
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+        // Try to get company_id from user data that was stored during login
+        const userData = localStorage.getItem("user_company_id");
+        if (userData) {
+            try {
+                return JSON.parse(userData);
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
+        }
+    }
+    return null;
+};
+const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+        const userId = localStorage.getItem("user_id");
+        if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+};
+  useEffect(() => {
+    const { day, month, year } = formData;
+    if (day && month && year) {
+      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      setFormData(prev => ({ ...prev, date: formattedDate }));
+    }
+  }, [formData.day, formData.month, formData.year]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Here you would typically send the data to your backend
+    setLoading(true);
+
+    try {
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+            setError('Company ID not found. Please log in again.');
+            setLoading(false);
+            return;
+        }
+      const submissionData = new FormData();
+      submissionData.append('company', companyId);
+      console.log("fdsgfsdgfsdgf",formData);
+      
+      for (const key in formData) {
+        if (key !== 'day' && key !== 'month' && key !== 'year' && formData[key] !== null) {
+          submissionData.append(key, formData[key]);
+        }
+      }
+
+      const response = await axios.post(`${BASE_URL}/qms/compliances/create/`, submissionData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      alert('Compliance added successfully');
+      navigate('/company/qms/list-compliance');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+     alert(error.response?.data?.message || 'Failed to add compliance');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleSaveAsDraft = async () => {
+    try {
+      setDraftLoading(true);
+  
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
+  
+      if (!companyId || !userId) {
+        setError('Company ID or User ID not found. Please log in again.');
+        setDraftLoading(false);
+        return;
+      }
+  
+      const submitData = new FormData();
+  
+      submitData.append('company', companyId);
+      submitData.append('user', userId);
+      submitData.append('is_draft', true);
+  
+      Object.keys(formData).forEach((key) => {
+        if (formData[key] !== null && formData[key] !== '') {
+          submitData.append(key, formData[key]);
+        }
+      });
+  
+     
+      if (formData.file) {
+        submitData.append('upload_attachment', formData.file);
+      }
+  
+      console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+  
+      const response = await axios.post(
+        `${BASE_URL}/qms/compliance/draft-create/`,  
+        submitData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+           
+          },
+        }
+      );
+  
+      setDraftLoading(false);
+      alert('Draft saved successfully!');
+     
+  
+    } catch (err) {
+      setDraftLoading(false);
+      const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+      setError(errorMessage);
+      console.error('Error saving Draft:', err.response?.data || err);
+    }
+  };
+  
+
   const handleListCompliance = () => {
-    navigate('/company/qms/list-compliance')
-  }
+    navigate('/company/qms/list-compliance');
+  };
 
   const handleCancel = () => {
-    navigate('/company/qms/list-compliance')
+    navigate('/company/qms/list-compliance');
   };
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
         <h2 className="add-compliance-head">Add Compliance / Obligation</h2>
-        <button className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-        onClick={handleListCompliance}
+        <button
+          className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+          onClick={handleListCompliance}
         >
           <span>List Compliance / Obligation</span>
         </button>
@@ -97,8 +231,8 @@ const QmsAddCompliance = () => {
             </label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="compliance_name"
+              value={formData.compliance_name}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -112,8 +246,8 @@ const QmsAddCompliance = () => {
             </label>
             <input
               type="text"
-              name="number"
-              value={formData.number}
+              name="compliance_no"
+              value={formData.compliance_no}
               onChange={handleInputChange}
               required
               className="w-full add-compliance-inputs"
@@ -127,22 +261,22 @@ const QmsAddCompliance = () => {
             </label>
             <div className="relative">
               <select
-                name="type"
-                value={formData.type}
+                name="compliance_type"
+                value={formData.compliance_type}
                 onChange={handleInputChange}
-                onFocus={() => handleDropdownFocus("type")}
-                onBlur={() => handleDropdownBlur("type")}
+                onFocus={() => handleDropdownFocus("compliance_type")}
+                onBlur={() => handleDropdownBlur("compliance_type")}
                 className="appearance-none w-full add-compliance-inputs cursor-pointer"
               >
                 <option value="">Select Compliance/Obligation Type</option>
-                <option value="legal">Legal</option>
-                <option value="regulatory">Regulatory</option>
-                <option value="contractual">Contractual</option>
-                <option value="internal">Internal</option>
+                <option value="Legal">Legal</option>
+                <option value="Business">Business</option>
+                <option value="Client">Client</option>
+                <option value="Process/Specification">Process/Specification</option>
               </select>
               <div
                 className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                  dropdowns.type ? "rotate-180" : ""
+                  dropdowns.compliance_type ? "rotate-180" : ""
                 }`}
               >
                 <ChevronDown size={20} />
@@ -165,7 +299,7 @@ const QmsAddCompliance = () => {
                 >
                   <option value="">dd</option>
                   {[...Array(31)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
+                    <option key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
                       {i + 1}
                     </option>
                   ))}
@@ -190,7 +324,7 @@ const QmsAddCompliance = () => {
                 >
                   <option value="">mm</option>
                   {[...Array(12)].map((_, i) => (
-                    <option key={i + 1} value={i + 1}>
+                    <option key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
                       {i + 1}
                     </option>
                   ))}
@@ -215,7 +349,7 @@ const QmsAddCompliance = () => {
                 >
                   <option value="">yyyy</option>
                   {[...Array(10)].map((_, i) => (
-                    <option key={2020 + i} value={2020 + i}>
+                    <option key={2020 + i} value={(2020 + i).toString()}>
                       {2020 + i}
                     </option>
                   ))}
@@ -237,7 +371,7 @@ const QmsAddCompliance = () => {
             <div className="relative">
               <input
                 type="file"
-                id="document"
+                id="fileInput"
                 className="hidden"
                 onChange={handleFileChange}
               />
@@ -264,8 +398,8 @@ const QmsAddCompliance = () => {
             </label>
             <input
               type="text"
-              name="businessProcess"
-              value={formData.businessProcess}
+              name="relate_business_process"
+              value={formData.relate_business_process}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -277,8 +411,8 @@ const QmsAddCompliance = () => {
               Compliance/Obligation Remarks
             </label>
             <textarea
-              name="remarks"
-              value={formData.remarks}
+              name="compliance_remarks"
+              value={formData.compliance_remarks}
               onChange={handleInputChange}
               rows="4"
               className="w-full add-compliance-inputs !py-3 !h-[98px]"
@@ -291,8 +425,8 @@ const QmsAddCompliance = () => {
               Relate Document/ Process
             </label>
             <textarea
-              name="relatedDocument"
-              value={formData.relatedDocument}
+              name="relate_document"
+              value={formData.relate_document}
               onChange={handleInputChange}
               rows="4"
               className="w-full add-compliance-inputs !py-3 !h-[98px]"
@@ -304,8 +438,8 @@ const QmsAddCompliance = () => {
             <label className="add-compliance-label">Revision</label>
             <input
               type="text"
-              name="revision"
-              value={formData.revision}
+              name="rivision"
+              value={formData.rivision}
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
@@ -325,23 +459,30 @@ const QmsAddCompliance = () => {
               </label>
             </div>
           <div>
-            <button className="request-correction-btn duration-200">
-              Save as Draft
+            <button 
+              type="button"
+              onClick={handleSaveAsDraft}
+              disabled={draftLoading}
+              className="request-correction-btn duration-200"
+            >
+              {draftLoading ? 'Saving...' : 'Save as Draft'}
             </button>
           </div>
           <div className="flex items-end gap-5">
             <button
               type="button"
               onClick={handleCancel}
+              disabled={loading}
               className="cancel-btn duration-200 !w-full"
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={loading}
               className="save-btn duration-200 !w-full"
             >
-              Save
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

@@ -112,13 +112,13 @@ const EditQmsInterestedParties = () => {
     }));
   };
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    if (name === "legal_requirements") {
-      setShowCustomField(value === "N/A");
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+    if (name === 'legal_requirements') {
+      setShowCustomField(value === 'N/A');
     }
   };
   const handleFileChange = (e) => {

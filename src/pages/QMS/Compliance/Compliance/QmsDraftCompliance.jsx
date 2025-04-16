@@ -1,48 +1,135 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import deletes from '../../../../assets/images/Company Documentation/delete.svg'
-import view from '../../../../assets/images/Company Documentation/view.svg'
+import deletes from '../../../../assets/images/Company Documentation/delete.svg';
+import view from '../../../../assets/images/Company Documentation/view.svg';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 
-const QmsDraftCompliance = () => {
-    const initialData = [
-        { id: 1, title: "Safety Protocol 2025", complianceNo: "SP-2025-001", revision: "Revision", date: "03-12-2024" },
-        { id: 2, title: "Environmental Compliance", complianceNo: "EC-2025-042", revision: "Revision", date: "03-12-2024" },
-    ];
 
-    // State for form data management
-    const [complianceData, setComplianceData] = useState(initialData);
+const QmsDraftCompliance = ({ userId }) => {
+    // State for data management
+    const [complianceData, setComplianceData] = useState([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
-    const navigate = useNavigate();
     const [itemsPerPage] = useState(10);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
+
+    
+ 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+ // Check the API response structure in your browser's dev tools
+useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const id = getRelevantUserId();
+            console.log("Fetching data for ID:", id); // Debug log
+            const response = await axios.get(`${BASE_URL}/qms/compliance-draft/${id}/`);
+            console.log("API Response:", response.data); // Debug log
+            
+            const data = response.data;
+            if (Array.isArray(data)) {
+                // Transform the data to match your frontend's expected structure
+                const formattedData = data.map(item => ({
+                    id: item.id,
+                    title: item.compliance_name || "Untitled",
+                    complianceNo: item.compliance_no || "N/A",
+                    complianceType: item.compliance_type || "N/A",
+                    revision: item.rivision || "N/A", 
+                    date: item.date ? formatDate(item.date) : "N/A"
+                }));
+                setComplianceData(formattedData);
+            } else if (data?.data && Array.isArray(data.data)) {
+                // Handle nested data structure
+                const formattedData = data.data.map(item => ({
+                    id: item.id,
+                    title: item.compliance_name || "Untitled",
+                    complianceNo: item.compliance_no || "N/A",
+                    complianceType: item.compliance_type || "N/A",
+                    revision: item.rivision || "N/A",
+                    date: item.date ? formatDate(item.date) : "N/A"
+                }));
+                setComplianceData(formattedData);
+            } else {
+                console.error("Unexpected data format:", data);
+                setComplianceData([]);
+            }
+            setLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch draft compliance:", error);
+            setError("Failed to load compliance data. Please try again.");
+            setLoading(false);
+        }
+    };
+    fetchData();
+}, [userId]);
+
+    // Format date from YYYY-MM-DD to DD-MM-YYYY
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }).replace(/\//g, '-');
+        } catch (error) {
+            return dateString;
+        }
+    };
 
     const handleClose = () => {
-        navigate('/company/qms/list-compliance')
-    }
+        navigate('/company/qms/list-compliance');
+    };
 
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
         setCurrentPage(1);
     };
 
-    const handleEditCompliance = () => {
-        navigate('/company/qms/edit-draft-compliance')
-    }
+    const handleEditCompliance = (id) => {
+        navigate(`/company/qms/edit-draft-compliance/${id}`);
+    };
 
-    const handleViewCompliance = () => {
-        navigate('/company/qms/view-draft-compliance')
-    }
+    const handleViewCompliance = (id) => {
+        navigate(`/company/qms/view-draft-compliance/${id}`);
+    };
 
-    const handleDelete = (id) => {
-        setComplianceData(complianceData.filter(item => item.id !== id));
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this compliance record?")) {
+            try {
+                const token = localStorage.getItem('token');
+                
+                await axios.delete(`${BASE_URL}/qms/compliances-get/${id}/`, {
+                   
+                });
+                navigate('/company/qms/list-compliance');
+            } catch (err) {
+                console.error("Error deleting compliance:", err);
+                alert("Failed to delete compliance record");
+            }
+        }
     };
 
     // Filter and pagination
     const filteredData = complianceData.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.complianceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.revision.toLowerCase().includes(searchQuery.toLowerCase())
+        (item.title && item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.complianceNo && item.complianceNo.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.revision && item.revision.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.complianceType && item.complianceType.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     const indexOfLastItem = currentPage * itemsPerPage;
@@ -74,97 +161,118 @@ const QmsDraftCompliance = () => {
                     </div>
                 </div>
 
-                <div className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full">
-                            <thead className='bg-[#24242D]'>
-                                <tr className="h-[48px]">
-                                    <th className="px-4 qms-list-compliance-thead text-left w-24">No</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Title</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Compliance No</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Revision</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Date</th>
-                                    <th className="px-4 qms-list-compliance-thead text-left">Action</th>
-                                    <th className="px-4 qms-list-compliance-thead text-center">View</th>
-                                    <th className="px-4 qms-list-compliance-thead text-center">Delete</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {currentItems.map((item) => (
-                                    <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                        <td className="px-4 qms-list-compliance-data">{item.id}</td>
-                                        <td className="px-4 qms-list-compliance-data">{item.title}</td>
-                                        <td className="px-4 qms-list-compliance-data">{item.complianceNo}</td>
-                                        <td className="px-4 qms-list-compliance-data">
-                                            <span className="text-[#1E84AF]">{item.revision}</span>
-                                        </td>
-                                        <td className="px-4 qms-list-compliance-data">{item.date}</td>
-                                        <td className="px-4 qms-list-compliance-data text-left">
-                                            <button
-                                                onClick={handleEditCompliance}
-                                                className='text-[#1E84AF]'
-                                            >
-                                               Click to Continue
-                                            </button>
-                                        </td>
-                                        <td className="px-4 qms-list-compliance-data text-center">
-                                            <button
-                                                onClick={handleViewCompliance}
-                                            >
-                                                <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                            </button>
-                                        </td>
-                                        <td className="px-4 qms-list-compliance-data text-center">
-                                            <button
-                                                onClick={() => handleDelete(item.id)}
-                                            >
-                                                <img src={deletes} alt="Deletes icon" className='w-[16px] h-[16px]' />
-                                            </button>
-                                        </td>
+                {loading ? (
+                    <div className="text-center py-8">Loading compliance data...</div>
+                ) : error ? (
+                    <div className="text-center text-red-400 py-8">{error}</div>
+                ) : (
+                    <div className="overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className='bg-[#24242D]'>
+                                    <tr className="h-[48px]">
+                                        <th className="px-4 qms-list-compliance-thead text-left w-24">No</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Title</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Compliance No</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Type</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Revision</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Date</th>
+                                        <th className="px-4 qms-list-compliance-thead text-left">Action</th>
+                                        <th className="px-4 qms-list-compliance-thead text-center">View</th>
+                                        <th className="px-4 qms-list-compliance-thead text-center">Delete</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="px-4 pt-3 flex items-center justify-between">
-                        <div className="text-white total-text">
-                            Total-{filteredData.length}
+                                </thead>
+                                <tbody>
+                                    {currentItems.length === 0 ? (
+                                        <tr className="border-b border-[#383840]">
+                                            <td colSpan="9" className="px-4 py-4 text-center not-found">
+                                                No draft compliances found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        currentItems.map((item, index) => (
+                                            <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px]">
+                                                <td className="px-4 qms-list-compliance-data">{indexOfFirstItem + index + 1}</td>
+                                                <td className="px-4 qms-list-compliance-data">{item.title}</td>
+                                                <td className="px-4 qms-list-compliance-data">{item.complianceNo}</td>
+                                                <td className="px-4 qms-list-compliance-data">{item.complianceType}</td>
+                                                <td className="px-4 qms-list-compliance-data">
+                                                    <span className="text-[#1E84AF]">{item.revision}</span>
+                                                </td>
+                                                <td className="px-4 qms-list-compliance-data">{item.date}</td>
+                                                <td className="px-4 qms-list-compliance-data text-left">
+                                                    <button
+                                                        onClick={() => handleEditCompliance(item.id)}
+                                                        className='text-[#1E84AF] cursor-pointer'
+                                                    >
+                                                        Click to Continue
+                                                    </button>
+                                                </td>
+                                                <td className="px-4 qms-list-compliance-data text-center">
+                                                    <button
+                                                        onClick={() => handleViewCompliance(item.id)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                                                    </button>
+                                                </td>
+                                                <td className="px-4 qms-list-compliance-data text-center">
+                                                    <button
+                                                        onClick={() => handleDelete(item.id)}
+                                                        className="cursor-pointer"
+                                                    >
+                                                        <img src={deletes} alt="Delete icon" className='w-[16px] h-[16px]' />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                        <div className="flex items-center gap-5">
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                disabled={currentPage === 1}
-                                className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                            >
-                                Previous
-                            </button>
 
-                            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                const pageNum = i + 1;
-                                return (
+                        <div className="px-4 pt-3 flex items-center justify-between">
+                            <div className="text-white total-text">
+                                Total-{filteredData.length}
+                            </div>
+                            {filteredData.length > 0 && (
+                                <div className="flex items-center gap-5">
                                     <button
-                                        key={pageNum}
-                                        onClick={() => setCurrentPage(pageNum)}
-                                        className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
+                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                        disabled={currentPage === 1}
+                                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                                     >
-                                        {pageNum}
+                                        Previous
                                     </button>
-                                );
-                            })}
 
-                            <button
-                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
-                            >
-                                Next
-                            </button>
+                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                        const pageNum = i + 1;
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                                className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+
+                                    <button
+                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                        disabled={currentPage === totalPages || totalPages === 0}
+                                        className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
-}
-export default QmsDraftCompliance
+};
+
+export default QmsDraftCompliance;
