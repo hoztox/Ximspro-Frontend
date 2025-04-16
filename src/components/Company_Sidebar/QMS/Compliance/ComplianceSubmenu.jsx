@@ -51,6 +51,7 @@ const ComplianceSubmenu = (props) => {
         "/company/qms/view-evaluation-compliance",
         "/company/qms/draft-evaluation-compliance",
         "/company/qms/edit-draft-evaluation-compliance",
+        "/company/qms/view-draft-evaluation-compliance",
       ]
     },
     {
@@ -67,8 +68,9 @@ const ComplianceSubmenu = (props) => {
       relatedPaths: ["/company/qms/add-management-change",
         "/company/qms/edit-management-change",
         "/company/qms/view-management-change",
-        // "/company/qms/draft-evaluation-compliance",
-        // "/company/qms/edit-draft-evaluation-compliance",
+        "/company/qms/draft-management-change",
+        "/company/qms/edit-draft-management-change",
+        "/company/qms/view-draft-management-change",
       ]
     },
     {

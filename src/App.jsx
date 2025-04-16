@@ -154,6 +154,10 @@ import QmsDraftViewLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherR
 import QmsDraftEditLegalRequirements from "./pages/QMS/Compliance/LegalAndOtherRequirements/QmsDraftEditLegalRequirements";
 import QmsEditManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsEditManagementChange";
 import QmsViewManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsViewManagementChange";
+import QmsDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsDraftManagementChange";
+import QmsEditDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsEditDraftManagementChange";
+import QmsViewDraftManagementChange from "./pages/QMS/Compliance/ManagementOfChange/QmsViewDraftManagementChange";
+import QmsViewDraftEvaluationCompliance from "./pages/QMS/Compliance/EvaluationOfCompliance/QmsViewDraftEvaluationCompliance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -283,11 +287,15 @@ const ThemedApp = () => {
            <Route path="qms/view-evaluation-compliance" element={<QmsViewEvaluationCompliance />} />
            <Route path="qms/draft-evaluation-compliance" element={<QmsDraftEvaluationCompliance />} />
            <Route path="qms/edit-draft-evaluation-compliance" element={<QmsEditDraftEvaluationCompliance />} />
+           <Route path="qms/view-draft-evaluation-compliance" element={<QmsViewDraftEvaluationCompliance />} />
 
            <Route path="qms/list-management-change" element={<QmsListManagementChange/>} />
            <Route path="qms/add-management-change" element={<QmsAddmanagementChange/>} />
            <Route path="qms/edit-management-change" element={<QmsEditManagementChange/>} />
            <Route path="qms/view-management-change" element={<QmsViewManagementChange/>} />
+           <Route path="qms/draft-management-change" element={<QmsDraftManagementChange/>}/>
+           <Route path="qms/edit-draft-management-change" element={<QmsEditDraftManagementChange/>}/>
+           <Route path="qms/view-draft-management-change" element={<QmsViewDraftManagementChange/>}/>
 
 
           {/* QMS User Management */}

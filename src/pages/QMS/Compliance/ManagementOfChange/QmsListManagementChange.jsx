@@ -24,6 +24,10 @@ const QmsListManagementChange = () => {
         navigate('/company/qms/add-management-change')
     };
 
+    const handleDraftManagementChange = () => {
+        navigate('/company/qms/draft-management-change')
+    }
+
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
         setCurrentPage(1);
@@ -73,7 +77,7 @@ const QmsListManagementChange = () => {
                         </div>
                         <button
                             className="flex items-center justify-center !px-5 add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                             
+                             onClick={handleDraftManagementChange}
                         >
                             <span>Drafts</span>
                         </button>
