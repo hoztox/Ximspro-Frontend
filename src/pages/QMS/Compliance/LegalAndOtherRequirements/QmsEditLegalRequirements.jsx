@@ -1,30 +1,84 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsEditLegalRequirements = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    
     const [formData, setFormData] = useState({
-        title: "",
-        number: "",
-        type: "",
+        legal_name: "",
+        legal_no: "",
+        document_type: "",
         day: "",
         month: "",
         year: "",
-        document: null,
+        attach_document: null,
         related_record_format: "",
-        revision: "",
+        rivision: "",
+        send_notification: false
     });
-
+    
     const [selectedFile, setSelectedFile] = useState(null);
+    const [originalDocumentUrl, setOriginalDocumentUrl] = useState(null);
 
     const [dropdowns, setDropdowns] = useState({
-        type: false,
+        document_type: false,
         day: false,
         month: false,
         year: false,
     });
+
+    useEffect(() => {
+        const fetchLegalData = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/legal-get/${id}/`);
+                const data = response.data;
+                
+                // Extract date components if exists
+                let day = "", month = "", year = "";
+                if (data.date) {
+                    const dateObj = new Date(data.date);
+                    day = dateObj.getDate().toString();
+                    month = (dateObj.getMonth() + 1).toString();
+                    year = dateObj.getFullYear().toString();
+                }
+                
+                setFormData({
+                    legal_name: data.legal_name || "",
+                    legal_no: data.legal_no || "",
+                    document_type: data.document_type || "",
+                    day,
+                    month,
+                    year,
+                    related_record_format: data.related_record_format || "",
+                    rivision: data.rivision || "",
+                    send_notification: data.send_notification || false
+                });
+                
+                if (data.attach_document) {
+                    setSelectedFile(data.attach_document.split('/').pop());
+                    setOriginalDocumentUrl(data.attach_document);
+                }
+                
+                setLoading(false);
+            } catch (err) {
+                setError("Failed to load legal requirement data");
+                setLoading(false);
+                console.error("Error fetching legal requirement data:", err);
+            }
+        };
+
+        if (id) {
+            fetchLegalData();
+        }
+    }, [id]);
 
     const handleDropdownFocus = (key) => {
         setDropdowns((prev) => ({ ...prev, [key]: true }));
@@ -34,52 +88,109 @@ const QmsEditLegalRequirements = () => {
         setDropdowns((prev) => ({ ...prev, [key]: false }));
     };
 
-    const [fileName, setFileName] = useState("No file chosen");
-
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [name]: value,
+            [name]: type === "checkbox" ? checked : value,
         });
     };
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setSelectedFile(file.name); // set the file name to selectedFile
+            setSelectedFile(file.name);
             setFormData({
                 ...formData,
-                document: file,
+                attach_document: file,
             });
         } else {
             setSelectedFile(null);
             setFormData({
                 ...formData,
-                document: null,
+                attach_document: null,
             });
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleViewFile = () => {
+        if (originalDocumentUrl) {
+            window.open(originalDocumentUrl, '_blank');
+        }
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log("Form submitted:", formData);
-        // Here you would typically send the data to your backend
+        
+        const submitData = new FormData();
+        
+        // Build date if all components are present
+        if (formData.day && formData.month && formData.year) {
+            const formattedDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`;
+            submitData.append('date', formattedDate);
+        }
+        
+        // Only append attach_document if it's a new file
+        if (formData.attach_document && typeof formData.attach_document === 'object') {
+            submitData.append('attach_document', formData.attach_document);
+        }
+        
+        // Add all other fields
+        Object.keys(formData).forEach(key => {
+            if (!['day', 'month', 'year', 'attach_document'].includes(key) && formData[key] !== null) {
+                submitData.append(key, formData[key]);
+            }
+        });
+        
+        try {
+            const response = await axios.put(`${BASE_URL}/qms/legal/${id}/edit/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            
+            console.log("Legal requirement updated successfully:", response.data);
+            navigate("/company/qms/list-legal-requirements");
+        } catch (err) {
+            console.error("Error updating legal requirement:", err);
+            setError("Failed to update legal requirement");
+        }
     };
 
     const handleListLegalRequirements = () => {
-        navigate('/company/qms/list-legal-requirements')
-    }
+        navigate('/company/qms/list-legal-requirements');
+    };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-legal-requirements')
+        navigate('/company/qms/list-legal-requirements');
     };
+
+    if (loading) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+                <div className="flex justify-center items-center h-64">
+                    <p>Loading legal requirement data...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+                <div className="flex justify-center items-center h-64">
+                    <p className="text-red-500">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
                 <h2 className="add-compliance-head">Edit Legal and Other Requirements</h2>
-                <button className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                <button 
+                    className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                     onClick={handleListLegalRequirements}
                 >
                     <span>List Legal and Other Requirements</span>
@@ -94,8 +205,8 @@ const QmsEditLegalRequirements = () => {
                         </label>
                         <input
                             type="text"
-                            name="title"
-                            value={formData.title}
+                            name="legal_name"
+                            value={formData.legal_name}
                             onChange={handleInputChange}
                             className="w-full add-compliance-inputs"
                         />
@@ -109,8 +220,8 @@ const QmsEditLegalRequirements = () => {
                         </label>
                         <input
                             type="text"
-                            name="number"
-                            value={formData.number}
+                            name="legal_no"
+                            value={formData.legal_no}
                             onChange={handleInputChange}
                             required
                             className="w-full add-compliance-inputs"
@@ -124,22 +235,23 @@ const QmsEditLegalRequirements = () => {
                         </label>
                         <div className="relative">
                             <select
-                                name="type"
-                                value={formData.type}
+                                name="document_type"
+                                value={formData.document_type}
                                 onChange={handleInputChange}
-                                onFocus={() => handleDropdownFocus("type")}
-                                onBlur={() => handleDropdownBlur("type")}
+                                onFocus={() => handleDropdownFocus("document_type")}
+                                onBlur={() => handleDropdownBlur("document_type")}
                                 className="appearance-none w-full add-compliance-inputs cursor-pointer"
                             >
                                 <option value="">Select Document Type</option>
-                                <option value="system">System</option>
-                                <option value="paper">Paper</option>
-                                <option value="external">External</option>
-                                <option value="workinstruction">Work Instruction</option>
+                                <option value="System">System</option>
+                                <option value="Paper">Paper</option>
+                                <option value="External">External</option>
+                                <option value="Work Instruction">Work Instruction</option>
                             </select>
                             <div
-                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.type ? "rotate-180" : ""
-                                    }`}
+                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                                    dropdowns.document_type ? "rotate-180" : ""
+                                }`}
                             >
                                 <ChevronDown size={20} />
                             </div>
@@ -161,14 +273,15 @@ const QmsEditLegalRequirements = () => {
                                 >
                                     <option value="">dd</option>
                                     {[...Array(31)].map((_, i) => (
-                                        <option key={i + 1} value={i + 1}>
+                                        <option key={i + 1} value={(i + 1).toString()}>
                                             {i + 1}
                                         </option>
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
-                                        }`}
+                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                                        dropdowns.day ? "rotate-180" : ""
+                                    }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -185,14 +298,15 @@ const QmsEditLegalRequirements = () => {
                                 >
                                     <option value="">mm</option>
                                     {[...Array(12)].map((_, i) => (
-                                        <option key={i + 1} value={i + 1}>
+                                        <option key={i + 1} value={(i + 1).toString()}>
                                             {i + 1}
                                         </option>
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
-                                        }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                                        dropdowns.month ? "rotate-180" : ""
+                                    }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -209,14 +323,15 @@ const QmsEditLegalRequirements = () => {
                                 >
                                     <option value="">yyyy</option>
                                     {[...Array(10)].map((_, i) => (
-                                        <option key={2020 + i} value={2020 + i}>
+                                        <option key={2020 + i} value={(2020 + i).toString()}>
                                             {2020 + i}
                                         </option>
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
-                                        }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                                        dropdowns.year ? "rotate-180" : ""
+                                    }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -229,19 +344,17 @@ const QmsEditLegalRequirements = () => {
                         <label className="add-compliance-label">Revision</label>
                         <input
                             type="text"
-                            name="revision"
-                            value={formData.revision}
+                            name="rivision"
+                            value={formData.rivision}
                             onChange={handleInputChange}
                             className="w-full add-compliance-inputs"
                         />
                     </div>
 
-
-
-                    {/* Relate Business Process */}
+                    {/* Related Record Format */}
                     <div>
                         <label className="add-compliance-label">
-                            Relate Record Format
+                            Related Record Format
                         </label>
                         <input
                             type="text"
@@ -258,14 +371,14 @@ const QmsEditLegalRequirements = () => {
                         <div className="relative">
                             <input
                                 type="file"
-                                id="document"
+                                id="fileInput"
                                 className="hidden"
                                 onChange={handleFileChange}
                             />
                             <button
                                 type="button"
                                 className="w-full add-qmsmanual-attach"
-                                onClick={() => document.getElementById("document").click()}
+                                onClick={() => document.getElementById("fileInput").click()}
                             >
                                 <span className="file-input">
                                     {selectedFile ? selectedFile : "Choose File"}
@@ -273,7 +386,15 @@ const QmsEditLegalRequirements = () => {
                                 <img src={file} alt="File Icon" />
                             </button>
                             <div className="flex items-center justify-between">
-                                <button className="flex items-center gap-2 mt-[10.65px] text-[#1E84AF] click-view-file-text !text-[14px]">Click to view file <Eye size={17} /></button>
+                                {originalDocumentUrl && (
+                                    <button 
+                                        type="button"
+                                        onClick={handleViewFile} 
+                                        className="flex items-center gap-2 mt-[10.65px] text-[#1E84AF] click-view-file-text !text-[14px]"
+                                    >
+                                        Click to view file <Eye size={17} />
+                                    </button>
+                                )}
                                 {!selectedFile && (
                                     <p className="text-right no-file">No file chosen</p>
                                 )}
@@ -316,5 +437,4 @@ const QmsEditLegalRequirements = () => {
     );
 };
 
-
-export default QmsEditLegalRequirements
+export default QmsEditLegalRequirements;

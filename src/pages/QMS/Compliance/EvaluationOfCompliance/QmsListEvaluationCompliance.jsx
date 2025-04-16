@@ -160,7 +160,7 @@ const QmsListEvaluationCompliance = () => {
         try {
             setLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/evaluation/${companyId}/`);
 
             // Apply visibility filtering
             const filteredManuals = filterManualsByVisibility(response.data);
@@ -190,7 +190,7 @@ const QmsListEvaluationCompliance = () => {
             try {
                 // First, fetch manuals
                 const companyId = getUserCompanyId();
-                const manualsResponse = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
+                const manualsResponse = await axios.get(`${BASE_URL}/qms/evaluation/${companyId}/`);
 
                 // Apply visibility filtering using the centralized function
                 const filteredManuals = filterManualsByVisibility(manualsResponse.data);
@@ -205,7 +205,7 @@ const QmsListEvaluationCompliance = () => {
                 // Then fetch corrections for visible manuals
                 const correctionsPromises = filteredManuals.map(async (manual) => {
                     try {
-                        const correctionResponse = await axios.get(`${BASE_URL}/qms/record/${manual.id}/corrections/`);
+                        const correctionResponse = await axios.get(`${BASE_URL}/qms/evaluation/${manual.id}/corrections/`);
                         console.log('sssssssssssssssssss', correctionResponse.data);
                         return { manualId: manual.id, corrections: correctionResponse.data };
 
@@ -228,7 +228,7 @@ const QmsListEvaluationCompliance = () => {
 
                 // Fetch draft count
                 const id = getRelevantUserId();
-                const draftResponse = await axios.get(`${BASE_URL}/qms/record/drafts-count/${id}/`);
+                const draftResponse = await axios.get(`${BASE_URL}/qms/evaluation/drafts-count/${id}/`);
                 setDraftCount(draftResponse.data.count);
 
                 // Set current user and clear loading state
@@ -259,7 +259,7 @@ const QmsListEvaluationCompliance = () => {
     };
 
     const handleClickApprove = (id) => {
-        navigate(`/company/qms/viewrecordformat/${id}`);
+        navigate(`/company/qms/view-evaluation-compliance/${id}`);
     };
 
     // Delete manual
@@ -333,11 +333,11 @@ const QmsListEvaluationCompliance = () => {
     };
 
     const handleEdit = (id) => {
-        navigate(`/company/qms/edit-evaluation-compliance`);
+        navigate(`/company/qms/edit-evaluation-compliance/${id}`);
     };
 
     const handleView = (id) => {
-        navigate(`/company/qms/view-evaluation-compliance`);
+        navigate(`/company/qms/view-evaluation-compliance/${id}`);
     };
 
     const handleManualDraft = () => {
@@ -388,7 +388,7 @@ const QmsListEvaluationCompliance = () => {
                 setShowPublishSuccessModal(false);
                 closePublishModal();
                 fetchManuals(); // Refresh the list
-                navigate("/company/qms/record-format");
+                navigate("/company/qms/list-evaluation-compliance");
                 setIsPublishing(false); // Reset loading state after completion
             }, 1500);
         } catch (error) {
@@ -478,7 +478,7 @@ const QmsListEvaluationCompliance = () => {
                     >
                         <span>Drafts</span>
                         {draftCount > 0 && (
-                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[190px]">
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[280px]">
                                 {draftCount}
                             </span>
                         )}

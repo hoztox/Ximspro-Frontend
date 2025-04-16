@@ -30,7 +30,7 @@ const QmsDraftEvaluationCompliance = () => {
   const handleConfirmDelete = () => {
     if (manualToDelete) {
       axios
-        .delete(`${BASE_URL}/qms/record-detail/${manualToDelete}/`)
+        .delete(`${BASE_URL}/qms/evaluation-detail/${manualToDelete}/`)
         .then((response) => {
           // Remove the deleted manual from state
           setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
@@ -66,7 +66,7 @@ const QmsDraftEvaluationCompliance = () => {
   };
   const handleEditDraft = (id) => {
 
-    navigate(`/company/qms/edit-draft-evaluation-compliance`);
+    navigate(`/company/qms/edit-draft-evaluation-compliance/${id}`);
   }
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -106,12 +106,12 @@ const QmsDraftEvaluationCompliance = () => {
     try {
       setLoading(true);
       const id = getRelevantUserId();
-      const response = await axios.get(`${BASE_URL}/qms/record-draft/${id}/`);
+      const response = await axios.get(`${BASE_URL}/qms/evaluation-draft/${id}/`);
       setManuals(response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedures:", err);
-      setError("Failed to load record format. Please try again.");
+      setError("Failed to load evaluation Please try again.");
       setLoading(false);
     }
   };
@@ -153,7 +153,7 @@ const QmsDraftEvaluationCompliance = () => {
     navigate('/company/qms/list-evaluation-compliance');
   };
   const handleView = (id) => {
-    navigate(`/company/qms/view-draft-evaluation-compliance`);
+    navigate(`/company/qms/view-draft-evaluation-compliance/:${id}`);
   };
   return (
     <div className="bg-[#1C1C24] list-manual-main">

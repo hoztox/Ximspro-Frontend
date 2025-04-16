@@ -93,14 +93,14 @@ const QmsEditDraftEvaluationCompliance = () => {
     const fetchManualDetails = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/evaluation-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Detailssssssssssss:", response.data);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching procedures details:", err);
-            setError("Failed to load record format details");
+            setError("Failed to load evaluation details");
             setIsInitialLoad(false);
             setLoading(false);
         }
@@ -172,7 +172,7 @@ const QmsEditDraftEvaluationCompliance = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load record format. Please check your connection and try again.");
+            setError("Failed to load evaluation. Please check your connection and try again.");
         }
     };
 
@@ -397,7 +397,7 @@ const QmsEditDraftEvaluationCompliance = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/record/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/evaluation/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -407,13 +407,13 @@ const QmsEditDraftEvaluationCompliance = () => {
             setShowEditDraftManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditDraftManualSuccessModal(false)
-                navigate('/company/qms/record-format');
+                navigate('/company/qms/list-evaluation-compliance');
             }, 2000);
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update record format');
-            console.error('Error updating record format:', err);
+            setError('Failed to update evaluation');
+            console.error('Error updating evaluation:', err);
         }
     };
     const errorTextClass = "text-red-500 text-sm mt-1";

@@ -306,19 +306,19 @@ const ThemedApp = () => {
 
           <Route path="qms/list-legal-requirements" element={<QmsListLegalRequirements />} />
           <Route path="qms/add-legal-requirements" element={<QmsAddLegalRequirements />} />
-          <Route path="qms/edit-legal-requirements" element={<QmsEditLegalRequirements />} />
-          <Route path="qms/view-legal-requirements" element={<QmsViewLegalRequirements />} />
+          <Route path="qms/edit-legal-requirements/:id" element={<QmsEditLegalRequirements />} />
+          <Route path="qms/view-legal-requirements/:id" element={<QmsViewLegalRequirements />} />
           <Route path="qms/draft-legal-requirements" element={<QmsDraftLegalRequirements />} />
-          <Route path="qms/view-draft-legal-requirements" element={<QmsDraftViewLegalRequirements />} />
-          <Route path="qms/edit-draft-legal-requirements" element={<QmsDraftEditLegalRequirements />} />
+          <Route path="qms/view-draft-legal-requirements/:id" element={<QmsDraftViewLegalRequirements />} />
+          <Route path="qms/edit-draft-legal-requirements/:id" element={<QmsDraftEditLegalRequirements />} />
 
           <Route path="qms/list-evaluation-compliance" element={<QmsListEvaluationCompliance />} />
           <Route path="qms/add-evaluation-compliance" element={<QmsAddEvaluationCompliance />} />
-          <Route path="qms/edit-evaluation-compliance" element={<QmsEditEvaluationCompliance />} />
-          <Route path="qms/view-evaluation-compliance" element={<QmsViewEvaluationCompliance />} />
+          <Route path="qms/edit-evaluation-compliance/:id" element={<QmsEditEvaluationCompliance />} />
+          <Route path="qms/view-evaluation-compliance/:id" element={<QmsViewEvaluationCompliance />} />
           <Route path="qms/draft-evaluation-compliance" element={<QmsDraftEvaluationCompliance />} />
-          <Route path="qms/edit-draft-evaluation-compliance" element={<QmsEditDraftEvaluationCompliance />} />
-          <Route path="qms/view-draft-evaluation-compliance" element={<QmsViewDraftEvaluationCompliance />} />
+          <Route path="qms/edit-draft-evaluation-compliance/:id" element={<QmsEditDraftEvaluationCompliance />} />
+          <Route path="qms/view-draft-evaluation-compliance/:id" element={<QmsViewDraftEvaluationCompliance />} />
 
           <Route path="qms/list-management-change" element={<QmsListManagementChange />} />
           <Route path="qms/add-management-change" element={<QmsAddmanagementChange />} />

@@ -244,9 +244,7 @@ const QmsListCompliance = () => {
                                                 <td className="px-4 qms-list-compliance-data">{item.title || 'N/A'}</td>
                                                 <td className="px-4 qms-list-compliance-data">{item.complianceNo || 'N/A'}</td>
                                                 <td className="px-4 qms-list-compliance-data">{item.complianceType || 'N/A'}</td>
-                                                <td className="px-4 qms-list-compliance-data">
-                                                    <span className="text-[#1E84AF]">{item.revision || 'N/A'}</span>
-                                                </td>
+                                                <td className="px-4 qms-list-compliance-data">{item.revision || 'N/A'}</td>
                                                 <td className="px-4 qms-list-compliance-data">{item.date}</td>
                                                 <td className="px-4 qms-list-compliance-data text-center">
                                                     <button onClick={() => handleViewCompliance(item.id)}>

@@ -223,8 +223,7 @@ const QmsDraftCompliance = ({ userId }) => {
                                                 <td className="px-4 qms-list-compliance-data">{item.title}</td>
                                                 <td className="px-4 qms-list-compliance-data">{item.complianceNo}</td>
                                                 <td className="px-4 qms-list-compliance-data">{item.complianceType}</td>
-                                                <td className="px-4 qms-list-compliance-data">
-                                                    <span className="text-[#1E84AF]">{item.revision}</span>
+                                                <td className="px-4 qms-list-compliance-data">{item.revision}
                                                 </td>
                                                 <td className="px-4 qms-list-compliance-data">{item.date}</td>
                                                 <td className="px-4 qms-list-compliance-data text-left">

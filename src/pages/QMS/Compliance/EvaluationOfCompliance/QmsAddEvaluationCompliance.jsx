@@ -57,11 +57,12 @@ const QmsAddEvaluationCompliance = () => {
         send_notification_to_approved_by: true,
         send_email_to_approved_by: true,
         rivision: '',
-        document_type: 'System',
+        document_type: 'Legal',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
-        retention_period: '',
+        related_record_format: '',
+        remarks:'',
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -131,12 +132,12 @@ const QmsAddEvaluationCompliance = () => {
     );
 
     const documentTypes = [
-        'System',
-        'Paper',
-        'External',
-        'Work Instruction'
+        'Legal',
+        'Business',
+        'Client',
+        'Process/Specification'
     ];
-
+    
     const toggleDropdown = (dropdown) => {
         setOpenDropdowns(prev => ({
             ...prev,
@@ -292,7 +293,7 @@ const QmsAddEvaluationCompliance = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/record-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/evaluation-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -302,7 +303,7 @@ const QmsAddEvaluationCompliance = () => {
             setShowAddManualSuccessModal(true);
             setTimeout(() => {
                 setShowAddManualSuccessModal(false);
-                // navigate('/company/qms/record-format');
+                navigate('/company/qms/list-evaluation-compliance');
             }, 1500);
 
         } catch (err) {
@@ -357,7 +358,7 @@ const QmsAddEvaluationCompliance = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/record/draft-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/evaluation/draft-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -367,7 +368,7 @@ const QmsAddEvaluationCompliance = () => {
             setShowDraftManualSuccessModal(true);
             setTimeout(() => {
                 setShowDraftManualSuccessModal(false);
-                // navigate('/company/qms/draftrecordformat');
+                navigate('/company/qms/draft-evaluation-compliance');
             }, 1500);
 
 
@@ -773,8 +774,8 @@ const QmsAddEvaluationCompliance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="related_record_format"
+                                value={formData.related_record_format}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
@@ -785,8 +786,8 @@ const QmsAddEvaluationCompliance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="remarks"
+                                value={formData.remarks}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />

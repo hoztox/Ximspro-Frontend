@@ -180,14 +180,14 @@ const QmsEditEvaluationCompliance = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/evaluation-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Details:", response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching record format details:", err);
-            setError("Failed to load record format details");
+            console.error("Error fetching evaluation details:", err);
+            setError("Failed to load evaluation details");
             setIsInitialLoad(false);
             setLoading(false);
         }
@@ -195,7 +195,7 @@ const QmsEditEvaluationCompliance = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/record/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/evaluation/${id}/corrections/`);
             setCorrections(response.data);
             console.log("Fetched Manual Corrections:", response.data);
         } catch (error) {
@@ -389,7 +389,7 @@ const QmsEditEvaluationCompliance = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/record/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/evaluation/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -401,13 +401,13 @@ const QmsEditEvaluationCompliance = () => {
             setShowEditManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditManualSuccessModal(false)
-                navigate('/company/qms/record-format');
+                navigate('/company/qms/list-evaluation-compliance');
             }, 2000);
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update record format');
-            console.error('Error updating record format:', err);
+            setError('Failed to update evaluation');
+            console.error('Error updating evaluation:', err);
         }
     };
 
