@@ -27,6 +27,9 @@ const EmployeeTrainingSubmenu = (props) => {
             relatedPaths: [
                 "/company/qms/edit-training",
                 "/company/qms/view-training",
+                "/company/qms/draft-training",
+                "/company/qms/edit-draft-training",
+                "/company/qms/view-draft-training",
             ]
         },
         {
@@ -60,6 +63,10 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/add-employee-performance",
                 "/company/qms/edit-employee-performance",
                 "/company/qms/view-employee-performance",
+                "/company/qms/draft-employee-performance",
+                "/company/qms/edit-draft-employee-performance",
+                "/company/qms/view-draft-employee-performance",
+                
 
             ]
         },

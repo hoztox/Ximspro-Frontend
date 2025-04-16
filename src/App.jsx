@@ -165,6 +165,12 @@ import QmsViewSustainability from "./pages/QMS/Compliance/Sustainability/QmsView
 import QmsDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsDraftSustainability";
 import QmsEditDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsEditDraftSustainability";
 import QmsViewDraftSustainability from "./pages/QMS/Compliance/Sustainability/QmsViewDraftSustainability";
+import QmsDraftListTraining from "./pages/QMS/EmployeeTraining/ListTraining/QmsDraftListTraining";
+import QmsEditDraftListTraining from "./pages/QMS/EmployeeTraining/ListTraining/QmsEditDraftListTraining";
+import QmsViewDraftTraining from "./pages/QMS/EmployeeTraining/ListTraining/QmsViewDraftTraining";
+import QmsDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsDraftEmployeePerformance";
+import QmsEditDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsEditDraftEmployeePerformance";
+import QmsViewDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsViewDraftEmployeePerformance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -248,6 +254,9 @@ const ThemedApp = () => {
           <Route path="qms/list-training" element={<QmsListTraining />} />
           <Route path="qms/edit-training" element={<QmsEditTraining/>} />
           <Route path="qms/view-training" element={<QmsViewTraining/>} />
+          <Route path="qms/draft-training" element={<QmsDraftListTraining/>} />
+          <Route path="qms/edit-draft-training" element={<QmsEditDraftListTraining/>} />
+          <Route path="qms/view-draft-training" element={<QmsViewDraftTraining/>} />
 
           <Route path="qms/listuser-training" element={<QmsListUserTraining/>} />
 
@@ -257,6 +266,9 @@ const ThemedApp = () => {
           <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance/>} />
           <Route path="qms/edit-employee-performance" element={<EditQmsEmployeePerformance/>} />
           <Route path="qms/view-employee-performance" element={<ViewQmsEmployeePerformance/>} />
+          <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance/>} />
+          <Route path="qms/edit-draft-employee-performance" element={<QmsEditDraftEmployeePerformance/>} />
+          <Route path="qms/view-draft-employee-performance" element={<QmsViewDraftEmployeePerformance/>} />
 
           <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction/>}/>
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction/>}/>

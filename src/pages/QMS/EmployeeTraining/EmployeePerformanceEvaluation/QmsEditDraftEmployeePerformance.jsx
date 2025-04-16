@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./addqmsemployeeperformance.css";
 
-const AddQmsEmployeePerformance = () => {
+const QmsEditDraftEmployeePerformance = () => {
     const [formData, setFormData] = useState({
-        evaluationTitle: '',
-        evaluationDescription: '',
+        evaluationTitle: 'ABC',
+        evaluationDescription: 'abc',
         validTill: {
             day: '',
             month: '',
@@ -39,7 +38,7 @@ const AddQmsEmployeePerformance = () => {
     };
 
     const handleListEmployeePerformance = () => {
-        navigate('/company/qms/employee-performance')
+        navigate('/company/qms/draft-employee-performance')
     }
 
     const handleSubmit = (e) => {
@@ -48,7 +47,7 @@ const AddQmsEmployeePerformance = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/employee-performance')
+        navigate('/company/qms/draft-employee-performance')
     };
 
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
@@ -85,11 +84,11 @@ const AddQmsEmployeePerformance = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
+                    <h1 className="add-employee-performance-head">Edit Draft Employee Performance Evaluation</h1>
                     <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeePerformance}
                     >
-                        List Employee Performance Evaluation
+                        List Draft Employee Performance Evaluation
                     </button>
                 </div>
 
@@ -184,36 +183,14 @@ const AddQmsEmployeePerformance = () => {
                             </div>
                         </div>
                     </div>
-                    {/* <div></div>
-                    <div className="flex items-end justify-end mt-5">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                name="send_notification"
-                                className="mr-2 form-checkboxes"
-                                checked={formData.send_notification}
-                                onChange={handleChange}
-                            />
-                            <span className="permissions-texts cursor-pointer">
-                                Send Notification
-                            </span>
-                        </label>
-                    </div> */}
 
-                    <div className="flex justify-between space-x-5 mt-5  ">
-                        <div>
-                            <button className='request-correction-btn duration-200'>
-                                Save as Draft
-                            </button>
-                        </div>
-                        <div className='flex gap-5'>
-                            <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
-                                Cancel
-                            </button>
-                            <button type="submit" className="save-btn duration-200">
-                                Save
-                            </button>
-                        </div>
+                    <div className="flex justify-end space-x-5 mt-5 pl-[23.5rem]">
+                        <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" className="save-btn duration-200">
+                            Save
+                        </button>
                     </div>
                 </form>
             </div>
@@ -221,4 +198,4 @@ const AddQmsEmployeePerformance = () => {
     );
 };
 
-export default AddQmsEmployeePerformance;
+export default QmsEditDraftEmployeePerformance

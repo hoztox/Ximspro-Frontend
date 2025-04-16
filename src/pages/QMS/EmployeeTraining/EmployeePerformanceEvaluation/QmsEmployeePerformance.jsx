@@ -344,6 +344,10 @@ const QmsEmployeePerformance = () => {
     navigate('/company/qms/add-employee-performance')
   };
 
+  const handleDraftEmployeePerformance = () => {
+    navigate('/company/qms/draft-employee-performance')
+  }
+
   const handleView = () => {
     navigate('/company/qms/view-employee-performance')
   }
@@ -395,6 +399,13 @@ const QmsEmployeePerformance = () => {
             </div>
           </div>
 
+          <button
+            className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+            onClick={handleDraftEmployeePerformance}
+          >
+            <span>Draft</span>
+             
+          </button>
           <button
             className="flex items-center justify-center !px-[5px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleAddEmployee}

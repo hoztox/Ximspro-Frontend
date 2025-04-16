@@ -645,8 +645,30 @@ const QmsAddTraining = () => {
 
         </div>
 
+        <div></div>
+        <div className="flex items-end justify-end mt-3">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="send_notification"
+              className="mr-2 form-checkboxes"
+              checked={formData.send_notification}
+              onChange={handleChange}
+            />
+            <span className="permissions-texts cursor-pointer">
+              Send Notification
+            </span>
+          </label>
+        </div>
+
         {/* Form Actions */}
-        <div className="md:col-span-2 mt-6 flex gap-4 justify-end">
+        <div className="md:col-span-2 flex gap-4 justify-between">
+          <div>
+            <button className='request-correction-btn duration-200'>
+              Save as Draft
+            </button>
+          </div>
+          <div className='flex gap-5'>
           <button
             type="button"
             onClick={handleCancel}
@@ -660,6 +682,7 @@ const QmsAddTraining = () => {
           >
             Save
           </button>
+          </div>
         </div>
       </form>
     </div>
