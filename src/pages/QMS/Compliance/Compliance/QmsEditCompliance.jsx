@@ -4,11 +4,13 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsEditComplianceSuccessModal from "./Modals/QmsEditComplianceSuccessModal";
+import QmsEditComplianceErrorModal from "./Modals/QmsEditComplianceErrorModal";
 
 const QmsEditCompliance = () => {
   const navigate = useNavigate();
   const { id } = useParams(); // Get the compliance ID from URL params
-  
+
   const [formData, setFormData] = useState({
     compliance_name: "",
     compliance_no: "",
@@ -25,6 +27,9 @@ const QmsEditCompliance = () => {
     send_notification: false,
   });
 
+  const [showUpdatedComplianceSuccessModal, setShowUpdatedComplianceSuccessModal] = useState(false);
+  const [showUpdateComplianceErrorModal, setShowUpdateComplianceErrorModal] = useState(false);
+
   const [selectedFile, setSelectedFile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -36,15 +41,15 @@ const QmsEditCompliance = () => {
     year: false,
   });
 
- 
+
   useEffect(() => {
     const fetchComplianceData = async () => {
       try {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/compliances-get/${id}/`);
         const data = response.data;
-        
-      
+
+
         let day = "", month = "", year = "";
         if (data.date) {
           const dateObj = new Date(data.date);
@@ -52,18 +57,18 @@ const QmsEditCompliance = () => {
           month = (dateObj.getMonth() + 1).toString();
           year = dateObj.getFullYear().toString();
         }
-        
+
         setFormData({
           ...data,
           day,
           month,
           year,
         });
-        
+
         if (data.attach_document) {
-          setSelectedFile(data.attach_document.split('/').pop()); 
+          setSelectedFile(data.attach_document.split('/').pop());
         }
-        
+
         setLoading(false);
       } catch (err) {
         setError("Failed to load compliance data");
@@ -126,18 +131,27 @@ const QmsEditCompliance = () => {
       }
     });
     try {
-        const response = await axios.put(`${BASE_URL}/qms/compliances/${id}/edit/`, submitData, {
+      const response = await axios.put(`${BASE_URL}/qms/compliances/${id}/edit/`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       console.log("Compliance updated successfully:", response.data);
-      navigate("/company/qms/list-compliance");
+      setShowUpdatedComplianceSuccessModal(true);
+      setTimeout(() => {
+        setShowUpdatedComplianceSuccessModal(false);
+        navigate("/company/qms/list-compliance");
+      }, 1500);
+
     } catch (err) {
       console.error("Error updating compliance:", err);
       setError("Failed to update compliance");
+      setShowUpdateComplianceErrorModal(true);
+      setTimeout(() => {
+        setShowUpdateComplianceErrorModal(false);
+      }, 3000);
     }
-};
+  };
 
 
   const handleListCompliance = () => {
@@ -167,6 +181,17 @@ const QmsEditCompliance = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
         <h2 className="add-compliance-head">Edit Compliance / Obligation</h2>
+
+        <QmsEditComplianceSuccessModal
+          showUpdatedComplianceSuccessModal={showUpdatedComplianceSuccessModal}
+          onClose={() => { setShowUpdatedComplianceSuccessModal(false) }}
+        />
+
+        <QmsEditComplianceErrorModal
+          showUpdateComplianceErrorModal={showUpdateComplianceErrorModal}
+          onClose={() => { setShowUpdateComplianceErrorModal(false) }}
+        />
+
         <button
           className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           onClick={handleListCompliance}
@@ -227,9 +252,8 @@ const QmsEditCompliance = () => {
                 <option value="Process/Specification">Process/Specification</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                  dropdowns.compliance_type ? "rotate-180" : ""
-                }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.compliance_type ? "rotate-180" : ""
+                  }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -257,9 +281,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.day ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -282,9 +305,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.month ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -307,9 +329,8 @@ const QmsEditCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.year ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -339,7 +360,7 @@ const QmsEditCompliance = () => {
               </button>
               <div className="flex items-center justify-between">
                 {(typeof formData.attach_document === 'string' || selectedFile) && (
-                  <div 
+                  <div
                     onClick={handleViewFile}
                     className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
                   >
