@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const AddQmsEmployeeSatisfaction = () => {
+const QmsEditDraftEmployeeSatisfaction = () => {
     const [formData, setFormData] = useState({
-        surveyTitle: '',
-        surveyDescription: '',
+        evaluationTitle: 'ABC',
+        evaluationDescription: 'abc',
         validTill: {
             day: '',
             month: '',
@@ -38,7 +38,7 @@ const AddQmsEmployeeSatisfaction = () => {
     };
 
     const handleListEmployeeSatisfaction = () => {
-        navigate('/company/qms/list-satisfaction-survey')
+        navigate('/company/qms/draft-satisfaction-survey')
     }
 
     const handleSubmit = (e) => {
@@ -47,7 +47,7 @@ const AddQmsEmployeeSatisfaction = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-satisfaction-survey')
+        navigate('/company/qms/draft-satisfaction-survey')
     };
 
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
@@ -84,11 +84,11 @@ const AddQmsEmployeeSatisfaction = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Add Employee Satisfaction Survey</h1>
+                    <h1 className="add-employee-performance-head">Edit Draft Employee Satisfaction Survey</h1>
                     <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeeSatisfaction}
                     >
-                        List Employee Satisfaction Survey
+                        List Draft Employee Satisfaction Survey
                     </button>
                 </div>
 
@@ -100,8 +100,8 @@ const AddQmsEmployeeSatisfaction = () => {
                             </label>
                             <input
                                 type="text"
-                                name="surveyTitle"
-                                value={formData.surveyTitle}
+                                name="evaluationTitle"
+                                value={formData.evaluationTitle}
                                 onChange={handleChange}
                                 className="w-full employee-performace-inputs"
                                 required
@@ -111,8 +111,8 @@ const AddQmsEmployeeSatisfaction = () => {
                         <div className="md:row-span-2">
                             <label className="block employee-performace-label">Survey Description</label>
                             <textarea
-                                name="surveyDescription"
-                                value={formData.surveyDescription}
+                                name="evaluationDescription"
+                                value={formData.evaluationDescription}
                                 onChange={handleChange}
                                 className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
@@ -184,20 +184,13 @@ const AddQmsEmployeeSatisfaction = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-between space-x-5 mt-5  ">
-                        <div>
-                            <button className='request-correction-btn duration-200'>
-                                Save as Draft
-                            </button>
-                        </div>
-                        <div className='flex gap-5'>
-                            <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
-                                Cancel
-                            </button>
-                            <button type="submit" className="save-btn duration-200">
-                                Save
-                            </button>
-                        </div>
+                    <div className="flex justify-end space-x-5 mt-5 pl-[23.5rem]">
+                        <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
+                            Cancel
+                        </button>
+                        <button type="submit" className="save-btn duration-200">
+                            Save
+                        </button>
                     </div>
                 </form>
             </div>
@@ -205,4 +198,5 @@ const AddQmsEmployeeSatisfaction = () => {
     );
 };
 
-export default AddQmsEmployeeSatisfaction
+
+export default QmsEditDraftEmployeeSatisfaction

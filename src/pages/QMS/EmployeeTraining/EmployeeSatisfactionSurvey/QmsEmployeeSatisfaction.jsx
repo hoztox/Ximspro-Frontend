@@ -339,6 +339,10 @@ const QmsEmployeeSatisfaction = () => {
         navigate('/company/qms/add-satisfaction-survey')
     };
 
+    const handleDraftEmployeeSatisfaction = () => {
+        navigate('/company/qms/draft-satisfaction-survey')
+    }
+
     const handleView = () => {
         navigate('/company/qms/view-satisfaction-survey')
     }
@@ -387,6 +391,14 @@ const QmsEmployeeSatisfaction = () => {
                             <Search size={18} />
                         </div>
                     </div>
+
+                    <button
+                        className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                        onClick={handleDraftEmployeeSatisfaction}
+                    >
+                        <span>Draft</span>
+
+                    </button>
 
                     <button
                         className="flex items-center justify-center !px-[5px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"

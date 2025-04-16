@@ -171,6 +171,9 @@ import QmsViewDraftTraining from "./pages/QMS/EmployeeTraining/ListTraining/QmsV
 import QmsDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsDraftEmployeePerformance";
 import QmsEditDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsEditDraftEmployeePerformance";
 import QmsViewDraftEmployeePerformance from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsViewDraftEmployeePerformance";
+import QmsDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsDraftEmployeeSatisfaction";
+import QmsEditDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsEditDraftEmployeeSatisfaction";
+import QmsViewDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsViewDraftEmployeeSatisfaction";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -274,6 +277,9 @@ const ThemedApp = () => {
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction/>}/>
           <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction/>}/>
           <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction/>}/>
+          <Route path="qms/draft-satisfaction-survey" element={<QmsDraftEmployeeSatisfaction/>}/>
+          <Route path="qms/edit-draft-satisfaction-survey" element={<QmsEditDraftEmployeeSatisfaction/>}/>
+          <Route path="qms/view-draft-satisfaction-survey" element={<QmsViewDraftEmployeeSatisfaction/>}/>
 
           <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining/>} />
           <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining/>} />

@@ -79,6 +79,9 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/add-satisfaction-survey",
                 "/company/qms/edit-satisfaction-survey",
                 "/company/qms/view-satisfaction-survey",
+                "/company/qms/draft-satisfaction-survey",
+                "/company/qms/edit-draft-satisfaction-survey",
+                "/company/qms/view-draft-satisfaction-survey",
             ]
         },
         {
