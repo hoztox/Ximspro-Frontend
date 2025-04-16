@@ -5,7 +5,11 @@ import "./qmsaddcompliance.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
- 
+import QmsAddComplianceSuccessModal from "./Modals/QmsAddComplianceSuccessModal";
+import QmsAddComplianceErrorModal from "./Modals/QmsAddComplianceErrorModal";
+import QmsSaveDraftComplianceSuccessModal from "./Modals/QmsSaveDraftComplianceSuccessModal";
+import QmsSaveDraftComplianceErrorModal from "./Modals/QmsSaveDraftComplianceErrorModal";
+
 
 const QmsAddCompliance = () => {
   const navigate = useNavigate();
@@ -24,6 +28,12 @@ const QmsAddCompliance = () => {
     rivision: "",
     send_notification: false,
   });
+
+  const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] = useState(false);
+  const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] = useState(false);
+
+  const [showDraftComplianceSuccessModal, setShowDraftComplianceSuccessModal] = useState(false);
+  const [showDraftComplianceErrorModal, setShowDraftComplianceErrorModal] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
@@ -76,32 +86,32 @@ const QmsAddCompliance = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-        // Try to get company_id from user data that was stored during login
-        const userData = localStorage.getItem("user_company_id");
-        if (userData) {
-            try {
-                return JSON.parse(userData);
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
-            }
+      // Try to get company_id from user data that was stored during login
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
         }
+      }
     }
     return null;
-};
-const getRelevantUserId = () => {
+  };
+  const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
     if (userRole === "user") {
-        const userId = localStorage.getItem("user_id");
-        if (userId) return userId;
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
 
     const companyId = localStorage.getItem("company_id");
     if (companyId) return companyId;
 
     return null;
-};
+  };
   useEffect(() => {
     const { day, month, year } = formData;
     if (day && month && year) {
@@ -115,16 +125,16 @@ const getRelevantUserId = () => {
     setLoading(true);
 
     try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-            setError('Company ID not found. Please log in again.');
-            setLoading(false);
-            return;
-        }
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError('Company ID not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
       const submissionData = new FormData();
       submissionData.append('company', companyId);
-      console.log("fdsgfsdgfsdgf",formData);
-      
+      console.log("fdsgfsdgfsdgf", formData);
+
       for (const key in formData) {
         if (key !== 'day' && key !== 'month' && key !== 'year' && formData[key] !== null) {
           submissionData.append(key, formData[key]);
@@ -137,11 +147,17 @@ const getRelevantUserId = () => {
         },
       });
 
-      alert('Compliance added successfully');
-      navigate('/company/qms/list-compliance');
+      setShowAddComplianceSuccessModal(true);
+      setTimeout(() => {
+        setShowAddComplianceSuccessModal(false);
+        navigate('/company/qms/list-compliance');
+      }, 1500);
     } catch (error) {
       console.error('Error submitting form:', error);
-     alert(error.response?.data?.message || 'Failed to add compliance');
+      setShowAddComplianceErrorModal(true);
+      setTimeout(() => {
+        setShowAddComplianceErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -150,58 +166,66 @@ const getRelevantUserId = () => {
   const handleSaveAsDraft = async () => {
     try {
       setDraftLoading(true);
-  
+
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-  
+
       if (!companyId || !userId) {
         setError('Company ID or User ID not found. Please log in again.');
         setDraftLoading(false);
         return;
       }
-  
+
       const submitData = new FormData();
-  
+
       submitData.append('company', companyId);
       submitData.append('user', userId);
       submitData.append('is_draft', true);
-  
+
       Object.keys(formData).forEach((key) => {
         if (formData[key] !== null && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
-  
-     
+
+
       if (formData.file) {
         submitData.append('upload_attachment', formData.file);
       }
-  
+
       console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
-  
+
       const response = await axios.post(
-        `${BASE_URL}/qms/compliance/draft-create/`,  
+        `${BASE_URL}/qms/compliance/draft-create/`,
         submitData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-           
+
           },
         }
       );
-  
+
       setDraftLoading(false);
-      alert('Draft saved successfully!');
-     
-  
+      setShowDraftComplianceSuccessModal(true);
+      setTimeout(() => {
+        setShowDraftComplianceSuccessModal(false);
+        navigate('/company/qms/draft-compliance');
+      }, 1500);
+
+
     } catch (err) {
       setDraftLoading(false);
+      setShowDraftComplianceErrorModal(true);
+      setTimeout(() => {
+        setShowDraftComplianceErrorModal(false);
+      }, 3000);
       const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
       setError(errorMessage);
       console.error('Error saving Draft:', err.response?.data || err);
     }
   };
-  
+
 
   const handleListCompliance = () => {
     navigate('/company/qms/list-compliance');
@@ -215,6 +239,27 @@ const getRelevantUserId = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
         <h2 className="add-compliance-head">Add Compliance / Obligation</h2>
+
+        <QmsAddComplianceSuccessModal
+          showAddComplianceSuccessModal={showAddComplianceSuccessModal}
+          onClose={() => { setShowAddComplianceSuccessModal(false) }}
+        />
+
+        <QmsAddComplianceErrorModal
+          showAddComplianceErrorModal={showAddComplianceErrorModal}
+          onClose={() => { setShowAddComplianceErrorModal(false) }}
+        />
+
+        <QmsSaveDraftComplianceSuccessModal
+          showDraftComplianceSuccessModal={showDraftComplianceSuccessModal}
+          onClose={() => { setShowDraftComplianceSuccessModal(false) }}
+        />
+
+        <QmsSaveDraftComplianceErrorModal
+          showDraftComplianceErrorModal={showDraftComplianceErrorModal}
+          onClose={() => { setShowDraftComplianceErrorModal(false) }}
+        />
+
         <button
           className="flex items-center justify-center add-manual-btn gap-[10px] !w-[238px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           onClick={handleListCompliance}
@@ -275,9 +320,8 @@ const getRelevantUserId = () => {
                 <option value="Process/Specification">Process/Specification</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                  dropdowns.compliance_type ? "rotate-180" : ""
-                }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.compliance_type ? "rotate-180" : ""
+                  }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -305,9 +349,8 @@ const getRelevantUserId = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.day ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -330,9 +373,8 @@ const getRelevantUserId = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.month ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -355,9 +397,8 @@ const getRelevantUserId = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.year ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -445,21 +486,21 @@ const getRelevantUserId = () => {
             />
           </div>
           <div className="flex items-end justify-end">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="send_notification"
-                  className="mr-2 form-checkboxes"
-                  checked={formData.send_notification}
-                  onChange={handleInputChange}
-                />
-                <span className="permissions-texts cursor-pointer">
-                  Send Notification
-                </span>
-              </label>
-            </div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="send_notification"
+                className="mr-2 form-checkboxes"
+                checked={formData.send_notification}
+                onChange={handleInputChange}
+              />
+              <span className="permissions-texts cursor-pointer">
+                Send Notification
+              </span>
+            </label>
+          </div>
           <div>
-            <button 
+            <button
               type="button"
               onClick={handleSaveAsDraft}
               disabled={draftLoading}
