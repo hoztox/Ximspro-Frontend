@@ -555,7 +555,7 @@ const QmsListSustainability = () => {
 
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white">Loading procedures...</div>
+                    <div className="text-center py-4 not-found">Loading Sustainability...</div>
                 ) : error ? (
                     <div className="text-center py-4 text-red-500">{error}</div>
                 ) : (
