@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
-import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./qmsaddtraining.css"
 
-const QmsAddMeeting = () => {
+const QmsEditDraftMeeting = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
@@ -13,7 +11,7 @@ const QmsAddMeeting = () => {
             month: '',
             year: ''
         },
-        cause:'',
+        cause: '',
         meetingType: '',
         venue: '',
         startTime: {
@@ -30,8 +28,8 @@ const QmsAddMeeting = () => {
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
-    const handleQmsListMeeting = () => {
-        navigate('/company/qms/list-meeting')
+    const handleQmsListDraftMeeting = () => {
+        navigate('/company/qms/draft-meeting')
     }
 
 
@@ -71,7 +69,7 @@ const QmsAddMeeting = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-training')
+        navigate('/company/qms/draft-meeting')
     };
 
     // Generate options for dropdowns
@@ -91,12 +89,12 @@ const QmsAddMeeting = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-                <h1 className="add-training-head">Add Meeting</h1>
+                <h1 className="add-training-head">Edit Draft Meeting</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
-                    onClick={() => handleQmsListMeeting()}
+                    onClick={() => handleQmsListDraftMeeting()}
                 >
-                    List Meeting
+                    List Draft Meeting
                 </button>
             </div>
 
@@ -136,7 +134,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform   transition-transform duration-300
-           ${focusedDropdown === "dateConducted.day" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "dateConducted.day" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -157,7 +155,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform   transition-transform duration-300
-           ${focusedDropdown === "dateConducted.month" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "dateConducted.month" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -178,7 +176,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform   transition-transform duration-300
-           ${focusedDropdown === "dateConducted.year" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "dateConducted.year" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -190,8 +188,8 @@ const QmsAddMeeting = () => {
 
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
-                    <label className="add-training-label">Select Cause :</label>
-                     <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
+                        <label className="add-training-label">Select Cause :</label>
+                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
                     </div>
                     <select
                         name="cause"
@@ -207,8 +205,8 @@ const QmsAddMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-1/2 transform   transition-transform duration-300 
-       ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
+                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+        ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -231,8 +229,8 @@ const QmsAddMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[55%] transform   transition-transform duration-300 
-       ${focusedDropdown === "meetingType" ? "rotate-180" : ""}`}
+                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+        ${focusedDropdown === "meetingType" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -276,7 +274,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-           ${focusedDropdown === "startTime.hour" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "startTime.hour" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -297,7 +295,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform  transition-transform duration-300
-           ${focusedDropdown === "startTime.min" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "startTime.min" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -326,7 +324,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-           ${focusedDropdown === "endTime.hour" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "endTime.hour" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -347,7 +345,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform  transition-transform duration-300
-           ${focusedDropdown === "endTime.min" ? "rotate-180" : ""}`}
+            ${focusedDropdown === "endTime.min" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -388,7 +386,7 @@ const QmsAddMeeting = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-         ${focusedDropdown === "calledBy" ? "rotate-180" : ""}`}
+          ${focusedDropdown === "calledBy" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -413,9 +411,6 @@ const QmsAddMeeting = () => {
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
-                        <button className='request-correction-btn duration-200'>
-                            Save as Draft
-                        </button>
                     </div>
                     <div className='flex gap-5'>
                         <button
@@ -437,4 +432,5 @@ const QmsAddMeeting = () => {
         </div>
     );
 };
-export default QmsAddMeeting
+
+export default QmsEditDraftMeeting

@@ -177,8 +177,18 @@ import QmsViewDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/Emplo
 import QmsDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsDraftAwarenessTraining";
 import QmsEditDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsEditDraftAwarenessTraining";
 import QmsViewDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewDraftAwarenessTraining";
-import QmsListMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsListMeeting";
-import QmsAddMeeting from "./pages/QMS/ActionsMeetingManagement/AddMeeting/QmsAddMeeting";
+import QmsListMeeting from "./pages/QMS/ActionsMeetingManagement/QmsListMeeting";
+import QmsAddMeeting from "./pages/QMS/ActionsMeetingManagement/QmsAddMeeting";
+import QmsEditMeeting from "./pages/QMS/ActionsMeetingManagement/QmsEditMeeting";
+import QmsViewMeeting from "./pages/QMS/ActionsMeetingManagement/QmsViewMeeting";
+import QmsDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsDraftMeeting";
+import QmsEditDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsEditDraftMeeting";
+import QmsViewDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsViewDraftMeeting";
+import QmsListInboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListInboxSystemMessaging";
+import QmsListTrashSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListTrashSystemMessaging";
+import QmsListOutboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListOutboxSystemMessaging";
+import QmsListDraftSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListDraftSystemMessaging";
+import QmsComposeSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsComposeSystemMessaging";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -301,6 +311,19 @@ const ThemedApp = () => {
           {/* QMS Actions, Meeting and Communication Management */}
           <Route path="qms/list-meeting" element={<QmsListMeeting />} />
           <Route path="qms/add-meeting" element={<QmsAddMeeting />} />
+          <Route path="qms/edit-meeting" element={<QmsEditMeeting />} />
+          <Route path="qms/view-meeting" element={<QmsViewMeeting />} />
+          <Route path="qms/draft-meeting" element={<QmsDraftMeeting />} />
+          <Route path="qms/edit-draft-meeting" element={<QmsEditDraftMeeting />} />
+          <Route path="qms/view-draft-meeting" element={<QmsViewDraftMeeting />} />
+
+          <Route path="qms/list-inbox" element={<QmsListInboxSystemMessaging />} />
+          <Route path="qms/list-trash" element={<QmsListTrashSystemMessaging />} />
+          <Route path="qms/list-outbox" element={<QmsListOutboxSystemMessaging />} />
+          <Route path="qms/list-draft" element={<QmsListDraftSystemMessaging />} />
+          <Route path="qms/compose" element={<QmsComposeSystemMessaging />} />
+
+          
 
 
 

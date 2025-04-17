@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
-import edits from "../../../../assets/images/Company Documentation/edit.svg"
-import deletes from "../../../../assets/images/Company Documentation/delete.svg"
-import view from "../../../../assets/images/Company Documentation/view.svg"
+import plusIcon from "../../../assets/images/Company Documentation/plus icon.svg";
+import edits from "../../../assets/images/Company Documentation/edit.svg"
+import deletes from "../../../assets/images/Company Documentation/delete.svg"
+import view from "../../../assets/images/Company Documentation/view.svg"
 import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
 
@@ -51,16 +51,16 @@ const QmsListMeeting = () => {
         navigate('/company/qms/add-meeting')
     }
 
-    const handleDraftAwarenessTraining = () => {
-        navigate('/company/qms/draft-awareness-training')
+    const handleDraftMeeting = () => {
+        navigate('/company/qms/draft-meeting')
     }
 
-    const handleEditAwarenessTraining = () => {
-        navigate('/company/qms/edit-awareness-training')
+    const handleEditMeeting = () => {
+        navigate('/company/qms/edit-meeting')
     }
 
-    const handleViewAwarenessTraining = () => {
-        navigate('/company/qms/view-awareness-training')
+    const handleViewMeeting = () => {
+        navigate('/company/qms/view-meeting')
     }
 
     return (
@@ -82,7 +82,7 @@ const QmsListMeeting = () => {
                     </div>
                     <button
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftAwarenessTraining}
+                        onClick={handleDraftMeeting}
                     >
                         <span>Draft</span>
                     </button>
@@ -123,7 +123,7 @@ const QmsListMeeting = () => {
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
                                         <button
-                                            onClick={handleViewAwarenessTraining}
+                                            onClick={handleViewMeeting}
                                         >
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                                         </button>
@@ -132,7 +132,7 @@ const QmsListMeeting = () => {
                                 <td className="list-awareness-training-datas text-center">
                                     <div className='flex justify-center items-center h-[50px]'>
                                         <button
-                                            onClick={handleEditAwarenessTraining}
+                                            onClick={handleEditMeeting}
                                         >
                                             <img src={edits} alt=" Edit Icon" className='w-[16px] h-[16px]' />
                                         </button>

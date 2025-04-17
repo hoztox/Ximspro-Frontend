@@ -15,12 +15,12 @@ const ActionsMeetingSubmenu = (props) => {
             label: "List Meeting",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
             path: "/company/qms/list-meeting",
-            relatedPaths: ["/company/qms/add-compliance",
-                // "/company/qms/edit-compliance",
-                // "/company/qms/view-compliance",
-                // "/company/qms/draft-compliance",
-                // "/company/qms/edit-draft-compliance",
-                // "/company/qms/view-draft-compliance",
+            relatedPaths: [
+                "/company/qms/edit-meeting",
+                "/company/qms/view-meeting",
+                "/company/qms/draft-meeting",
+                "/company/qms/edit-draft-meeting",
+                "/company/qms/view-draft-meeting",
               ]
         },
         {
@@ -35,7 +35,12 @@ const ActionsMeetingSubmenu = (props) => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/procedure",
+            path: "/company/qms/list-inbox",
+            relatedPaths: ["/company/qms/list-trash",
+                "/company/qms/list-outbox",
+                "/company/qms/list-draft",
+                "/company/qms/compose",
+              ]
         },
         {
             id: "Internal-problems-observations",
