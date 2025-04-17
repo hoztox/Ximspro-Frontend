@@ -36,7 +36,7 @@ const EditQmsManualSuccessModal = ({ showEditManualSuccessModal, onClose }) => {
                             <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
                             <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Evaluation Compliance Updated Successfully</p>
+                            <p className="success-messege">Sustainability Updated Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>
