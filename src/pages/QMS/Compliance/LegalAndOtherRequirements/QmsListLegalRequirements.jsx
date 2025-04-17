@@ -9,10 +9,20 @@ import plusIcon from '../../../../assets/images/Company Documentation/plus icon.
 import editIcon from '../../../../assets/images/Company Documentation/edit.svg';
 import deleteIcon from '../../../../assets/images/Company Documentation/delete.svg';
 import viewIcon from '../../../../assets/images/Company Documentation/view.svg';
+import QmsDeleteConfirmLegalModal from './Modals/QmsDeleteConfirmLegalModal';
+import QmsDeleteLegalSuccessModal from './Modals/QmsDeleteLegalSuccessModal';
+import QmsDeleteLegalErrorModal from './Modals/QmsDeleteLegalErrorModal';
 
 const QmsListLegalRequirements = () => {
     // Initial data state (empty array)
     const initialData = [];
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [requirementsToDelete, setRequirementsToDelete] = useState(null);
+    const [showDeleteLegalSuccessModal, setShowDeleteLegalSuccessModal] = useState(false);
+    const [showDeleteLegalErrorModal, setShowDeleteLegalErrorModal] = useState(false);
+    const [deleteErrorMessage, setDeleteErrorMessage] = useState("");
 
     // State management
     const [legalRequirements, setLegalRequirements] = useState(initialData);
@@ -118,15 +128,37 @@ const QmsListLegalRequirements = () => {
         fetchDraftCount();
     }, []);
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this legal requirement?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/legal-get/${id}/`);
-                setLegalRequirements(legalRequirements.filter(item => item.id !== id));
-            } catch (err) {
-                alert('Failed to delete legal requirement');
-                console.error('Error deleting legal requirement:', err);
-            }
+    // Open delete confirmation modal
+    const openDeleteModal = (id) => {
+        setRequirementsToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteLegalSuccessModal(false);
+        setShowDeleteLegalErrorModal(false);
+        setRequirementsToDelete(null);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!requirementsToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/legal-get/${requirementsToDelete}/`);
+            setLegalRequirements(legalRequirements.filter(item => item.id !== requirementsToDelete));
+            setShowDeleteModal(false);
+            setShowDeleteLegalSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteLegalSuccessModal(false);
+            }, 2000);
+        } catch (err) {
+            console.error("Failed to delete legal requirement:", err);
+            setShowDeleteModal(false);
+            setDeleteErrorMessage(err.response?.data?.message || "Failed to delete the requirement");
+            setShowDeleteLegalErrorModal(true);
         }
     };
 
@@ -250,7 +282,7 @@ const QmsListLegalRequirements = () => {
                                                     </button>
                                                 </td>
                                                 <td className="px-4 qms-list-compliance-data text-center">
-                                                    <button onClick={() => handleDelete(item.id)}>
+                                                    <button onClick={() => openDeleteModal(item.id)}>
                                                         <img src={deleteIcon} alt="Delete icon" className='w-[16px] h-[16px]' />
                                                     </button>
                                                 </td>
@@ -307,6 +339,25 @@ const QmsListLegalRequirements = () => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <QmsDeleteConfirmLegalModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Delete Success Modal */}
+            <QmsDeleteLegalSuccessModal
+                showDeleteLegalSuccessModal={showDeleteLegalSuccessModal}
+                onClose={() => setShowDeleteLegalSuccessModal(false)}
+            />
+
+            {/* Delete Error Modal */}
+            <QmsDeleteLegalErrorModal
+                showDeleteLegalErrorModal={showDeleteLegalErrorModal}
+                onClose={() => setShowDeleteLegalErrorModal(false)}
+            />
         </div>
     );
 };

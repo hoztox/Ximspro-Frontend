@@ -143,14 +143,6 @@ const QmsDraftCompliance = ({ userId }) => {
         setComplianceToDelete(null);
     };
 
-    const closeSuccessModal = () => {
-        setShowDeleteComplianceSuccessModal(false);
-    };
-
-    const closeErrorModal = () => {
-        setShowDeleteComplianceErrorModal(false);
-    };
-
     // Filter and pagination
     const filteredData = complianceData.filter(item =>
         (item.title && item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||

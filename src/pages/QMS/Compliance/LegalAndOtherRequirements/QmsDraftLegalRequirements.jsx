@@ -5,6 +5,9 @@ import view from '../../../../assets/images/Company Documentation/view.svg';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsDeleteConfirmLegalModal from "./Modals/QmsDeleteConfirmLegalModal"
+import QmsDeleteLegalSuccessModal from './Modals/QmsDeleteLegalSuccessModal';
+import QmsDeleteLegalErrorModal from './Modals/QmsDeleteLegalErrorModal';
 
 const QmsDraftLegalRequirements = () => {
     // State for form data management
@@ -15,6 +18,12 @@ const QmsDraftLegalRequirements = () => {
     const [error, setError] = useState(null);
     const [itemsPerPage] = useState(10);
     const navigate = useNavigate();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [requirementsToDelete, setRequirementsToDelete] = useState(null);
+    const [showDeleteLegalSuccessModal, setShowDeleteLegalSuccessModal] = useState(false);
+    const [showDeleteLegalErrorModal, setShowDeleteLegalErrorModal] = useState(false);
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -31,10 +40,10 @@ const QmsDraftLegalRequirements = () => {
         if (!dateString) return "N/A";
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
+            return date.toLocaleDateString('en-US', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
             }).replace(/\//g, '-');
         } catch (error) {
             console.error("Date formatting error:", error);
@@ -47,19 +56,19 @@ const QmsDraftLegalRequirements = () => {
             try {
                 const id = getRelevantUserId();
                 console.log("Fetching data for ID:", id); // Debug log
-                
+
                 if (!id) {
                     setError("User ID or Company ID not found");
                     setLoading(false);
                     return;
                 }
-                
+
                 const response = await axios.get(`${BASE_URL}/qms/legal-draft/${id}/`);
                 console.log("API Response:", response.data); // Debug log
-                
+
                 const data = response.data;
                 if (Array.isArray(data)) {
-              
+
                     const formattedData = response.data.map(item => ({
                         id: item.id,
                         title: item.legal_name,
@@ -119,13 +128,37 @@ const QmsDraftLegalRequirements = () => {
         navigate(`/company/qms/view-draft-legal-requirements/${id}`);
     };
 
-    const handleDelete = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (id) => {
+        setRequirementsToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteLegalSuccessModal(false);
+        setShowDeleteLegalErrorModal(false);
+        setRequirementsToDelete(null);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!requirementsToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/legal-get/${id}/`);
-            setComplianceData(complianceData.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/legal-get/${requirementsToDelete}/`);
+            setComplianceData(complianceData.filter(item => item.id !== requirementsToDelete));
+            setShowDeleteModal(false);
+            setShowDeleteLegalSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteLegalSuccessModal(false);
+            }, 2000);
         } catch (error) {
             console.error("Failed to delete item:", error);
-            // Implement proper error handling here
+            setShowDeleteModal(false);
+            
+            setShowDeleteLegalErrorModal(true);
         }
     };
 
@@ -190,7 +223,7 @@ const QmsDraftLegalRequirements = () => {
                                         <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                             <td className="px-4 qms-list-compliance-data">{indexOfFirstItem + index + 1}</td>
                                             <td className="px-4 qms-list-compliance-data">{item.title}</td>
-                                            <td className="px-4 qms-list-compliance-data">{item.complianceNo}</td>
+                                            <td className="px-4 qms-list-compliance-data">{item.legalNo}</td>
                                             <td className="px-4 qms-list-compliance-data">{item.documentType}</td>
                                             <td className="px-4 qms-list-compliance-data">
                                                 <span className="text-[#1E84AF]">{item.revision}</span>
@@ -213,7 +246,7 @@ const QmsDraftLegalRequirements = () => {
                                             </td>
                                             <td className="px-4 qms-list-compliance-data text-center">
                                                 <button
-                                                    onClick={() => handleDelete(item.id)}
+                                                    onClick={() => openDeleteModal(item.id)}
                                                 >
                                                     <img src={deletes} alt="Delete icon" className='w-[16px] h-[16px]' />
                                                 </button>
@@ -268,6 +301,25 @@ const QmsDraftLegalRequirements = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <QmsDeleteConfirmLegalModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Delete Success Modal */}
+            <QmsDeleteLegalSuccessModal
+                showDeleteLegalSuccessModal={showDeleteLegalSuccessModal}
+                onClose={() => setShowDeleteLegalSuccessModal(false)}
+            />
+
+            {/* Delete Error Modal */}
+            <QmsDeleteLegalErrorModal
+                showDeleteLegalErrorModal={showDeleteLegalErrorModal}
+                onClose={() => setShowDeleteLegalErrorModal(false)}
+            />
         </div>
     );
 };

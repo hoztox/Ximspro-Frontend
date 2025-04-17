@@ -4,6 +4,8 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsEditDraftLegalSuccessModal from "./Modals/QmsEditDraftLegalSuccessModal";
+import QmsEditDraftLegalErrorModal from "./Modals/QmsEditDraftLegalErrorModal";
 
 const QmsDraftEditLegalRequirements = () => {
     const navigate = useNavigate();
@@ -22,7 +24,10 @@ const QmsDraftEditLegalRequirements = () => {
         rivision: "",
         send_notification: false
     });
-    
+
+    const [showDraftEditLegalSuccessModal, setShowDraftEditLegalSuccessModal] = useState(false);
+    const [showDraftEditLegalErrorModal, setShowDraftEditLegalErrorModal] = useState(false);
+
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileUrl, setFileUrl] = useState(null);
 
@@ -39,9 +44,9 @@ const QmsDraftEditLegalRequirements = () => {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/legal-get/${id}/`);
                 const data = response.data;
-                
+
                 console.log("API Response:", data); // Debug log
-                
+
                 let day = "", month = "", year = "";
                 if (data.date) {
                     const dateObj = new Date(data.date);
@@ -49,7 +54,7 @@ const QmsDraftEditLegalRequirements = () => {
                     month = (dateObj.getMonth() + 1).toString();
                     year = dateObj.getFullYear().toString();
                 }
-                
+
                 setFormData({
                     legal_name: data.legal_name || "",
                     legal_no: data.legal_no || "",
@@ -61,12 +66,12 @@ const QmsDraftEditLegalRequirements = () => {
                     rivision: data.rivision || "",
                     send_notification: data.send_notification || false
                 });
-                
+
                 if (data.attach_document) {
                     setSelectedFile(data.attach_document.split('/').pop());
                     setFileUrl(data.attach_document);
                 }
-                
+
                 setLoading(false);
             } catch (err) {
                 setError("Failed to load legal requirement data");
@@ -74,7 +79,7 @@ const QmsDraftEditLegalRequirements = () => {
                 console.error("Error fetching legal requirement data:", err);
             }
         };
-    
+
         if (id) {
             fetchLegalData();
         }
@@ -95,19 +100,19 @@ const QmsDraftEditLegalRequirements = () => {
             [name]: type === 'checkbox' ? checked : value,
         });
     };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         const submitData = new FormData();
-        
+
         // Format date
         if (formData.day && formData.month && formData.year) {
             const formattedDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`;
             submitData.append('date', formattedDate);
         }
-        
- 
+
+
         Object.keys(formData).forEach(key => {
             if (!['day', 'month', 'year'].includes(key) && formData[key] !== null) {
                 if (key === 'attach_document' && typeof formData[key] === 'object') {
@@ -117,19 +122,28 @@ const QmsDraftEditLegalRequirements = () => {
                 }
             }
         });
-        
+
         try {
             const response = await axios.put(`${BASE_URL}/qms/legal/${id}/edit/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            
+
             console.log("Legal requirement updated successfully:", response.data);
-            navigate("/company/qms/draft-legal-requirements");
+            setShowDraftEditLegalSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftEditLegalSuccessModal(false);
+                navigate("/company/qms/draft-legal-requirements");
+            }, 1500);
+
         } catch (err) {
             console.error("Error updating legal requirement:", err);
             setError("Failed to update legal requirement");
+            setShowDraftEditLegalErrorModal(true);
+            setTimeout(() => {
+                setShowDraftEditLegalErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -181,7 +195,19 @@ const QmsDraftEditLegalRequirements = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
                 <h2 className="add-compliance-head">Edit Draft Legal and Other Requirements</h2>
-                <button 
+
+                <QmsEditDraftLegalSuccessModal
+                    showDraftEditLegalSuccessModal={showDraftEditLegalSuccessModal}
+                    onClose={() => { setShowDraftEditLegalSuccessModal(false) }}
+                />
+
+                <QmsEditDraftLegalErrorModal
+                    showDraftEditLegalErrorModal={showDraftEditLegalErrorModal}
+                    onClose={() => { setShowDraftEditLegalErrorModal(false) }}
+                />
+
+
+                <button
                     className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                     onClick={handleListLegalRequirements}
                 >
@@ -215,7 +241,7 @@ const QmsDraftEditLegalRequirements = () => {
                             name="legal_no"
                             value={formData.legal_no}
                             onChange={handleInputChange}
-                            
+
                             className="w-full add-compliance-inputs"
                         />
                     </div>
@@ -241,9 +267,8 @@ const QmsDraftEditLegalRequirements = () => {
                                 <option value="Work Instruction">Work Instruction</option>
                             </select>
                             <div
-                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                    dropdowns.document_type ? "rotate-180" : ""
-                                }`}
+                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.document_type ? "rotate-180" : ""
+                                    }`}
                             >
                                 <ChevronDown size={20} />
                             </div>
@@ -271,9 +296,8 @@ const QmsDraftEditLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.day ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -296,9 +320,8 @@ const QmsDraftEditLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.month ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -321,9 +344,8 @@ const QmsDraftEditLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.year ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -379,9 +401,9 @@ const QmsDraftEditLegalRequirements = () => {
                             </button>
                             <div className="flex items-center justify-between">
                                 {(selectedFile && fileUrl) && (
-                                    <button 
-                                        type="button" 
-                                        onClick={handleViewFile} 
+                                    <button
+                                        type="button"
+                                        onClick={handleViewFile}
                                         className="flex items-center gap-2 mt-[10.65px] text-[#1E84AF] click-view-file-text !text-[14px]"
                                     >
                                         Click to view file <Eye size={17} />
@@ -393,7 +415,7 @@ const QmsDraftEditLegalRequirements = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-end justify-end">
                         <label className="flex items-center">
                             <input
@@ -408,9 +430,9 @@ const QmsDraftEditLegalRequirements = () => {
                             </span>
                         </label>
                     </div>
-                    
+
                     <div></div>
-                    
+
                     <div className="flex items-end gap-5">
                         <button
                             type="button"

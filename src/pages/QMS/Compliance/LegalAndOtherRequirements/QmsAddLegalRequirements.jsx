@@ -4,10 +4,14 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import QmsAddLegalSuccessModal from "./Modals/QmsAddLegalSuccessModal";
+import QmsAddLegalErrorModal from "./Modals/QmsAddLegalErrorModal";
+import QmsSaveDraftLegalSuccessModal from "./Modals/QmsSaveDraftLegalSuccessModal";
+import QmsSaveDraftLegalErrorModal from "./Modals/QmsSaveDraftLegalErrorModal";
 
 const QmsAddLegalRequirements = () => {
     const navigate = useNavigate();
-      const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         legal_name: "",
         legal_no: "",
@@ -20,15 +24,21 @@ const QmsAddLegalRequirements = () => {
         is_draft: false
     });
 
+    const [showAddLegalSuccessModal, setShowAddLegalSuccessModal] = useState(false);
+    const [showAddLegalErrorModal, setShowAddLegalErrorModal] = useState(false);
+
+    const [showDraftLegalSuccessModal, setShowDraftLegalSuccessModal] = useState(false);
+    const [showDraftLegalErrorModal, setShowDraftLegalErrorModal] = useState(false);
+
     // State to handle file selection UI
     const [selectedFile, setSelectedFile] = useState(null);
-    
+
     // Get user info from localStorage
     const getUserCompanyId = () => {
         // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
-    
+
         // If user data exists with company_id
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
@@ -70,10 +80,10 @@ const QmsAddLegalRequirements = () => {
 
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        
+
         // Handle checkbox inputs differently
         const inputValue = type === 'checkbox' ? checked : value;
-        
+
         setFormData({
             ...formData,
             [name]: inputValue,
@@ -83,19 +93,19 @@ const QmsAddLegalRequirements = () => {
     // Update date when day, month, or year changes
     const handleDateChange = (e) => {
         const { name, value } = e.target;
-        
+
         const updatedDateComponents = {
             ...dateComponents,
             [name]: value
         };
-        
+
         setDateComponents(updatedDateComponents);
-        
+
         // Only set the date if all components are selected
         if (updatedDateComponents.day && updatedDateComponents.month && updatedDateComponents.year) {
             // Format date as YYYY-MM-DD for backend
             const formattedDate = `${updatedDateComponents.year}-${String(updatedDateComponents.month).padStart(2, '0')}-${String(updatedDateComponents.day).padStart(2, '0')}`;
-            
+
             setFormData({
                 ...formData,
                 date: formattedDate
@@ -122,17 +132,17 @@ const QmsAddLegalRequirements = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         try {
             const companyId = getUserCompanyId();
-        if (!companyId) {
-            setError('Company ID not found. Please log in again.');
-            setLoading(false);
-            return;
-        }
-        const formDataToSend = new FormData();
-        formDataToSend.append('company', companyId);
-            
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+            const formDataToSend = new FormData();
+            formDataToSend.append('company', companyId);
+
             // Add all form fields to FormData
             Object.keys(formData).forEach(key => {
                 if (key === 'attach_document' && formData[key]) {
@@ -141,7 +151,7 @@ const QmsAddLegalRequirements = () => {
                     formDataToSend.append(key, formData[key]);
                 }
             });
-            
+
             // Send the request
             const response = await axios.post(
                 `${BASE_URL}/qms/legal/create/`,
@@ -152,83 +162,97 @@ const QmsAddLegalRequirements = () => {
                     }
                 }
             );
-            
+
             console.log("Legal requirement added successfully:", response.data);
-            
-            // Navigate back to list page on success
-            navigate('/company/qms/list-legal-requirements');
+            setShowAddLegalSuccessModal(true);
+            setTimeout(() => {
+                setShowAddLegalSuccessModal(false);
+                navigate('/company/qms/list-legal-requirements');
+            }, 1500);
+
         } catch (error) {
             console.error("Error adding legal requirement:", error);
-            alert("Failed to add legal requirement. Please try again.");
+            setShowAddLegalErrorModal(true);
+            setTimeout(() => {
+                setShowAddLegalErrorModal(false);
+            }, 3000);
         }
     };
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
-    
+
         if (userRole === "user") {
             const userId = localStorage.getItem("user_id");
             if (userId) return userId;
         }
-    
+
         const companyId = localStorage.getItem("company_id");
         if (companyId) return companyId;
-    
+
         return null;
     };
     const handleSaveAsDraft = async () => {
         try {
-          setLoading(true);
-      
-          const companyId = getUserCompanyId();
-          const userId = getRelevantUserId();
-      
-          if (!companyId || !userId) {
-            setError('Company ID or User ID not found. Please log in again.');
+            setLoading(true);
+
+            const companyId = getUserCompanyId();
+            const userId = getRelevantUserId();
+
+            if (!companyId || !userId) {
+                setError('Company ID or User ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+
+            submitData.append('company', companyId);
+            submitData.append('user', userId);
+            submitData.append('is_draft', true);
+
+            Object.keys(formData).forEach((key) => {
+                if (formData[key] !== null && formData[key] !== '') {
+                    submitData.append(key, formData[key]);
+                }
+            });
+
+
+            if (formData.file) {
+                submitData.append('upload_attachment', formData.file);
+            }
+
+            console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+
+            const response = await axios.post(
+                `${BASE_URL}/qms/legal/draft-create/`,
+                submitData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+
+                    },
+                }
+            );
+
             setLoading(false);
-            return;
-          }
-      
-          const submitData = new FormData();
-      
-          submitData.append('company', companyId);
-          submitData.append('user', userId);
-          submitData.append('is_draft', true);
-      
-          Object.keys(formData).forEach((key) => {
-            if (formData[key] !== null && formData[key] !== '') {
-              submitData.append(key, formData[key]);
-            }
-          });
-      
-         
-          if (formData.file) {
-            submitData.append('upload_attachment', formData.file);
-          }
-      
-          console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
-      
-          const response = await axios.post(
-            `${BASE_URL}/qms/legal/draft-create/`,  
-            submitData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-               
-              },
-            }
-          );
-      
-          setLoading(false);
-          alert('Draft saved successfully!');
-         
-      
+            setShowDraftLegalSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftLegalSuccessModal(false);
+                navigate('/company/qms/draft-legal-requirements');
+            }, 1500);
+
+
         } catch (err) {
-          setLoading(false);
-          const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
-          setError(errorMessage);
-          console.error('Error saving Draft:', err.response?.data || err);
+            setLoading(false);
+            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+            setError(errorMessage);
+            setShowDraftLegalErrorModal(true);
+            setTimeout(() => {
+                setShowDraftLegalErrorModal(false);
+            }, 3000);
+            console.error('Error saving Draft:', err.response?.data || err);
         }
-      };
+    };
 
     const handleListLegalRequirements = () => {
         navigate('/company/qms/list-legal-requirements');
@@ -242,7 +266,29 @@ const QmsAddLegalRequirements = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
                 <h2 className="add-compliance-head">Add Legal and Other Requirements</h2>
-                <button 
+
+                <QmsAddLegalSuccessModal
+                    showAddLegalSuccessModal={showAddLegalSuccessModal}
+                    onClose={() => { setShowAddLegalSuccessModal(false) }}
+                />
+
+                <QmsAddLegalErrorModal
+                    showAddLegalErrorModal={showAddLegalErrorModal}
+                    onClose={() => { setShowAddLegalErrorModal(false) }}
+                />
+
+                <QmsSaveDraftLegalSuccessModal
+                    showDraftLegalSuccessModal={showDraftLegalSuccessModal}
+                    onClose={() => { setShowDraftLegalSuccessModal(false) }}
+                />
+
+                <QmsSaveDraftLegalErrorModal
+                    showDraftLegalErrorModal={showDraftLegalErrorModal}
+                    onClose={() => { setShowDraftLegalErrorModal(false) }}
+                />
+
+
+                <button
                     className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                     onClick={handleListLegalRequirements}
                 >
@@ -302,9 +348,8 @@ const QmsAddLegalRequirements = () => {
                                 <option value="Work Instruction">Work Instruction</option>
                             </select>
                             <div
-                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                    dropdowns.document_type ? "rotate-180" : ""
-                                }`}
+                                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.document_type ? "rotate-180" : ""
+                                    }`}
                             >
                                 <ChevronDown size={20} />
                             </div>
@@ -332,9 +377,8 @@ const QmsAddLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.day ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -357,9 +401,8 @@ const QmsAddLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.month ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -382,9 +425,8 @@ const QmsAddLegalRequirements = () => {
                                     ))}
                                 </select>
                                 <div
-                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                                        dropdowns.year ? "rotate-180" : ""
-                                    }`}
+                                    className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                                        }`}
                                 >
                                     <ChevronDown size={20} />
                                 </div>
@@ -443,7 +485,7 @@ const QmsAddLegalRequirements = () => {
                             className="w-full add-compliance-inputs"
                         />
                     </div>
-                    
+
                     {/* Send Notification */}
                     <div className="flex items-end justify-end">
                         <label className="flex items-center">
@@ -459,10 +501,10 @@ const QmsAddLegalRequirements = () => {
                             </span>
                         </label>
                     </div>
-                    
+
                     {/* Save as Draft */}
                     <div>
-                        <button 
+                        <button
                             type="button"
                             onClick={handleSaveAsDraft}
                             className="request-correction-btn duration-200"
@@ -470,7 +512,7 @@ const QmsAddLegalRequirements = () => {
                             Save as Draft
                         </button>
                     </div>
-                    
+
                     {/* Action Buttons */}
                     <div className="flex items-end gap-5">
                         <button
