@@ -177,6 +177,8 @@ import QmsViewDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/Emplo
 import QmsDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsDraftAwarenessTraining";
 import QmsEditDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsEditDraftAwarenessTraining";
 import QmsViewDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewDraftAwarenessTraining";
+import QmsListMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsListMeeting";
+import QmsAddMeeting from "./pages/QMS/ActionsMeetingManagement/AddMeeting/QmsAddMeeting";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -291,6 +293,14 @@ const ThemedApp = () => {
           <Route path="qms/draft-awareness-training" element={<QmsDraftAwarenessTraining />} />
           <Route path="qms/edit-draft-awareness-training" element={<QmsEditDraftAwarenessTraining />} />
           <Route path="qms/view-draft-awareness-training" element={<QmsViewDraftAwarenessTraining />} />
+
+
+
+
+
+          {/* QMS Actions, Meeting and Communication Management */}
+          <Route path="qms/list-meeting" element={<QmsListMeeting />} />
+          <Route path="qms/add-meeting" element={<QmsAddMeeting />} />
 
 
 

@@ -5,7 +5,7 @@ import procedure from "../../../../assets/images/Company-Sidebar/manual.svg";
 import record from "../../../../assets/images/Company-Sidebar/record-format.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const ActionsMeetingSubmenu = () => {
+const ActionsMeetingSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -14,13 +14,20 @@ const ActionsMeetingSubmenu = () => {
             id: "list-meeting",
             label: "List Meeting",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/list-meeting",
+            relatedPaths: ["/company/qms/add-compliance",
+                // "/company/qms/edit-compliance",
+                // "/company/qms/view-compliance",
+                // "/company/qms/draft-compliance",
+                // "/company/qms/edit-draft-compliance",
+                // "/company/qms/view-draft-compliance",
+              ]
         },
         {
             id: "add-meeting",
             label: "Add Meeting",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/add-meeting",
         },
         {
             id: "system-messaging",
@@ -49,7 +56,10 @@ const ActionsMeetingSubmenu = () => {
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     const handleCategoryClick = (category) => {
