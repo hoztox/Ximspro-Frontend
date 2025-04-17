@@ -57,7 +57,7 @@ const QmsAddSustainability = () => {
         send_notification_to_approved_by: true,
         send_email_to_approved_by: true,
         rivision: '',
-        document_type: 'System',
+        document_type: 'Legal',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
@@ -132,11 +132,11 @@ const QmsAddSustainability = () => {
     );
 
     const documentTypes = [
-        'System',
-        'Paper',
-        'External',
-        'Work Instruction'
-    ];
+        ('Legal', 'Legal'),
+        ('Business', 'Business'),
+        ('Client','Client'),
+        ('Process/Specification','Process/Specification')
+    ]
 
     const toggleDropdown = (dropdown) => {
         setOpenDropdowns(prev => ({
@@ -293,7 +293,7 @@ const QmsAddSustainability = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/record-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/sustainability-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -303,7 +303,7 @@ const QmsAddSustainability = () => {
             setShowAddManualSuccessModal(true);
             setTimeout(() => {
                 setShowAddManualSuccessModal(false);
-                // navigate('/company/qms/record-format');
+                navigate('/company/qms/list-sustainability');
             }, 1500);
 
         } catch (err) {
@@ -358,7 +358,7 @@ const QmsAddSustainability = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/record/draft-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/sustainability/draft-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -368,7 +368,7 @@ const QmsAddSustainability = () => {
             setShowDraftManualSuccessModal(true);
             setTimeout(() => {
                 setShowDraftManualSuccessModal(false);
-                // navigate('/company/qms/draftrecordformat');
+                navigate('/company/qms/draft-sustainability');
             }, 1500);
 
 

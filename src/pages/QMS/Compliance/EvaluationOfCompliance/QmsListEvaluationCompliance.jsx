@@ -271,7 +271,7 @@ const QmsListEvaluationCompliance = () => {
     const handleConfirmDelete = async () => {
         if (manualToDelete) {
             try {
-                await axios.delete(`${BASE_URL}/qms/record-detail/${manualToDelete}/`);
+                await axios.delete(`${BASE_URL}/qms/evaluation-detail/${manualToDelete}/`);
                 setShowDeleteModal(false);
                 setShowDeleteManualSuccessModal(true);
                 setTimeout(() => {
@@ -377,7 +377,7 @@ const QmsListEvaluationCompliance = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`, {
+            await axios.post(`${BASE_URL}/qms/evaluation/${selectedManualId}/publish-notification/`, {
                 company_id: getUserCompanyId(),
                 published_by: userId,
                 send_notification: sendNotification

@@ -1,39 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Eye } from 'lucide-react';
-import edits from '../../../../assets/images/Company Documentation/edit.svg'
-import deletes from '../../../../assets/images/Company Documentation/delete.svg'
-import { useNavigate } from 'react-router-dom';
-
+import edits from '../../../../assets/images/Company Documentation/edit.svg';
+import deletes from '../../../../assets/images/Company Documentation/delete.svg';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsViewManagementChange = () => {
-  const [formData, setFormData] = useState({
-    title: 'Test',
-    type: 'Test',
-    document: ' ',
-    purpose: 'Internal',
-    potential_change: 'Test',
-    remarks: 'Internal',
-    moc_no: 'Test',
-    date: 'Test',
-    relate_record_format: 'Test',
-    resourses: 'Test',
-    impact: 'Test',
-    evaluationBy: 'Test',
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [managementChange, setManagementChange] = useState({
+    moc_title: '',
+    moc_type: '',
+    attach_document: '',
+    purpose_of_chnage: '',
+    potential_cosequences: '',
+    moc_remarks: '',
+    moc_no: '',
+    date: '',
+    related_record_format: '',
+    resources_required: '',
+    impact_on_process: '',
+    rivision: '',
   });
-
+  
+  const { id } = useParams();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchManagementChangeData = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(`${BASE_URL}/qms/changes-get/${id}/`);
+        setManagementChange(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load management change data");
+        setLoading(false);
+        console.error("Error fetching management change data:", err);
+      }
+    };
+
+    if (id) {
+      fetchManagementChangeData();
+    }
+  }, [id]);
+
   const handleClose = () => {
-    navigate('/company/qms/list-management-change')
+    navigate('/company/qms/list-management-change');
   };
 
   const handleEdit = () => {
-    navigate('/company/qms/edit-management-change')
+    navigate(`/company/qms/edit-management-change/${id}`);
   };
 
-  const handleDelete = () => {
-    console.log('Delete clicked');
+  const handleDelete = async () => {
+    if (window.confirm("Are you sure you want to delete this management change record?")) {
+      try {
+        await axios.delete(`${BASE_URL}/qms/changes-get/${id}/`);
+        navigate('/company/qms/list-management-change');
+      } catch (err) {
+        console.error("Error deleting management change:", err);
+        alert("Failed to delete management change record");
+      }
+    }
   };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  if (loading) return <div className="text-white">Loading...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div>
@@ -49,69 +89,74 @@ const QmsViewManagementChange = () => {
           <div className="space-y-[40px] border-r border-[#383840]">
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">MOC Name/Title</p>
-              <p className="text-white view-training-data">{formData.title}</p>
+              <p className="text-white view-training-data">{managementChange.moc_title}</p>
             </div>
 
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">MOC Type</p>
-              <p className="text-white view-training-data">{formData.type}</p>
+              <p className="text-white view-training-data">{managementChange.moc_type}</p>
             </div>
 
-            <div>
-              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Attach Document</p>
-              <button className="text-[#1E84AF] flex items-center gap-2 click-view-file-btn !text-[18px]">
-                Click to view file <Eye size={20} className='text-[#1E84AF]' />
-                {formData.document}
-              </button>
-            </div>
+            {managementChange.attach_document && (
+              <div>
+                <p className="text-[#AAAAAA] view-training-label mb-[6px]">Attach Document</p>
+                <a 
+                  href={managementChange.attach_document} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#1E84AF] flex items-center gap-2 click-view-file-btn !text-[18px]"
+                >
+                  Click to view file <Eye size={20} className='text-[#1E84AF]' />
+                </a>
+              </div>
+            )}
 
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">Purpose of Change</p>
-              <p className="text-white view-training-data">{formData.purpose}</p>
+              <p className="text-white view-training-data">{managementChange.purpose_of_chnage}</p>
             </div>
 
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">Potential Consequences of Change</p>
-              <p className="text-white view-training-data">{formData.potential_change}</p>
+              <p className="text-white view-training-data">{managementChange.potential_cosequences}</p>
             </div>
 
             <div>
-              <p className="text-[#AAAAAA] view-training-label mb-[6px]">MOC Remarks </p>
-              <p className="text-white view-training-data">{formData.remarks}</p>
+              <p className="text-[#AAAAAA] view-training-label mb-[6px]">MOC Remarks</p>
+              <p className="text-white view-training-data">{managementChange.moc_remarks}</p>
             </div>
-
           </div>
 
           <div className="space-y-[40px] ml-5">
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">MOC Number</p>
-              <p className="text-white view-training-data">{formData.moc_no}</p>
+              <p className="text-white view-training-data">{managementChange.moc_no}</p>
             </div>
 
             <div>
               <p className="text-[#AAAAAA] view-training-label mb-[6px]">Date</p>
-              <p className="text-white view-training-data">{formData.date}</p>
+              <p className="text-white view-training-data">{formatDate(managementChange.date)}</p>
             </div>
 
             <div>
-              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Relate Record Format</p>
-              <p className="text-white view-training-data">{formData.relate_record_format}</p>
+              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Related Record Format</p>
+              <p className="text-white view-training-data">{managementChange.related_record_format}</p>
             </div>
 
             <div>
-              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Resourses Required</p>
-              <p className="text-white view-training-data">{formData.resourses}</p>
+              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Resources Required</p>
+              <p className="text-white view-training-data">{managementChange.resources_required}</p>
             </div>
 
             <div>
-              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Impact on Processes/Activity </p>
-              <p className="text-white view-training-data">{formData.impact}</p>
+              <p className="text-[#AAAAAA] view-training-label mb-[6px]">Impact on Processes/Activity</p>
+              <p className="text-white view-training-data">{managementChange.impact_on_process}</p>
             </div>
 
             <div className='flex justify-between'>
               <div>
-                <p className="text-[#AAAAAA] view-training-label mb-[6px]">Evaluation By</p>
-                <p className="text-white view-training-data">{formData.evaluationBy}</p>
+                <p className="text-[#AAAAAA] view-training-label mb-[6px]">Revision</p>
+                <p className="text-white view-training-data">{managementChange.rivision}</p>
               </div>
               <div className="flex gap-10">
                 <button
@@ -133,11 +178,9 @@ const QmsViewManagementChange = () => {
             </div>
           </div>
         </div>
-
-
       </div>
     </div>
   );
 }
 
-export default QmsViewManagementChange
+export default QmsViewManagementChange;

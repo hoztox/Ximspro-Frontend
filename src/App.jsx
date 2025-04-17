@@ -322,19 +322,19 @@ const ThemedApp = () => {
 
           <Route path="qms/list-management-change" element={<QmsListManagementChange />} />
           <Route path="qms/add-management-change" element={<QmsAddmanagementChange />} />
-          <Route path="qms/edit-management-change" element={<QmsEditManagementChange />} />
-          <Route path="qms/view-management-change" element={<QmsViewManagementChange />} />
+          <Route path="qms/edit-management-change/:id" element={<QmsEditManagementChange />} />
+          <Route path="qms/view-management-change/:id" element={<QmsViewManagementChange />} />
           <Route path="qms/draft-management-change" element={<QmsDraftManagementChange />} />
-          <Route path="qms/edit-draft-management-change" element={<QmsEditDraftManagementChange />} />
-          <Route path="qms/view-draft-management-change" element={<QmsViewDraftManagementChange />} />
+          <Route path="qms/edit-draft-management-change/:id" element={<QmsEditDraftManagementChange />} />
+          <Route path="qms/view-draft-management-change/:id" element={<QmsViewDraftManagementChange />} />
 
           <Route path="qms/list-sustainability" element={<QmsListSustainability />} />
           <Route path="qms/add-sustainability" element={<QmsAddSustainability />} />
-          <Route path="qms/edit-sustainability" element={<QmsEditSustainability />} />
-          <Route path="qms/view-sustainability" element={<QmsViewSustainability />} />
+          <Route path="qms/edit-sustainability/:id" element={<QmsEditSustainability />} />
+          <Route path="qms/view-sustainability/:id" element={<QmsViewSustainability />} />
           <Route path="qms/draft-sustainability" element={<QmsDraftSustainability />} />
-          <Route path="qms/edit-draft-sustainability" element={<QmsEditDraftSustainability />} />
-          <Route path="qms/view-draft-sustainability" element={<QmsViewDraftSustainability />} />
+          <Route path="qms/edit-draft-sustainability/:id" element={<QmsEditDraftSustainability />} />
+          <Route path="qms/view-draft-sustainability/:id" element={<QmsViewDraftSustainability />} />
 
 
           {/* QMS User Management */}

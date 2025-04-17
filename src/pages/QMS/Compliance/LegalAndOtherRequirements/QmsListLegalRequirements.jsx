@@ -22,7 +22,6 @@ const QmsListLegalRequirements = () => {
     const [requirementsToDelete, setRequirementsToDelete] = useState(null);
     const [showDeleteLegalSuccessModal, setShowDeleteLegalSuccessModal] = useState(false);
     const [showDeleteLegalErrorModal, setShowDeleteLegalErrorModal] = useState(false);
-    const [deleteErrorMessage, setDeleteErrorMessage] = useState("");
 
     // State management
     const [legalRequirements, setLegalRequirements] = useState(initialData);
@@ -157,7 +156,7 @@ const QmsListLegalRequirements = () => {
         } catch (err) {
             console.error("Failed to delete legal requirement:", err);
             setShowDeleteModal(false);
-            setDeleteErrorMessage(err.response?.data?.message || "Failed to delete the requirement");
+       
             setShowDeleteLegalErrorModal(true);
         }
     };

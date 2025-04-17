@@ -31,7 +31,7 @@ const QmsDraftSustainability = () => {
     const handleConfirmDelete = () => {
         if (manualToDelete) {
             axios
-                .delete(`${BASE_URL}/qms/record-detail/${manualToDelete}/`)
+                .delete(`${BASE_URL}/qms/sustainability-detail/${manualToDelete}/`)
                 .then((response) => {
                     // Remove the deleted manual from state
                     setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
@@ -66,7 +66,7 @@ const QmsDraftSustainability = () => {
         }).replace(/\//g, '-');
     };
     const handleEditDraft = (id) => {
-        navigate(`/company/qms/edit-draft-sustainability`);
+        navigate(`/company/qms/edit-draft-sustainability/${id}`);
     }
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -106,12 +106,12 @@ const QmsDraftSustainability = () => {
         try {
             setLoading(true);
             const id = getRelevantUserId();
-            const response = await axios.get(`${BASE_URL}/qms/record-draft/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/sustainability-draft/${id}/`);
             setManuals(response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching procedures:", err);
-            setError("Failed to load record format. Please try again.");
+            console.error("Error fetching Sustainability:", err);
+            setError("Failed to load Sustainability. Please try again.");
             setLoading(false);
         }
     };
@@ -153,7 +153,7 @@ const QmsDraftSustainability = () => {
         navigate('/company/qms/list-sustainability');
     };
     const handleView = (id) => {
-        navigate(`/company/qms/view-draft-sustainability`);
+        navigate(`/company/qms/view-draft-sustainability/${id}`);
     };
     return (
         <div className="bg-[#1C1C24] list-manual-main">
@@ -200,7 +200,7 @@ const QmsDraftSustainability = () => {
             {/* Table section with updated columns */}
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white">Loading manuals...</div>
+                    <div className="text-center py-4 text-white not-found">Loading Sustainability...</div>
                 ) : error ? (
                     <div className="text-center py-4 text-red-500">{error}</div>
                 ) : (
@@ -210,7 +210,7 @@ const QmsDraftSustainability = () => {
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Title</th>
                                 <th className="px-2 text-left add-manual-theads">Sustainability No</th>
-                                {/* <th className="px-2 text-left add-manual-theads">Approved by</th> */}
+                                <th className="px-2 text-left add-manual-theads">Approved by</th>
                                 <th className="px-2 text-left add-manual-theads">Revision</th>
                                 <th className="px-2 text-left add-manual-theads">Date</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>
@@ -225,11 +225,11 @@ const QmsDraftSustainability = () => {
                                         <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
-                                        {/* <td className="px-2 add-manual-datas">
-                        {manual.approved_by ?
-                          `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
-                          'N/A'}
-                      </td> */}
+                                        <td className="px-2 add-manual-datas">
+                                            {manual.approved_by ?
+                                                `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
+                                                'N/A'}
+                                        </td>
                                         <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                                         <td className='px-2 add-manual-datas'>

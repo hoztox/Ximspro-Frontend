@@ -93,7 +93,7 @@ const QmsEditDraftSustainability = () => {
     const fetchManualDetails = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Detailssssssssssss:", response.data);
@@ -335,7 +335,7 @@ const QmsEditDraftSustainability = () => {
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
     const handleCancelClick = () => {
-        navigate('/company/qms/draft-evaluation-compliance')
+        navigate('/company/qms/draft-sustainability')
     }
 
     useEffect(() => {
@@ -398,7 +398,7 @@ const QmsEditDraftSustainability = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/record/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/sustainability/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -408,7 +408,7 @@ const QmsEditDraftSustainability = () => {
             setShowEditDraftManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditDraftManualSuccessModal(false)
-                navigate('/company/qms/record-format');
+                navigate('/company/qms/list-sustainability');
             }, 2000);
 
         } catch (err) {

@@ -180,7 +180,7 @@ const QmsEditSustainability = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Details:", response.data);
@@ -195,7 +195,7 @@ const QmsEditSustainability = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/record/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/sustainability/${id}/corrections/`);
             setCorrections(response.data);
             console.log("Fetched Manual Corrections:", response.data);
         } catch (error) {
@@ -389,7 +389,7 @@ const QmsEditSustainability = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/record/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/sustainability/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -401,7 +401,7 @@ const QmsEditSustainability = () => {
             setShowEditManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditManualSuccessModal(false)
-                navigate('/company/qms/record-format');
+                navigate('/company/qms/list-sustainability');
             }, 2000);
 
         } catch (err) {

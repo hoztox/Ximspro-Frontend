@@ -29,7 +29,6 @@ const QmsListSustainability = () => {
     const manualPerPage = 10;
 
     const [showPublishModal, setShowPublishModal] = useState(false);
-    // const [publishSuccess, setPublishSuccess] = useState(false);
     const [selectedManualId, setSelectedManualId] = useState(null);
     const [sendNotification, setSendNotification] = useState(false);
 
@@ -54,6 +53,7 @@ const QmsListSustainability = () => {
 
     const getCurrentUser = () => {
         const role = localStorage.getItem('role');
+        console.log("Current role from localStorage:", role);
 
         try {
             if (role === 'company') {
@@ -95,6 +95,13 @@ const QmsListSustainability = () => {
                 // Add additional fields from localStorage
                 userData.role = role;
                 userData.user_id = localStorage.getItem('user_id');
+                
+                // DEBUG: Log all localStorage items to see what's available
+                console.log("All localStorage items:");
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    console.log(`${key}: ${localStorage.getItem(key)}`);
+                }
 
                 console.log("Regular User Data:", userData);
                 return userData;
@@ -107,13 +114,19 @@ const QmsListSustainability = () => {
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
+        console.log("Getting company ID for role:", role);
 
         if (role === "company") {
-            return localStorage.getItem("company_id");
+            const companyId = localStorage.getItem("company_id");
+            console.log("Company ID from localStorage:", companyId);
+            return companyId;
         } else if (role === "user") {
             try {
                 const userCompanyId = localStorage.getItem("user_company_id");
-                return userCompanyId ? JSON.parse(userCompanyId) : null;
+                const parsedId = userCompanyId ? JSON.parse(userCompanyId) : null;
+                console.log("User company ID from localStorage:", userCompanyId);
+                console.log("Parsed user company ID:", parsedId);
+                return parsedId;
             } catch (e) {
                 console.error("Error parsing user company ID:", e);
                 return null;
@@ -126,48 +139,70 @@ const QmsListSustainability = () => {
     // Centralized function to check if current user is involved with a manual
     const isUserInvolvedWithManual = (manual) => {
         const currentUserId = Number(localStorage.getItem('user_id'));
+        
+        console.log("Checking involvement for manual:", manual.id);
+        console.log("Current user ID:", currentUserId);
+        console.log("Written by:", manual.written_by?.id);
+        console.log("Checked by:", manual.checked_by?.id);
+        console.log("Approved by:", manual.approved_by?.id);
 
         // Check if user is the writer, checker, or approver of the manual
-        return (
+        const isInvolved = (
             (manual.written_by && manual.written_by.id === currentUserId) ||
             (manual.checked_by && manual.checked_by.id === currentUserId) ||
             (manual.approved_by && manual.approved_by.id === currentUserId)
         );
+        
+        console.log("Is user involved:", isInvolved);
+        return isInvolved;
     };
 
     // Centralized function to filter manuals based on visibility rules
     const filterManualsByVisibility = (manualsData) => {
         const role = localStorage.getItem('role');
+        console.log("Filtering manuals by visibility for role:", role);
+        console.log("Total manuals before filtering:", manualsData.length);
 
-        return manualsData.filter(manual => {
+        const filteredManuals = manualsData.filter(manual => {
+            console.log("Evaluating manual:", manual);
+            console.log("Manual status:", manual.status);
+            
             // If manual is published, show to everyone
             if (manual.status === 'Publish') {
+                console.log("Manual is published, showing to everyone");
                 return true;
             }
 
             // If user is a company admin, show all
             if (role === 'company') {
+                console.log("User is company admin, showing all manuals");
                 return true;
             }
 
             // For other statuses, only show if user is involved with the manual
-            return isUserInvolvedWithManual(manual);
+            const involved = isUserInvolvedWithManual(manual);
+            console.log("Manual visibility decision for regular user:", involved);
+            return involved;
         });
+
+        console.log("Manuals after filtering:", filteredManuals.length);
+        return filteredManuals;
     };
 
     // Fetch manuals using the centralized filter function
-    // Modify the fetchManuals function to sort by creation date in descending order
     const fetchManuals = async () => {
         try {
             setLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
+            console.log("Fetching manuals for company ID:", companyId);
+            
+            const response = await axios.get(`${BASE_URL}/qms/sustainability/${companyId}/`);
+            console.log("Raw API response:", response.data);
 
             // Apply visibility filtering
             const filteredManuals = filterManualsByVisibility(response.data);
 
             // Sort manuals by creation date (newest first)
-            // Assuming there's a 'created_at' or similar field - adjust field name if needed
             const sortedManuals = filteredManuals.sort((a, b) => {
                 // Use created_at if available, otherwise fall back to date field
                 const dateA = new Date(a.created_at || a.date || 0);
@@ -191,25 +226,25 @@ const QmsListSustainability = () => {
             try {
                 // First, fetch manuals
                 const companyId = getUserCompanyId();
-                const manualsResponse = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
+                console.log("Fetching manuals for company ID:", companyId);
+                
+                const manualsResponse = await axios.get(`${BASE_URL}/qms/sustainability/${companyId}/`);
+                console.log("Raw manuals data from API:", manualsResponse.data);
 
                 // Apply visibility filtering using the centralized function
                 const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-
+                console.log("Filtered manuals:", filteredManuals);
 
                 // Set filtered manuals
                 setManuals(filteredManuals);
 
-                console.log('aaaaaaaaaaaaa', filteredManuals);
-
-
                 // Then fetch corrections for visible manuals
                 const correctionsPromises = filteredManuals.map(async (manual) => {
                     try {
-                        const correctionResponse = await axios.get(`${BASE_URL}/qms/record/${manual.id}/corrections/`);
-                        console.log('sssssssssssssssssss', correctionResponse.data);
+                        console.log(`Fetching corrections for manual ID ${manual.id}`);
+                        const correctionResponse = await axios.get(`${BASE_URL}/qms/sustainability/${manual.id}/corrections/`);
+                        console.log(`Corrections for manual ${manual.id}:`, correctionResponse.data);
                         return { manualId: manual.id, corrections: correctionResponse.data };
-
                     } catch (correctionError) {
                         console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
                         return { manualId: manual.id, corrections: [] };
@@ -226,14 +261,20 @@ const QmsListSustainability = () => {
                 }, {});
 
                 setCorrections(correctionsByManual);
+                console.log("Corrections by manual:", correctionsByManual);
 
                 // Fetch draft count
                 const id = getRelevantUserId();
-                const draftResponse = await axios.get(`${BASE_URL}/qms/record/drafts-count/${id}/`);
+                console.log("Getting draft count for user ID:", id);
+                const draftResponse = await axios.get(`${BASE_URL}/qms/sustainability/drafts-count/${id}/`);
+                console.log("Draft count response:", draftResponse.data);
                 setDraftCount(draftResponse.data.count);
 
                 // Set current user and clear loading state
-                setCurrentUser(getCurrentUser());
+                const currentUserData = getCurrentUser();
+                setCurrentUser(currentUserData);
+                console.log("Set current user to:", currentUserData);
+                
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -247,20 +288,24 @@ const QmsListSustainability = () => {
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
+        console.log("Getting relevant user ID for role:", userRole);
 
         if (userRole === "user") {
             const userId = localStorage.getItem("user_id");
+            console.log("User ID from localStorage:", userId);
             if (userId) return userId;
         }
 
         const companyId = localStorage.getItem("company_id");
+        console.log("Company ID from localStorage:", companyId);
         if (companyId) return companyId;
 
+        console.log("No relevant user ID found");
         return null;
     };
 
     const handleClickApprove = (id) => {
-        navigate(`/company/qms/viewrecordformat/${id}`);
+        navigate(`/company/qms/view-sustainability/${id}`);
     };
 
     // Delete manual
@@ -272,7 +317,7 @@ const QmsListSustainability = () => {
     const handleConfirmDelete = async () => {
         if (manualToDelete) {
             try {
-                await axios.delete(`${BASE_URL}/qms/record-detail/${manualToDelete}/`);
+                await axios.delete(`${BASE_URL}/qms/sustainability-detail/${manualToDelete}/`);
                 setShowDeleteModal(false);
                 setShowDeleteManualSuccessModal(true);
                 setTimeout(() => {
@@ -329,26 +374,25 @@ const QmsListSustainability = () => {
         }
     };
 
-    const handleQMSAddSustainability = () => {
+    const handleQMSAddEvaluationCompliance = () => {
         navigate('/company/qms/add-sustainability');
     };
 
     const handleEdit = (id) => {
-        navigate(`/company/qms/edit-sustainability`);
+        navigate(`/company/qms/edit-sustainability/${id}`);
     };
 
     const handleView = (id) => {
-        navigate(`/company/qms/view-sustainability`);
+        navigate(`/company/qms/view-sustainability/${id}`);
     };
 
-    const handleSustainability = () => {
+    const handleManualDraft = () => {
         navigate('/company/qms/draft-sustainability')
     }
 
     const handlePublish = (manual) => {
         setSelectedManualId(manual.id);
         setShowPublishModal(true);
-        // setPublishSuccess(false);
         setSendNotification(false);
     };
 
@@ -356,10 +400,8 @@ const QmsListSustainability = () => {
         fetchManuals();
         setShowPublishModal(false);
         setIsPublishing(false); // Reset loading state when modal is closed
-        setTimeout(() => {
-            // setPublishSuccess(false);
-        }, 300);
     };
+
     // Modify the handlePublishSave function to update the manual's status
     const handlePublishSave = async () => {
         try {
@@ -372,14 +414,22 @@ const QmsListSustainability = () => {
             setIsPublishing(true);
 
             const userId = localStorage.getItem('user_id');
+            console.log("Publishing manual with user ID:", userId);
+            
             if (!userId) {
                 alert("User information not found. Please log in again.");
                 setIsPublishing(false); // Reset loading state on error
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`, {
-                company_id: getUserCompanyId(),
+            const companyId = getUserCompanyId();
+            console.log("Publishing for company ID:", companyId);
+            
+            console.log("Publishing manual with ID:", selectedManualId);
+            console.log("Send notification:", sendNotification);
+            
+            await axios.post(`${BASE_URL}/qms/sustainability/${selectedManualId}/publish-notification/`, {
+                company_id: companyId,
                 published_by: userId,
                 send_notification: sendNotification
             });
@@ -389,7 +439,7 @@ const QmsListSustainability = () => {
                 setShowPublishSuccessModal(false);
                 closePublishModal();
                 fetchManuals(); // Refresh the list
-                navigate("/company/qms/record-format");
+                navigate("/company/qms/list-sustainability");
                 setIsPublishing(false); // Reset loading state after completion
             }, 1500);
         } catch (error) {
@@ -408,27 +458,36 @@ const QmsListSustainability = () => {
 
         console.log('Reviewing Conditions Debug:', {
             currentUserId,
+            manualId: manual.id,
             checkedById: manual.checked_by?.id,
+            approvedById: manual.approved_by?.id,
             status: manual.status,
             corrections: manualCorrections,
             toUserValues: manualCorrections.map(correction => correction.to_user)
         });
 
         if (manual.status === "Pending for Review/Checking") {
-            return currentUserId === manual.checked_by?.id;
+            const canCheck = currentUserId === manual.checked_by?.id;
+            console.log("Can check this manual:", canCheck);
+            return canCheck;
         }
 
         if (manual.status === "Correction Requested") {
-            // Fix: Compare the to_user.id with currentUserId, not the entire object
-            return manualCorrections.some(correction =>
-                correction.to_user.id === currentUserId
+            // Check if any correction is directed to the current user
+            const canCorrect = manualCorrections.some(correction => 
+                correction.to_user && correction.to_user.id === currentUserId
             );
+            console.log("Can correct this manual:", canCorrect);
+            return canCorrect;
         }
 
         if (manual.status === "Reviewed,Pending for Approval") {
-            return currentUserId === manual.approved_by?.id;
+            const canApprove = currentUserId === manual.approved_by?.id;
+            console.log("Can approve this manual:", canApprove);
+            return canApprove;
         }
 
+        console.log("User cannot review this manual");
         return false;
     };
 
@@ -475,18 +534,18 @@ const QmsListSustainability = () => {
                     </div>
                     <button
                         className="flex items-center justify-center add-draft-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleSustainability}
+                        onClick={handleManualDraft}
                     >
                         <span>Drafts</span>
                         {draftCount > 0 && (
-                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[190px]">
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[207px]">
                                 {draftCount}
                             </span>
                         )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleQMSAddSustainability}
+                        onClick={handleQMSAddEvaluationCompliance}
                     >
                         <span>Add Sustainability</span>
                         <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
@@ -505,7 +564,7 @@ const QmsListSustainability = () => {
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Title</th>
-                                <th className="px-2 text-left add-manual-theads">Sustainability No</th>
+                                <th className="px-2 text-left add-manual-theads">Compliance No</th>
                                 <th className="px-2 text-left add-manual-theads">Approved by</th>
                                 <th className="px-2 text-left add-manual-theads">Revision</th>
                                 <th className="px-2 text-left add-manual-theads">Date</th>
@@ -520,6 +579,7 @@ const QmsListSustainability = () => {
                             {paginatedManual.length > 0 ? (
                                 paginatedManual.map((manual, index) => {
                                     const canApprove = canReview(manual);
+                                    console.log(`Manual ${index} (${manual.id}): can review = ${canApprove}`);
 
                                     return (
                                         <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
@@ -682,5 +742,6 @@ const QmsListSustainability = () => {
         </div>
     );
 };
+
 
 export default QmsListSustainability
