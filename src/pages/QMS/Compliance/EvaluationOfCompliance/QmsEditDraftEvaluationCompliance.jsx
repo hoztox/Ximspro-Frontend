@@ -78,7 +78,8 @@ const QmsEditDraftEvaluationCompliance = () => {
                 send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
                 send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
                 send_email_to_approved_by: manualDetails.send_email_to_approved_by || false,
-                retention_period: manualDetails.retention_period || ''
+                relate_document: manualDetails.relate_document || '',
+                remarks: manualDetails.remarks || '',
             });
 
             console.log("Setting form data with checkbox values:", {
@@ -139,7 +140,8 @@ const QmsEditDraftEvaluationCompliance = () => {
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
         send_email_to_approved_by: false,
-        retention_period: ''
+        relate_document: '',
+        remarks:'',
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -764,8 +766,8 @@ const QmsEditDraftEvaluationCompliance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="relate_document"
+                                value={formData.relate_document}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
@@ -776,8 +778,8 @@ const QmsEditDraftEvaluationCompliance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="remarks"
+                                value={formData.remarks}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
