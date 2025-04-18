@@ -134,12 +134,14 @@ const AddQmsProcesses = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    const userId = getRelevantUserId();
     const submitData = new FormData();
     // Only include the specific fields requested
     submitData.append("name", formData.name);
     submitData.append("type", formData.type);
     submitData.append("no", formData.no);
     submitData.append("legal_requirements", formData.legal_requirements);
+    submitData.append('user', userId);
 
     // Only add custom_legal_requirements if it has a value
     if (formData.custom_legal_requirements) {

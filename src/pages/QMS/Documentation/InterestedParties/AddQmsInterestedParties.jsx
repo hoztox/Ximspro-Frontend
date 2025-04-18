@@ -128,6 +128,7 @@ const AddQmsInterestedParties = () => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    const userId = getRelevantUserId();
     const submitData = new FormData();
     // Explicitly add each field, making sure custom_legal_requirements is included
     submitData.append('name', formData.name);
@@ -137,6 +138,7 @@ const AddQmsInterestedParties = () => {
     submitData.append('special_requirements', formData.special_requirements);
     submitData.append('legal_requirements', formData.legal_requirements);
     submitData.append('send_notification', formData.send_notification);
+    submitData.append('user', userId);
     // Only add custom_legal_requirements if it has a value
     if (formData.custom_legal_requirements) {
       submitData.append('custom_legal_requirements', formData.custom_legal_requirements);

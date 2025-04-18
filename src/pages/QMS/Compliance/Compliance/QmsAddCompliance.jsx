@@ -125,6 +125,7 @@ const QmsAddCompliance = () => {
     setLoading(true);
 
     try {
+      const userId = getRelevantUserId();
       const companyId = getUserCompanyId();
       if (!companyId) {
         setError('Company ID not found. Please log in again.');
@@ -133,6 +134,7 @@ const QmsAddCompliance = () => {
       }
       const submissionData = new FormData();
       submissionData.append('company', companyId);
+      submissionData.append('user', userId);
       console.log("fdsgfsdgfsdgf", formData);
 
       for (const key in formData) {

@@ -183,7 +183,7 @@ const QmsAddmanagementChange = () => {
         try {
             setLoading(true);
             setError("");
-
+            const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
@@ -200,6 +200,7 @@ const QmsAddmanagementChange = () => {
             const formDataToSend = new FormData();
             formDataToSend.append('company', companyId);
             formDataToSend.append('is_draft', isDraft);
+            formDataToSend.append('user', userId);
 
             // Add all form fields to FormData
             Object.keys(formData).forEach(key => {
