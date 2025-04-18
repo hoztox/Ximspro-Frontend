@@ -177,18 +177,20 @@ import QmsViewDraftEmployeeSatisfaction from "./pages/QMS/EmployeeTraining/Emplo
 import QmsDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsDraftAwarenessTraining";
 import QmsEditDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsEditDraftAwarenessTraining";
 import QmsViewDraftAwarenessTraining from "./pages/QMS/EmployeeTraining/AwarenessTraining/QmsViewDraftAwarenessTraining";
-import QmsListMeeting from "./pages/QMS/ActionsMeetingManagement/QmsListMeeting";
-import QmsAddMeeting from "./pages/QMS/ActionsMeetingManagement/QmsAddMeeting";
-import QmsEditMeeting from "./pages/QMS/ActionsMeetingManagement/QmsEditMeeting";
-import QmsViewMeeting from "./pages/QMS/ActionsMeetingManagement/QmsViewMeeting";
-import QmsDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsDraftMeeting";
-import QmsEditDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsEditDraftMeeting";
-import QmsViewDraftMeeting from "./pages/QMS/ActionsMeetingManagement/QmsViewDraftMeeting";
-import QmsListInboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListInboxSystemMessaging";
-import QmsListTrashSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListTrashSystemMessaging";
-import QmsListOutboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListOutboxSystemMessaging";
-import QmsListDraftSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsListDraftSystemMessaging";
-import QmsComposeSystemMessaging from "./pages/QMS/ActionsMeetingManagement/QmsComposeSystemMessaging";
+import QmsListMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsListMeeting";
+import QmsAddMeeting from "./pages/QMS/ActionsMeetingManagement/AddMeeting/QmsAddMeeting";
+import QmsEditMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsEditMeeting";
+import QmsViewMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsViewMeeting";
+import QmsDraftMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsDraftMeeting";
+import QmsEditDraftMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsEditDraftMeeting";
+import QmsViewDraftMeeting from "./pages/QMS/ActionsMeetingManagement/ListMeeting/QmsViewDraftMeeting";
+import QmsListInboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsListInboxSystemMessaging";
+import QmsListTrashSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsListTrashSystemMessaging";
+import QmsListOutboxSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsListOutboxSystemMessaging";
+import QmsListDraftSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsListDraftSystemMessaging";
+import QmsComposeSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsComposeSystemMessaging";
+import QmsListInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsListInternalProblems";
+import QmsAddInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsAddInternalProblems";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -322,6 +324,9 @@ const ThemedApp = () => {
           <Route path="qms/list-outbox" element={<QmsListOutboxSystemMessaging />} />
           <Route path="qms/list-draft" element={<QmsListDraftSystemMessaging />} />
           <Route path="qms/compose" element={<QmsComposeSystemMessaging />} />
+
+          <Route path="qms/list-internal-problems-observations" element={<QmsListInternalProblems/>} />
+          <Route path="qms/add-internal-problems-observations" element={<QmsAddInternalProblems/>} />
 
           
 

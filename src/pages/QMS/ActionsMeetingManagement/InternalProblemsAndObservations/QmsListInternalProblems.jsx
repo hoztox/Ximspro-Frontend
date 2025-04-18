@@ -1,30 +1,30 @@
 import React, { useState } from 'react';
-import { Search} from 'lucide-react';
+import { Search } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListTraining = () => {
+const QmsListInternalProblems = () => {
     const initialData = [
-        { id: 1, title: 'Cloud Computing', type: 'Webinar', venue: 'Online Platform', datePlanned: '03-12-2024', status: 'Completed' },
-        { id: 2, title: 'Agile Methodology', type: 'Workshop', venue: 'Meeting Room B', datePlanned: '03-12-2024', status: 'Requested' },
-        { id: 3, title: 'Cybersecurity Basics', type: 'Online', venue: 'Virtual Class', datePlanned: '03-12-2024', status: 'Completed' },
+        { id: 1, description: 'Anonymous', cause: 'Anonymous', car: '123', date_problem: '03-12-2024', status: 'Solved' },
+        { id: 2, description: 'Anonymous', cause: 'Anonymous', car: '123', date_problem: '03-12-2024', status: 'Not Solved' },
+        { id: 3, description: 'Anonymous', cause: 'Anonymous', car: '123', date_problem: '03-12-2024', status: 'Solved' },
     ];
 
     // State
-    const [trainings, setTrainings] = useState(initialData);
+    const [internalProblems, setInternalProblems] = useState(initialData);
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
-        title: '',
-        type: '',
-        venue: '',
-        datePlanned: '',
-        status: 'Requested'  // Default status set to 'Requested'
+        description: '',
+        cause: '',
+        date_problem: '',
+        car: '',
+        status: 'Solved'  // Default status set to 'Requested'
     });
 
     const handleSearchChange = (e) => {
@@ -37,38 +37,30 @@ const QmsListTraining = () => {
 
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = trainings.length;
+    const totalItems = internalProblems.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = trainings.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = internalProblems.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-    const filteredTrainings = currentItems.filter(training =>
-        training.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        training.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        training.venue.toLowerCase().includes(searchTerm.toLowerCase())
+     
+    const filteredTrainings = currentItems.filter(internalProblem =>
+        internalProblem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        internalProblem.cause.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        internalProblem.car.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // Handle form input changes
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({
-            ...formData,
-            [name]: value
-        });
-    };
-
-    // Add new training
+    // Add new  internalProblem
     const handleAddTraining = (e) => {
         e.preventDefault();
         const newTraining = {
-            id: trainings.length + 1,
+            id: internalProblems.length + 1,
             ...formData
         };
-        setTrainings([...trainings, newTraining]);
+        setInternalProblems([...internalProblems, newTraining]);
         setFormData({
             title: '',
             type: '',
@@ -79,26 +71,26 @@ const QmsListTraining = () => {
         setShowAddModal(false);
     };
 
-    const handleQmsAddTraining = () => {
-        navigate('/company/qms/add-training')
+    const handleAddInternalProblems = () => {
+        navigate('/company/qms/add-internal-problems-observations')
     }
 
     const handleDraftTraining = () => {
-        navigate('/company/qms/draft-training')
+        navigate('/company/qms/draft- internalProblem')
     }
-    
+
     const handleQmsViewTraining = () => {
-        navigate('/company/qms/view-training')
+        navigate('/company/qms/view- internalProblem')
     }
-    
+
     const handleQmsEditTraining = () => {
-        navigate('/company/qms/edit-training')
+        navigate('/company/qms/edit- internalProblem')
     }
 
 
-    // Delete training
+    // Delete  internalProblem
     const handleDeleteTraining = (id) => {
-        setTrainings(trainings.filter(training => training.id !== id));
+        setInternalProblems(internalProblems.filter(internalProblem => internalProblem.id !== id));
     };
 
     // Change page
@@ -110,7 +102,7 @@ const QmsListTraining = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">List Training</h1>
+                <h1 className="list-manual-head">Internal Problems and Observations</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -129,13 +121,13 @@ const QmsListTraining = () => {
                         onClick={handleDraftTraining}
                     >
                         <span>Drafts</span>
-                         
+
                     </button>
                     <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[140px]"
-                        onClick={handleQmsAddTraining}
+                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                        onClick={handleAddInternalProblems}
                     >
-                        <span>Add Training</span>
+                        <span>  Add Internal Problem/Observation</span>
                         <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
                     </button>
                 </div>
@@ -147,10 +139,10 @@ const QmsListTraining = () => {
                     <thead className='bg-[#24242D]'>
                         <tr className="h-[48px]">
                             <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                            <th className="px-2 text-left add-manual-theads">Training Title</th>
-                            <th className="px-2 text-left add-manual-theads">Type</th>
-                            <th className="px-2 text-left add-manual-theads">Venue</th>
-                            <th className="px-2 text-left add-manual-theads">Date Planned</th>
+                            <th className="px-2 text-left add-manual-theads">Description</th>
+                            <th className="px-2 text-left add-manual-theads">Cause</th>
+                            <th className="px-2 text-left add-manual-theads">Date Problem</th>
+                            <th className="px-2 text-left add-manual-theads">CAR</th>
                             <th className="px-2 text-center add-manual-theads">Status</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
                             <th className="px-2 text-center add-manual-theads">Edit</th>
@@ -158,22 +150,22 @@ const QmsListTraining = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTrainings.map((training, index) => (
-                            <tr key={training.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{training.id}</td>
-                                <td className="px-2 add-manual-datas">{training.title}</td>
-                                <td className="px-2 add-manual-datas">{training.type}</td>
-                                <td className="px-2 add-manual-datas">{training.venue}</td>
-                                <td className="px-2 add-manual-datas">{training.datePlanned}</td>
+                        {filteredTrainings.map((internalProblem, index) => (
+                            <tr key={internalProblem.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                <td className="pl-5 pr-2 add-manual-datas">{internalProblem.id}</td>
+                                <td className="px-2 add-manual-datas">{internalProblem.description}</td>
+                                <td className="px-2 add-manual-datas">{internalProblem.cause}</td>
+                                <td className="px-2 add-manual-datas">{internalProblem.date_problem}</td>
+                                <td className="px-2 add-manual-datas">{internalProblem.car}</td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === 'Completed' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#ddd23611] text-[#ddd236]'
+                                    <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${internalProblem.status === 'Solved' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'
                                         }`}>
-                                        {training.status}
+                                        {internalProblem.status}
                                     </span>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
                                     <button onClick={handleQmsViewTraining}>
-                                        <img src={viewIcon} alt="View Icon" style={{filter:'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)'}} />
+                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
@@ -183,7 +175,7 @@ const QmsListTraining = () => {
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
                                     <button>
-                                    <img src={deleteIcon} alt="Delete Icon" />
+                                        <img src={deleteIcon} alt="Delete Icon" />
                                     </button>
                                 </td>
                             </tr>
@@ -228,4 +220,4 @@ const QmsListTraining = () => {
     );
 };
 
-export default QmsListTraining
+export default QmsListInternalProblems

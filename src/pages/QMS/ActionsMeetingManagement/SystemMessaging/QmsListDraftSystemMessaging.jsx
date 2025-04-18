@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
-import actions from "../../../assets/images/ActionMeetings/actions.svg"
-import "./qmslistawarenesstraining.css"
+import { Search } from 'lucide-react';
+import actions from "../../../../assets/images/ActionMeetings/actions.svg"
+// import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
-
-const QmsListOutboxSystemMessaging = () => {
+const QmsListDraftSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
@@ -49,7 +48,7 @@ const QmsListOutboxSystemMessaging = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">Outbox</h1>
+                <h1 className="list-awareness-training-head">Draft</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -141,4 +140,4 @@ const QmsListOutboxSystemMessaging = () => {
         </div >
     );
 }
-export default QmsListOutboxSystemMessaging
+export default QmsListDraftSystemMessaging

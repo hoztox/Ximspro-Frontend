@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
-import actions from "../../../assets/images/ActionMeetings/actions.svg"
-import "./qmslistawarenesstraining.css"
+import { Search} from 'lucide-react';
+import actions from "../../../../assets/images/ActionMeetings/actions.svg"
+// import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
 
 

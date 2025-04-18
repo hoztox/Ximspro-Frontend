@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
-import plusIcon from "../../../assets/images/Company Documentation/plus icon.svg";
-import edits from "../../../assets/images/Company Documentation/edit.svg"
-import deletes from "../../../assets/images/Company Documentation/delete.svg"
-import view from "../../../assets/images/Company Documentation/view.svg"
+import { Search } from 'lucide-react';
+import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import edits from "../../../../assets/images/Company Documentation/edit.svg"
+import deletes from "../../../../assets/images/Company Documentation/delete.svg"
+import view from "../../../../assets/images/Company Documentation/view.svg"
 import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
 

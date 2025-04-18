@@ -1,25 +1,23 @@
 import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
-import deletes from "../../../assets/images/Company Documentation/delete.svg"
-import view from "../../../assets/images/Company Documentation/view.svg"
-import "./qmslistawarenesstraining.css"
+import { Search} from 'lucide-react';
+import actions from "../../../../assets/images/ActionMeetings/actions.svg"
+// import "./qmslistawarenesstraining.css"
 import { useNavigate } from 'react-router-dom';
 
-const QmsDraftMeeting = () => {
+const QmsListOutboxSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
-        called_by: '',
         date: '',
-        minutes: '',
+        time: '',
     });
 
     // Demo data
     const [trainingItems, setTrainingItems] = useState([
-        { id: 1, title: 'Anonymous', called_by: 'Anonymous', date: '03-04-2025', },
-        { id: 2, title: 'Anonymous', called_by: 'Anonymous', date: '03-04-2025', },
+        { id: 1, title: 'Anonymous', date: '03-04-2025', time: '09:00:24am', },
+        { id: 2, title: 'Anonymous', date: '03-04-2025', time: '09:00:24am', },
     ]);
 
     const itemsPerPage = 10;
@@ -28,8 +26,8 @@ const QmsDraftMeeting = () => {
 
     // Filter items based on search query
     const filteredItems = trainingItems.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.called_by.toLowerCase().includes(searchQuery.toLowerCase())
+        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+
     );
 
     // Get current page items
@@ -40,27 +38,18 @@ const QmsDraftMeeting = () => {
     const handlePageChange = (pageNumber) => {
         setCurrentPage(pageNumber);
     };
-
-    const handleDeleteItem = (id) => {
-        setTrainingItems(trainingItems.filter(item => item.id !== id));
-    };
-
-    const handleClose = () => {
-        navigate('/company/qms/list-meeting')
+    const handleInbox = () => {
+        navigate('/company/qms/list-inbox')
     }
 
-    const handleEditDraftMeeting = () => {
-        navigate('/company/qms/edit-draft-meeting')
-    }
-
-    const handleViewDraftMeeting = () => {
-        navigate('/company/qms/view-draft-meeting')
+    const handleAction = () => {
+        //  navigate('/company/qms/view-meeting')
     }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">Draft Meeting</h1>
+                <h1 className="list-awareness-training-head">Outbox</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -74,9 +63,12 @@ const QmsDraftMeeting = () => {
                             <Search size={18} />
                         </div>
                     </div>
+                    <button
+                        className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                        onClick={handleInbox}
+                    >
+                        <span>Inbox</span>
 
-                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
-                        <X className="text-white" />
                     </button>
                 </div>
             </div>
@@ -84,14 +76,11 @@ const QmsDraftMeeting = () => {
                 <table className="w-full">
                     <thead className='bg-[#24242D]'>
                         <tr className='h-[48px]'>
-                            <th className="px-3 text-left list-awareness-training-thead">No</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Meeting Title</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Called By</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Date</th>
-                            {/* <th className="px-3 text-center list-awareness-training-thead">Minutes</th> */}
-                            <th className="px-3 text-left list-awareness-training-thead">Edit</th>
-                            <th className="px-3 text-center list-awareness-training-thead">View</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Delete</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[20%]">No</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[25%]">Title</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[25%]">Date</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Time</th>
+                            <th className="px-3 text-right list-awareness-training-thead">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,36 +88,16 @@ const QmsDraftMeeting = () => {
                             <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                 <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.title}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.called_by}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.date}</td>
-                                {/* <td className="px-3 list-awareness-training-datas text-center flex items-center justify-center gap-6 h-[53px] text-[#1E84AF]">
-                                    <button>Add</button>
-                                    <button>View</button>
-                                </td> */}
-                                <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
+                                <td className="px-3 list-awareness-training-datas">{item.time}</td>
+                                <td className="list-awareness-training-datas text-right pr-[25px]">
+
                                     <button
-                                        onClick={handleEditDraftMeeting}
+                                        onClick={handleAction}
                                     >
-                                        Click to Continue
+                                        <img src={actions} alt="View Icon" className='w-[16px] h-[16px]' />
                                     </button>
-                                </td>
-                                <td className="list-awareness-training-datas text-center ">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button
-                                            onClick={handleViewDraftMeeting}
-                                        >
-                                            <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button
-                                            onClick={() => handleDeleteItem(item.id)}
-                                        >
-                                            <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
+
                                 </td>
                             </tr>
                         ))}
@@ -172,4 +141,4 @@ const QmsDraftMeeting = () => {
         </div >
     );
 }
-export default QmsDraftMeeting
+export default QmsListOutboxSystemMessaging

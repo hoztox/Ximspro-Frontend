@@ -57,7 +57,7 @@ const QmsAddAwarenessTraining = () => {
         navigate('/company/qms/list-awareness-training')
     };
 
-    const categories = ['Youtube_Link', 'Article', 'Webinar', 'Course'];
+    const categories = ['Youtube_Link', 'Presentation', 'WebLink'];
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">

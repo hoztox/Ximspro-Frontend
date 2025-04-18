@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./qmsaddtraining.css"
+import "./qmsaddmeeting.css"
 
 const QmsAddMeeting = () => {
     const navigate = useNavigate();

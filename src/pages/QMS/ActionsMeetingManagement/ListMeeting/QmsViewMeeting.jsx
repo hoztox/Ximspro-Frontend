@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
-import edits from "../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../assets/images/Company Documentation/delete.svg";
+import edits from "../../../../assets/images/Company Documentation/edit.svg";
+import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
-
-const QmsViewDraftMeeting = () => {
+const QmsViewMeeting = () => {
     const [formData, setFormData] = useState({
         title: "Anonymous",
-        chooseCategory: "Anonymous",
+        chooseCategory: "Anonymous", 
         description: "test",
         youtube_link: "www.youtube.com/watch?v=exampl",
         isModalOpen: true,
@@ -15,7 +14,7 @@ const QmsViewDraftMeeting = () => {
     const navigate = useNavigate();
 
     const handleClose = () => {
-        navigate("/company/qms/draft-meeting");
+        navigate("/company/qms/list-meeting");
     };
 
     const handleEdit = () => {
@@ -54,47 +53,70 @@ const QmsViewDraftMeeting = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Date
+                           Date
                         </label>
                         <div className="view-employee-data">{formData.chooseCategory}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Select Cause
+                        Select Cause 
                         </label>
                         <div className="view-employee-data">{formData.description}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Meeting Type
+                       Meeting Type
                         </label>
                         <div className="view-employee-data">{formData.description}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Start
+                       Start
                         </label>
                         <div className="view-employee-data">{formData.description}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            End
+                        End
                         </label>
                         <div className="view-employee-data">{formData.description}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Attendee
+                       Attendee
                         </label>
                         <div className="view-employee-data">{formData.description}</div>
                     </div>
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
-                                Called By
+                           Called By
                             </label>
                             <div className="view-employee-data">{formData.youtube_link}</div>
+                        </div>
+                        <div className="flex space-x-10">
+                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
+                                Edit
+                                <button onClick={handleEdit}>
+                                    <img
+                                        src={edits}
+                                        alt="Edit Iocn"
+                                        className="w-[18px] h-[18px]"
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
+                                Delete
+                                <button onClick={handleDelete}>
+                                    <img
+                                        src={deletes}
+                                        alt="Delete Icon"
+                                        className="w-[18px] h-[18px]"
+                                    />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -102,4 +124,5 @@ const QmsViewDraftMeeting = () => {
         </div>
     );
 };
-export default QmsViewDraftMeeting
+
+export default QmsViewMeeting

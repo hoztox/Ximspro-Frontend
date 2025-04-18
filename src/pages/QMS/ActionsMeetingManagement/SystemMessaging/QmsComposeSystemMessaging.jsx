@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import file from "../../../assets/images/Company Documentation/file-icon.svg"
+import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
