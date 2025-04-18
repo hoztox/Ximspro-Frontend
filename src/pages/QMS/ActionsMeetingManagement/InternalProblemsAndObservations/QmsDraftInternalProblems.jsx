@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListInternalProblems = () => {
+
+const QmsDraftInternalProblems = () => {
     const initialData = [
         { id: 1, description: 'Anonymous', cause: 'Anonymous', car: '123', date_problem: '03-12-2024', status: 'Solved' },
         { id: 2, description: 'Anonymous', cause: 'Anonymous', car: '123', date_problem: '03-12-2024', status: 'Not Solved' },
@@ -46,7 +46,7 @@ const QmsListInternalProblems = () => {
     const currentItems = internalProblems.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-     
+
     const filteredTrainings = currentItems.filter(internalProblem =>
         internalProblem.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         internalProblem.cause.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -71,12 +71,8 @@ const QmsListInternalProblems = () => {
         setShowAddModal(false);
     };
 
-    const handleAddInternalProblems = () => {
-        navigate('/company/qms/add-internal-problems-observations')
-    }
-
-    const handleDraftInternalProblems = () => {
-        navigate('/company/qms/draft-internal-problems-observations')
+    const handleClose = () => {
+        navigate('/company/qms/list-internal-problems-observations')
     }
 
     const handleQmsViewInternalProblems = () => {
@@ -102,7 +98,7 @@ const QmsListInternalProblems = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">Internal Problems and Observations</h1>
+                <h1 className="list-manual-head">Draft Internal Problems and Observations</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -116,19 +112,9 @@ const QmsListInternalProblems = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftInternalProblems}
-                    >
-                        <span>Drafts</span>
-
-                    </button>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddInternalProblems}
-                    >
-                        <span>  Add Internal Problem/Observation</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+                     
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
                     </button>
                 </div>
             </div>
@@ -144,8 +130,8 @@ const QmsListInternalProblems = () => {
                             <th className="px-2 text-left add-manual-theads">Date Problem</th>
                             <th className="px-2 text-left add-manual-theads">CAR</th>
                             <th className="px-2 text-center add-manual-theads">Status</th>
-                            <th className="px-2 text-center add-manual-theads">View</th>
                             <th className="px-2 text-center add-manual-theads">Edit</th>
+                            <th className="px-2 text-center add-manual-theads">View</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
                         </tr>
                     </thead>
@@ -164,13 +150,13 @@ const QmsListInternalProblems = () => {
                                     </span>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewInternalProblems}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                    <button onClick={handleQmsEditInternalProblems}>
+                                        <img src={editIcon} alt="Edit Icon" />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditInternalProblems}>
-                                        <img src={editIcon} alt="Edit Icon" />
+                                    <button onClick={handleQmsViewInternalProblems}>
+                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
@@ -220,4 +206,5 @@ const QmsListInternalProblems = () => {
     );
 };
 
-export default QmsListInternalProblems
+
+export default QmsDraftInternalProblems

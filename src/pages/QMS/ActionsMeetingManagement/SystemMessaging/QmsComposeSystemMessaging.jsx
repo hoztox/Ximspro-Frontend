@@ -56,8 +56,8 @@ const QmsComposeSystemMessaging = () => {
 
     const handleCancel = () => {
         navigate('/company/qms/list-inbox')
-    }; 
-   
+    };
+
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -97,10 +97,10 @@ const QmsComposeSystemMessaging = () => {
                 </div>
                 <div></div>
 
-                
+
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                       Subject
+                        Subject
                     </label>
                     <input
                         type="text"
@@ -111,8 +111,8 @@ const QmsComposeSystemMessaging = () => {
                         required
                     />
                 </div>
-              <div></div>
-              <div className="flex flex-col gap-3">
+                <div></div>
+                <div className="flex flex-col gap-3">
                     <label className="add-training-label">Attach Document</label>
                     <div className="flex">
                         <input
@@ -150,23 +150,30 @@ const QmsComposeSystemMessaging = () => {
                     />
                 </div>
                 <div></div>
-               
+
+                <div className='flex justify-between'>
+                    <div>
+                        <button className='request-correction-btn duration-200'>
+                            Save as Draft
+                        </button>
+                    </div>
                     <div className='flex gap-5'>
                         <button
                             type="button"
                             onClick={handleCancel}
-                            className="cancel-btn duration-200 !w-full"
+                            className="cancel-btn duration-200  "
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="save-btn duration-200 !w-full"
+                            className="save-btn duration-200  "
                         >
                             Save
                         </button>
                     </div>
-                 
+                </div>
+
             </form>
         </div>
     );

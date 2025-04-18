@@ -50,9 +50,9 @@ const ActionsMeetingSubmenu = (props) => {
             ),
             path: "/company/qms/list-internal-problems-observations",
             relatedPaths: ["/company/qms/add-internal-problems-observations",
-                // "/company/qms/list-outbox",
-                // "/company/qms/list-draft",
-                // "/company/qms/compose",
+                "/company/qms/edit-internal-problems-observations",
+                "/company/qms/view-internal-problems-observations",
+                "/company/qms/draft-internal-problems-observations",
               ]
         },
         {
