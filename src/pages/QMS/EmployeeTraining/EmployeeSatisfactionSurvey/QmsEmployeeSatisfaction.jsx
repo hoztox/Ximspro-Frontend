@@ -135,11 +135,11 @@ const QmsEmployeeSatisfaction = () => {
                                                                 </button>
 
                                                                 {openDropdown === index && (
-                                                                    <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-[100]">
+                                                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100] max-h-64 overflow-scroll">
                                                                         {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                                                                             <div
                                                                                 key={rating}
-                                                                                className="px-4 py-2 text-sm hover:bg-gray-600 cursor-pointer text-center"
+                                                                                className="px-4 py-2 text-sm hover:bg-[#1a1a22] cursor-pointer text-center"
                                                                                 onClick={() => handleRatingChange(index, rating)}
                                                                             >
                                                                                 {rating}

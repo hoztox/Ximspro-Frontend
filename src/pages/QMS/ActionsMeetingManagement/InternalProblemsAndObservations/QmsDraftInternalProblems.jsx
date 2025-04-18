@@ -128,9 +128,9 @@ const QmsDraftInternalProblems = () => {
                             <th className="px-2 text-left add-manual-theads">Description</th>
                             <th className="px-2 text-left add-manual-theads">Cause</th>
                             <th className="px-2 text-left add-manual-theads">Date Problem</th>
-                            <th className="px-2 text-left add-manual-theads">CAR</th>
-                            <th className="px-2 text-center add-manual-theads">Status</th>
-                            <th className="px-2 text-center add-manual-theads">Edit</th>
+                            {/* <th className="px-2 text-left add-manual-theads">CAR</th> */}
+                            {/* <th className="px-2 text-center add-manual-theads">Status</th> */}
+                            <th className="px-2 text-left add-manual-theads">Action</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
                         </tr>
@@ -142,16 +142,16 @@ const QmsDraftInternalProblems = () => {
                                 <td className="px-2 add-manual-datas">{internalProblem.description}</td>
                                 <td className="px-2 add-manual-datas">{internalProblem.cause}</td>
                                 <td className="px-2 add-manual-datas">{internalProblem.date_problem}</td>
-                                <td className="px-2 add-manual-datas">{internalProblem.car}</td>
-                                <td className="px-2 add-manual-datas !text-center">
+                                {/* <td className="px-2 add-manual-datas">{internalProblem.car}</td> */}
+                                {/* <td className="px-2 add-manual-datas !text-center">
                                     <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${internalProblem.status === 'Solved' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'
                                         }`}>
                                         {internalProblem.status}
                                     </span>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
+                                </td> */}
+                                <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                                     <button onClick={handleQmsEditInternalProblems}>
-                                        <img src={editIcon} alt="Edit Icon" />
+                                        Click to Continue
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
