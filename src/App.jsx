@@ -196,6 +196,13 @@ import QmsViewInternalProblems from "./pages/QMS/ActionsMeetingManagement/Intern
 import QmsDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsDraftInternalProblems";
 import QmsEditDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsEditDraftInternalProblems";
 import QmsViewDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsViewDraftInternalProblems";
+import QmsListAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsListAudit";
+import QmsAddAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsAddAudit";
+import QmsEditAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsEditAudit";
+import QmsViewAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsViewAudit";
+import QmsDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsDraftAudit";
+import QmsEditDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsEditDraftAudit";
+import QmsViewDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsViewDraftAudit";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -337,6 +344,20 @@ const ThemedApp = () => {
           <Route path="qms/draft-internal-problems-observations" element={<QmsDraftInternalProblems/>} />
           <Route path="qms/edit-draft-internal-problems-observations" element={<QmsEditDraftInternalProblems/>} />
           <Route path="qms/view-draft-internal-problems-observations" element={<QmsViewDraftInternalProblems/>} />
+
+
+
+
+
+
+          {/* QMS Audits & Inspection management */}
+          <Route path="qms/list-audit" element={<QmsListAudit/>} />
+          <Route path="qms/add-audit" element={<QmsAddAudit/>} />
+          <Route path="qms/edit-audit" element={<QmsEditAudit/>} />
+          <Route path="qms/view-audit" element={<QmsViewAudit/>} />
+          <Route path="qms/draft-audit" element={<QmsDraftAudit/>} />
+          <Route path="qms/edit-draft-audit" element={<QmsEditDraftAudit/>} />
+          <Route path="qms/view-draft-audit" element={<QmsViewDraftAudit/>} />
 
           
 

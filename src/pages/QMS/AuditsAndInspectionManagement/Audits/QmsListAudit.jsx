@@ -4,32 +4,31 @@ import plusIcon from "../../../../assets/images/Company Documentation/plus icon.
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
-import "./qmslistmeeting.css";
 import { useNavigate } from 'react-router-dom';
-import AddMinutesModal from './AddMinutesModal'; // Import the new component
-import ViewMinutesModal from './ViewMinutesModal'; // Import the view modal component
+import AddAuditReportModal from './AddAuditReportModal';
+import ViewAuditReportModal from './ViewAuditReportModal';
 
-const QmsListMeeting = () => {
+const QmsListAudit = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
 
     // Modal visibility and animation states
-    const [addMinutesVisible, setAddMinutesVisible] = useState(false);
-    const [viewMinutesVisible, setViewMinutesVisible] = useState(false);
+    const [addAuditReport, setAddAuditReport] = useState(false);
+    const [viewAuditReport, setViewAuditReport] = useState(false);
 
     // Animation states
-    const [addMinutesAnimating, setAddMinutesAnimating] = useState(false);
-    const [viewMinutesAnimating, setViewMinutesAnimating] = useState(false);
-    const [addMinutesExiting, setAddMinutesExiting] = useState(false);
-    const [viewMinutesExiting, setViewMinutesExiting] = useState(false);
+    const [addAuditReportAnimating, setAddAuditReportAnimating] = useState(false);
+    const [viewAuditReportAnimating, setViewAuditReportAnimating] = useState(false);
+    const [addAuditReportExiting, setAddAuditReportExiting] = useState(false);
+    const [viewAuditReportExiting, setViewAuditReportExiting] = useState(false);
 
     const [selectedMeeting, setSelectedMeeting] = useState(null);
 
     // Demo data
     const [trainingItems, setTrainingItems] = useState([
-        { id: 1, title: 'Anonymous', called_by: 'Anonymous', date: '03-04-2025', minutes: 'Discussion about project timeline and resource allocation.' },
-        { id: 2, title: 'Anonymous', called_by: 'Anonymous', date: '03-04-2025', minutes: 'Review of quarterly performance and upcoming goals.' },
+        { id: 1, title: 'Anonymous', audit_type: 'Anonymous', date_planned: '03-04-2025', area: 'Test', date_conducted: '03-04-2025' },
+        { id: 2, title: 'Anonymous', audit_type: 'Anonymous', date_planned: '03-04-2025', area: 'Test', date_conducted: '03-04-2025' },
     ]);
 
     const itemsPerPage = 10;
@@ -39,7 +38,7 @@ const QmsListMeeting = () => {
     // Filter items based on search query
     const filteredItems = trainingItems.filter(item =>
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.called_by.toLowerCase().includes(searchQuery.toLowerCase())
+        item.audit_type.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Get current page items
@@ -55,50 +54,50 @@ const QmsListMeeting = () => {
         setTrainingItems(trainingItems.filter(item => item.id !== id));
     };
 
-    const handleAddMeeting = () => {
-        navigate('/company/qms/add-meeting');
+    const handleAddAudit = () => {
+        navigate('/company/qms/add-audit');
     };
 
-    const handleDraftMeeting = () => {
-        navigate('/company/qms/draft-meeting');
+    const handleDraftAudit = () => {
+        navigate('/company/qms/draft-audit');
     };
 
-    const handleEditMeeting = () => {
-        navigate('/company/qms/edit-meeting');
+    const handleEditAudit = () => {
+        navigate('/company/qms/edit-audit');
     };
 
-    const handleViewMeeting = () => {
-        navigate('/company/qms/view-meeting');
+    const handleViewAudit = () => {
+        navigate('/company/qms/view-audit');
     };
 
     // Modal handlers with animations
-    const openAddMinutesModal = (item) => {
+    const openAddAuditReportModal = (item) => {
         setSelectedMeeting(item);
-        setAddMinutesVisible(true);
-        setAddMinutesAnimating(true);
-        setTimeout(() => setAddMinutesAnimating(false), 300);
+        setAddAuditReport(true);
+        setAddAuditReportAnimating(true);
+        setTimeout(() => setAddAuditReportAnimating(false), 300);
     };
 
-    const openViewMinutesModal = (item) => {
+    const openViewAuditReportModal = (item) => {
         setSelectedMeeting(item);
-        setViewMinutesVisible(true);
-        setViewMinutesAnimating(true);
-        setTimeout(() => setViewMinutesAnimating(false), 300);
+        setViewAuditReport(true);
+        setViewAuditReportAnimating(true);
+        setTimeout(() => setViewAuditReportAnimating(false), 300);
     };
 
-    const closeAddMinutesModal = () => {
-        setAddMinutesExiting(true);
+    const closeAddAuditReportModal = () => {
+        setAddAuditReportExiting(true);
         setTimeout(() => {
-            setAddMinutesVisible(false);
-            setAddMinutesExiting(false);
+            setAddAuditReport(false);
+            setAddAuditReportExiting(false);
         }, 200);
     };
 
-    const closeViewMinutesModal = () => {
-        setViewMinutesExiting(true);
+    const closeViewAuditReportModal = () => {
+        setViewAuditReportExiting(true);
         setTimeout(() => {
-            setViewMinutesVisible(false);
-            setViewMinutesExiting(false);
+            setViewAuditReport(false);
+            setViewAuditReportExiting(false);
         }, 200);
     };
 
@@ -112,14 +111,14 @@ const QmsListMeeting = () => {
                 return item;
             });
             setTrainingItems(updatedItems);
-            closeAddMinutesModal();
+            closeAddAuditReportModal();
         }
     };
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">List Meeting</h1>
+                <h1 className="list-awareness-training-head">Audits</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -135,15 +134,15 @@ const QmsListMeeting = () => {
                     </div>
                     <button
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftMeeting}
+                        onClick={handleDraftAudit}
                     >
                         <span>Draft</span>
                     </button>
                     <button
                         className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddMeeting}
+                        onClick={handleAddAudit}
                     >
-                        <span>Add Meeting</span>
+                        <span>Add Audit</span>
                         <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
                     </button>
                 </div>
@@ -153,10 +152,12 @@ const QmsListMeeting = () => {
                     <thead className='bg-[#24242D]'>
                         <tr className='h-[48px]'>
                             <th className="px-3 text-left list-awareness-training-thead">No</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Meeting Title</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Called By</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Date</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Minutes</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Title</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Audit Type</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Date Planned</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Area/Function</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Date Conducted</th>
+                            <th className="px-3 text-center list-awareness-training-thead">Add / View Reports</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Edit</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
@@ -167,17 +168,19 @@ const QmsListMeeting = () => {
                             <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                 <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.title}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.called_by}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.date}</td>
+                                <td className="px-3 list-awareness-training-datas">{item.audit_type}</td>
+                                <td className="px-3 list-awareness-training-datas">{item.date_planned}</td>
+                                <td className="px-3 list-awareness-training-datas">{item.area}</td>
+                                <td className="px-3 list-awareness-training-datas">{item.date_conducted}</td>
                                 <td className="px-3 list-awareness-training-datas text-center flex items-center justify-center gap-6 h-[53px] text-[#1E84AF]">
                                     <button
-                                        onClick={() => openAddMinutesModal(item)}
+                                        onClick={() => openAddAuditReportModal(item)}
                                         className="hover:text-blue-400 transition-colors duration-200"
                                     >
                                         Add
                                     </button>
                                     <button
-                                        onClick={() => openViewMinutesModal(item)}
+                                        onClick={() => openViewAuditReportModal(item)}
                                         className="hover:text-blue-400 transition-colors duration-200"
                                     >
                                         View
@@ -185,14 +188,14 @@ const QmsListMeeting = () => {
                                 </td>
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleViewMeeting}>
+                                        <button onClick={handleViewAudit}>
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
                                 </td>
                                 <td className="list-awareness-training-datas text-center">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleEditMeeting}>
+                                        <button onClick={handleEditAudit}>
                                             <img src={edits} alt="Edit Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
@@ -242,24 +245,24 @@ const QmsListMeeting = () => {
             </div>
 
             {/* Use the separate modal components */}
-            <AddMinutesModal
-                isVisible={addMinutesVisible}
-                isExiting={addMinutesExiting}
-                isAnimating={addMinutesAnimating}
+            <AddAuditReportModal
+                isVisible={addAuditReport}
+                isExiting={addAuditReportExiting}
+                isAnimating={addAuditReportAnimating}
                 selectedMeeting={selectedMeeting}
-                onClose={closeAddMinutesModal}
+                onClose={closeAddAuditReportModal}
                 onSave={handleSaveMinutes}
             />
 
-            <ViewMinutesModal
-                isVisible={viewMinutesVisible}
-                isExiting={viewMinutesExiting}
-                isAnimating={viewMinutesAnimating}
+            <ViewAuditReportModal
+                isVisible={viewAuditReport}
+                isExiting={viewAuditReportExiting}
+                isAnimating={viewAuditReportAnimating}
                 selectedMeeting={selectedMeeting}
-                onClose={closeViewMinutesModal}
+                onClose={closeViewAuditReportModal}
             />
         </div>
     );
 };
 
-export default QmsListMeeting;
+export default QmsListAudit

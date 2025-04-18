@@ -89,7 +89,7 @@ const QmsDraftMeeting = () => {
                             <th className="px-3 text-left list-awareness-training-thead">Called By</th>
                             <th className="px-3 text-left list-awareness-training-thead">Date</th>
                             {/* <th className="px-3 text-center list-awareness-training-thead">Minutes</th> */}
-                            <th className="px-3 text-left list-awareness-training-thead">Edit</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Action</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
