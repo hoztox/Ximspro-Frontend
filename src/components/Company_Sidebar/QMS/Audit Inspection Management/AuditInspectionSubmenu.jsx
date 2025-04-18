@@ -34,7 +34,14 @@ const AuditInspectionSubmenu = (props) => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/procedure",
+            path: "/company/qms/add-inspection",
+            relatedPaths: [
+              "/company/qms/list-inspection",
+              "/company/qms/edit-inspection",
+              "/company/qms/view-inspection",
+              // "/company/qms/edit-draft-audit",
+              // "/company/qms/view-draft-audit",
+            ]
         },
     ]
 

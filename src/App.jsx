@@ -203,6 +203,10 @@ import QmsViewAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsVi
 import QmsDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsDraftAudit";
 import QmsEditDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsEditDraftAudit";
 import QmsViewDraftAudit from "./pages/QMS/AuditsAndInspectionManagement/Audits/QmsViewDraftAudit";
+import QmsListInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsListInspection";
+import QmsAddInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsAddInspection";
+import QmsEditInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsEditInspection";
+import QmsViewInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsViewInspection";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -358,6 +362,11 @@ const ThemedApp = () => {
           <Route path="qms/draft-audit" element={<QmsDraftAudit/>} />
           <Route path="qms/edit-draft-audit" element={<QmsEditDraftAudit/>} />
           <Route path="qms/view-draft-audit" element={<QmsViewDraftAudit/>} />
+
+          <Route path="qms/list-inspection" element={<QmsListInspection/>} />
+          <Route path="qms/add-inspection" element={<QmsAddInspection/>} />
+          <Route path="qms/edit-inspection" element={<QmsEditInspection/>} />
+          <Route path="qms/view-inspection" element={<QmsViewInspection/>} />
 
           
 

@@ -1,6 +1,6 @@
-import React from 'react';
+import React from 'react'
 
-const AddAuditReportModal = ({ 
+const AddInspectionReportModal = ({ 
   isVisible, 
   onClose, 
   onSave,
@@ -22,11 +22,12 @@ const AddAuditReportModal = ({
       ></div>
       <div className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-5 transform transition-all duration-300 ease-in-out ${isAnimating ? 'modal-enter' : ''} ${isExiting ? 'modal-exit' : ''}`}>
         <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
-          <h3 className="list-awareness-training-head">Add Audit Report</h3>
+          <h3 className="list-awareness-training-head">Add Inspection Report</h3>
         </div>
-         Add Audit Report
+         Add Inspection Report
       </div>
     </div>
   );
 };
-export default AddAuditReportModal
+
+export default AddInspectionReportModal
