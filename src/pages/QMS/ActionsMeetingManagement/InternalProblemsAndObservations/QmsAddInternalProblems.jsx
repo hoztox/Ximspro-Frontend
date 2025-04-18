@@ -115,7 +115,7 @@ const QmsAddInternalProblems = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5  ">
-                {/* Training Title */}
+                 
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Select Causes / Root Cause</label>
@@ -143,59 +143,22 @@ const QmsAddInternalProblems = () => {
                     <button className='flex justify-start add-training-label !text-[#1E84AF]'>Add Causes / Root Causes</button>
                 </div>
 
-                {/* Type of Training */}
-                <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Type of Training</label>
-                    <div className="relative">
-                        <select
-                            name="typeOfTraining"
-                            value={formData.typeOfTraining}
-                            onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("typeOfTraining")}
-                            onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        >
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
-                        </select>
-                        <ChevronDown
-                            className={`absolute right-3 top-1/3 transform   transition-transform duration-300 
-       ${focusedDropdown === "typeOfTraining" ? "rotate-180" : ""}`}
-                            size={20}
-                            color="#AAAAAA"
-                        />
-                    </div>
-                </div>
-
-
-                {/* Expected Results */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Expected Results <span className="text-red-500">*</span>
+                    Problem/ Observation Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                         name="expectedResults"
                         value={formData.expectedResults}
                         onChange={handleChange}
-                        className="add-training-inputs !h-[109px]"
+                        className="add-training-inputs !h-[152px]"
                         required
                     />
                 </div>
 
-                {/* Actual Results */}
-                <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Actual Results</label>
-                    <textarea
-                        name="actualResults"
-                        value={formData.actualResults}
-                        onChange={handleChange}
-                        className="add-training-inputs !h-[109px]"
-                    />
-                </div>
 
-                {/* Training Attendee */}
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Training Attendees</label>
+                    <label className="add-training-label">Immediate Action Taken :</label>
                     <textarea
                         name="trainingAttendee"
                         value={formData.trainingAttendee}
@@ -209,7 +172,7 @@ const QmsAddInternalProblems = () => {
                 <div className="flex flex-col gap-5">
                     <div className='flex flex-col gap-3 relative'>
                         <label className="add-training-label">
-                            Status <span className="text-red-500">*</span>
+                        Executor:
                         </label>
                         <select
                             name="status"
@@ -220,7 +183,7 @@ const QmsAddInternalProblems = () => {
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             required
                         >
-                            <option value="" disabled>Select</option>
+                            <option value="" disabled>Select User</option>
                             <option value="Planned">Planned</option>
                             <option value="Completed">Completed</option>
                             <option value="Cancelled">Cancelled</option>

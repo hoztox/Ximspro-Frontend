@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 const QmsAddAwarenessTraining = () => {
     const [formData, setFormData] = useState({
         title: '',
-        category: 'Youtube_Link',
+        category: 'Select Category', // Changed initial value to 'Select Category'
         description: '',
         youtubeLink: '',
         webLink: '',
@@ -18,7 +18,7 @@ const QmsAddAwarenessTraining = () => {
 
     const [errors, setErrors] = useState({});
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [fieldVisible, setFieldVisible] = useState(true);
+    const [fieldVisible, setFieldVisible] = useState(false); // Set to false initially
 
     // Handle animation timing
     const handleCategoryChange = (e) => {
@@ -33,7 +33,8 @@ const QmsAddAwarenessTraining = () => {
                 ...prevData,
                 category: value
             }));
-            setFieldVisible(true);
+            // Only show the field if it's a valid category
+            setFieldVisible(value !== 'Select Category');
         }, 300); // 300ms matches our animation duration
     };
 
@@ -74,14 +75,19 @@ const QmsAddAwarenessTraining = () => {
         // Validate form
         const newErrors = {};
         if (!formData.title.trim()) newErrors.title = 'Title is required';
-
-        // Validate based on category
-        if (formData.category === 'Youtube_Link' && !formData.youtubeLink.trim()) {
-            newErrors.youtubeLink = 'YouTube link is required';
-        } else if (formData.category === 'WebLink' && !formData.webLink.trim()) {
-            newErrors.webLink = 'Web link is required';
-        } else if (formData.category === 'Presentation' && !formData.presentationFile) {
-            newErrors.presentationFile = 'Presentation file is required';
+        
+        // Add validation for category selection
+        if (formData.category === 'Select Category') {
+            newErrors.category = 'Please select a category';
+        } else {
+            // Validate based on category
+            if (formData.category === 'Youtube_Link' && !formData.youtubeLink.trim()) {
+                newErrors.youtubeLink = 'YouTube link is required';
+            } else if (formData.category === 'WebLink' && !formData.webLink.trim()) {
+                newErrors.webLink = 'Web link is required';
+            } else if (formData.category === 'Presentation' && !formData.presentationFile) {
+                newErrors.presentationFile = 'Presentation file is required';
+            }
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -101,14 +107,20 @@ const QmsAddAwarenessTraining = () => {
         navigate('/company/qms/list-awareness-training')
     };
 
-    const categories = ['Youtube_Link', 'Presentation', 'WebLink'];
+    // Updated categories array to include the select option
+    const categories = ['Select Category', 'Youtube Link', 'Presentation', 'WebLink'];
 
     // Render the appropriate input field based on category
     const renderCategoryField = () => {
+        // Don't show any field if "Select Category" is selected
+        if (formData.category === 'Select Category') {
+            return null;
+        }
+
         const animationClass = fieldVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0';
 
         switch (formData.category) {
-            case 'Youtube_Link':
+            case 'Youtube Link':
                 return (
                     <div className={`transition-all duration-300 ease-in-out ${animationClass}`}>
                         <label className="block employee-performace-label">
@@ -148,6 +160,7 @@ const QmsAddAwarenessTraining = () => {
                         {!formData.presentationFile && (
                             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
                         )}
+                        {errors.presentationFile && <p className="text-red-500 text-sm mt-1">{errors.presentationFile}</p>}
                     </div>
                 );
             case 'WebLink':
@@ -223,6 +236,7 @@ const QmsAddAwarenessTraining = () => {
                                 <ChevronDown className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${dropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
                         </div>
+                        {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
                     </div>
 
                     <div>
