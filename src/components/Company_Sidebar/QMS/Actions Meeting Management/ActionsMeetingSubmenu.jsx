@@ -53,6 +53,8 @@ const ActionsMeetingSubmenu = (props) => {
                 "/company/qms/edit-internal-problems-observations",
                 "/company/qms/view-internal-problems-observations",
                 "/company/qms/draft-internal-problems-observations",
+                "/company/qms/edit-draft-internal-problems-observations",
+                "/company/qms/view-draft-internal-problems-observations",
               ]
         },
         {

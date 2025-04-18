@@ -194,6 +194,8 @@ import QmsAddInternalProblems from "./pages/QMS/ActionsMeetingManagement/Interna
 import QmsEditInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsEditInternalProblems";
 import QmsViewInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsViewInternalProblems";
 import QmsDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsDraftInternalProblems";
+import QmsEditDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsEditDraftInternalProblems";
+import QmsViewDraftInternalProblems from "./pages/QMS/ActionsMeetingManagement/InternalProblemsAndObservations/QmsViewDraftInternalProblems";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -333,6 +335,8 @@ const ThemedApp = () => {
           <Route path="qms/edit-internal-problems-observations" element={<QmsEditInternalProblems/>} />
           <Route path="qms/view-internal-problems-observations" element={<QmsViewInternalProblems/>} />
           <Route path="qms/draft-internal-problems-observations" element={<QmsDraftInternalProblems/>} />
+          <Route path="qms/edit-draft-internal-problems-observations" element={<QmsEditDraftInternalProblems/>} />
+          <Route path="qms/view-draft-internal-problems-observations" element={<QmsViewDraftInternalProblems/>} />
 
           
 

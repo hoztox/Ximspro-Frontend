@@ -75,12 +75,12 @@ const QmsDraftInternalProblems = () => {
         navigate('/company/qms/list-internal-problems-observations')
     }
 
-    const handleQmsViewInternalProblems = () => {
-        navigate('/company/qms/view-internal-problems-observations')
+    const handleQmsViewDraftInternalProblems = () => {
+        navigate('/company/qms/view-draft-internal-problems-observations')
     }
 
-    const handleQmsEditInternalProblems = () => {
-        navigate('/company/qms/edit-internal-problems-observations')
+    const handleQmsEditDraftInternalProblems = () => {
+        navigate('/company/qms/edit-draft-internal-problems-observations')
     }
 
 
@@ -150,12 +150,12 @@ const QmsDraftInternalProblems = () => {
                                     </span>
                                 </td> */}
                                 <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
-                                    <button onClick={handleQmsEditInternalProblems}>
+                                    <button onClick={handleQmsEditDraftInternalProblems}>
                                         Click to Continue
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewInternalProblems}>
+                                    <button onClick={handleQmsViewDraftInternalProblems}>
                                         <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
