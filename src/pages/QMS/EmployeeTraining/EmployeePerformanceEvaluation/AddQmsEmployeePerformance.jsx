@@ -2,25 +2,33 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import "./addqmsemployeeperformance.css";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const AddQmsEmployeePerformance = () => {
     const [formData, setFormData] = useState({
-        evaluationTitle: '',
-        evaluationDescription: '',
-        validTill: {
+        evaluation_title: '',
+        description: '',
+        valid_till: {
             day: '',
             month: '',
             year: ''
-        }
+        },
+        
     });
 
     const [focusedField, setFocusedField] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [draftLoading, setDraftLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
+
     const handleFocus = (field) => setFocusedField(field);
     const handleBlur = () => setFocusedField("");
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -33,22 +41,181 @@ const AddQmsEmployeePerformance = () => {
         } else {
             setFormData({
                 ...formData,
-                [name]: value
+                [name]: type === 'checkbox' ? checked : value
+            });
+        }
+        
+        // Clear error for this field if it exists
+        if (errors[name]) {
+            setErrors({
+                ...errors,
+                [name]: ''
             });
         }
     };
 
-    const handleListEmployeePerformance = () => {
-        navigate('/company/qms/employee-performance')
-    }
+    const getUserCompanyId = () => {
+        // First check if company_id is stored directly
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
 
-    const handleSubmit = (e) => {
+        // If user data exists with company_id
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            // Try to get company_id from user data that was stored during login
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    // Validate the form data
+    const validateForm = () => {
+        const newErrors = {};
+        if (!formData.evaluation_title.trim()) {
+            newErrors.evaluation_title = 'Evaluation Title is required';
+        }
+
+        // Validate date if any part is filled
+        if (formData.valid_till.day || formData.valid_till.month || formData.valid_till.year) {
+            if (!formData.valid_till.day || !formData.valid_till.month || !formData.valid_till.year) {
+                newErrors.valid_till = 'Please complete the date';
+            }
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
+    // Format date for submission
+    const formatDateForSubmission = () => {
+        const { day, month, year } = formData.valid_till;
+        if (day && month && year) {
+            return `${year}-${month}-${day}`;
+        }
+        return null;
+    };
+
+    const prepareSubmissionData = (isDraft = false) => {
+        const userId = getRelevantUserId();
+        const companyId = getUserCompanyId();
+        
+        if (!companyId) {
+            setError('Company ID not found. Please log in again.');
+            return null;
+        }
+
+        const submissionData = new FormData();
+        submissionData.append('company', companyId);
+        submissionData.append('user', userId);
+        submissionData.append('evaluation_title', formData.evaluation_title);
+        submissionData.append('description', formData.description || '');
+        
+        // Format and append valid_till date if all parts are filled
+        const formattedDate = formatDateForSubmission();
+        if (formattedDate) {
+            submissionData.append('valid_till', formattedDate);
+        }
+        
+        if (isDraft) {
+            submissionData.append('is_draft', true);
+        }
+
+        return submissionData;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
+        
+        // Validate form before submission
+        if (!validateForm()) {
+            return;
+        }
+
+        setLoading(true);
+        setError('');
+
+        try {
+            const submissionData = prepareSubmissionData();
+            if (!submissionData) {
+                setLoading(false);
+                return;
+            }
+
+            await axios.post(`${BASE_URL}/qms/performance/create/`, submissionData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            // Success - redirect after a short delay
+            setTimeout(() => {
+                navigate('/company/qms/employee-performance');
+            }, 1500);
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setError(error.response?.data?.message || 'Failed to save employee performance evaluation. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveAsDraft = async () => {
+        setDraftLoading(true);
+        setError('');
+
+        try {
+            const submissionData = prepareSubmissionData(true);
+            if (!submissionData) {
+                setDraftLoading(false);
+                return;
+            }
+
+            await axios.post(`${BASE_URL}/qms/performance/draft-create/`, submissionData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            // Success - redirect after a short delay
+            setTimeout(() => {
+                navigate('/company/qms/draft-employee-performance');
+            }, 1500);
+        } catch (err) {
+            setDraftLoading(false);
+            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+            setError(errorMessage);
+            console.error('Error saving Draft:', err.response?.data || err);
+        }
+    };
+
+    const handleListEmployeePerformance = () => {
+        navigate('/company/qms/employee-performance');
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/employee-performance')
+        navigate('/company/qms/employee-performance');
     };
 
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
@@ -86,12 +253,19 @@ const AddQmsEmployeePerformance = () => {
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
-                    <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
+                    <button 
+                        className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeePerformance}
                     >
                         List Employee Performance Evaluation
                     </button>
                 </div>
+
+                {error && (
+                    <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 my-3 rounded mx-[104px]">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -101,19 +275,22 @@ const AddQmsEmployeePerformance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="evaluationTitle"
-                                value={formData.evaluationTitle}
+                                name="evaluation_title"
+                                value={formData.evaluation_title}
                                 onChange={handleChange}
-                                className="w-full employee-performace-inputs"
+                                className={`w-full employee-performace-inputs ${errors.evaluation_title ? 'border-red-500' : ''}`}
                                 required
                             />
+                            {errors.evaluation_title && (
+                                <p className="text-red-500 text-sm mt-1">{errors.evaluation_title}</p>
+                            )}
                         </div>
 
                         <div className="md:row-span-2">
                             <label className="block employee-performace-label">Evaluation Description</label>
                             <textarea
-                                name="evaluationDescription"
-                                value={formData.evaluationDescription}
+                                name="description"
+                                value={formData.description}
                                 onChange={handleChange}
                                 className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
@@ -125,12 +302,12 @@ const AddQmsEmployeePerformance = () => {
                                 {/* Day */}
                                 <div className="relative w-1/3">
                                     <select
-                                        name="validTill.day"
-                                        value={formData.validTill.day}
+                                        name="valid_till.day"
+                                        value={formData.valid_till.day}
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("day")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">dd</option>
                                         {dayOptions}
@@ -145,12 +322,12 @@ const AddQmsEmployeePerformance = () => {
                                 {/* Month */}
                                 <div className="relative w-1/3">
                                     <select
-                                        name="validTill.month"
-                                        value={formData.validTill.month}
+                                        name="valid_till.month"
+                                        value={formData.valid_till.month}
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("month")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">mm</option>
                                         {monthOptions}
@@ -165,12 +342,12 @@ const AddQmsEmployeePerformance = () => {
                                 {/* Year */}
                                 <div className="relative w-1/3">
                                     <select
-                                        name="validTill.year"
-                                        value={formData.validTill.year}
+                                        name="valid_till.year"
+                                        value={formData.valid_till.year}
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("year")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">yyyy</option>
                                         {yearOptions}
@@ -182,36 +359,39 @@ const AddQmsEmployeePerformance = () => {
                                     </div>
                                 </div>
                             </div>
+                            {errors.valid_till && (
+                                <p className="text-red-500 text-sm mt-1">{errors.valid_till}</p>
+                            )}
                         </div>
                     </div>
-                    {/* <div></div>
-                    <div className="flex items-end justify-end mt-5">
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                name="send_notification"
-                                className="mr-2 form-checkboxes"
-                                checked={formData.send_notification}
-                                onChange={handleChange}
-                            />
-                            <span className="permissions-texts cursor-pointer">
-                                Send Notification
-                            </span>
-                        </label>
-                    </div> */}
 
-                    <div className="flex justify-between space-x-5 mt-5  ">
+                   
+
+                    <div className="flex justify-between space-x-5 mt-5">
                         <div>
-                            <button className='request-correction-btn duration-200'>
-                                Save as Draft
+                            <button 
+                                type="button"
+                                onClick={handleSaveAsDraft}
+                                disabled={draftLoading}
+                                className='request-correction-btn duration-200'
+                            >
+                                {draftLoading ? 'Saving...' : 'Save as Draft'}
                             </button>
                         </div>
                         <div className='flex gap-5'>
-                            <button type="button" onClick={handleCancel} className="cancel-btn duration-200">
+                            <button 
+                                type="button" 
+                                onClick={handleCancel} 
+                                className="cancel-btn duration-200"
+                            >
                                 Cancel
                             </button>
-                            <button type="submit" className="save-btn duration-200">
-                                Save
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="save-btn duration-200"
+                            >
+                                {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>

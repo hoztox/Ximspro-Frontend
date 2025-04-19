@@ -124,19 +124,17 @@ const QmsManual = () => {
     return null;
   };
 
-  // Centralized function to check if current user is involved with a manual
+ 
   const isUserInvolvedWithManual = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
-
-    // Check if user is the writer, checker, or approver of the manual
+  
     return (
       (manual.written_by && manual.written_by.id === currentUserId) ||
       (manual.checked_by && manual.checked_by.id === currentUserId) ||
       (manual.approved_by && manual.approved_by.id === currentUserId)
     );
   };
-
-  // Centralized function to filter manuals based on visibility rules
+ 
   const filterManualsByVisibility = (manualsData) => {
     const role = localStorage.getItem('role');
 
@@ -145,34 +143,28 @@ const QmsManual = () => {
       if (manual.status === 'Published') {
         return true;
       }
-
-      // If user is a company admin, show all
+ 
       if (role === 'company') {
         return true;
       }
-
-      // For other statuses, only show if user is involved with the manual
+ 
       return isUserInvolvedWithManual(manual);
     });
   };
-
-  // Fetch manuals using the centralized filter function
-  // Modify the fetchManuals function to sort by creation date in descending order
+ 
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
 
-      // Apply visibility filtering
+     
       const filteredManuals = filterManualsByVisibility(response.data);
-
-      // Sort manuals by creation date (newest first)
-      // Assuming there's a 'created_at' or similar field - adjust field name if needed
+ 
       const sortedManuals = filteredManuals.sort((a, b) => {
-        // Use created_at if available, otherwise fall back to date field
-        const dateA = new Date(a.created_at || a.date || 0);
-        const dateB = new Date(b.created_at || b.date || 0);
+   
+        const dateA = new Date(a.written_at || a.date || 0);
+        const dateB = new Date(b.written_at || b.date || 0);
         return dateB - dateA; // Descending order (newest first)
       });
 
@@ -199,9 +191,9 @@ const QmsManual = () => {
 
     // Sort manuals by creation date (newest first)
     const sortedManuals = filteredManuals.sort((a, b) => {
-      // Use created_at if available, otherwise fall back to date field
-      const dateA = new Date(a.created_at || a.date || 0);
-      const dateB = new Date(b.created_at || b.date || 0);
+      // Use written_at if available, otherwise fall back to date field
+      const dateA = new Date(a.written_at || a.date || 0);
+      const dateB = new Date(b.written_at || b.date || 0);
       return dateB - dateA; // Descending order (newest first)
     });
 
@@ -370,23 +362,21 @@ const QmsManual = () => {
         alert("No manual selected for publishing");
         return;
       }
-      
       // Set isPublishing to true at the start of the operation
       setIsPublishing(true);
-      
       const userId = localStorage.getItem('user_id');
-      if (!userId) {
+      const companyId = localStorage.getItem('company_id');
+      const publisherId = userId || companyId;
+      if (!publisherId) {
         alert("User information not found. Please log in again.");
-        setIsPublishing(false); // Reset if there's an error
+        setIsPublishing(false);
         return;
       }
-      
       await axios.post(`${BASE_URL}/qms/manuals/${selectedManualId}/publish-notification/`, {
         company_id: getUserCompanyId(),
-        published_by: userId,  
+        published_by: userId,
         send_notification: sendNotification
       });
-      
       setShowPublishSuccessModal(true);
       setTimeout(() => {
         setShowPublishSuccessModal(false);
@@ -407,7 +397,6 @@ const QmsManual = () => {
   const canReview = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
     const manualCorrections = corrections[manual.id] || [];
-
     console.log('Reviewing Conditions Debug:', {
       currentUserId,
       checkedById: manual.checked_by?.id,
@@ -415,23 +404,20 @@ const QmsManual = () => {
       corrections: manualCorrections,
       toUserId: manualCorrections.length > 0 ? manualCorrections[0].to_user?.id : null,
     });
-
     if (manual.status === "Pending for Review/Checking") {
       return currentUserId === manual.checked_by?.id;
     }
-
     if (manual.status === "Correction Requested") {
       return manualCorrections.some(correction =>
         correction.to_user?.id === currentUserId && currentUserId === correction.to_user?.id
       );
     }
-
     if (manual.status === "Reviewed,Pending for Approval") {
       return currentUserId === manual.approved_by?.id;
     }
-
     return false;
   };
+
   return (
     <div className="bg-[#1C1C24] list-manual-main">
       <div className="flex items-center justify-between px-[14px] pt-[24px]">

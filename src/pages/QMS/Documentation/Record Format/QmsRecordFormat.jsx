@@ -372,9 +372,11 @@ const QmsRecordFormat = () => {
       setIsPublishing(true);
       
       const userId = localStorage.getItem('user_id');
-      if (!userId) {
+      const companyId = localStorage.getItem('company_id');
+      const publisherId = userId || companyId;
+      if (!publisherId) {
         alert("User information not found. Please log in again.");
-        setIsPublishing(false); // Reset loading state on error
+        setIsPublishing(false);
         return;
       }
       
@@ -479,7 +481,7 @@ const QmsRecordFormat = () => {
           >
             <span>Drafts</span>
             {draftCount > 0 && (
-              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[190px]">
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[214px]">
                 {draftCount}
               </span>
             )}

@@ -1,41 +1,44 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import file from "../../../../assets/images/Company Documentation/file-icon.svg"
-import "./qmsaddawarenesstraining.css"
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
+import "./qmsaddawarenesstraining.css";
 import { useNavigate } from 'react-router-dom';
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
+
 
 const QmsAddAwarenessTraining = () => {
+    const [draftLoading, setDraftLoading] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
-        category: 'Select Category', // Changed initial value to 'Select Category'
+        category: 'Select Category',
         description: '',
-        youtubeLink: '',
-        webLink: '',
-        presentationFile: null
+        youtube_link: '',
+        web_link: '',
+        upload_file: null
     });
 
     const navigate = useNavigate();
-
+    const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [fieldVisible, setFieldVisible] = useState(false); // Set to false initially
+    const [fieldVisible, setFieldVisible] = useState(false);
 
-    // Handle animation timing
+    const [error, setError] = useState('');
+
     const handleCategoryChange = (e) => {
         const { value } = e.target;
 
-        // First hide the current field
         setFieldVisible(false);
 
-        // After animation completes, change the category and show the new field
         setTimeout(() => {
             setFormData(prevData => ({
                 ...prevData,
                 category: value
             }));
-            // Only show the field if it's a valid category
+
             setFieldVisible(value !== 'Select Category');
-        }, 300); // 300ms matches our animation duration
+        }, 300);
     };
 
     const handleChange = (e) => {
@@ -45,7 +48,6 @@ const QmsAddAwarenessTraining = () => {
             [name]: value
         }));
 
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prevErrors => ({
                 ...prevErrors,
@@ -57,36 +59,71 @@ const QmsAddAwarenessTraining = () => {
     const handleFileChange = (e) => {
         setFormData(prevData => ({
             ...prevData,
-            presentationFile: e.target.files[0]
+            upload_file: e.target.files[0]
         }));
 
-        // Clear error when user selects a file
-        if (errors.presentationFile) {
+        if (errors.upload_file) {
             setErrors(prevErrors => ({
                 ...prevErrors,
-                presentationFile: ''
+                upload_file: ''
             }));
         }
     };
 
-    const handleSubmit = (e) => {
+    const getUserCompanyId = () => {
+        // First check if company_id is stored directly
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        // If user data exists with company_id
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            // Try to get company_id from user data that was stored during login
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validate form
         const newErrors = {};
         if (!formData.title.trim()) newErrors.title = 'Title is required';
-        
+
         // Add validation for category selection
         if (formData.category === 'Select Category') {
             newErrors.category = 'Please select a category';
         } else {
             // Validate based on category
-            if (formData.category === 'Youtube_Link' && !formData.youtubeLink.trim()) {
-                newErrors.youtubeLink = 'YouTube link is required';
-            } else if (formData.category === 'WebLink' && !formData.webLink.trim()) {
-                newErrors.webLink = 'Web link is required';
-            } else if (formData.category === 'Presentation' && !formData.presentationFile) {
-                newErrors.presentationFile = 'Presentation file is required';
+            if (formData.category === 'YouTube video' && !formData.youtube_link.trim()) {
+                newErrors.youtube_link = 'YouTube link is required';
+            } else if (formData.category === 'Web Link' && !formData.web_link.trim()) {
+                newErrors.web_link = 'Web link is required';
+            } else if (formData.category === 'Presentation' && !formData.upload_file) {
+                newErrors.upload_file = 'Presentation file is required';
             }
         }
 
@@ -95,10 +132,126 @@ const QmsAddAwarenessTraining = () => {
             return;
         }
 
-        // Handle form submission
-        console.log('Form submitted:', formData);
+        setLoading(true);
+
+        try {
+            const userId = getRelevantUserId();
+            const companyId = getUserCompanyId();
+
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+
+                return;
+            }
+
+            const submissionData = new FormData();
+            submissionData.append('company', companyId);
+            submissionData.append('user', userId);
+            submissionData.append('title', formData.title);
+            submissionData.append('description', formData.description || '');
+            submissionData.append('category', formData.category);
+
+            // Append the appropriate field based on category
+            if (formData.category === 'YouTube video') {
+                submissionData.append('youtube_link', formData.youtube_link);
+            } else if (formData.category === 'Web Link') {
+                submissionData.append('web_link', formData.web_link);
+            } else if (formData.category === 'Presentation' && formData.upload_file) {
+                submissionData.append('upload_file', formData.upload_file);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/awareness/create/`, submissionData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+
+            setTimeout(() => {
+
+                navigate('/company/qms/list-awareness-training');
+            }, 1500);
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setError(error.response?.data?.message || 'Failed to save awareness training. Please try again.');
+
+            setTimeout(() => {
+
+            }, 3000);
+        } finally {
+            setLoading(false);
+        }
     };
 
+
+    const handleSaveAsDraft = async () => {
+        try {
+            setDraftLoading(true);
+
+            const companyId = getUserCompanyId();
+            const userId = getRelevantUserId();
+
+            if (!companyId || !userId) {
+                setError('Company ID or User ID not found. Please log in again.');
+                setDraftLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+
+            submitData.append('company', companyId);
+            submitData.append('user', userId);
+            submitData.append('is_draft', true);
+
+            Object.keys(formData).forEach((key) => {
+                if (
+                    formData[key] !== null &&
+                    formData[key] !== '' &&
+                    !(key === 'category' && formData[key] === 'Select Category')
+                ) {
+                    submitData.append(key, formData[key]);
+                }
+            });
+            
+
+
+            if (formData.file) {
+                submitData.append('upload_attachment', formData.file);
+            }
+
+            console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+
+            const response = await axios.post(
+                `${BASE_URL}/qms/awareness/draft-create/`,
+                submitData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+
+                    },
+                }
+            );
+
+            setDraftLoading(false);
+
+            setTimeout(() => {
+
+                navigate('/company/qms/draft-awareness-training');
+            }, 1500);
+
+
+        } catch (err) {
+            setDraftLoading(false);
+        
+            setTimeout(() => {
+              
+            }, 3000);
+            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+            setError(errorMessage);
+            console.error('Error saving Draft:', err.response?.data || err);
+        }
+    };
     const handleListAwarenessTraining = () => {
         navigate('/company/qms/list-awareness-training')
     }
@@ -107,8 +260,8 @@ const QmsAddAwarenessTraining = () => {
         navigate('/company/qms/list-awareness-training')
     };
 
-    // Updated categories array to include the select option
-    const categories = ['Select Category', 'Youtube Link', 'Presentation', 'WebLink'];
+    // Updated categories to match the Django model choices
+    const categories = ['Select Category', 'YouTube video', 'Presentation', 'Web Link'];
 
     // Render the appropriate input field based on category
     const renderCategoryField = () => {
@@ -120,25 +273,27 @@ const QmsAddAwarenessTraining = () => {
         const animationClass = fieldVisible ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0';
 
         switch (formData.category) {
-            case 'Youtube Link':
+            case 'YouTube video':
                 return (
                     <div className={`transition-all duration-300 ease-in-out ${animationClass}`}>
                         <label className="block employee-performace-label">
-                            Youtube Link <span className="text-red-500">*</span>
+                            YouTube Link <span className="text-red-500">*</span>
                         </label>
-                        <textarea
-                            name="youtubeLink"
-                            value={formData.youtubeLink}
+                        <input
+                            type="url"
+                            name="youtube_link"
+                            value={formData.youtube_link}
                             onChange={handleChange}
-                            className='w-full employee-performace-inputs !h-[84px]'
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            className='w-full employee-performace-inputs'
                         />
-                        {errors.youtubeLink && <p className="text-red-500 text-sm mt-1">{errors.youtubeLink}</p>}
+                        {errors.youtube_link && <p className="text-red-500 text-sm mt-1">{errors.youtube_link}</p>}
                     </div>
                 );
             case 'Presentation':
                 return (
                     <div className={`transition-all duration-300 ease-in-out ${animationClass}`}>
-                        <label className="block employee-performace-label">Upload File  <span className="text-red-500">*</span></label>
+                        <label className="block employee-performace-label">Upload File <span className="text-red-500">*</span></label>
                         <div className="flex">
                             <input
                                 type="file"
@@ -154,28 +309,30 @@ const QmsAddAwarenessTraining = () => {
                                 <img src={file} alt="" />
                             </label>
                         </div>
-                        {formData.presentationFile && (
-                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.presentationFile.name}</p>
+                        {formData.upload_file && (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.upload_file.name}</p>
                         )}
-                        {!formData.presentationFile && (
+                        {!formData.upload_file && (
                             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
                         )}
-                        {errors.presentationFile && <p className="text-red-500 text-sm mt-1">{errors.presentationFile}</p>}
+                        {errors.upload_file && <p className="text-red-500 text-sm mt-1">{errors.upload_file}</p>}
                     </div>
                 );
-            case 'WebLink':
+            case 'Web Link':
                 return (
                     <div className={`transition-all duration-300 ease-in-out ${animationClass}`}>
                         <label className="block employee-performace-label">
                             Web Link <span className="text-red-500">*</span>
                         </label>
-                        <textarea
-                            name="webLink"
-                            value={formData.webLink}
+                        <input
+                            type="url"
+                            name="web_link"
+                            value={formData.web_link}
                             onChange={handleChange}
-                            className='w-full employee-performace-inputs !h-[84px]'
+                            placeholder="https://example.com"
+                            className='w-full employee-performace-inputs'
                         />
-                        {errors.webLink && <p className="text-red-500 text-sm mt-1">{errors.webLink}</p>}
+                        {errors.web_link && <p className="text-red-500 text-sm mt-1">{errors.web_link}</p>}
                     </div>
                 );
             default:
@@ -185,10 +342,13 @@ const QmsAddAwarenessTraining = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+
             <div className="flex justify-between items-center px-[104px] pb-5 border-b border-[#383840]">
                 <h1 className="add-awareness-training-head">Add Awareness Training</h1>
-                <button className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] w-[213px] list-training-btn duration-200"
+                <button
+                    className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] w-[213px] list-training-btn duration-200"
                     onClick={handleListAwarenessTraining}
+                    type="button"
                 >
                     List Awareness Training
                 </button>
@@ -206,6 +366,7 @@ const QmsAddAwarenessTraining = () => {
                             value={formData.title}
                             onChange={handleChange}
                             className='w-full employee-performace-inputs'
+                            maxLength={100}
                         />
                         {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
                     </div>
@@ -221,7 +382,6 @@ const QmsAddAwarenessTraining = () => {
                                 onChange={(e) => {
                                     handleCategoryChange(e);
                                     setDropdownOpen(prev => !prev);
-                                    // Simulate the dropdown closing after selection
                                     setTimeout(() => setDropdownOpen(false), 200);
                                 }}
                                 onFocus={() => setDropdownOpen(true)}
@@ -259,8 +419,13 @@ const QmsAddAwarenessTraining = () => {
 
                 <div className="flex justify-between mt-5 gap-5">
                     <div>
-                        <button className='request-correction-btn duration-200'>
-                            Save as Draft
+                        <button
+                            type="button"
+                            onClick={handleSaveAsDraft}
+                            disabled={draftLoading}
+                            className="request-correction-btn duration-200"
+                        >
+                            {draftLoading ? 'Saving...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -268,14 +433,16 @@ const QmsAddAwarenessTraining = () => {
                             type="button"
                             onClick={handleCancel}
                             className="cancel-btn duration-200"
+                            disabled={loading}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             className="save-btn duration-200"
+                            disabled={loading}
                         >
-                            Save
+                            {loading ? "Saving..." : "Save"}
                         </button>
                     </div>
                 </div>
@@ -284,4 +451,4 @@ const QmsAddAwarenessTraining = () => {
     );
 }
 
-export default QmsAddAwarenessTraining
+export default QmsAddAwarenessTraining;

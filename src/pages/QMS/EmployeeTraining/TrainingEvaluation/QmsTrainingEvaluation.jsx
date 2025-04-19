@@ -1,49 +1,114 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; 
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
+
+
 
 const QmsTrainingEvaluation = () => {
     const [selectedUser, setSelectedUser] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [isFocused, setIsFocused] = useState(false);
-    const [isOpen, setIsOpen] = useState(false); // replaces isFocused
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [trainingData, setTrainingData] = useState([]);
+    const [users, setUsers] = useState([]);
     const navigate = useNavigate();
-
-
-    const [formData, setFormData] = useState([
-        { id: 1, userId: 'user1', title: 'Safety Protocol Training', type: 'Online', datePlanned: '03-12-2024', status: 'Completed' },
-        { id: 2, userId: 'user2', title: 'Workplace Ethics', type: 'Online', datePlanned: '04-15-2024', status: 'Requested' },
-        { id: 3, userId: 'user3', title: 'Data Security Basics', type: 'Webinar', datePlanned: '03-12-2024', status: 'Completed' },
-        { id: 4, userId: 'user2', title: 'Advanced Excel Skills', type: 'Workshop', datePlanned: '04-20-2024', status: 'Requested' },
-    ]);
-
-    const [users, setUsers] = useState([
-        { id: 'user1', name: 'John Doe' },
-        { id: 'user2', name: 'Jane Smith' },
-        { id: 'user3', name: 'Robert Johnson' },
-        { id: 'user4', name: 'Emily Wilson' },
-        { id: 'user5', name: 'Michael Brown' }
-    ]);
 
     const itemsPerPage = 10;
 
-    // Filter data by selected user
-    const filteredData = selectedUser
-        ? formData.filter((item) => item.userId === selectedUser)
-        : formData;
+    const getUserCompanyId = () => {
 
-    const totalItems = filteredData.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
 
-    // Reset to page 1 on user change
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+
+
     useEffect(() => {
-        setCurrentPage(1);
+        const fetchUsers = async () => {
+            try {
+                const companyId = getUserCompanyId();
+                const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+                setUsers(response.data);
+            } catch (error) {
+                console.error('Error fetching users:', error);
+            }
+        };
+
+        fetchUsers();
+    }, []);
+
+
+    useEffect(() => {
+        const fetchTrainingData = async () => {
+            if (!selectedUser) {
+                setTrainingData([]);
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const response = await axios.get(`${BASE_URL}/qms/training/evaluated-by/${selectedUser}/`);
+
+                const formattedData = response.data.map((item, index) => ({
+                    id: index + 1,
+                    userId: selectedUser,
+                    title: item.training_title || 'Untitled Training',
+                    type: item.type_of_training || 'N/A',
+                    datePlanned: item.date_planned ? formatDate(item.date_planned) : 'N/A',
+                    status: item.status || 'N/A'
+                }));
+                setTrainingData(formattedData);
+            } catch (error) {
+                console.error('Error fetching training data:', error);
+                setTrainingData([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTrainingData();
+        setCurrentPage(1);  
     }, [selectedUser]);
+
+    // Helper function to format date
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-');
+    };
+
+    // Get user's company ID from storage/context
+
+
+    const totalItems = trainingData.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     const getCurrentPageData = () => {
         const startIndex = (currentPage - 1) * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        return filteredData.slice(startIndex, endIndex);
+        return trainingData.slice(startIndex, endIndex);
     };
 
     const handlePageChange = (page) => {
@@ -51,8 +116,8 @@ const QmsTrainingEvaluation = () => {
     };
 
     const handleListTraining = () => {
-        navigate('/company/qms/list-training')
-    }
+        navigate('/company/qms/list-training');
+    };
 
     const renderPagination = () => {
         const pages = [];
@@ -60,8 +125,7 @@ const QmsTrainingEvaluation = () => {
             pages.push(
                 <button
                     key={i}
-                    className={`${currentPage === i ? 'pagin-active' : 'pagin-inactive'
-                        }`}
+                    className={`${currentPage === i ? 'pagin-active' : 'pagin-inactive'}`}
                     onClick={() => handlePageChange(i)}
                 >
                     {i}
@@ -82,7 +146,7 @@ const QmsTrainingEvaluation = () => {
                 <button
                     className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
                     onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages || totalPages === 0}
                 >
                     Next
                 </button>
@@ -95,31 +159,34 @@ const QmsTrainingEvaluation = () => {
             <div className="flex justify-between items-center">
                 <h1 className="list-user-training-head">Training Evaluation</h1>
                 <div className="flex gap-5">
-                    <div className="relative w-[332px] ">
+                    <div className="relative w-[332px]">
                         <select
-                            className="bg-[#24242D] text-white  py-2 px-5 rounded-md appearance-none border-none pr-8 cursor-pointer select-user h-[42px]"
+                            className="bg-[#24242D] text-white py-2 px-5 rounded-md appearance-none border-none pr-8 cursor-pointer select-user h-[42px]"
                             value={selectedUser}
                             onChange={(e) => {
                                 setSelectedUser(e.target.value);
-                                setIsOpen(false); // close on selection
+                                setIsOpen(false);
                             }}
                             onMouseDown={() => setIsOpen(true)}
                             onBlur={() => setIsOpen(false)}
                         >
                             <option value="">Select User</option>
                             {users.map((user) => (
-                                <option key={user.id} value={user.id}>{user.name}</option>
+                                <option key={user.id} value={user.id}>
+                                    {user.first_name && user.last_name
+                                        ? `${user.first_name} ${user.last_name}`
+                                        : user.first_name || user.last_name || user.username || user.email}
+                                </option>
                             ))}
+
                         </select>
 
                         <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                             <ChevronDown
-                                className={`w-[18px] h-[18px] text-[#AAAAAA] transition-transform duration-300 ${isOpen ? "rotate-180" : ""
-                                    }`}
+                                className={`w-[18px] h-[18px] text-[#AAAAAA] transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                             />
                         </div>
                     </div>
-
 
                     <button
                         onClick={handleListTraining}
@@ -141,22 +208,32 @@ const QmsTrainingEvaluation = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {getCurrentPageData().map((item, index) => (
-                            <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                <td className="px-2 add-manual-datas">{item.title}</td>
-                                <td className="px-2 add-manual-datas">{item.type}</td>
-                                <td className="px-2 add-manual-datas">{item.datePlanned}</td>
-                                <td className="px-2 add-manual-datas !text-right">
-                                    <span className={`rounded-[4px] px-[10px] py-[3px] ${item.status === 'Completed' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#ddd23611] text-[#ddd236]'}`}>
-                                        {item.status}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredData.length === 0 && (
+                        {loading ? (
                             <tr>
-                                <td colSpan="5" className="not-found text-center p-5">No training found for selected user</td>
+                                <td colSpan="5" className="text-center p-5">Loading...</td>
+                            </tr>
+                        ) : getCurrentPageData().length > 0 ? (
+                            getCurrentPageData().map((item, index) => (
+                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{item.title}</td>
+                                    <td className="px-2 add-manual-datas">{item.type}</td>
+                                    <td className="px-2 add-manual-datas">{item.datePlanned}</td>
+                                    <td className="px-2 add-manual-datas !text-right">
+                                        <span className={`rounded-[4px] px-[10px] py-[3px] ${item.status === 'Completed'
+                                                ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                                : 'bg-[#ddd23611] text-[#ddd236]'
+                                            }`}>
+                                            {item.status}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="5" className="not-found text-center p-5">
+                                    {selectedUser ? 'No training found for selected user' : 'Please select a user to view their training'}
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -165,7 +242,7 @@ const QmsTrainingEvaluation = () => {
 
             <div className="flex justify-between items-center mt-4">
                 <div className="text-white total-text">Total - {totalItems}</div>
-                {renderPagination()}
+                {totalItems > 0 && renderPagination()}
             </div>
         </div>
     );

@@ -35,7 +35,7 @@ const ViewMinutesModal = ({
                         <X className="text-white" />
                     </button>
                 </div>
-                <div className="p-5 relative">
+                <div className="py-5 relative">
                     {/* Vertical divider line */}
                     <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>
 

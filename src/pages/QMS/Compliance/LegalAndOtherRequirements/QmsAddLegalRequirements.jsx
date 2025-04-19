@@ -24,6 +24,7 @@ const QmsAddLegalRequirements = () => {
         is_draft: false
     });
 
+    const [error, setError] = useState(null);
     const [showAddLegalSuccessModal, setShowAddLegalSuccessModal] = useState(false);
     const [showAddLegalErrorModal, setShowAddLegalErrorModal] = useState(false);
 

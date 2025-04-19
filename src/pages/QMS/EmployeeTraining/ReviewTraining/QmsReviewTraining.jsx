@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { X, Eye } from 'lucide-react';
 import edits from '../../../../assets/images/Company Documentation/edit.svg';
 import deletes from '../../../../assets/images/Company Documentation/delete.svg';
-import "./qmsviewtraining.css";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-const QmsViewTraining = () => {
+const QmsReviewTraining = () => {
     const [training, setTraining] = useState({
         training_title: '',
         type_of_training: '',
@@ -25,11 +24,13 @@ const QmsViewTraining = () => {
         training_evaluation: '',
         evaluation_date: '',
         evaluation_by: null,
-        is_draft: false
+        is_draft: false,
+        send_notification: false,
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [attendees, setAttendees] = useState([]);
+    const [isPublishing, setIsPublishing] = useState(false);
 
     const { id } = useParams(); // Get training ID from URL
     const navigate = useNavigate();
@@ -43,6 +44,40 @@ const QmsViewTraining = () => {
             month: '2-digit',
             year: 'numeric'
         }).replace(/\//g, '-');
+    };
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+
+        if (type === 'checkbox') {
+            setTraining({
+                ...training,
+                [name]: checked
+            });
+            return;
+        }
+
+        // Handle nested objects
+        if (name.includes('.')) {
+            const [parent, child] = name.split('.');
+            setTraining({
+                ...training,
+                [parent]: {
+                    ...training[parent],
+                    [child]: value
+                }
+            });
+        } else {
+            setTraining({
+                ...training,
+                [name]: value
+            });
+        }
+    };
+
+    // Function to get user company ID from localStorage
+    const getUserCompanyId = () => {
+        return localStorage.getItem('company_id') || '';
     };
 
     // Format time from HH:MM:SS to readable format
@@ -60,7 +95,7 @@ const QmsViewTraining = () => {
                 const response = await axios.get(`${BASE_URL}/qms/training-get/${id}/`);
                 setTraining(response.data);
                 setLoading(false);
-                console.log("sssssssssssssss", response.data)
+                console.log("Training data loaded:", response.data);
             } catch (err) {
                 setError("Failed to load training data");
                 setLoading(false);
@@ -72,6 +107,50 @@ const QmsViewTraining = () => {
             fetchTrainingData();
         }
     }, [id]);
+
+    const handlePublishSave = async () => {
+        try {
+            if (!id) {
+                alert("Training ID not found");
+                return;
+            }
+
+            setIsPublishing(true);
+
+            const userId = localStorage.getItem('user_id');
+      const companyId = localStorage.getItem('company_id');
+      const publisherId = userId || companyId;
+      if (!publisherId) {
+        alert("User information not found. Please log in again.");
+        setIsPublishing(false);
+        return;
+      }
+
+            await axios.post(`${BASE_URL}/qms/training/${id}/complete/`, {
+                company_id: getUserCompanyId(),
+                published_by: userId,
+                send_notification: training.send_notification
+            });
+
+            alert("Training published successfully");
+
+            setTimeout(() => {
+                setIsPublishing(false);
+                // Update the status to completed
+                setTraining({
+                    ...training,
+                    status: 'Completed'
+                });
+            }, 1500);
+        } catch (error) {
+            console.error("Error publishing training:", error);
+            alert("Failed to publish training");
+
+            setTimeout(() => {
+                setIsPublishing(false);
+            }, 1500);
+        }
+    };
 
     const handleClose = () => {
         navigate('/company/qms/list-training');
@@ -93,8 +172,13 @@ const QmsViewTraining = () => {
         }
     };
 
+    if (loading) {
+        return <div className="flex justify-center items-center h-40">Loading training information...</div>;
+    }
 
-
+    if (error) {
+        return <div className="text-red-500">{error}</div>;
+    }
 
     return (
         <div>
@@ -166,6 +250,21 @@ const QmsViewTraining = () => {
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Evaluation Date</p>
                             <p className="text-white view-training-data">{formatDate(training.evaluation_date) || 'Not evaluated yet'}</p>
                         </div>
+
+                        <div className="flex items-end justify-start mt-3">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    name="send_notification"
+                                    className="mr-2 form-checkboxes"
+                                    checked={training.send_notification}
+                                    onChange={handleChange}
+                                />
+                                <span className="permissions-texts cursor-pointer">
+                                    Send Notification
+                                </span>
+                            </label>
+                        </div>
                     </div>
 
                     <div className="space-y-[40px] ml-5">
@@ -236,6 +335,16 @@ const QmsViewTraining = () => {
                                 </button>
                             </div>
                         </div>
+
+                        <div>
+                            <button
+                                onClick={handlePublishSave}
+                                className='save-btn duration-200 text-white'
+                                disabled={isPublishing}
+                            >
+                                {isPublishing ? 'Completing...' : 'Complete'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -243,4 +352,4 @@ const QmsViewTraining = () => {
     );
 };
 
-export default QmsViewTraining;
+export default QmsReviewTraining;

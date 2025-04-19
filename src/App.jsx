@@ -210,6 +210,17 @@ import QmsViewInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspect
 import QmsDraftInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsDraftInspection";
 import QmsEditDraftInspections from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsEditDraftInspections";
 import QmsViewDraftInspection from "./pages/QMS/AuditsAndInspectionManagement/Inspection/QmsViewDraftInspection";
+import QmsAddCustomer from "./pages/QMS/CustomerManagement/Customers/QmsAddCustomer";
+import QmsListCustomer from "./pages/QMS/CustomerManagement/Customers/QmsListCustomer";
+import QmsEditCustomer from "./pages/QMS/CustomerManagement/Customers/QmsEditCustomer";
+import QmsViewCustomer from "./pages/QMS/CustomerManagement/Customers/QmsViewCustomer";
+import QmsDraftCustomer from "./pages/QMS/CustomerManagement/Customers/QmsDraftCustomer";
+import QmsEditDraftCustomer from "./pages/QMS/CustomerManagement/Customers/QmsEditDraftCustomer";
+import QmsViewDraftCustomer from "./pages/QMS/CustomerManagement/Customers/QmsViewDraftCustomer";
+import QmsAddComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsAddComplaints";
+import QmsListComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsListComplaints";
+import QmsEditComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsEditComplaints";
+import QmsReviewTraining from "./pages/QMS/EmployeeTraining/ReviewTraining/QmsReviewTraining";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -291,11 +302,12 @@ const ThemedApp = () => {
           <Route path="qms/add-training" element={<QmsAddTraining />} />
 
           <Route path="qms/list-training" element={<QmsListTraining />} />
-          <Route path="qms/edit-training" element={<QmsEditTraining />} />
-          <Route path="qms/view-training" element={<QmsViewTraining />} />
+          <Route path="qms/edit-training/:id" element={<QmsEditTraining />} />
+          <Route path="qms/view-training/:id" element={<QmsViewTraining />} />
+          <Route path="qms/review-training/:id" element={<QmsReviewTraining />} />
           <Route path="qms/draft-training" element={<QmsDraftListTraining />} />
-          <Route path="qms/edit-draft-training" element={<QmsEditDraftListTraining />} />
-          <Route path="qms/view-draft-training" element={<QmsViewDraftTraining />} />
+          <Route path="qms/edit-draft-training/:id" element={<QmsEditDraftListTraining />} />
+          <Route path="qms/view-draft-training/:id" element={<QmsViewDraftTraining />} />
 
           <Route path="qms/listuser-training" element={<QmsListUserTraining />} />
 
@@ -303,27 +315,27 @@ const ThemedApp = () => {
 
           <Route path="qms/employee-performance" element={<QmsEmployeePerformance />} />
           <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance />} />
-          <Route path="qms/edit-employee-performance" element={<EditQmsEmployeePerformance />} />
-          <Route path="qms/view-employee-performance" element={<ViewQmsEmployeePerformance />} />
+          <Route path="qms/edit-employee-performance/:id" element={<EditQmsEmployeePerformance />} />
+          <Route path="qms/view-employee-performance/:id" element={<ViewQmsEmployeePerformance />} />
           <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance />} />
-          <Route path="qms/edit-draft-employee-performance" element={<QmsEditDraftEmployeePerformance />} />
-          <Route path="qms/view-draft-employee-performance" element={<QmsViewDraftEmployeePerformance />} />
+          <Route path="qms/edit-draft-employee-performance/:id" element={<QmsEditDraftEmployeePerformance />} />
+          <Route path="qms/view-draft-employee-performance/:id" element={<QmsViewDraftEmployeePerformance />} />
 
           <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction />} />
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction />} />
-          <Route path="qms/edit-satisfaction-survey" element={<EditQmsEmployeeSatisfaction />} />
-          <Route path="qms/view-satisfaction-survey" element={<ViewQmsEmployeeSatisfaction />} />
+          <Route path="qms/edit-satisfaction-survey/:id" element={<EditQmsEmployeeSatisfaction />} />
+          <Route path="qms/view-satisfaction-survey/:id" element={<ViewQmsEmployeeSatisfaction />} />
           <Route path="qms/draft-satisfaction-survey" element={<QmsDraftEmployeeSatisfaction />} />
-          <Route path="qms/edit-draft-satisfaction-survey" element={<QmsEditDraftEmployeeSatisfaction />} />
-          <Route path="qms/view-draft-satisfaction-survey" element={<QmsViewDraftEmployeeSatisfaction />} />
+          <Route path="qms/edit-draft-satisfaction-survey/:id" element={<QmsEditDraftEmployeeSatisfaction />} />
+          <Route path="qms/view-draft-satisfaction-survey/:id" element={<QmsViewDraftEmployeeSatisfaction />} />
 
           <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining />} />
           <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining />} />
-          <Route path="qms/edit-awareness-training" element={<QmsEditAwarenessTraining />} />
-          <Route path="qms/view-awareness-training" element={<QmsViewAwarenessTraining />} />
+          <Route path="qms/edit-awareness-training/:id" element={<QmsEditAwarenessTraining />} />
+          <Route path="qms/view-awareness-training/:id" element={<QmsViewAwarenessTraining />} />
           <Route path="qms/draft-awareness-training" element={<QmsDraftAwarenessTraining />} />
-          <Route path="qms/edit-draft-awareness-training" element={<QmsEditDraftAwarenessTraining />} />
-          <Route path="qms/view-draft-awareness-training" element={<QmsViewDraftAwarenessTraining />} />
+          <Route path="qms/edit-draft-awareness-training/:id" element={<QmsEditDraftAwarenessTraining />} />
+          <Route path="qms/view-draft-awareness-training/:id" element={<QmsViewDraftAwarenessTraining />} />
 
 
 
@@ -374,7 +386,27 @@ const ThemedApp = () => {
           <Route path="qms/edit-draft-inspection" element={<QmsEditDraftInspections/>} />
           <Route path="qms/view-draft-inspection" element={<QmsViewDraftInspection/>} />
 
+
+
+
+
+
+          {/* QMS Customer Management */}
+          <Route path="qms/add-customer" element={<QmsAddCustomer/>} />
+
+          <Route path="qms/list-customer" element={<QmsListCustomer/>} />
+          <Route path="qms/edit-customer" element={<QmsEditCustomer/>} />
+          <Route path="qms/view-customer" element={<QmsViewCustomer/>} />
+          <Route path="qms/draft-customer" element={<QmsDraftCustomer/>} />
+          <Route path="qms/edit-draft-customer" element={<QmsEditDraftCustomer/>} />
+          <Route path="qms/view-draft-customer" element={<QmsViewDraftCustomer/>} />
+
+          <Route path="qms/add-complaints" element={<QmsAddComplaints/>} />
+          <Route path="qms/list-complaints" element={<QmsListComplaints/>} />
+          <Route path="qms/edit-complaints" element={<QmsEditComplaints/>} />
+
           
+
 
 
 

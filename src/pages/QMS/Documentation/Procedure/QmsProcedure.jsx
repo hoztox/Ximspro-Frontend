@@ -374,9 +374,11 @@ const QmsProcedure = () => {
       setIsPublishing(true);
       
       const userId = localStorage.getItem('user_id');
-      if (!userId) {
+      const companyId = localStorage.getItem('company_id');
+      const publisherId = userId || companyId;
+      if (!publisherId) {
         alert("User information not found. Please log in again.");
-        setIsPublishing(false); // Reset loading state if there's an error
+        setIsPublishing(false);
         return;
       }
       

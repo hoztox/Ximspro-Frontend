@@ -414,16 +414,13 @@ const QmsListSustainability = () => {
             setIsPublishing(true);
 
             const userId = localStorage.getItem('user_id');
-            console.log("Publishing manual with user ID:", userId);
-            
-            if (!userId) {
-                alert("User information not found. Please log in again.");
-                setIsPublishing(false); // Reset loading state on error
-                return;
+            const companyId = localStorage.getItem('company_id');
+            const publisherId = userId || companyId;
+            if (!publisherId) {
+              alert("User information not found. Please log in again.");
+              setIsPublishing(false);
+              return;
             }
-
-            const companyId = getUserCompanyId();
-            console.log("Publishing for company ID:", companyId);
             
             console.log("Publishing manual with ID:", selectedManualId);
             console.log("Send notification:", sendNotification);

@@ -7,40 +7,155 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { motion, AnimatePresence } from 'framer-motion';
 import "./qmsemployeeperformance.css"
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 
-// Demo employee data
-const demoEmployees = [
-  { id: "emp1", name: "John Doe", position: "Software Developer", department: "Engineering" },
-  { id: "emp2", name: "Jane Smith", position: "UX Designer", department: "Design" },
-];
+ 
 
-// Modal Components
-const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmployees }) => {
+const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceId }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(employee ? employee.id || 'Select Employee' : 'Select Employee');
-  const [ratings, setRatings] = useState(Array(4).fill('N/A'));
-  const [openDropdown, setOpenDropdown] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [users, setUsers] = useState([]);
+  const [performances, setPerformances] = useState([]);
 
-  // Update selectedEmployee if employee prop changes
   useEffect(() => {
-    if (employee) {
-      setSelectedEmployee(employee.id || 'Select Employee'); 
+    const fetchUsers = async () => {
+      try {
+        const companyId = getUserCompanyId();
+
+        const response = await axios.get(
+          `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
+        );
+
+        setUsers(response.data);
+      } catch (error) {
+        console.error('Error fetching unsubmitted users:', error);
+      }
+    };
+
+    if (isOpen && performanceId) {
+      fetchUsers();
     }
-  }, [employee]);
+  }, [isOpen, performanceId]);
 
-  const handleRatingChange = (index, rating) => {
-    const newRatings = [...ratings];
-    newRatings[index] = rating;
-    setRatings(newRatings);
-    setOpenDropdown(null);
+
+  useEffect(() => {
+    const fetchPerformanceData = async () => {
+      setLoading(true);
+      try {
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+          setError('Company ID not found');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/qms/performance/${companyId}/`);
+        setPerformances(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load employee performance data');
+        console.error('Error fetching employee performance data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch employees for dropdown
+
+
+    fetchPerformanceData();
+
+  }, []);
+  // Fetch questions when modal opens
+  useEffect(() => {
+    if (isOpen && performanceId) {
+      fetchQuestions();
+    }
+  }, [isOpen, performanceId]);
+
+
+
+
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/performance/${performanceId}/questions/`);
+      setQuestions(response.data);
+      console.log('Fetched questionsssss:', response.data);
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+      setError('Failed to load questions');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const toggleDropdown = (index) => {
-    setOpenDropdown(openDropdown === index ? null : index);
+
+  const handleAnswerChange = async (questionId, rating) => {
+    if (selectedEmployee === 'Select Employee') {
+      setError('Please select an employee first');
+      return;
+    }
+
+    const updatedQuestions = questions.map(q =>
+      q.id === questionId ? { ...q, answer: rating } : q
+    );
+    setQuestions(updatedQuestions);
+
+
+    console.log("Submitting answer change with data:", {
+      questionId,
+      answer: rating,
+      user_id: selectedEmployee
+    });
+
+    try {
+      await axios.patch(`${BASE_URL}/qms/performance/question/answer/${questionId}/`, {
+        answer: rating,
+        user_id: selectedEmployee
+      });
+    } catch (err) {
+      console.error('Error updating answer:', err);
+      setError('Failed to save answer');
+    }
   };
 
-  // Find selected employee details
-  const selectedEmployeeDetails = employeeList.find(emp => emp.id === selectedEmployee) || {};
+
+
+  const combinedOptions = [...(employeeList || []), ...(users || [])].reduce((unique, item) => {
+    const exists = unique.find(x => x.id === item.id);
+    if (!exists) {
+      unique.push(item);
+    }
+    return unique;
+  }, []);
+
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const toggleDropdown = (questionId) => {
+    setOpenDropdown(openDropdown === questionId ? null : questionId);
+  };
+
+
+  const getUserCompanyId = () => {
+    const role = localStorage.getItem("role");
+    if (role === "company") {
+      return localStorage.getItem("company_id");
+    } else if (role === "user") {
+      try {
+        const userCompanyId = localStorage.getItem("user_company_id");
+        return userCompanyId ? JSON.parse(userCompanyId) : null;
+      } catch (e) {
+        console.error("Error parsing user company ID:", e);
+        return null;
+      }
+    }
+    return null;
+  };
 
   return (
     <AnimatePresence>
@@ -59,7 +174,6 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
             exit={{ scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
-
             <div className="bg-[#1C1C24] text-white flex items-start justify-center rounded-lg">
               <div className="w-[528px]">
                 <div className="px-[8px] pt-5 pb-6 border-b border-[#383840] mx-3">
@@ -80,11 +194,14 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                       onBlur={() => setIsDropdownOpen(false)}
                     >
                       <option value="Select Employee">Select Employee</option>
-                      {employeeList.map(emp => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.name}
+                      {combinedOptions.map(item => (
+                        <option key={item.id} value={item.id}>
+                          {item.first_name && item.last_name
+                            ? `${item.first_name} ${item.last_name}`
+                            : item.first_name || item.last_name || item.username || item.email}
                         </option>
                       ))}
+
                     </select>
 
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
@@ -96,63 +213,78 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   </div>
                 </div>
 
-                <div className="max-h-[320px]">
-                  <table className="min-w-full">
-                    <thead className='bg-[#24242D]'>
-                      <tr className="h-[48px]">
-                        <th className="px-4 text-left employee-evaluation-theads w-16">
-                          No
-                        </th>
-                        <th className="px-4 text-left employee-evaluation-theads">
-                          Question
-                        </th>
-                        <th className="px-4 text-right employee-evaluation-theads w-32">
-                          Answer
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[1, 2, 3, 4].map((num, index) => (
-                        <tr key={index} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
-                          <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                            {num}
-                          </td>
-                          <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                            Anonymous
-                          </td>
-                          <td className="px-4 whitespace-nowrap text-right">
-                            <div className="relative">
-                              <button
-                                onClick={() => toggleDropdown(index)}
-                                className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
-                              >
-                                <span>{ratings[index]}</span>
-                                <ChevronDown
-                                  size={16}
-                                  className={`transition-transform duration-300 ${openDropdown === index ? 'rotate-180' : ''}`}
-                                />
-                              </button>
-
-                              {openDropdown === index && (
-                                <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100] max-h-64 overflow-scroll">
-                                  {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                                    <div
-                                      key={rating}
-                                      className="px-4 py-2 text-sm hover:bg-[#1a1a22] cursor-pointer text-center"
-                                      onClick={() => handleRatingChange(index, rating)}
-                                    >
-                                      {rating}
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          </td>
+                {loading ? (
+                  <div className="text-center py-6">Loading questions...</div>
+                ) : error ? (
+                  <div className="text-center py-6 text-red-500">{error}</div>
+                ) : (
+                  <div className="max-h-[320px] overflow-y-auto">
+                    <table className="min-w-full">
+                      <thead className='bg-[#24242D]'>
+                        <tr className="h-[48px]">
+                          <th className="px-4 text-left employee-evaluation-theads w-16">
+                            No
+                          </th>
+                          <th className="px-4 text-left employee-evaluation-theads">
+                            Question
+                          </th>
+                          <th className="px-4 text-right employee-evaluation-theads w-32">
+                            Answer
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {questions.length > 0 ? (
+                          questions.map((question, index) => (
+                            <tr key={question.id} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
+                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                {index + 1}
+                              </td>
+                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                {question.question_text}
+                              </td>
+                              <td className="px-4 whitespace-nowrap text-right">
+                                <div className="relative">
+                                  <button
+                                    onClick={() => toggleDropdown(question.id)}
+                                    className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
+                                  >
+                                    <span>{question.answer || 'N/A'}</span>
+                                    <ChevronDown
+                                      size={16}
+                                      className={`transition-transform duration-300 ${openDropdown === question.id ? 'rotate-180' : ''}`}
+                                    />
+                                  </button>
+
+                                  {openDropdown === question.id && (
+                                    <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-[100]">
+                                      {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+                                        <div
+                                          key={rating}
+                                          className="px-4 py-2 text-sm hover:bg-gray-600 cursor-pointer text-center"
+                                          onClick={() => {
+                                            handleAnswerChange(question.id, rating);
+                                            toggleDropdown(null);
+                                          }}
+                                        >
+                                          {rating}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="3" className="text-center py-4 not-found">No questions available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
 
                 <div className="p-4 flex justify-end space-x-4">
                   <button className="cancel-btn duration-200"
@@ -160,8 +292,10 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
                   >
                     Cancel
                   </button>
-                  <button className="save-btn duration-200">
-                    Save
+                  <button className="save-btn duration-200"
+                    onClick={onClose}
+                  >
+                    Done
                   </button>
                 </div>
               </div>
@@ -172,14 +306,35 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList = demoEmploye
     </AnimatePresence>
   );
 };
-
-const QuestionsModal = ({ isOpen, onClose }) => {
+const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
   const [formData, setFormData] = useState({
     question: '',
   });
-
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (performanceId) {
+        setLoading(true);
+        try {
+          const response = await axios.get(`${BASE_URL}/qms/performance/${performanceId}/questions/`);
+          setQuestions(response.data);
+        } catch (err) {
+          console.error('Error fetching questions:', err);
+          setError('Failed to load questions');
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (isOpen) {
+      fetchQuestions();
+    }
+  }, [isOpen, performanceId]);
 
   const handleChange = (e) => {
     setFormData({
@@ -188,27 +343,43 @@ const QuestionsModal = ({ isOpen, onClose }) => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log('Submitting formData:', formData);
     if (!formData.question.trim()) {
       setError('Question is required');
       return;
     }
 
-    setQuestions([...questions, {
-      id: questions.length + 1,
-      question: formData.question,
-      anonymous: true
-    }]);
+    setLoading(true);
+    try {
+      const response = await axios.post(`${BASE_URL}/qms/performance/question-add/`, {
+        performance: performanceId,
+        question_text: formData.question
+      });
 
-    // Reset form data
-    setFormData({ question: '' });
-    setError('');
+      setQuestions([...questions, response.data]);
+      setFormData({ question: '' });
+      setError('');
+    } catch (err) {
+      console.error('Error adding question:', err);
+      setError('Failed to add question');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id) => {
-    setQuestions(questions.filter(question => question.id !== id));
+  const handleDelete = async (id) => {
+    setLoading(true);
+    try {
+      await axios.delete(`${BASE_URL}/qms/performance/question/${id}/delete/`);
+      setQuestions(questions.filter(question => question.id !== id));
+    } catch (err) {
+      console.error('Error deleting question:', err);
+      setError('Failed to delete question');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -244,6 +415,7 @@ const QuestionsModal = ({ isOpen, onClose }) => {
                   onChange={handleChange}
                   className="w-full bg-[#24242D] rounded-md p-3 h-[111px] text-white outline-none add-question-inputs"
                   placeholder="Add Question"
+                  disabled={loading}
                 />
                 {error && <p className="text-red-500 mt-1">{error}</p>}
               </div>
@@ -257,53 +429,60 @@ const QuestionsModal = ({ isOpen, onClose }) => {
                       onClose();
                     }}
                     className="flex-1 cancel-btn duration-200"
+                    disabled={loading}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     className="flex-1 save-btn duration-200"
+                    disabled={loading}
                   >
-                    Save
+                    {loading ? 'Saving...' : 'Save'}
                   </button>
                 </div>
               </div>
             </form>
 
-            {questions.length > 0 && (
-              <div className="mb-4">
-                <table className="w-full text-left">
-                  <thead className="bg-[#24242D]">
-                    <tr className='h-[48px]'>
-                      <th className="px-4 add-question-theads text-left w-[10%]">No</th>
-                      <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
-                      <th className="px-4 pr-8 add-question-theads text-right">Delete</th>
-                    </tr>
-                  </thead>
-                </table>
-                <div className="max-h-[148px] overflow-y-auto">
+            {loading && questions.length === 0 ? (
+              <div className="text-center py-4">Loading questions...</div>
+            ) : (
+              questions.length > 0 && (
+                <div className="mb-4">
                   <table className="w-full text-left">
-                    <tbody>
-                      {questions.map((question) => (
-                        <tr key={question.id} className="border-b border-[#383840] h-[42px] last:border-b-0">
-                          <td className="px-4 add-question-data w-[10%]">{question.id}</td>
-                          <td className="px-4 add-question-data w-[70%]">
-                            {question.question}
-                          </td>
-                          <td className="px-4 text-center">
-                            <button
-                              onClick={() => handleDelete(question.id)}
-                              className="text-gray-400 hover:text-white"
-                            >
-                              <img src={deleteIcon} alt="Delete Icon" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
+                    <thead className="bg-[#24242D]">
+                      <tr className='h-[48px]'>
+                        <th className="px-4 add-question-theads text-left w-[10%]">No</th>
+                        <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
+                        <th className="px-4 pr-8 add-question-theads text-right">Delete</th>
+                      </tr>
+                    </thead>
                   </table>
+                  <div className="max-h-[148px] overflow-y-auto">
+                    <table className="w-full text-left">
+                      <tbody>
+                        {questions.map((question, index) => (
+                          <tr key={question.id} className="border-b border-[#383840] h-[42px] last:border-b-0">
+                            <td className="px-4 add-question-data w-[10%]">{index + 1}</td>
+                            <td className="px-4 add-question-data w-[70%]">
+                              {question.question_text}
+                            </td>
+                            <td className="px-4 text-center">
+                              <button
+                                onClick={() => handleDelete(question.id)}
+                                className="text-gray-400 hover:text-white"
+                                disabled={loading}
+                              >
+                                <img src={deleteIcon} alt="Delete Icon" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )
             )}
           </motion.div>
         </motion.div>
@@ -313,71 +492,154 @@ const QuestionsModal = ({ isOpen, onClose }) => {
 };
 
 const QmsEmployeePerformance = () => {
-  const initialData = [
-    { id: 1, title: 'Anonymous', validTill: '03-12-2024', email: 'employee1@company.com' },
-    { id: 2, title: 'Anonymous', validTill: '03-12-2024', email: 'employee2@company.com' },
-  ];
-
   // State for data management
-  const [employees, setEmployees] = useState(initialData);
+  const [performances, setPerformances] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
 
   // Modal states
   const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
 
+  const getUserCompanyId = () => {
+    const role = localStorage.getItem("role");
+    if (role === "company") {
+      return localStorage.getItem("company_id");
+    } else if (role === "user") {
+      try {
+        const userCompanyId = localStorage.getItem("user_company_id");
+        return userCompanyId ? JSON.parse(userCompanyId) : null;
+      } catch (e) {
+        console.error("Error parsing user company ID:", e);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Fetch employee performance data
+  useEffect(() => {
+    const fetchPerformanceData = async () => {
+      setLoading(true);
+      try {
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+          setError('Company ID not found');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/qms/performance/${companyId}/`);
+        setPerformances(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load employee performance data');
+        console.error('Error fetching employee performance data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Fetch employees for dropdown
+
+
+    fetchPerformanceData();
+
+  }, []);
+
   // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter employees based on search term
-  const filteredEmployees = employees.filter(employee =>
-    employee.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter performances based on search term
+  const filteredPerformances = performances.filter(performance =>
+    performance.evaluation_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Add new employee
-  const handleAddEmployee = (e) => {
-    navigate('/company/qms/add-employee-performance')
+  // Add new employee performance evaluation
+  const handleAddEmployee = () => {
+    navigate('/company/qms/add-employee-performance');
   };
 
+  // Go to drafts
   const handleDraftEmployeePerformance = () => {
-    navigate('/company/qms/draft-employee-performance')
-  }
-
-  const handleView = () => {
-    navigate('/company/qms/view-employee-performance')
-  }
-
-  // Edit employee
-  const handleEdit = () => {
-    navigate('/company/qms/edit-employee-performance')
+    navigate('/company/qms/draft-employee-performance');
   };
 
-  // Delete employee
-  const handleDelete = (id) => {
-    // Implementation
+  // View performance
+  const handleView = (id) => {
+    navigate(`/company/qms/view-employee-performance/${id}`);
+  };
+
+  // Edit performance
+  const handleEdit = (id) => {
+    navigate(`/company/qms/edit-employee-performance/${id}`);
+  };
+
+  // Delete performance
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this evaluation?')) {
+      try {
+        await axios.delete(`${BASE_URL}/qms/performance/${id}/update/`);
+        setPerformances(performances.filter(performance => performance.id !== id));
+      } catch (err) {
+        console.error('Error deleting performance evaluation:', err);
+        alert('Failed to delete the evaluation');
+      }
+    }
+  };
+
+  // Send email
+  const handleSendEmail = async (performanceId) => {
+    try {
+      await axios.post(`${BASE_URL}/qms/performance/send-email/${performanceId}/`);
+      alert('Email sent successfully');
+    } catch (err) {
+      console.error('Error sending email:', err);
+      alert('Failed to send email');
+    }
   };
 
   // Open evaluation modal
-  const openEvaluationModal = (employee) => {
-    setEvaluationModal({ isOpen: true, employee });
+  const openEvaluationModal = (performance) => {
+    setEvaluationModal({
+      isOpen: true,
+      employee: performance,
+      performanceId: performance.id
+    });
   };
 
   // Open questions modal
-  const openQuestionsModal = () => {
-    setQuestionsModal({ isOpen: true, });
+  const openQuestionsModal = (performanceId) => {
+    setQuestionsModal({ isOpen: true, performanceId });
+  };
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      .replace(/(\d+)\/(\d+)\/(\d+)/, "$2-$1-$3");
   };
 
   // Pagination
   const itemsPerPage = 10;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredEmployees.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage);
+  const currentItems = filteredPerformances.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPerformances.length / itemsPerPage);
+
+  if (loading) {
+    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
+  }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -404,8 +666,8 @@ const QmsEmployeePerformance = () => {
             onClick={handleDraftEmployeePerformance}
           >
             <span>Draft</span>
-             
           </button>
+
           <button
             className="flex items-center justify-center !px-[5px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleAddEmployee}
@@ -434,107 +696,122 @@ const QmsEmployeePerformance = () => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((employee) => (
-              <tr key={employee.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                <td className="pl-5 pr-2 add-manual-datas">{employee.id}</td>
-                <td className="px-2 add-manual-datas">{employee.title}</td>
-                <td className="px-2 add-manual-datas">{employee.validTill}</td>
-                <td className="px-2 add-manual-datas">
-                  <button className="text-[#1E84AF]">Send Mail</button>
-                </td>
-                <td className="px-2 add-manual-datas">
-                  <button
-                    className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
-                    onClick={() => openEvaluationModal(employee)}
-                  >
-                    Click to Evaluate
-                  </button>
-                </td>
-                <td className="px-2 add-manual-datas">
-                  <button className="text-[#1E84AF]">See Result Graph</button>
-                </td>
-                <td className="px-2 add-manual-datas">
-                  <button
-                    className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
-                    onClick={() => openQuestionsModal(employee)}
-                  >
-                    Add Questions
-                  </button>
-                </td>
-                <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={() => handleView()}>
-                    <img src={viewIcon} alt="View Icon" className='action-btn' />
-                  </button>
-                </td>
-                <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={() => handleEdit()}>
-                    <img src={editIcon} alt="Edit Icon" className='action-btn' />
-                  </button>
-                </td>
-                <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={() => handleDelete(employee.id)}>
-                    <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
-                  </button>
-                </td>
+            {currentItems.length > 0 ? (
+              currentItems.map((performance, index) => (
+                <tr key={performance.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                  <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                  <td className="px-2 add-manual-datas">{performance.evaluation_title || 'Anonymous'}</td>
+                  <td className="px-2 add-manual-datas">{formatDate(performance.valid_till)}</td>
+                  <td className="px-2 add-manual-datas">
+                    <button
+                      className="text-[#1E84AF]"
+                      onClick={() => handleSendEmail(performance.id)}
+                    >
+                      Send Mail
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    <button
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
+                      onClick={() => openEvaluationModal(performance)}
+                    >
+                      Click to Evaluate
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    <button className="text-[#1E84AF]">See Result Graph</button>
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    <button
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
+                      onClick={() => openQuestionsModal(performance.id)}
+                    >
+                      Add Questions
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button onClick={() => handleView(performance.id)}>
+                      <img src={viewIcon} alt="View Icon" className='action-btn' />
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button onClick={() => handleEdit(performance.id)}>
+                      <img src={editIcon} alt="Edit Icon" className='action-btn' />
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button onClick={() => handleDelete(performance.id)}>
+                      <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="10" className="text-center py-4 not-found">No employee performance evaluations found</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-3">
-        <div className='text-white total-text'>Total-{filteredEmployees.length}</div>
-        <div className="flex items-center gap-5">
-          <button
-            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-          >
-            Previous
-          </button>
+      {filteredPerformances.length > 0 && (
+        <div className="flex justify-between items-center mt-3">
+          <div className='text-white total-text'>Total-{filteredPerformances.length}</div>
+          <div className="flex items-center gap-5">
+            <button
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </button>
 
-          {Array.from({ length: Math.min(4, totalPages) }, (_, i) => {
-            // Show pages around current page
-            const pageToShow = currentPage <= 2 ? i + 1 :
-              currentPage >= totalPages - 1 ? totalPages - 3 + i :
-                currentPage - 2 + i;
+            {Array.from({ length: Math.min(4, totalPages) }, (_, i) => {
+              // Show pages around current page
+              const pageToShow = currentPage <= 2 ? i + 1 :
+                currentPage >= totalPages - 1 ? totalPages - 3 + i :
+                  currentPage - 2 + i;
 
-            if (pageToShow <= totalPages) {
-              return (
-                <button
-                  key={pageToShow}
-                  className={`${currentPage === pageToShow ? 'pagin-active' : 'pagin-inactive'
-                    }`}
-                  onClick={() => setCurrentPage(pageToShow)}
-                >
-                  {pageToShow}
-                </button>
-              );
-            }
-            return null;
-          })}
+              if (pageToShow <= totalPages) {
+                return (
+                  <button
+                    key={pageToShow}
+                    className={`${currentPage === pageToShow ? 'pagin-active' : 'pagin-inactive'}`}
+                    onClick={() => setCurrentPage(pageToShow)}
+                  >
+                    {pageToShow}
+                  </button>
+                );
+              }
+              return null;
+            })}
 
-          <button
-            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={currentPage === totalPages}
-          >
-            Next
-          </button>
+            <button
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Modals */}
       <EvaluationModal
         isOpen={evaluationModal.isOpen}
         onClose={() => setEvaluationModal({ isOpen: false, employee: null })}
         employee={evaluationModal.employee}
+        employeeList={employees}
+        performanceId={evaluationModal.performanceId}
       />
 
       <QuestionsModal
         isOpen={questionsModal.isOpen}
         onClose={() => setQuestionsModal({ isOpen: false })}
+        performanceId={questionsModal.performanceId}
       />
     </div>
   );

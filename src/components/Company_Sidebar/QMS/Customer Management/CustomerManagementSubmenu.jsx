@@ -6,7 +6,7 @@ import record from "../../../../assets/images/Company-Sidebar/record-format.svg"
 import parties from "../../../../assets/images/Company-Sidebar/interested parties.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const CustomerManagementSubmenu = () => {
+const CustomerManagementSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -15,13 +15,20 @@ const CustomerManagementSubmenu = () => {
             id: "add-customer ",
             label: "Add Customer ",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            //   path: "/company/qms/policy",
+              path: "/company/qms/add-customer",
         },
         {
             id: "list-customer",
             label: "List Customer",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            //   path: "/company/qms/manual",
+              path: "/company/qms/list-customer",
+              relatedPaths: [
+                "/company/qms/edit-customer",
+                "/company/qms/view-customer",
+                "/company/qms/draft-customer",
+                "/company/qms/edit-draft-customer",
+                "/company/qms/view-draft-customer",
+              ]
         },
         {
             id: "add-complaints-feedback",
@@ -29,7 +36,7 @@ const CustomerManagementSubmenu = () => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            //   path: "/company/qms/procedure",
+              path: "/company/qms/add-complaints",
         },
         {
             id: "list-complaints-feedback",
@@ -37,7 +44,14 @@ const CustomerManagementSubmenu = () => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            //   path: "/company/qms/record-format",
+              path: "/company/qms/list-complaints",
+              relatedPaths: [
+                "/company/qms/edit-complaints",
+                // "/company/qms/view-customer",
+                // "/company/qms/draft-customer",
+                // "/company/qms/edit-draft-customer",
+                // "/company/qms/view-draft-customer",
+              ]
         },
         {
             id: "customer-satisfaction-survey",
@@ -54,7 +68,10 @@ const CustomerManagementSubmenu = () => {
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     const handleCategoryClick = (category) => {
