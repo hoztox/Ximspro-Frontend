@@ -39,8 +39,9 @@ const AuditInspectionSubmenu = (props) => {
               "/company/qms/list-inspection",
               "/company/qms/edit-inspection",
               "/company/qms/view-inspection",
-              // "/company/qms/edit-draft-audit",
-              // "/company/qms/view-draft-audit",
+              "/company/qms/draft-inspection",
+              "/company/qms/edit-draft-inspection",
+              "/company/qms/view-draft-inspection",
             ]
         },
     ]

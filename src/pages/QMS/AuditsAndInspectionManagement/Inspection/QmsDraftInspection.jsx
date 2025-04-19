@@ -1,30 +1,15 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from 'lucide-react';
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
-import AddInspectionReportModal from './AddInspectionReportModal';
-import ViewInspectionReportModal from './ViewInspectionReportModal';
+ 
 
-
-const QmsListInspection = () => {
+const QmsDraftInspection = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
-
-    // Modal visibility and animation states
-    const [addInspectionReport, setAddInspectionReport] = useState(false);
-    const [viewInspectionReport, setViewInspectionReport] = useState(false);
-
-    // Animation states
-    const [addInspectionReportAnimating, setAddInspectionReportAnimating] = useState(false);
-    const [viewInspectionReportAnimating, setViewInspectionReportAnimating] = useState(false);
-    const [addInspectionReportExiting, setAddInspectionReportExiting] = useState(false);
-    const [viewInspectionReportExiting, setViewInspectionReportExiting] = useState(false);
-
-    const [selectedMeeting, setSelectedMeeting] = useState(null);
 
     // Demo data
     const [trainingItems, setTrainingItems] = useState([
@@ -55,71 +40,22 @@ const QmsListInspection = () => {
         setTrainingItems(trainingItems.filter(item => item.id !== id));
     };
 
-    const handleAddInspection = () => {
-        navigate('/company/qms/add-inspection');
+    const handleClose = () => {
+        navigate('/company/qms/list-inspection');
     };
 
-    const handleDraftInspection = () => {
-        navigate('/company/qms/draft-inspection');
+    const handleEditDraftInspections = () => {
+        navigate('/company/qms/edit-draft-inspection');
     };
 
-    const handleEditInspection = () => {
-        navigate('/company/qms/edit-inspection');
-    };
-
-    const handleViewInspection = () => {
-        navigate('/company/qms/view-inspection');
-    };
-
-    // Modal handlers with animations
-    const openAddInspectionReportModal = (item) => {
-        setSelectedMeeting(item);
-        setAddInspectionReport(true);
-        setAddInspectionReportAnimating(true);
-        setTimeout(() => setAddInspectionReportAnimating(false), 300);
-    };
-
-    const openViewInspectionReportModal = (item) => {
-        setSelectedMeeting(item);
-        setViewInspectionReport(true);
-        setViewInspectionReportAnimating(true);
-        setTimeout(() => setViewInspectionReportAnimating(false), 300);
-    };
-
-    const closeAddInspectionReportModal = () => {
-        setAddInspectionReportExiting(true);
-        setTimeout(() => {
-            setAddInspectionReport(false);
-            setAddInspectionReportExiting(false);
-        }, 200);
-    };
-
-    const closeViewInspectionReportModal = () => {
-        setViewInspectionReportExiting(true);
-        setTimeout(() => {
-            setViewInspectionReport(false);
-            setViewInspectionReportExiting(false);
-        }, 200);
-    };
-
-    const handleSaveMinutes = (minutesData) => {
-        // Logic to save minutes to the selected meeting
-        if (selectedMeeting && minutesData.minutes) {
-            const updatedItems = trainingItems.map(item => {
-                if (item.id === selectedMeeting.id) {
-                    return { ...item, minutes: minutesData.minutes };
-                }
-                return item;
-            });
-            setTrainingItems(updatedItems);
-            closeAddInspectionReportModal();
-        }
+    const handleViewDraftInspection = () => {
+        navigate('/company/qms/view-draft-inspection');
     };
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">Inspections</h1>
+                <h1 className="list-awareness-training-head">Draft Inspections</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -133,19 +69,10 @@ const QmsListInspection = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftInspection}
-                    >
-                        <span>Draft</span>
-                    </button>
-                    <button
-                        className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddInspection}
-                    >
-                        <span>Add Inspection</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
-                    </button>
+                    
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                         <X className="text-white" />
+                     </button>
                 </div>
             </div>
             <div className="overflow-hidden">
@@ -157,10 +84,8 @@ const QmsListInspection = () => {
                             <th className="px-3 text-left list-awareness-training-thead">Inspection Type</th>
                             <th className="px-3 text-left list-awareness-training-thead">Date Planned</th>
                             <th className="px-3 text-left list-awareness-training-thead">Area/Function</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Date Conducted</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Add / View Reports</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Action</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Edit</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
                     </thead>
@@ -171,33 +96,18 @@ const QmsListInspection = () => {
                                 <td className="px-3 list-awareness-training-datas">{item.title}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.inspection_type}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.date_planned}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.area}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.date_conducted}</td>
-                                <td className="px-3 list-awareness-training-datas text-center flex items-center justify-center gap-6 h-[53px] text-[#1E84AF]">
-                                    <button
-                                        onClick={() => openAddInspectionReportModal(item)}
-                                        className="hover:text-blue-400 transition-colors duration-200"
-                                    >
-                                        Add
-                                    </button>
-                                    <button
-                                        onClick={() => openViewInspectionReportModal(item)}
-                                        className="hover:text-blue-400 transition-colors duration-200"
-                                    >
-                                        View
-                                    </button>
+                                <td className="px-3 list-awareness-training-datas">{item.area}</td>                  
+                                <td className="px-3 list-awareness-training-datas text-left">
+                                     <button className='text-[#1E84AF]'
+                                     onClick={handleEditDraftInspections}
+                                     >
+                                        Click to Continue
+                                     </button>
                                 </td>
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleViewInspection}>
+                                        <button onClick={handleViewDraftInspection}>
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleEditInspection}>
-                                            <img src={edits} alt="Edit Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
                                 </td>
@@ -244,25 +154,7 @@ const QmsListInspection = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Use the separate modal components */}
-            <AddInspectionReportModal
-                isVisible={addInspectionReport}
-                isExiting={addInspectionReportExiting}
-                isAnimating={addInspectionReportAnimating}
-                selectedMeeting={selectedMeeting}
-                onClose={closeAddInspectionReportModal}
-                onSave={handleSaveMinutes}
-            />
-
-            <ViewInspectionReportModal
-                isVisible={viewInspectionReport}
-                isExiting={viewInspectionReportExiting}
-                isAnimating={viewInspectionReportAnimating}
-                selectedMeeting={selectedMeeting}
-                onClose={closeViewInspectionReportModal}
-            />
         </div>
     );
 };
-export default QmsListInspection
+export default QmsDraftInspection
