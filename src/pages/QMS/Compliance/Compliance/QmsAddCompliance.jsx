@@ -29,6 +29,8 @@ const QmsAddCompliance = () => {
     send_notification: false,
   });
 
+  const [error, setError] = useState('')
+
   const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] = useState(false);
   const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] = useState(false);
 
