@@ -6,8 +6,7 @@ import { ChevronDown } from 'lucide-react';
 import EditEmployeeSatisfactionSuccessModal from '../Modals/EditEmployeeSatisfactionSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
 
-
-const EditQmsEmployeeSatisfaction = () => {
+const QmsEditCustomerSurvey = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -157,7 +156,7 @@ const EditQmsEmployeeSatisfaction = () => {
             setShowEditEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowEditEmployeeSatisfactionSuccessModal(false);
-                navigate("/company/qms/list-satisfaction-survey");
+                navigate("/company/qms/list-customer-survey");
             }, 1500);
         } catch (err) {
             console.error("Error updating survey evaluation:", err);
@@ -171,7 +170,7 @@ const EditQmsEmployeeSatisfaction = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-satisfaction-survey');
+        navigate('/company/qms/list-customer-survey');
     };
 
     // Generate options for the date selectors
@@ -217,12 +216,12 @@ const EditQmsEmployeeSatisfaction = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Edit Employee survey Evaluation</h1>
+                    <h1 className="add-employee-performance-head">Edit Customer Satisfaction Survey</h1>
                     <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
-                        onClick={() => navigate('/company/qms/list-satisfaction-survey')}
+                        onClick={() => navigate('/company/qms/list-customer-survey')}
                     >
-                        List Employee Satisfaction survey
+                        List Customer Satisfaction Survey
                     </button>
                 </div>
 
@@ -268,15 +267,7 @@ const EditQmsEmployeeSatisfaction = () => {
                             />
                         </div>
 
-                        <div className="md:row-span-2">
-                            <label className="block employee-performace-label">Survey Description</label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                className="w-full h-full min-h-[151px] employee-performace-inputs"
-                            />
-                        </div>
+
 
                         <div>
                             <label className="block employee-performace-label">Valid Till</label>
@@ -343,6 +334,16 @@ const EditQmsEmployeeSatisfaction = () => {
                             </div>
                         </div>
 
+                        <div className="md:row-span-2 col-span-2">
+                            <label className="block employee-performace-label">Survey Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                className="w-full h-full min-h-[84px] employee-performace-inputs"
+                            />
+                        </div>
+
 
 
                     </div>
@@ -369,5 +370,4 @@ const EditQmsEmployeeSatisfaction = () => {
         </div>
     );
 };
-
-export default EditQmsEmployeeSatisfaction
+export default QmsEditCustomerSurvey

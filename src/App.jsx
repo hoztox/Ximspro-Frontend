@@ -225,6 +225,13 @@ import QmsViewComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedb
 import QmsDraftComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftComplaints";
 import QmsDraftEditComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftEditComplaints";
 import QmsDraftViewComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftViewComplaints";
+import QmsListCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsListCustomerSurvey";
+import QmsAddCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsAddCustomerSurvey";
+import QmsEditCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsEditCustomerSurvey";
+import QmsViewCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsViewCustomerSurvey";
+import QmsDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsDraftCustomerSurvey";
+import QmsEditDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsEditDraftCustomerSurvey";
+import QmsViewDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsViewDraftCustomerSurvey";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -412,6 +419,14 @@ const ThemedApp = () => {
           <Route path="qms/draft-complaints" element={<QmsDraftComplaints/>} />
           <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints/>} />
           <Route path="qms/view-draft-complaints" element={<QmsDraftViewComplaints/>} />
+
+          <Route path="qms/list-customer-survey" element={<QmsListCustomerSurvey/>} />
+          <Route path="qms/add-customer-survey" element={<QmsAddCustomerSurvey/>} />
+          <Route path="qms/edit-customer-survey" element={<QmsEditCustomerSurvey/>} />
+          <Route path="qms/view-customer-survey" element={<QmsViewCustomerSurvey/>} />
+          <Route path="qms/draft-customer-survey" element={<QmsDraftCustomerSurvey/>} />
+          <Route path="qms/edit-draft-customer-survey" element={<QmsEditDraftCustomerSurvey/>} />
+          <Route path="qms/view-draft-customer-survey" element={<QmsViewDraftCustomerSurvey/>} />
 
           
 

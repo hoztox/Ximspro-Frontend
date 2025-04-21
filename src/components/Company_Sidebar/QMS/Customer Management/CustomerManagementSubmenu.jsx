@@ -15,20 +15,20 @@ const CustomerManagementSubmenu = (props) => {
             id: "add-customer ",
             label: "Add Customer ",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-              path: "/company/qms/add-customer",
+            path: "/company/qms/add-customer",
         },
         {
             id: "list-customer",
             label: "List Customer",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-              path: "/company/qms/list-customer",
-              relatedPaths: [
+            path: "/company/qms/list-customer",
+            relatedPaths: [
                 "/company/qms/edit-customer",
                 "/company/qms/view-customer",
                 "/company/qms/draft-customer",
                 "/company/qms/edit-draft-customer",
                 "/company/qms/view-draft-customer",
-              ]
+            ]
         },
         {
             id: "add-complaints-feedback",
@@ -36,7 +36,7 @@ const CustomerManagementSubmenu = (props) => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-              path: "/company/qms/add-complaints",
+            path: "/company/qms/add-complaints",
         },
         {
             id: "list-complaints-feedback",
@@ -44,14 +44,14 @@ const CustomerManagementSubmenu = (props) => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-              path: "/company/qms/list-complaints",
-              relatedPaths: [
+            path: "/company/qms/list-complaints",
+            relatedPaths: [
                 "/company/qms/edit-complaints",
                 "/company/qms/view-complaints",
                 "/company/qms/draft-complaints",
                 "/company/qms/edit-draft-complaints",
                 "/company/qms/view-draft-complaints",
-              ]
+            ]
         },
         {
             id: "customer-satisfaction-survey",
@@ -63,7 +63,15 @@ const CustomerManagementSubmenu = (props) => {
                     className="w-[15px] h-[15px]"
                 />
             ),
-            //   path: "/company/qms/interested-parties",
+            path: "/company/qms/list-customer-survey",
+            relatedPaths: [
+                "/company/qms/add-customer-survey",
+                "/company/qms/edit-customer-survey",
+                "/company/qms/view-customer-survey",
+                "/company/qms/draft-customer-survey",
+                "/company/qms/edit-draft-customer-survey",
+                "/company/qms/view-draft-customer-survey",
+            ]
         },
     ]
 

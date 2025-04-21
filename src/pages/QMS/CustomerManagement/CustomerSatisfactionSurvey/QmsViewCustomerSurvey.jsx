@@ -6,7 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
-const ViewQmsEmployeeSatisfaction = () => {
+const QmsViewCustomerSurvey = () => {
     const [performanceData, setPerformanceData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,11 +34,11 @@ const ViewQmsEmployeeSatisfaction = () => {
     }, [id]);
 
     const handleClose = () => {
-        navigate('/company/qms/list-satisfaction-survey');
+        navigate('/company/qms/list-customer-survey');
     };
 
     const handleEdit = () => {
-        navigate(`/company/qms/edit-satisfaction-survey/${id}`);
+        navigate(`/company/qms/edit-customer-survey/${id}`);
     };
 
     const handleDelete = async () => {
@@ -64,7 +64,7 @@ const ViewQmsEmployeeSatisfaction = () => {
     if (loading) {
         return (
             <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
-                <p className="text-xl">Loading...</p>
+                <p className="text-ms not-found">Loading...</p>
             </div>
         );
     }
@@ -80,7 +80,7 @@ const ViewQmsEmployeeSatisfaction = () => {
     if (!performanceData) {
         return (
             <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
-                <p className="text-xl">No data found</p>
+                <p className="text-ms not-found">No data found</p>
             </div>
         );
     }
@@ -88,7 +88,7 @@ const ViewQmsEmployeeSatisfaction = () => {
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                <h2 className="view-employee-head">Employee Satisfaction Survey Information</h2>
+                <h2 className="view-employee-head">Customer Satisfaction Survey Information</h2>
                 <button onClick={handleClose} className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md">
                     <X className='text-white' />
                 </button>
@@ -106,12 +106,6 @@ const ViewQmsEmployeeSatisfaction = () => {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">Survey Description</label>
-                        <div className="view-employee-data">
-                            {performanceData.description || 'No description provided'}
-                        </div>
-                    </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">Valid Till</label>
@@ -120,7 +114,14 @@ const ViewQmsEmployeeSatisfaction = () => {
                         </div>
                     </div>
 
-                    
+                    <div>
+                        <label className="block view-employee-label mb-[6px]">Survey Description</label>
+                        <div className="view-employee-data">
+                            {performanceData.description || 'No description provided'}
+                        </div>
+                    </div>
+
+
 
                     <div className="flex justify-end items-end space-x-10 md:col-start-2">
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
@@ -138,9 +139,8 @@ const ViewQmsEmployeeSatisfaction = () => {
                         </div>
                     </div>
                 </div>
-            </div>       
+            </div>
         </div>
     );
 };
-
-export default ViewQmsEmployeeSatisfaction
+export default QmsViewCustomerSurvey

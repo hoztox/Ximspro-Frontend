@@ -6,7 +6,7 @@ import { BASE_URL } from "../../../../Utils/Config";
 import EditDraftEmployeeSatisfactionSuccessModal from '../Modals/EditDraftEmployeeSatisfactionSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
 
-const QmsEditDraftEmployeeSatisfaction = () => {
+const QmsEditDraftCustomerSurvey = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -141,7 +141,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
             setShowEditDraftEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowEditDraftEmployeeSatisfactionSuccessModal(false);
-                navigate("/company/qms/draft-satisfaction-survey");
+                navigate("/company/qms/draft-customer-survey");
             }, 1500);
         } catch (err) {
             console.error("Error updating survey evaluation:", err);
@@ -154,12 +154,12 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         }
     };
 
-    const handleListEmployeesurvey = () => {
-        navigate('/company/qms/draft-satisfaction-survey');
+    const handleListDraftCustomerSurvey = () => {
+        navigate('/company/qms/draft-customer-survey');
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/draft-satisfaction-survey');
+        navigate('/company/qms/draft-customer-survey');
     };
 
     // Generate date options
@@ -197,12 +197,12 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Edit Draft Employee Survey Evaluation</h1>
+                    <h1 className="add-employee-performance-head">Edit Draft Customer Satisfaction Survey</h1>
                     <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
-                        onClick={handleListEmployeesurvey}
+                        onClick={handleListDraftCustomerSurvey}
                     >
-                        List Draft Employee Satisfaction Survey
+                        List Draft Customer Satisfaction Survey
                     </button>
                 </div>
 
@@ -340,4 +340,4 @@ const QmsEditDraftEmployeeSatisfaction = () => {
 };
 
 
-export default QmsEditDraftEmployeeSatisfaction
+export default QmsEditDraftCustomerSurvey
