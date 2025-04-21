@@ -81,12 +81,7 @@ const QmsViewDraftAudit = () => {
                         </label>
                         <div className="view-employee-data">{formData.procedures}</div>
                     </div>
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                            Corrective Action Needed ?
-                        </label>
-                        <div className="view-employee-data">{formData.corrective_action}</div>
-                    </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Proposed Date for Audit

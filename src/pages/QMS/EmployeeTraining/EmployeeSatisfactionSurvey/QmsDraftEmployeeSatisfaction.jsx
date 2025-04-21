@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, AlertCircle, CheckCircle } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteEmployeeSatisfactionConfirmModal from '../Modals/DeleteEmployeeSatisfactionConfirmModal';
+import DeleteEmployeeSatisfactionSuccessModal from '../Modals/DeleteEmployeeSatisfactionSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEmployeeSatisfaction = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
+    // State for modals
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
+    const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     // State for data management
     const [surveyData, setsurveyData] = useState([]);
@@ -27,13 +37,14 @@ const QmsDraftEmployeeSatisfaction = () => {
         if (companyId) return companyId;
         return null;
     };
+
     useEffect(() => {
         const fetchsurveyData = async () => {
             try {
                 const id = getRelevantUserId();
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/survey-draft/${id}/`);
-               
+
                 setsurveyData(response.data);
                 setError(null);
             } catch (err) {
@@ -70,17 +81,40 @@ const QmsDraftEmployeeSatisfaction = () => {
         navigate(`/company/qms/edit-draft-satisfaction-survey/${id}`);
     };
 
-    // Delete employee
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this draft?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/survey/${id}/update/`);
-                // Remove the deleted item from state
-                setsurveyData(surveyData.filter(item => item.id !== id));
-            } catch (err) {
-                setError("Failed to delete survey evaluation");
-                console.error("Error deleting survey evaluation:", err);
-            }
+    // Open delete confirmation modal
+    const openDeleteModal = (survey) => {
+        setSatisfactionToDelete(survey);
+        setShowDeleteModal(true);
+    };
+
+    // Close delete confirmation modal
+    const closeDeleteModal = () => {
+        setShowDeleteModal(false);
+        setSatisfactionToDelete(null);
+    };
+
+    // Delete employee survey
+    const confirmDelete = async () => {
+        if (!satisfactionToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/survey/${satisfactionToDelete.id}/update/`);
+            // Remove the deleted item from state
+            setsurveyData(surveyData.filter(item => item.id !== satisfactionToDelete.id));
+            // Close delete modal and show success modal
+            setShowDeleteModal(false);
+            setShowDeleteEmployeeSatisfactionSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteEmployeeSatisfactionSuccessModal(false);
+            }, 2000);
+        } catch (err) {
+            // Close delete modal and show error modal
+            setShowDeleteModal(false);
+            setErrorMessage("Failed to delete survey evaluation");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 2000);
         }
     };
 
@@ -166,7 +200,7 @@ const QmsDraftEmployeeSatisfaction = () => {
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button onClick={() => handleDelete(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
                                             </button>
                                         </td>
@@ -225,7 +259,27 @@ const QmsDraftEmployeeSatisfaction = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteEmployeeSatisfactionConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeDeleteModal}
+            />
+
+            {/* Success Modal */}
+            <DeleteEmployeeSatisfactionSuccessModal
+                showDeleteEmployeeSatisfactionSuccessModal={showDeleteEmployeeSatisfactionSuccessModal}
+                onClose={() => setShowDeleteEmployeeSatisfactionSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+            />
         </div>
     );
 };
-export default QmsDraftEmployeeSatisfaction
+
+export default QmsDraftEmployeeSatisfaction;

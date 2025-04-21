@@ -89,12 +89,7 @@ const QmsViewAudit = () => {
                         </label>
                         <div className="view-employee-data">{formData.procedures}</div>
                     </div>
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                        Corrective Action Needed ?
-                        </label>
-                        <div className="view-employee-data">{formData.corrective_action}</div>
-                    </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                         Proposed Date for Audit 
@@ -114,7 +109,9 @@ const QmsViewAudit = () => {
                             </label>
                             <div className="view-employee-data">{formData.notes}</div>
                         </div>
-                        <div className="flex space-x-10">
+                    </div>
+                    
+                        <div className="flex space-x-10 justify-end">
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Edit
                                 <button onClick={handleEdit}>
@@ -137,7 +134,6 @@ const QmsViewAudit = () => {
                                 </button>
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>

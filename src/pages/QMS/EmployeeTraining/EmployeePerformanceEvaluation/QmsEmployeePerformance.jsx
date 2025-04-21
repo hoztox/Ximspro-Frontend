@@ -129,11 +129,11 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
         user_id: selectedEmployee
       });
 
-      // setShowAddRatingSuccessModal(true);
-      // setTimeout(() => {
-      //   setShowAddRatingSuccessModal(false);
-      //   navigate('/company/qms/employee-performance');
-      // }, 1500);
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        navigate('/company/qms/employee-performance');
+      }, 1500);
     } catch (err) {
       console.error('Error updating answer:', err);
       setShowErrorModal(true);
@@ -289,11 +289,11 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                                   </button>
 
                                   {openDropdown === question.id && (
-                                    <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-[100]">
+                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100]">
                                       {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                                         <div
                                           key={rating}
-                                          className="px-4 py-2 text-sm hover:bg-gray-600 cursor-pointer text-center"
+                                          className="px-4 py-2 text-sm hover:bg-[#0e0e13] cursor-pointer text-center"
                                           onClick={() => {
                                             handleAnswerChange(question.id, rating);
                                             toggleDropdown(null);
@@ -326,12 +326,9 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                   </button>
                   <button className="save-btn duration-200"
                     onClick={() => {
-                      setShowAddRatingSuccessModal(true);
-                      setTimeout(() => {
-                        setShowAddRatingSuccessModal(false);
-                        navigate('/company/qms/employee-performance');
+                      
                         onClose();
-                      }, 1500);
+            
                     }}
                   >
                     Done

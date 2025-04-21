@@ -5,12 +5,19 @@ import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { motion, AnimatePresence } from 'framer-motion';
- 
+
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteEmployeeSatisfactionConfirmModal from '../Modals/DeleteEmployeeSatisfactionConfirmModal';
+import DeleteEmployeeSatisfactionSuccessModal from '../Modals/DeleteEmployeeSatisfactionSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import QuestionAddSuccessModal from '../Modals/QuestionAddSuccessModal';
+import DeleteQuestionConfirmModal from '../Modals/DeleteQuestionConfirmModal';
+import DeleteQuestionSuccessModal from '../Modals/DeleteQuestionSuccessModal';
+import RatingAddSuccessModal from '../Modals/RatingAddSuccessModal';
 
- 
+
 
 const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(employee ? employee.id || 'Select Employee' : 'Select Employee');
@@ -20,6 +27,9 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [surveys, setsurveys] = useState([]);
+
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -118,8 +128,17 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
         answer: rating,
         user_id: selectedEmployee
       });
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        navigate('/company/qms/list-satisfaction-survey');
+      }, 1500);
     } catch (err) {
       console.error('Error updating answer:', err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError('Failed to save answer');
     }
   };
@@ -175,7 +194,22 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <div className="bg-[#1C1C24] text-white flex items-start justify-center rounded-lg">
-              <div className="w-[528px]">
+
+              <RatingAddSuccessModal
+                showAddRatingSuccessModal={showAddRatingSuccessModal}
+                onClose={() => {
+                  setShowAddRatingSuccessModal(false);
+                }}
+              />
+
+              <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => {
+                  setShowErrorModal(false);
+                }}
+              />
+
+              <div className="w-[528px]  ">
                 <div className="px-[8px] pt-5 pb-6 border-b border-[#383840] mx-3">
                   <p className="evaluate-modal-head">
                     Please respond to each question on a scale of 1-10, 1<br />
@@ -215,8 +249,6 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
 
                 {loading ? (
                   <div className="text-center py-6">Loading questions...</div>
-                ) : error ? (
-                  <div className="text-center py-6 text-red-500">{error}</div>
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     <table className="min-w-full">
@@ -257,11 +289,11 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
                                   </button>
 
                                   {openDropdown === question.id && (
-                                    <div className="absolute right-0 mt-1 w-24 bg-gray-700 rounded shadow-lg z-[100]">
+                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100]">
                                       {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
                                         <div
                                           key={rating}
-                                          className="px-4 py-2 text-sm hover:bg-gray-600 cursor-pointer text-center"
+                                          className="px-4 py-2 text-sm hover:bg-[#0e0e13] cursor-pointer text-center"
                                           onClick={() => {
                                             handleAnswerChange(question.id, rating);
                                             toggleDropdown(null);
@@ -278,7 +310,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="3" className="text-center py-4">No questions available</td>
+                            <td colSpan="3" className="text-center py-4 not-found">No questions available</td>
                           </tr>
                         )}
                       </tbody>
@@ -293,7 +325,10 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
                     Cancel
                   </button>
                   <button className="save-btn duration-200"
-                    onClick={onClose}
+                    onClick={() => {
+                       
+                        onClose();
+                    }}
                   >
                     Done
                   </button>
@@ -307,13 +342,21 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, surveyId }) 
   );
 };
 const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     question: '',
   });
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
+  // Modal states
+  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -325,6 +368,8 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
         } catch (err) {
           console.error('Error fetching questions:', err);
           setError('Failed to load questions');
+          setErrorMessage('Failed to load questions');
+          setShowErrorModal(true);
         } finally {
           setLoading(false);
         }
@@ -348,6 +393,8 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
     console.log('Submitting formData:', formData);
     if (!formData.question.trim()) {
       setError('Question is required');
+      setErrorMessage('Question is required');
+      setShowErrorModal(true);
       return;
     }
 
@@ -360,25 +407,61 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
 
       setQuestions([...questions, response.data]);
       setFormData({ question: '' });
+      setShowAddQuestionSuccessModal(true);
+      setTimeout(() => {
+        setShowAddQuestionSuccessModal(false);
+        navigate("/company/qms/list-satisfaction-survey");
+      }, 1500);
       setError('');
     } catch (err) {
       console.error('Error adding question:', err);
+      setErrorMessage('Failed to add question');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError('Failed to add question');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (question) => {
+    setQuestionToDelete(question);
+    setShowDeleteModal(true);
+  };
+
+  // Close delete confirmation modal
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setQuestionToDelete(null);
+  };
+
+  // Confirm delete
+  const confirmDelete = async () => {
+    if (!questionToDelete) return;
+
     setLoading(true);
     try {
-      await axios.delete(`${BASE_URL}/qms/survey/question/${id}/delete/`);
-      setQuestions(questions.filter(question => question.id !== id));
+      await axios.delete(`${BASE_URL}/qms/survey/question/${questionToDelete.id}/delete/`);
+      setQuestions(questions.filter(q => q.id !== questionToDelete.id));
+      setShowDeleteModal(false);
+      setShowDeleteQuestionSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteQuestionSuccessModal(false);
+      }, 3000);
     } catch (err) {
       console.error('Error deleting question:', err);
-      setError('Failed to delete question');
+      setShowDeleteModal(false);
+      setErrorMessage('Failed to delete question');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
+      setQuestionToDelete(null);
     }
   };
 
@@ -469,7 +552,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                             </td>
                             <td className="px-4 text-center">
                               <button
-                                onClick={() => handleDelete(question.id)}
+                                onClick={() => openDeleteModal(question)}
                                 className="text-gray-400 hover:text-white"
                                 disabled={loading}
                               >
@@ -487,13 +570,36 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Modals */}
+      <QuestionAddSuccessModal
+        showAddQuestionSuccessModal={showAddQuestionSuccessModal}
+        onClose={() => setShowAddQuestionSuccessModal(false)}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        errorMessage={errorMessage}
+      />
+
+      <DeleteQuestionConfirmModal
+        showDeleteModal={showDeleteModal}
+        onClose={closeDeleteModal}
+        onConfirm={confirmDelete}
+      />
+
+      <DeleteQuestionSuccessModal
+        showDeleteQuestionSuccessModal={showDeleteQuestionSuccessModal}
+        onClose={() => setShowDeleteQuestionSuccessModal(false)}
+      />
     </AnimatePresence>
   );
 };
 
 const QmsEmployeeSatisfaction = () => {
   // State for data management
-  const [surveys, setsurveys] = useState([]);
+  const [surveys, setSurveys] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -504,6 +610,13 @@ const QmsEmployeeSatisfaction = () => {
   // Modal states
   const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
+
+  // Delete related modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
+  const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -523,7 +636,7 @@ const QmsEmployeeSatisfaction = () => {
 
   // Fetch employee survey data
   useEffect(() => {
-    const fetchsurveyData = async () => {
+    const fetchSurveyData = async () => {
       setLoading(true);
       try {
         const companyId = getUserCompanyId();
@@ -534,7 +647,7 @@ const QmsEmployeeSatisfaction = () => {
         }
 
         const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
-        setsurveys(response.data);
+        setSurveys(response.data);
         setError(null);
       } catch (err) {
         setError('Failed to load employee survey data');
@@ -544,11 +657,7 @@ const QmsEmployeeSatisfaction = () => {
       }
     };
 
-    // Fetch employees for dropdown
-
-
-    fetchsurveyData();
-
+    fetchSurveyData();
   }, []);
 
   // Handle search
@@ -557,7 +666,7 @@ const QmsEmployeeSatisfaction = () => {
   };
 
   // Filter surveys based on search term
-  const filteredsurveys = surveys.filter(survey =>
+  const filteredSurveys = surveys.filter(survey =>
     survey.survey_title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -567,7 +676,7 @@ const QmsEmployeeSatisfaction = () => {
   };
 
   // Go to drafts
-  const handleDraftEmployeesurvey = () => {
+  const handleDraftEmployeeSurvey = () => {
     navigate('/company/qms/draft-satisfaction-survey');
   };
 
@@ -581,17 +690,37 @@ const QmsEmployeeSatisfaction = () => {
     navigate(`/company/qms/edit-satisfaction-survey/${id}`);
   };
 
-  // Delete survey
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this evaluation?')) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/survey/${id}/update/`);
-        setsurveys(surveys.filter(survey => survey.id !== id));
-      } catch (err) {
-        console.error('Error deleting survey evaluation:', err);
-        alert('Failed to delete the evaluation');
-      }
+  // Open delete confirmation modal
+  const openDeleteModal = (survey) => {
+    setSatisfactionToDelete(survey);
+    setShowDeleteModal(true);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/survey/${satisfactionToDelete.id}/update/`);
+      setSurveys(surveys.filter(survey => survey.id !== satisfactionToDelete.id));
+      setShowDeleteModal(false);
+      setShowDeleteEmployeeSatisfactionSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteEmployeeSatisfactionSuccessModal(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Error deleting survey evaluation:', err);
+      setShowDeleteModal(false);
+      setErrorMessage('Failed to delete the evaluation');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 2000);
     }
+  };
+
+  // Cancel delete
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setSatisfactionToDelete(null);
   };
 
   // Send email
@@ -601,7 +730,8 @@ const QmsEmployeeSatisfaction = () => {
       alert('Email sent successfully');
     } catch (err) {
       console.error('Error sending email:', err);
-      alert('Failed to send email');
+      setErrorMessage('Failed to send email');
+      setShowErrorModal(true);
     }
   };
 
@@ -618,6 +748,7 @@ const QmsEmployeeSatisfaction = () => {
   const openQuestionsModal = (surveyId) => {
     setQuestionsModal({ isOpen: true, surveyId });
   };
+
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -630,16 +761,16 @@ const QmsEmployeeSatisfaction = () => {
   const itemsPerPage = 10;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredsurveys.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredsurveys.length / itemsPerPage);
+  const currentItems = filteredSurveys.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredSurveys.length / itemsPerPage);
 
   if (loading) {
     return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-  }
+  // if (error) {
+  //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
+  // }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -663,7 +794,7 @@ const QmsEmployeeSatisfaction = () => {
 
           <button
             className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-            onClick={handleDraftEmployeesurvey}
+            onClick={handleDraftEmployeeSurvey}
           >
             <span>Draft</span>
           </button>
@@ -740,7 +871,7 @@ const QmsEmployeeSatisfaction = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleDelete(survey.id)}>
+                    <button onClick={() => openDeleteModal(survey)}>
                       <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
                     </button>
                   </td>
@@ -756,9 +887,9 @@ const QmsEmployeeSatisfaction = () => {
       </div>
 
       {/* Pagination */}
-      {filteredsurveys.length > 0 && (
+      {filteredSurveys.length > 0 && (
         <div className="flex justify-between items-center mt-3">
-          <div className='text-white total-text'>Total-{filteredsurveys.length}</div>
+          <div className='text-white total-text'>Total-{filteredSurveys.length}</div>
           <div className="flex items-center gap-5">
             <button
               className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
@@ -812,6 +943,25 @@ const QmsEmployeeSatisfaction = () => {
         isOpen={questionsModal.isOpen}
         onClose={() => setQuestionsModal({ isOpen: false })}
         surveyId={questionsModal.surveyId}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteEmployeeSatisfactionConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
+
+      {/* Success Modal */}
+      <DeleteEmployeeSatisfactionSuccessModal
+        showDeleteEmployeeSatisfactionSuccessModal={showDeleteEmployeeSatisfactionSuccessModal}
+        onClose={() => setShowDeleteEmployeeSatisfactionSuccessModal(false)}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
       />
     </div>
   );

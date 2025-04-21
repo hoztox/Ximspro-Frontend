@@ -3,11 +3,13 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditDraftEmployeeSatisfactionSuccessModal from '../Modals/EditDraftEmployeeSatisfactionSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftEmployeeSatisfaction = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -18,22 +20,25 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         is_draft: true
     });
 
+    const [showEditDraftEmployeeSatisfactionSuccessModal, setShowEditDraftEmployeeSatisfactionSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     // For date picker UI
     const [dateValues, setDateValues] = useState({
         day: '',
         month: '',
         year: ''
     });
-    
+
     const [focusedField, setFocusedField] = useState("");
-    
+
     useEffect(() => {
         const fetchsurveyData = async () => {
             try {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
                 const data = response.data;
-                
+
                 // Set the main form data
                 setFormData({
                     survey_title: data.survey_title || '',
@@ -41,7 +46,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                     valid_till: data.valid_till || null,
                     is_draft: data.is_draft !== undefined ? data.is_draft : true
                 });
-                
+
                 // If valid_till exists, parse it to set the date values
                 if (data.valid_till) {
                     const date = new Date(data.valid_till);
@@ -51,7 +56,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                         year: String(date.getFullYear())
                     });
                 }
-                
+
                 setError(null);
             } catch (err) {
                 setError("Failed to load employee survey data");
@@ -71,7 +76,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         if (name.includes('.')) {
             // Handle date fields
             const [parent, child] = name.split('.');
@@ -79,14 +84,14 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                 ...dateValues,
                 [child]: value
             });
-            
+
             // Update the valid_till in formData if all date fields are filled
             if (child === 'day' || child === 'month' || child === 'year') {
                 const updatedDateValues = {
                     ...dateValues,
                     [child]: value
                 };
-                
+
                 // Only set valid_till if all date parts are present
                 if (updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
                     const formattedDate = `${updatedDateValues.year}-${updatedDateValues.month}-${updatedDateValues.day}`;
@@ -115,25 +120,35 @@ const QmsEditDraftEmployeeSatisfaction = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axios.put(`${BASE_URL}/qms/survey/${id}/update/`, formData);
             console.log("survey evaluation updated successfully:", response.data);
             setSuccess("survey evaluation updated successfully");
-            
+
             // Navigate after a brief delay to show success message
             setTimeout(() => {
+
+            }, 1500);
+
+            setShowEditDraftEmployeeSatisfactionSuccessModal(true);
+            setTimeout(() => {
+                setShowEditDraftEmployeeSatisfactionSuccessModal(false);
                 navigate("/company/qms/draft-satisfaction-survey");
             }, 1500);
         } catch (err) {
             console.error("Error updating survey evaluation:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setError("Failed to update survey evaluation");
             setLoading(false);
         }
@@ -144,7 +159,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/draft-employee-survey');
+        navigate('/company/qms/draft-satisfaction-survey');
     };
 
     // Generate date options
@@ -182,8 +197,8 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-survey-head">Edit Draft Employee survey Evaluation</h1>
-                    <button 
+                    <h1 className="add-employee-performance-head">Edit Draft Employee survey Evaluation</h1>
+                    <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeesurvey}
                     >
@@ -191,7 +206,21 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                     </button>
                 </div>
 
-                 
+                <EditDraftEmployeeSatisfactionSuccessModal
+                    showEditDraftEmployeeSatisfactionSuccessModal={showEditDraftEmployeeSatisfactionSuccessModal}
+                    onClose={() => {
+                        setShowEditDraftEmployeeSatisfactionSuccessModal(false);
+                    }}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => {
+                        setShowErrorModal(false);
+                    }}
+                />
+
+
 
                 {!loading && (
                     <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
@@ -287,16 +316,16 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                         </div>
 
                         <div className="flex justify-end space-x-5 mt-5 pl-[23.5rem]">
-                            <button 
-                                type="button" 
-                                onClick={handleCancel} 
+                            <button
+                                type="button"
+                                onClick={handleCancel}
                                 className="cancel-btn duration-200"
                                 disabled={loading}
                             >
                                 Cancel
                             </button>
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 className="save-btn duration-200"
                                 disabled={loading}
                             >
