@@ -50,7 +50,7 @@ const CustomerManagementSubmenu = (props) => {
                 "/company/qms/view-complaints",
                 "/company/qms/draft-complaints",
                 "/company/qms/edit-draft-complaints",
-                // "/company/qms/view-draft-customer",
+                "/company/qms/view-draft-complaints",
               ]
         },
         {

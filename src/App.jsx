@@ -224,6 +224,7 @@ import QmsReviewTraining from "./pages/QMS/EmployeeTraining/ReviewTraining/QmsRe
 import QmsViewComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsViewComplaints";
 import QmsDraftComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftComplaints";
 import QmsDraftEditComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftEditComplaints";
+import QmsDraftViewComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftViewComplaints";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -410,6 +411,7 @@ const ThemedApp = () => {
           <Route path="qms/view-complaints" element={<QmsViewComplaints/>} />
           <Route path="qms/draft-complaints" element={<QmsDraftComplaints/>} />
           <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints/>} />
+          <Route path="qms/view-draft-complaints" element={<QmsDraftViewComplaints/>} />
 
           
 

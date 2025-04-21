@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
+import { Search, X } from 'lucide-react';
+ 
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
@@ -44,20 +43,17 @@ const QmsDraftComplaints = () => {
         setCustomers(customers.filter(item => item.id !== id));
     };
 
-    const handleAddComplaints = () => {
-        navigate('/company/qms/add-complaints');
+     const handleClose = () => {
+        navigate('/company/qms/list-complaints');
+     }
+
+
+    const handleEditDraftComplaints = () => {
+        navigate('/company/qms/edit-draft-complaints');
     };
 
-    const handleDraftComplaints = () => {
-        // navigate('/company/qms/draft-customer');
-    };
-
-    const handleEditComplaints = () => {
-        navigate('/company/qms/edit-complaints');
-    };
-
-    const handleViewComplaints = () => {
-        navigate('/company/qms/view-complaints');
+    const handleViewDraftComplaints = () => {
+        navigate('/company/qms/view-draft-complaints');
     };
 
     return (
@@ -77,19 +73,10 @@ const QmsDraftComplaints = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftComplaints}
-                    >
-                        <span>Draft</span>
-                    </button>
-                    <button
-                        className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddComplaints}
-                    >
-                        <span> Add Complaints and Feedbacks</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
-                    </button>
+
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
+                    </button> 
                 </div>
             </div>
             <div className="overflow-hidden">
@@ -114,14 +101,14 @@ const QmsDraftComplaints = () => {
                                 <td className="px-3 list-awareness-training-datas">{item.entered_by}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.executor}</td>
                                 <td className="px-3 list-awareness-training-datas">{item.car}</td>
-                                <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]"> 
-                                    <button>
+                                <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
+                                    <button onClick={handleEditDraftComplaints}>
                                         Click to Continue
                                     </button>
                                 </td>
                                 <td className="list-awareness-training-datas text-center ">
                                     <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleViewComplaints}>
+                                        <button onClick={handleViewDraftComplaints}>
                                             <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </div>
