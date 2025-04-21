@@ -14,8 +14,8 @@ const QmsListComplaints = () => {
 
   // Demo data
   const [customers, setCustomers] = useState([
-    { id: 1, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: '123 Home, Bangalore', car: '123',  date: '03-04-2025' },
-    { id: 2, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: 'Xyz Street, Norway', car: '123',  date: '03-04-2025' },
+    { id: 1, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: '123 Home, Bangalore', car: '123', date: '03-04-2025' },
+    { id: 2, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: 'Xyz Street, Norway', car: '123', date: '03-04-2025' },
   ]);
 
   const itemsPerPage = 10;
@@ -48,15 +48,15 @@ const QmsListComplaints = () => {
   };
 
   const handleDraftComplaints = () => {
-    // navigate('/company/qms/draft-customer');
+    navigate('/company/qms/draft-complaints');
   };
 
   const handleEditComplaints = () => {
     navigate('/company/qms/edit-complaints');
   };
 
-  const handleViewCustomer = () => {
-    // navigate('/company/qms/view-customer');
+  const handleViewComplaints = () => {
+    navigate('/company/qms/view-complaints');
   };
 
   return (
@@ -117,7 +117,7 @@ const QmsListComplaints = () => {
                 <td className="px-3 list-awareness-training-datas">{item.date}</td>
                 <td className="list-awareness-training-datas text-center ">
                   <div className='flex justify-center items-center h-[50px]'>
-                    <button onClick={handleViewCustomer}>
+                    <button onClick={handleViewComplaints}>
                       <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                     </button>
                   </div>

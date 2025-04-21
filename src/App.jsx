@@ -221,6 +221,9 @@ import QmsAddComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedba
 import QmsListComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsListComplaints";
 import QmsEditComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsEditComplaints";
 import QmsReviewTraining from "./pages/QMS/EmployeeTraining/ReviewTraining/QmsReviewTraining";
+import QmsViewComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsViewComplaints";
+import QmsDraftComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftComplaints";
+import QmsDraftEditComplaints from "./pages/QMS/CustomerManagement/ComplaintsAndFeedback/QmsDraftEditComplaints";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -404,6 +407,9 @@ const ThemedApp = () => {
           <Route path="qms/add-complaints" element={<QmsAddComplaints/>} />
           <Route path="qms/list-complaints" element={<QmsListComplaints/>} />
           <Route path="qms/edit-complaints" element={<QmsEditComplaints/>} />
+          <Route path="qms/view-complaints" element={<QmsViewComplaints/>} />
+          <Route path="qms/draft-complaints" element={<QmsDraftComplaints/>} />
+          <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints/>} />
 
           
 

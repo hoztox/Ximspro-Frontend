@@ -47,9 +47,9 @@ const CustomerManagementSubmenu = (props) => {
               path: "/company/qms/list-complaints",
               relatedPaths: [
                 "/company/qms/edit-complaints",
-                // "/company/qms/view-customer",
-                // "/company/qms/draft-customer",
-                // "/company/qms/edit-draft-customer",
+                "/company/qms/view-complaints",
+                "/company/qms/draft-complaints",
+                "/company/qms/edit-draft-complaints",
                 // "/company/qms/view-draft-customer",
               ]
         },
