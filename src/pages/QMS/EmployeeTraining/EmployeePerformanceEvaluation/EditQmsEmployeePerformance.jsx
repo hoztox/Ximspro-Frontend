@@ -3,6 +3,8 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditEmployeePerformanceSuccessModal from '../Modals/EditEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const EditQmsEmployeePerformance = () => {
     const { id } = useParams();
@@ -10,26 +12,29 @@ const EditQmsEmployeePerformance = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
-    
+
     const [formData, setFormData] = useState({
         evaluation_title: '',
         description: '',
         valid_till: null,
         is_draft: true
     });
-    
+
+    const [showEditEmployeePerformanceSuccessModal, setShowEditEmployeePerformanceSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     // Separate state for date values to handle the UI components
     const [dateValues, setDateValues] = useState({
         day: '',
         month: '',
         year: ''
     });
-    
+
     const [focusedField, setFocusedField] = useState("");
-    
+
     const handleFocus = (field) => setFocusedField(field);
     const handleBlur = () => setFocusedField("");
-    
+
     // Fetch performance data on component mount
     useEffect(() => {
         const fetchPerformanceData = async () => {
@@ -37,7 +42,7 @@ const EditQmsEmployeePerformance = () => {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/performance-get/${id}/`);
                 const data = response.data;
-                
+
                 // Set the main form data
                 setFormData({
                     evaluation_title: data.evaluation_title || '',
@@ -45,7 +50,7 @@ const EditQmsEmployeePerformance = () => {
                     valid_till: data.valid_till || null,
                     is_draft: data.is_draft !== undefined ? data.is_draft : true
                 });
-                
+
                 // If valid_till exists, parse it to set the date values
                 if (data.valid_till) {
                     const date = new Date(data.valid_till);
@@ -55,7 +60,7 @@ const EditQmsEmployeePerformance = () => {
                         year: String(date.getFullYear())
                     });
                 }
-                
+
                 setError(null);
             } catch (err) {
                 setError("Failed to load employee performance data");
@@ -69,23 +74,23 @@ const EditQmsEmployeePerformance = () => {
             fetchPerformanceData();
         }
     }, [id]);
-    
+
     const validateForm = () => {
         if (!formData.evaluation_title) {
             setError("Evaluation title is required");
             return false;
         }
-        
+
         // Validate date if all date fields are filled
         if (dateValues.day && dateValues.month && dateValues.year) {
             const dateStr = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
             const date = new Date(dateStr);
-            
+
             if (isNaN(date.getTime())) {
                 setError("Invalid date");
                 return false;
             }
-            
+
             // Update the valid_till field in formData
             setFormData({
                 ...formData,
@@ -96,13 +101,13 @@ const EditQmsEmployeePerformance = () => {
             setError("Please complete the date");
             return false;
         }
-        
+
         return true;
     };
-    
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         if (name.startsWith('valid_till.')) {
             const field = name.split('.')[1];
             setDateValues({
@@ -116,48 +121,54 @@ const EditQmsEmployeePerformance = () => {
             });
         }
     };
-    
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
-        
+
         // Prepare submission data
         const submissionData = {
             ...formData
         };
-        
+
         // If all date fields are filled, format the date for submission
         if (dateValues.day && dateValues.month && dateValues.year) {
             submissionData.valid_till = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
         } else {
             submissionData.valid_till = null;
         }
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             await axios.put(`${BASE_URL}/qms/performance/${id}/update/`, submissionData);
             setSuccess("Performance evaluation updated successfully");
-            
-            // Navigate after a brief delay to show success message
+
+            setShowEditEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
+                setShowEditEmployeePerformanceSuccessModal(false);
                 navigate("/company/qms/employee-performance");
             }, 1500);
         } catch (err) {
             console.error("Error updating performance evaluation:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+
             setError("Failed to update performance evaluation");
             setLoading(false);
         }
     };
-    
+
     const handleCancel = () => {
         navigate('/company/qms/employee-performance');
     };
-    
+
     // Generate options for the date selectors
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
         const day = i + 1;
@@ -167,7 +178,7 @@ const EditQmsEmployeePerformance = () => {
             </option>
         );
     });
-    
+
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthOptions = months.map((month, index) => {
@@ -178,7 +189,7 @@ const EditQmsEmployeePerformance = () => {
             </option>
         );
     });
-    
+
     const currentYear = new Date().getFullYear();
     const yearOptions = Array.from({ length: 11 }, (_, i) => {
         const year = currentYear + i;
@@ -188,7 +199,7 @@ const EditQmsEmployeePerformance = () => {
             </option>
         );
     });
-    
+
     if (loading && !formData.evaluation_title) {
         return (
             <div className="bg-[#1C1C24] text-white p-5 flex justify-center items-center h-screen">
@@ -196,32 +207,47 @@ const EditQmsEmployeePerformance = () => {
             </div>
         );
     }
-    
+
     return (
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Edit Employee Performance Evaluation</h1>
-                    <button 
+
+                    <EditEmployeePerformanceSuccessModal
+                        showEditEmployeePerformanceSuccessModal={showEditEmployeePerformanceSuccessModal}
+                        onClose={() => {
+                            setShowEditEmployeePerformanceSuccessModal(false);
+                        }}
+                    />
+
+                    <ErrorModal
+                        showErrorModal={showErrorModal}
+                        onClose={() => {
+                            setShowErrorModal(false);
+                        }}
+                    />
+
+                    <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={() => navigate('/company/qms/employee-performance')}
                     >
                         List Employee Performance Evaluation
                     </button>
                 </div>
-                
-                {error && (
+
+                {/* {error && (
                     <div className="mx-[104px] mt-4 p-3 bg-red-900/30 border border-red-500 rounded text-red-400">
                         {error}
                     </div>
                 )}
-                
+
                 {success && (
                     <div className="mx-[104px] mt-4 p-3 bg-green-900/30 border border-green-500 rounded text-green-400">
                         {success}
                     </div>
-                )}
-                
+                )} */}
+
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -237,7 +263,7 @@ const EditQmsEmployeePerformance = () => {
                                 required
                             />
                         </div>
-                        
+
                         <div className="md:row-span-2">
                             <label className="block employee-performace-label">Evaluation Description</label>
                             <textarea
@@ -247,7 +273,7 @@ const EditQmsEmployeePerformance = () => {
                                 className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
                         </div>
-                        
+
                         <div>
                             <label className="block employee-performace-label">Valid Till</label>
                             <div className="flex gap-5">
@@ -270,7 +296,7 @@ const EditQmsEmployeePerformance = () => {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 {/* Month */}
                                 <div className="relative w-1/3">
                                     <select
@@ -290,7 +316,7 @@ const EditQmsEmployeePerformance = () => {
                                         />
                                     </div>
                                 </div>
-                                
+
                                 {/* Year */}
                                 <div className="relative w-1/3">
                                     <select
@@ -312,22 +338,22 @@ const EditQmsEmployeePerformance = () => {
                                 </div>
                             </div>
                         </div>
-                        
-                     
-                         
+
+
+
                     </div>
-                    
+
                     <div className="flex justify-end space-x-5 mt-5">
-                        <button 
-                            type="button" 
-                            onClick={handleCancel} 
+                        <button
+                            type="button"
+                            onClick={handleCancel}
                             className="cancel-btn duration-200"
                             disabled={loading}
                         >
                             Cancel
                         </button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="save-btn duration-200"
                             disabled={loading}
                         >

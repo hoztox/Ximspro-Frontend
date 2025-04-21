@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import "./addqmsemployeeperformance.css";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import AddEmployeePerformanceSuccessModal from '../Modals/AddEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DraftEmployeePerformanceSuccessModal from '../Modals/DraftEmployeePerformanceSuccessModal';
 
 const AddQmsEmployeePerformance = () => {
     const [formData, setFormData] = useState({
@@ -14,8 +17,12 @@ const AddQmsEmployeePerformance = () => {
             month: '',
             year: ''
         },
-        
+
     });
+
+    const [showAddEmployeePerformanceSuccessModal, setShowAddEmployeePerformanceSuccessModal] = useState(false);
+    const [showDraftEmployeePerformanceSuccessModal, setShowDraftEmployeePerformanceSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [focusedField, setFocusedField] = useState("");
     const [loading, setLoading] = useState(false);
@@ -44,7 +51,7 @@ const AddQmsEmployeePerformance = () => {
                 [name]: type === 'checkbox' ? checked : value
             });
         }
-        
+
         // Clear error for this field if it exists
         if (errors[name]) {
             setErrors({
@@ -120,7 +127,7 @@ const AddQmsEmployeePerformance = () => {
     const prepareSubmissionData = (isDraft = false) => {
         const userId = getRelevantUserId();
         const companyId = getUserCompanyId();
-        
+
         if (!companyId) {
             setError('Company ID not found. Please log in again.');
             return null;
@@ -131,13 +138,13 @@ const AddQmsEmployeePerformance = () => {
         submissionData.append('user', userId);
         submissionData.append('evaluation_title', formData.evaluation_title);
         submissionData.append('description', formData.description || '');
-        
+
         // Format and append valid_till date if all parts are filled
         const formattedDate = formatDateForSubmission();
         if (formattedDate) {
             submissionData.append('valid_till', formattedDate);
         }
-        
+
         if (isDraft) {
             submissionData.append('is_draft', true);
         }
@@ -147,7 +154,7 @@ const AddQmsEmployeePerformance = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // Validate form before submission
         if (!validateForm()) {
             return;
@@ -169,13 +176,18 @@ const AddQmsEmployeePerformance = () => {
                 },
             });
 
-            // Success - redirect after a short delay
+            setShowAddEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
+                setShowAddEmployeePerformanceSuccessModal(false);
                 navigate('/company/qms/employee-performance');
             }, 1500);
         } catch (error) {
             console.error('Error submitting form:', error);
             setError(error.response?.data?.message || 'Failed to save employee performance evaluation. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -198,13 +210,19 @@ const AddQmsEmployeePerformance = () => {
                 },
             });
 
-            // Success - redirect after a short delay
+            setShowDraftEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
+                setShowDraftEmployeePerformanceSuccessModal(false);
                 navigate('/company/qms/draft-employee-performance');
             }, 1500);
+
         } catch (err) {
             setDraftLoading(false);
             const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setError(errorMessage);
             console.error('Error saving Draft:', err.response?.data || err);
         }
@@ -253,7 +271,30 @@ const AddQmsEmployeePerformance = () => {
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
-                    <button 
+
+                    <AddEmployeePerformanceSuccessModal
+                        showAddEmployeePerformanceSuccessModal={showAddEmployeePerformanceSuccessModal}
+                        onClose={() => {
+                            setShowAddEmployeePerformanceSuccessModal(false);
+                        }}
+                    />
+
+                    <ErrorModal
+                        showErrorModal={showErrorModal}
+                        onClose={() => {
+                            setShowErrorModal(false);
+                        }}
+                    />
+
+                    <DraftEmployeePerformanceSuccessModal
+                        showDraftEmployeePerformanceSuccessModal={showDraftEmployeePerformanceSuccessModal}
+                        onClose={() => {
+                            setShowDraftEmployeePerformanceSuccessModal(false);
+                        }}
+                    />
+
+
+                    <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeePerformance}
                     >
@@ -261,11 +302,7 @@ const AddQmsEmployeePerformance = () => {
                     </button>
                 </div>
 
-                {error && (
-                    <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 my-3 rounded mx-[104px]">
-                        {error}
-                    </div>
-                )}
+
 
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -365,11 +402,11 @@ const AddQmsEmployeePerformance = () => {
                         </div>
                     </div>
 
-                   
+
 
                     <div className="flex justify-between space-x-5 mt-5">
                         <div>
-                            <button 
+                            <button
                                 type="button"
                                 onClick={handleSaveAsDraft}
                                 disabled={draftLoading}
@@ -379,15 +416,15 @@ const AddQmsEmployeePerformance = () => {
                             </button>
                         </div>
                         <div className='flex gap-5'>
-                            <button 
-                                type="button" 
-                                onClick={handleCancel} 
+                            <button
+                                type="button"
+                                onClick={handleCancel}
                                 className="cancel-btn duration-200"
                             >
                                 Cancel
                             </button>
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 disabled={loading}
                                 className="save-btn duration-200"
                             >

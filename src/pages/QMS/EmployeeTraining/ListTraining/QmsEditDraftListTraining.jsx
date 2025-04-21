@@ -389,8 +389,8 @@ const QmsEditDraftListTraining = () => {
 
   if (loading)
     return <div className="text-white text-center py-10">Loading...</div>;
-  if (error)
-    return <div className="text-red-500 text-center py-10">{error}</div>;
+  // if (error)
+  //   return <div className="text-red-500 text-center py-10">{error}</div>;
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">

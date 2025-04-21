@@ -3,14 +3,16 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditDraftEmployeePerformanceSuccessModal from '../Modals/EditDraftEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftEmployeePerformance = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const [success , setSuccess ] = useState(null);
     const [formData, setFormData] = useState({
         evaluation_title: '',
         description: '',
@@ -24,16 +26,19 @@ const QmsEditDraftEmployeePerformance = () => {
         month: '',
         year: ''
     });
-    
+
+    const [showEditDraftEmployeePerformanceSuccessModal, setShowEditDraftEmployeePerformanceSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     const [focusedField, setFocusedField] = useState("");
-    
+
     useEffect(() => {
         const fetchPerformanceData = async () => {
             try {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/performance-get/${id}/`);
                 const data = response.data;
-                
+
                 // Set the main form data
                 setFormData({
                     evaluation_title: data.evaluation_title || '',
@@ -41,7 +46,7 @@ const QmsEditDraftEmployeePerformance = () => {
                     valid_till: data.valid_till || null,
                     is_draft: data.is_draft !== undefined ? data.is_draft : true
                 });
-                
+
                 // If valid_till exists, parse it to set the date values
                 if (data.valid_till) {
                     const date = new Date(data.valid_till);
@@ -51,7 +56,7 @@ const QmsEditDraftEmployeePerformance = () => {
                         year: String(date.getFullYear())
                     });
                 }
-                
+
                 setError(null);
             } catch (err) {
                 setError("Failed to load employee performance data");
@@ -71,7 +76,7 @@ const QmsEditDraftEmployeePerformance = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         if (name.includes('.')) {
             // Handle date fields
             const [parent, child] = name.split('.');
@@ -79,14 +84,14 @@ const QmsEditDraftEmployeePerformance = () => {
                 ...dateValues,
                 [child]: value
             });
-            
+
             // Update the valid_till in formData if all date fields are filled
             if (child === 'day' || child === 'month' || child === 'year') {
                 const updatedDateValues = {
                     ...dateValues,
                     [child]: value
                 };
-                
+
                 // Only set valid_till if all date parts are present
                 if (updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
                     const formattedDate = `${updatedDateValues.year}-${updatedDateValues.month}-${updatedDateValues.day}`;
@@ -115,26 +120,32 @@ const QmsEditDraftEmployeePerformance = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
-        
+
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axios.put(`${BASE_URL}/qms/performance/${id}/update/`, formData);
             console.log("Performance evaluation updated successfully:", response.data);
             setSuccess("Performance evaluation updated successfully");
-            
-            // Navigate after a brief delay to show success message
+
+
+            setShowEditDraftEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
+                setShowEditDraftEmployeePerformanceSuccessModal(false);
                 navigate("/company/qms/draft-employee-performance");
             }, 1500);
         } catch (err) {
             console.error("Error updating performance evaluation:", err);
             setError("Failed to update performance evaluation");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setLoading(false);
         }
     };
@@ -183,7 +194,7 @@ const QmsEditDraftEmployeePerformance = () => {
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Edit Draft Employee Performance Evaluation</h1>
-                    <button 
+                    <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
                         onClick={handleListEmployeePerformance}
                     >
@@ -191,7 +202,21 @@ const QmsEditDraftEmployeePerformance = () => {
                     </button>
                 </div>
 
-                 
+                <EditDraftEmployeePerformanceSuccessModal
+                    showEditDraftEmployeePerformanceSuccessModal={showEditDraftEmployeePerformanceSuccessModal}
+                    onClose={() => {
+                        setShowEditDraftEmployeePerformanceSuccessModal(false);
+                    }}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => {
+                        setShowErrorModal(false);
+                    }}
+                />
+
+
 
                 {!loading && (
                     <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
@@ -287,16 +312,16 @@ const QmsEditDraftEmployeePerformance = () => {
                         </div>
 
                         <div className="flex justify-end space-x-5 mt-5 pl-[23.5rem]">
-                            <button 
-                                type="button" 
-                                onClick={handleCancel} 
+                            <button
+                                type="button"
+                                onClick={handleCancel}
                                 className="cancel-btn duration-200"
                                 disabled={loading}
                             >
                                 Cancel
                             </button>
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 className="save-btn duration-200"
                                 disabled={loading}
                             >

@@ -9,8 +9,15 @@ import "./qmsemployeeperformance.css"
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteEmployeePerformanceConfirmModal from '../Modals/DeleteEmployeePerformanceConfirmModal';
+import DeleteEmployeePerformanceSuccessModal from '../Modals/DeleteEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import QuestionAddSuccessModal from '../Modals/QuestionAddSuccessModal';
+import DeleteQuestionConfirmModal from '../Modals/DeleteQuestionConfirmModal';
+import DeleteQuestionSuccessModal from '../Modals/DeleteQuestionSuccessModal';
+import RatingAddSuccessModal from '../Modals/RatingAddSuccessModal';
 
- 
+
 
 const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceId }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(employee ? employee.id || 'Select Employee' : 'Select Employee');
@@ -20,6 +27,9 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [performances, setPerformances] = useState([]);
+
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -118,8 +128,18 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
         answer: rating,
         user_id: selectedEmployee
       });
+
+      // setShowAddRatingSuccessModal(true);
+      // setTimeout(() => {
+      //   setShowAddRatingSuccessModal(false);
+      //   navigate('/company/qms/employee-performance');
+      // }, 1500);
     } catch (err) {
       console.error('Error updating answer:', err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError('Failed to save answer');
     }
   };
@@ -183,6 +203,20 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                   </p>
                 </div>
 
+                <RatingAddSuccessModal
+                  showAddRatingSuccessModal={showAddRatingSuccessModal}
+                  onClose={() => {
+                    setShowAddRatingSuccessModal(false);
+                  }}
+                />
+
+                <ErrorModal
+                  showErrorModal={showErrorModal}
+                  onClose={() => {
+                    setShowErrorModal(false);
+                  }}
+                />
+
                 <div className="p-5 pt-6">
                   <div className="flex relative items-center gap-3">
                     <label className="block evaluate-modal-head">Select Employee</label>
@@ -215,8 +249,6 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
 
                 {loading ? (
                   <div className="text-center py-6">Loading questions...</div>
-                ) : error ? (
-                  <div className="text-center py-6 text-red-500">{error}</div>
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     <table className="min-w-full">
@@ -293,7 +325,14 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                     Cancel
                   </button>
                   <button className="save-btn duration-200"
-                    onClick={onClose}
+                    onClick={() => {
+                      setShowAddRatingSuccessModal(true);
+                      setTimeout(() => {
+                        setShowAddRatingSuccessModal(false);
+                        navigate('/company/qms/employee-performance');
+                        onClose();
+                      }, 1500);
+                    }}
                   >
                     Done
                   </button>
@@ -314,6 +353,14 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  // Delete related states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [questionToDelete, setQuestionToDelete] = useState(null);
+  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -360,23 +407,62 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
 
       setQuestions([...questions, response.data]);
       setFormData({ question: '' });
+      setShowAddQuestionSuccessModal(true);
+      setTimeout(() => {
+        setShowAddQuestionSuccessModal(false);
+        navigate("/company/qms/employee-performance");
+      }, 1500);
       setError('');
     } catch (err) {
       console.error('Error adding question:', err);
-      setError('Failed to add question');
+      setErrorMessage('Failed to add question');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (question) => {
+    setQuestionToDelete(question);
+    setShowDeleteModal(true);
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowDeleteQuestionSuccessModal(false);
+    setShowErrorModal(false);
+    setShowAddQuestionSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!questionToDelete) return;
+
     setLoading(true);
     try {
-      await axios.delete(`${BASE_URL}/qms/performance/question/${id}/delete/`);
-      setQuestions(questions.filter(question => question.id !== id));
+      await axios.delete(`${BASE_URL}/qms/performance/question/${questionToDelete.id}/delete/`);
+
+      // Remove the deleted question from state
+      setQuestions(questions.filter(question => question.id !== questionToDelete.id));
+      setShowDeleteModal(false);
+      setShowDeleteQuestionSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteQuestionSuccessModal(false);
+      }, 1500);
+
     } catch (err) {
       console.error('Error deleting question:', err);
-      setError('Failed to delete question');
+      setShowDeleteModal(false);
+      setErrorMessage('Failed to delete question');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -469,7 +555,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
                             </td>
                             <td className="px-4 text-center">
                               <button
-                                onClick={() => handleDelete(question.id)}
+                                onClick={() => openDeleteModal(question)}
                                 className="text-gray-400 hover:text-white"
                                 disabled={loading}
                               >
@@ -487,6 +573,33 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
           </motion.div>
         </motion.div>
       )}
+
+      <QuestionAddSuccessModal
+        showAddQuestionSuccessModal={showAddQuestionSuccessModal}
+        onClose={() => {
+          setShowAddQuestionSuccessModal(false);
+        }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteQuestionConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+      />
+
+      {/* Question Added Success Modal */}
+      <DeleteQuestionSuccessModal
+        showDeleteQuestionSuccessModal={showDeleteQuestionSuccessModal}
+        onClose={() => setShowDeleteQuestionSuccessModal(false)}
+      />
+
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+      />
     </AnimatePresence>
   );
 };
@@ -504,6 +617,13 @@ const QmsEmployeePerformance = () => {
   // Modal states
   const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [performanceToDelete, setPerformanceToDelete] = useState(null);
+  const [showDeleteEmployeePerformanceSuccessModal, setShowDeleteEmployeePerformanceSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -544,11 +664,7 @@ const QmsEmployeePerformance = () => {
       }
     };
 
-    // Fetch employees for dropdown
-
-
     fetchPerformanceData();
-
   }, []);
 
   // Handle search
@@ -581,16 +697,35 @@ const QmsEmployeePerformance = () => {
     navigate(`/company/qms/edit-employee-performance/${id}`);
   };
 
-  // Delete performance
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this evaluation?')) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/performance/${id}/update/`);
-        setPerformances(performances.filter(performance => performance.id !== id));
-      } catch (err) {
-        console.error('Error deleting performance evaluation:', err);
-        alert('Failed to delete the evaluation');
-      }
+  // Open delete confirmation modal
+  const openDeleteModal = (performance) => {
+    setPerformanceToDelete(performance);
+    setShowDeleteModal(true);
+  };
+
+  const cancelDeleteEmployeePerformance = () => {
+    setShowDeleteModal(false);
+    setPerformanceToDelete(null);
+  };
+
+  // Delete performance after confirmation
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/performance/${performanceToDelete.id}/update/`);
+      setPerformances(performances.filter(performance => performance.id !== performanceToDelete.id));
+      setShowDeleteModal(false);
+      setShowDeleteEmployeePerformanceSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteEmployeePerformanceSuccessModal(false);
+      }, 2000);
+    } catch (err) {
+      console.error('Error deleting performance evaluation:', err);
+      setErrorMessage('Failed to delete the evaluation');
+      setShowDeleteModal(false);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 2000);
     }
   };
 
@@ -618,6 +753,7 @@ const QmsEmployeePerformance = () => {
   const openQuestionsModal = (performanceId) => {
     setQuestionsModal({ isOpen: true, performanceId });
   };
+
   // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -637,9 +773,9 @@ const QmsEmployeePerformance = () => {
     return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-  }
+  // if (error) {
+  //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
+  // }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -740,7 +876,7 @@ const QmsEmployeePerformance = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleDelete(performance.id)}>
+                    <button onClick={() => openDeleteModal(performance)}>
                       <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
                     </button>
                   </td>
@@ -812,6 +948,25 @@ const QmsEmployeePerformance = () => {
         isOpen={questionsModal.isOpen}
         onClose={() => setQuestionsModal({ isOpen: false })}
         performanceId={questionsModal.performanceId}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteEmployeePerformanceConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={cancelDeleteEmployeePerformance}
+      />
+
+      {/* Success Modal */}
+      <DeleteEmployeePerformanceSuccessModal
+        showDeleteEmployeePerformanceSuccessModal={showDeleteEmployeePerformanceSuccessModal}
+        onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
       />
     </div>
   );

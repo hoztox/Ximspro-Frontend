@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, AlertCircle, CheckCircle } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteEmployeePerformanceConfirmModal from '../Modals/DeleteEmployeePerformanceConfirmModal';
+import DeleteEmployeePerformanceSuccessModal from '../Modals/DeleteEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEmployeePerformance = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [performanceToDelete, setPerformanceToDelete] = useState(null);
+    const [showDeleteEmployeePerformanceSuccessModal, setShowDeleteEmployeePerformanceSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     // State for data management
     const [performanceData, setPerformanceData] = useState([]);
@@ -27,13 +37,14 @@ const QmsDraftEmployeePerformance = () => {
         if (companyId) return companyId;
         return null;
     };
+
     useEffect(() => {
         const fetchPerformanceData = async () => {
             try {
                 const id = getRelevantUserId();
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/performance-draft/${id}/`);
-               
+
                 setPerformanceData(response.data);
                 setError(null);
             } catch (err) {
@@ -70,17 +81,40 @@ const QmsDraftEmployeePerformance = () => {
         navigate(`/company/qms/edit-draft-employee-performance/${id}`);
     };
 
+    // Open delete confirmation modal
+    const openDeleteModal = (item) => {
+        setPerformanceToDelete(item);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteEmployeePerformanceSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
     // Delete employee
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this draft?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/performance/${id}/update/`);
-                // Remove the deleted item from state
-                setPerformanceData(performanceData.filter(item => item.id !== id));
-            } catch (err) {
-                setError("Failed to delete performance evaluation");
-                console.error("Error deleting performance evaluation:", err);
-            }
+    const handleDelete = async () => {
+        if (!performanceToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/performance/${performanceToDelete.id}/update/`);
+
+            // Remove the deleted item from state
+            setPerformanceData(performanceData.filter(item => item.id !== performanceToDelete.id));
+            setShowDeleteModal(false);
+            setShowDeleteEmployeePerformanceSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteEmployeePerformanceSuccessModal(false);
+            }, 2000);
+
+        } catch (err) {
+            // Close delete modal and show error modal
+            setShowDeleteModal(false);
+            setErrorMessage("Failed to delete performance evaluation");
+            setShowErrorModal(true);
+            console.error("Error deleting performance evaluation:", err);
         }
     };
 
@@ -166,7 +200,7 @@ const QmsDraftEmployeePerformance = () => {
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button onClick={() => handleDelete(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
                                             </button>
                                         </td>
@@ -225,6 +259,25 @@ const QmsDraftEmployeePerformance = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteEmployeePerformanceConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteEmployeePerformanceSuccessModal
+                showDeleteEmployeePerformanceSuccessModal={showDeleteEmployeePerformanceSuccessModal}
+                onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+            />
         </div>
     );
 };
