@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Eye, Edit2, Trash2 } from 'lucide-react';
+import { Search, Eye, Edit2, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
@@ -8,6 +8,9 @@ import "./qmslistawarenesstraining.css";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteAwarenessTrainingConfirmModal from '../Modals/DeleteAwarenessTrainingConfirmModal';
+import DeleteAwarenessTrainingSuccessModal from '../Modals/DeleteAwarenessTrainingSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsListAwarenessTraining = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +19,12 @@ const QmsListAwarenessTraining = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [trainingToDelete, setTrainingToDelete] = useState(null);
+    const [showDeleteAwarenessTrainingSuccessModal, setShowDeleteAwarenessTrainingSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -71,13 +80,36 @@ const QmsListAwarenessTraining = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteItem = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (item) => {
+        setTrainingToDelete(item);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteAwarenessTrainingSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!trainingToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/awareness/${id}/update/`);
-            setTrainingItems(trainingItems.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/awareness/${trainingToDelete.id}/update/`);
+            setTrainingItems(trainingItems.filter(item => item.id !== trainingToDelete.id));
+            setShowDeleteModal(false);
+            setShowDeleteAwarenessTrainingSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteAwarenessTrainingSuccessModal(false);
+            }, 3000);
         } catch (err) {
             console.error('Error deleting awareness training item:', err);
-            alert('Failed to delete the training item');
+            setShowDeleteModal(false);
+            setErrorMessage('Failed to delete the training item. Please try again later.');
+            setShowErrorModal(true);
         }
     };
 
@@ -127,9 +159,9 @@ const QmsListAwarenessTraining = () => {
         return <div className="flex justify-center items-center h-64 bg-[#1C1C24] text-white">Loading...</div>;
     }
 
-    if (error) {
-        return <div className="flex justify-center items-center h-64 bg-[#1C1C24] text-white">{error}</div>;
-    }
+    // if (error) {
+    //     return <div className="flex justify-center items-center h-64 bg-[#1C1C24] text-white">{error}</div>;
+    // }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -170,7 +202,6 @@ const QmsListAwarenessTraining = () => {
                             <th className="px-3 text-left list-awareness-training-thead">No</th>
                             <th className="px-3 text-left list-awareness-training-thead">Title</th>
                             <th className="px-3 text-left list-awareness-training-thead">Description</th>
-                           
                             <th className="px-3 text-left list-awareness-training-thead">Link</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Edit</th>
@@ -184,7 +215,6 @@ const QmsListAwarenessTraining = () => {
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.title}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.description || 'N/A'}</td>
-                                
                                     <td className="px-3 list-awareness-training-datas">
                                         {renderLink(item)}
                                     </td>
@@ -204,7 +234,7 @@ const QmsListAwarenessTraining = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
-                                            <button onClick={() => handleDeleteItem(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </div>
@@ -252,6 +282,24 @@ const QmsListAwarenessTraining = () => {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteAwarenessTrainingConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteAwarenessTrainingSuccessModal
+                showDeleteAwarenessTrainingSuccessModal={showDeleteAwarenessTrainingSuccessModal}
+                onClose={() => setShowDeleteAwarenessTrainingSuccessModal(false)}
+            />
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+            />
         </div>
     );
 };

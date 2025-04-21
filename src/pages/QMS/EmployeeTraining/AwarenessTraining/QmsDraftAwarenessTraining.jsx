@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, CheckCircle, AlertCircle } from 'lucide-react';
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import "./qmslistawarenesstraining.css";
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteAwarenessTrainingConfirmModal from '../Modals/DeleteAwarenessTrainingConfirmModal';
+import DeleteAwarenessTrainingSuccessModal from '../Modals/DeleteAwarenessTrainingSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftAwarenessTraining = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -14,6 +17,12 @@ const QmsDraftAwarenessTraining = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [trainingToDelete, setTrainingToDelete] = useState(null);
+    const [showDeleteAwarenessTrainingSuccessModal, setShowDeleteAwarenessTrainingSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const itemsPerPage = 10;
 
@@ -33,14 +42,12 @@ const QmsDraftAwarenessTraining = () => {
             try {
                 const id = getRelevantUserId();
                 console.log("Fetching data for ID:", id);
-                
-            
+
                 const response = await axios.get(`${BASE_URL}/qms/awareness-draft/${id}/`);
                 console.log("API Response:", response.data);
 
                 const data = response.data;
                 if (Array.isArray(data)) {
-                   
                     const formattedData = data.map(item => ({
                         id: item.id,
                         title: item.title || "Untitled",
@@ -74,13 +81,13 @@ const QmsDraftAwarenessTraining = () => {
                 setLoading(false);
             }
         };
-        
+
         fetchData();
     }, []);
 
     // Get the link value based on category
     const getLinkValue = (item) => {
-        switch(item.category) {
+        switch (item.category) {
             case 'YouTube video':
                 return item.youtube_link;
             case 'Web Link':
@@ -109,13 +116,36 @@ const QmsDraftAwarenessTraining = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteItem = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (item) => {
+        setTrainingToDelete(item);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteAwarenessTrainingSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!trainingToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/awareness/${id}/delete/`);
-            setTrainingItems(trainingItems.filter(item => item.id !== id));
-        } catch (error) {
-            console.error("Failed to delete awareness training:", error);
-            alert("Failed to delete the item. Please try again.");
+            await axios.delete(`${BASE_URL}/qms/awareness/${trainingToDelete.id}/update/`);
+            setTrainingItems(trainingItems.filter(item => item.id !== trainingToDelete.id));
+            setShowDeleteModal(false);
+            setShowDeleteAwarenessTrainingSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteAwarenessTrainingSuccessModal(false);
+            }, 3000);
+        } catch (err) {
+            console.error('Error deleting awareness training item:', err);
+            setShowDeleteModal(false);
+            setErrorMessage('Failed to delete the training item. Please try again later.');
+            setShowErrorModal(true);
         }
     };
 
@@ -135,14 +165,6 @@ const QmsDraftAwarenessTraining = () => {
         return (
             <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
                 <p>Loading...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
-                <p className="text-red-500">{error}</p>
             </div>
         );
     }
@@ -172,7 +194,7 @@ const QmsDraftAwarenessTraining = () => {
                     </button>
                 </div>
             </div>
-            
+
             {trainingItems.length === 0 ? (
                 <div className="text-center py-8 not-found">
                     No draft awareness trainings found.
@@ -200,8 +222,8 @@ const QmsDraftAwarenessTraining = () => {
                                         <td className="px-3 list-awareness-training-datas">{item.title}</td>
                                         <td className="px-3 list-awareness-training-datas">
                                             {item.description ? (
-                                                item.description.length > 30 
-                                                    ? `${item.description.substring(0, 30)}...` 
+                                                item.description.length > 30
+                                                    ? `${item.description.substring(0, 30)}...`
                                                     : item.description
                                             ) : "No description"}
                                         </td>
@@ -209,22 +231,22 @@ const QmsDraftAwarenessTraining = () => {
                                         <td className="px-3 list-awareness-training-datas">
                                             {item.category === 'YouTube video' && item.youtube_link && (
                                                 <a href={item.youtube_link} className="text-[#1E84AF] hover:underline" target="_blank" rel="noopener noreferrer">
-                                                    {item.youtube_link.length > 30 
-                                                        ? `${item.youtube_link.substring(0, 30)}...` 
+                                                    {item.youtube_link.length > 30
+                                                        ? `${item.youtube_link.substring(0, 30)}...`
                                                         : item.youtube_link}
                                                 </a>
                                             )}
                                             {item.category === 'Web Link' && item.web_link && (
                                                 <a href={item.web_link} className="text-[#1E84AF] hover:underline" target="_blank" rel="noopener noreferrer">
-                                                    {item.web_link.length > 30 
-                                                        ? `${item.web_link.substring(0, 30)}...` 
+                                                    {item.web_link.length > 30
+                                                        ? `${item.web_link.substring(0, 30)}...`
                                                         : item.web_link}
                                                 </a>
                                             )}
                                             {item.category === 'Presentation' && item.upload_file && (
                                                 <span>
-                                                    {item.upload_file.split('/').pop().length > 30 
-                                                        ? `${item.upload_file.split('/').pop().substring(0, 30)}...` 
+                                                    {item.upload_file.split('/').pop().length > 30
+                                                        ? `${item.upload_file.split('/').pop().substring(0, 30)}...`
                                                         : item.upload_file.split('/').pop()}
                                                 </span>
                                             )}
@@ -244,7 +266,7 @@ const QmsDraftAwarenessTraining = () => {
                                         </td>
                                         <td className="list-awareness-training-datas text-center">
                                             <div className='flex justify-center items-center h-[50px]'>
-                                                <button onClick={() => handleDeleteItem(item.id)}>
+                                                <button onClick={() => openDeleteModal(item)}>
                                                     <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                                 </button>
                                             </div>
@@ -257,36 +279,57 @@ const QmsDraftAwarenessTraining = () => {
 
                     <div className="flex justify-between items-center mt-3">
                         <div className='text-white total-text'>Total: {totalItems}</div>
-                        <div className="flex items-center gap-5">
-                            <button
-                                className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                                disabled={currentPage === 1}
-                                onClick={() => handlePageChange(currentPage - 1)}
-                            >
-                                Previous
-                            </button>
-
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                        {totalPages > 0 && (
+                            <div className="flex items-center gap-5">
                                 <button
-                                    key={number}
-                                    className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
-                                    onClick={() => handlePageChange(number)}
+                                    className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                                    disabled={currentPage === 1}
+                                    onClick={() => handlePageChange(currentPage - 1)}
                                 >
-                                    {number}
+                                    Previous
                                 </button>
-                            ))}
 
-                            <button
-                                className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                                disabled={currentPage === totalPages || totalPages === 0}
-                                onClick={() => handlePageChange(currentPage + 1)}
-                            >
-                                Next
-                            </button>
-                        </div>
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                                    <button
+                                        key={number}
+                                        className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                                        onClick={() => handlePageChange(number)}
+                                    >
+                                        {number}
+                                    </button>
+                                ))}
+
+                                <button
+                                    className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                                    disabled={currentPage === totalPages || totalPages === 0}
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteAwarenessTrainingConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteAwarenessTrainingSuccessModal
+                showDeleteAwarenessTrainingSuccessModal={showDeleteAwarenessTrainingSuccessModal}
+                onClose={() => setShowDeleteAwarenessTrainingSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+            />
         </div>
     );
 };

@@ -5,6 +5,9 @@ import "./qmsaddawarenesstraining.css";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import AddAwarenessTrainingSuccessModal from '../Modals/AddAwarenessTrainingSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DraftAwarenessTrainingSuccessModal from '../Modals/DraftAwarenessTrainingSuccessModal';
 
 
 const QmsAddAwarenessTraining = () => {
@@ -17,6 +20,10 @@ const QmsAddAwarenessTraining = () => {
         web_link: '',
         upload_file: null
     });
+
+    const [showAddAwarenessTrainingSuccessModal, setShowAddAwarenessTrainingSuccessModal] = useState(false);
+    const [showDraftAwarenessTrainingSuccessModal, setShowDraftAwarenessTrainingSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -167,17 +174,18 @@ const QmsAddAwarenessTraining = () => {
                 },
             });
 
-
+            setShowAddAwarenessTrainingSuccessModal(true);
             setTimeout(() => {
-
+                setShowAddAwarenessTrainingSuccessModal(false);
                 navigate('/company/qms/list-awareness-training');
             }, 1500);
         } catch (error) {
             console.error('Error submitting form:', error);
             setError(error.response?.data?.message || 'Failed to save awareness training. Please try again.');
 
+            setShowErrorModal(true);
             setTimeout(() => {
-
+                setShowErrorModal(false);
             }, 3000);
         } finally {
             setLoading(false);
@@ -213,7 +221,7 @@ const QmsAddAwarenessTraining = () => {
                     submitData.append(key, formData[key]);
                 }
             });
-            
+
 
 
             if (formData.file) {
@@ -233,19 +241,19 @@ const QmsAddAwarenessTraining = () => {
                 }
             );
 
-            setDraftLoading(false);
-
+            
+            setShowDraftAwarenessTrainingSuccessModal(true);
             setTimeout(() => {
-
+                setShowDraftAwarenessTrainingSuccessModal(false);
                 navigate('/company/qms/draft-awareness-training');
             }, 1500);
 
 
         } catch (err) {
             setDraftLoading(false);
-        
+            setShowErrorModal(true);
             setTimeout(() => {
-              
+                setShowErrorModal(false);
             }, 3000);
             const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
             setError(errorMessage);
@@ -345,6 +353,30 @@ const QmsAddAwarenessTraining = () => {
 
             <div className="flex justify-between items-center px-[104px] pb-5 border-b border-[#383840]">
                 <h1 className="add-awareness-training-head">Add Awareness Training</h1>
+
+                <AddAwarenessTrainingSuccessModal
+                    showAddAwarenessTrainingSuccessModal={showAddAwarenessTrainingSuccessModal}
+                    onClose={() => {
+                        setShowAddAwarenessTrainingSuccessModal(false);
+                    }}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => {
+                        setShowErrorModal(false);
+                    }}
+                />
+
+                <DraftAwarenessTrainingSuccessModal
+                    showDraftAwarenessTrainingSuccessModal={showDraftAwarenessTrainingSuccessModal}
+                    onClose={() => {
+                        setShowDraftAwarenessTrainingSuccessModal(false);
+                    }}
+                />
+
+
+
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] w-[213px] list-training-btn duration-200"
                     onClick={handleListAwarenessTraining}

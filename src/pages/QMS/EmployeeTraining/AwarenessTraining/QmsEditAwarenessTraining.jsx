@@ -3,6 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditAwarenessTrainingSuccessModal from "../Modals/EditAwarenessTrainingSuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsEditAwarenessTraining = () => {
   const [formData, setFormData] = useState({
@@ -13,18 +15,19 @@ const QmsEditAwarenessTraining = () => {
     web_link: "",
     upload_file: null
   });
-  
+
   const [selectedFile, setSelectedFile] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showUpdatedComplianceSuccessModal, setShowUpdatedComplianceSuccessModal] = useState(false);
-  const [showUpdateComplianceErrorModal, setShowUpdateComplianceErrorModal] = useState(false);
   const [errors, setErrors] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
+
+  const [showEditAwarenessTrainingSuccessModal, setShowEditAwarenessTrainingSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const categories = [
     "YouTube video",
     "Presentation",
@@ -37,7 +40,7 @@ const QmsEditAwarenessTraining = () => {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/awareness-get/${id}/`);
         const data = response.data;
-        
+
         setFormData({
           title: data.title || "",
           category: data.category || "YouTube video",
@@ -92,37 +95,37 @@ const QmsEditAwarenessTraining = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.title.trim()) {
       newErrors.title = "Title is required";
     }
-    
+
     // Validate based on category
     if (formData.category === "YouTube video" && !formData.youtube_link.trim()) {
       newErrors.youtube_link = "YouTube link is required";
     }
-    
+
     if (formData.category === "Web Link" && !formData.web_link.trim()) {
       newErrors.web_link = "Web link is required";
     }
-    
+
     if (formData.category === "Presentation" && !formData.upload_file && !selectedFile) {
       newErrors.upload_file = "Presentation file is required";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     const submitData = new FormData();
-    
+
     Object.keys(formData).forEach(key => {
       if (key === 'upload_file') {
         if (formData[key] && typeof formData[key] === 'object') {
@@ -132,7 +135,7 @@ const QmsEditAwarenessTraining = () => {
         submitData.append(key, formData[key]);
       }
     });
-    
+
     try {
       const response = await axios.put(`${BASE_URL}/qms/awareness/${id}/update/`, submitData, {
         headers: {
@@ -140,18 +143,18 @@ const QmsEditAwarenessTraining = () => {
         },
       });
       console.log("Awareness training updated successfully:", response.data);
-      setShowUpdatedComplianceSuccessModal(true);
+      setShowEditAwarenessTrainingSuccessModal(true);
       setTimeout(() => {
-        setShowUpdatedComplianceSuccessModal(false);
+        setShowEditAwarenessTrainingSuccessModal(false);
         navigate("/company/qms/list-awareness-training");
       }, 1500);
 
     } catch (err) {
       console.error("Error updating awareness training:", err);
       setError("Failed to update awareness training");
-      setShowUpdateComplianceErrorModal(true);
+      setShowErrorModal(true);
       setTimeout(() => {
-        setShowUpdateComplianceErrorModal(false);
+        setShowErrorModal(false);
       }, 3000);
     }
   };
@@ -170,21 +173,22 @@ const QmsEditAwarenessTraining = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-      {showUpdatedComplianceSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-green-800 p-4 rounded-lg">
-            <p>Awareness training updated successfully!</p>
-          </div>
-        </div>
-      )}
-      
-      {showUpdateComplianceErrorModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-red-800 p-4 rounded-lg">
-            <p>{error}</p>
-          </div>
-        </div>
-      )}
+
+
+      <EditAwarenessTrainingSuccessModal
+        showEditAwarenessTrainingSuccessModal={showEditAwarenessTrainingSuccessModal}
+        onClose={() => {
+          setShowEditAwarenessTrainingSuccessModal(false);
+        }}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => {
+          setShowErrorModal(false);
+        }}
+      />
+
 
       <div className="flex justify-between items-center px-[104px] pb-5 border-b border-[#383840]">
         <h1 className="add-awareness-training-head">Edit Awareness Training</h1>
@@ -238,9 +242,8 @@ const QmsEditAwarenessTraining = () => {
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${
-                    dropdownOpen ? "rotate-180" : "rotate-0"
-                  }`}
+                  className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${dropdownOpen ? "rotate-180" : "rotate-0"
+                    }`}
                 />
               </div>
             </div>
