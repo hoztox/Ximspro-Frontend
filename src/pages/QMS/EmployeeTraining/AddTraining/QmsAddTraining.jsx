@@ -1,57 +1,63 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./qmsaddtraining.css";
 import { BASE_URL } from "../../../../Utils/Config";
+import AddTrainingSuccessModal from "../Modals/AddTrainingSuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
+import AddTrainingDraftSuccessModal from "../Modals/AddTrainingDraftSuccessModal";
 
 const QmsAddTraining = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showAddTrainingSuccessModal, setShowAddTrainingSuccessModal] = useState(false);
-  const [showAddTrainingErrorModal, setShowAddTrainingErrorModal] = useState(false);
+  const [showAddTrainingSuccessModal, setShowAddTrainingSuccessModal] =
+    useState(false);
+  const [showDraftTrainingSuccessModal, setShowDraftTrainingSuccessModal] =
+    useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [draftLoading, setDraftLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    trainingTitle: '',
-    typeOfTraining: 'Internal',
-    expectedResults: '',
-    actualResults: '',
-    status: 'Requested',
-    requestedBy: '',
+    trainingTitle: "",
+    typeOfTraining: "Internal",
+    expectedResults: "",
+    actualResults: "",
+    status: "Requested",
+    requestedBy: "",
     datePlanned: {
-      day: '',
-      month: '',
-      year: ''
+      day: "",
+      month: "",
+      year: "",
     },
     dateConducted: {
-      day: '',
-      month: '',
-      year: ''
+      day: "",
+      month: "",
+      year: "",
     },
     startTime: {
-      hour: '',
-      min: ''
+      hour: "",
+      min: "",
     },
     endTime: {
-      hour: '',
-      min: ''
+      hour: "",
+      min: "",
     },
-    venue: '',
+    venue: "",
     attachment: null,
-    trainingEvaluation: '',
+    trainingEvaluation: "",
     evaluationDate: {
-      day: '',
-      month: '',
-      year: ''
+      day: "",
+      month: "",
+      year: "",
     },
-    evaluationBy: '',
+    evaluationBy: "",
     send_notification: false,
-    is_draft: false
+    is_draft: false,
   });
 
   useEffect(() => {
@@ -59,10 +65,12 @@ const QmsAddTraining = () => {
     const fetchUsers = async () => {
       try {
         const companyId = getUserCompanyId();
-        const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+        const response = await axios.get(
+          `${BASE_URL}/company/users-active/${companyId}/`
+        );
         setUsers(response.data);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error("Error fetching users:", error);
       }
     };
 
@@ -108,34 +116,34 @@ const QmsAddTraining = () => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
 
   const handleQmsListTraining = () => {
-    navigate('/company/qms/list-training');
+    navigate("/company/qms/list-training");
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       setFormData({
         ...formData,
-        [name]: checked
+        [name]: checked,
       });
       return;
     }
 
     // Handle nested objects
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
       setFormData({
         ...formData,
         [parent]: {
           ...formData[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -143,7 +151,7 @@ const QmsAddTraining = () => {
   const handleFileChange = (e) => {
     setFormData({
       ...formData,
-      attachment: e.target.files[0]
+      attachment: e.target.files[0],
     });
   };
 
@@ -160,8 +168,6 @@ const QmsAddTraining = () => {
     setSelectedAttendees(selectedValues);
   };
 
-
-
   const handleSubmit = async (e, isDraft = false) => {
     e.preventDefault();
     setLoading(true);
@@ -170,7 +176,7 @@ const QmsAddTraining = () => {
       const userId = getRelevantUserId();
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setError('Company ID not found. Please log in again.');
+        setError("Company ID not found. Please log in again.");
         setLoading(false);
         return;
       }
@@ -183,50 +189,54 @@ const QmsAddTraining = () => {
       const evaluationDate = `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}`;
 
       const submissionData = new FormData();
-      submissionData.append('company', companyId);
-      submissionData.append('user', userId);
-      submissionData.append('training_title', formData.trainingTitle);
-      submissionData.append('expected_results', formData.expectedResults);
-      submissionData.append('actual_results', formData.actualResults);
-      submissionData.append('type_of_training', formData.typeOfTraining);
-      submissionData.append('status', formData.status);
-      submissionData.append('requested_by', formData.requestedBy);
-      submissionData.append('date_planned', datePlanned);
-      submissionData.append('date_conducted', dateConducted);
-      submissionData.append('start_time', startTime);
-      submissionData.append('end_time', endTime);
-      submissionData.append('venue', formData.venue);
-      submissionData.append('training_evaluation', formData.trainingEvaluation);
-      submissionData.append('evaluation_date', evaluationDate);
-      submissionData.append('evaluation_by', formData.evaluationBy);
-      submissionData.append('send_notification', formData.send_notification);
-      submissionData.append('is_draft', isDraft || formData.is_draft);
+      submissionData.append("company", companyId);
+      submissionData.append("user", userId);
+      submissionData.append("training_title", formData.trainingTitle);
+      submissionData.append("expected_results", formData.expectedResults);
+      submissionData.append("actual_results", formData.actualResults);
+      submissionData.append("type_of_training", formData.typeOfTraining);
+      submissionData.append("status", formData.status);
+      submissionData.append("requested_by", formData.requestedBy);
+      submissionData.append("date_planned", datePlanned);
+      submissionData.append("date_conducted", dateConducted);
+      submissionData.append("start_time", startTime);
+      submissionData.append("end_time", endTime);
+      submissionData.append("venue", formData.venue);
+      submissionData.append("training_evaluation", formData.trainingEvaluation);
+      submissionData.append("evaluation_date", evaluationDate);
+      submissionData.append("evaluation_by", formData.evaluationBy);
+      submissionData.append("send_notification", formData.send_notification);
+      submissionData.append("is_draft", isDraft || formData.is_draft);
 
       // Append selected attendees
-      selectedAttendees.forEach(attendeeId => {
-        submissionData.append('training_attendees', attendeeId);
+      selectedAttendees.forEach((attendeeId) => {
+        submissionData.append("training_attendees", attendeeId);
       });
 
       if (formData.attachment) {
-        submissionData.append('attachment', formData.attachment);
+        submissionData.append("attachment", formData.attachment);
       }
 
-      const response = await axios.post(`${BASE_URL}/qms/training/create/`, submissionData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post(
+        `${BASE_URL}/qms/training/create/`,
+        submissionData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       setShowAddTrainingSuccessModal(true);
       setTimeout(() => {
         setShowAddTrainingSuccessModal(false);
-        navigate('/company/qms/list-training');
+        navigate("/company/qms/list-training");
       }, 1500);
     } catch (error) {
-      console.error('Error submitting form:', error);
-      setShowAddTrainingErrorModal(true);
+      console.error("Error submitting form:", error);
+      setShowErrorModal(true);
       setTimeout(() => {
-        setShowAddTrainingErrorModal(false);
+        setShowErrorModal(false);
       }, 3000);
     } finally {
       setLoading(false);
@@ -234,17 +244,18 @@ const QmsAddTraining = () => {
   };
 
   const handleCancel = () => {
-    navigate('/company/qms/list-training');
+    navigate("/company/qms/list-training");
   };
 
   // Generate options for dropdowns
-  const generateOptions = (start, end, prefix = '') => {
+  const generateOptions = (start, end, prefix = "") => {
     const options = [];
     for (let i = start; i <= end; i++) {
       const value = i < 10 ? `0${i}` : `${i}`;
       options.push(
         <option key={i} value={value}>
-          {prefix}{value}
+          {prefix}
+          {value}
         </option>
       );
     }
@@ -258,89 +269,142 @@ const QmsAddTraining = () => {
       const userId = getRelevantUserId();
 
       if (!companyId || !userId) {
-        setError('Company ID or User ID not found. Please log in again.');
+        setError("Company ID or User ID not found. Please log in again.");
         setDraftLoading(false);
         return;
       }
 
       // Format dates and times properly
-      const datePlanned = formData.datePlanned.year && formData.datePlanned.month && formData.datePlanned.day ?
-        `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}` : '';
+      const datePlanned =
+        formData.datePlanned.year &&
+        formData.datePlanned.month &&
+        formData.datePlanned.day
+          ? `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}`
+          : "";
 
-      const dateConducted = formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day ?
-        `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}` : '';
+      const dateConducted =
+        formData.dateConducted.year &&
+        formData.dateConducted.month &&
+        formData.dateConducted.day
+          ? `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`
+          : "";
 
-      const startTime = formData.startTime.hour && formData.startTime.min ?
-        `${formData.startTime.hour}:${formData.startTime.min}:00` : '';
+      const startTime =
+        formData.startTime.hour && formData.startTime.min
+          ? `${formData.startTime.hour}:${formData.startTime.min}:00`
+          : "";
 
-      const endTime = formData.endTime.hour && formData.endTime.min ?
-        `${formData.endTime.hour}:${formData.endTime.min}:00` : '';
+      const endTime =
+        formData.endTime.hour && formData.endTime.min
+          ? `${formData.endTime.hour}:${formData.endTime.min}:00`
+          : "";
 
-      const evaluationDate = formData.evaluationDate.year && formData.evaluationDate.month && formData.evaluationDate.day ?
-        `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}` : '';
+      const evaluationDate =
+        formData.evaluationDate.year &&
+        formData.evaluationDate.month &&
+        formData.evaluationDate.day
+          ? `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}`
+          : "";
 
       const submitData = new FormData();
 
-      submitData.append('company', companyId);
-      submitData.append('user', userId);
-      submitData.append('is_draft', true);
+      submitData.append("company", companyId);
+      submitData.append("user", userId);
+      submitData.append("is_draft", true);
 
       // Add basic fields
-      if (formData.trainingTitle) submitData.append('training_title', formData.trainingTitle);
-      if (formData.typeOfTraining) submitData.append('type_of_training', formData.typeOfTraining);
-      if (formData.expectedResults) submitData.append('expected_results', formData.expectedResults);
-      if (formData.actualResults) submitData.append('actual_results', formData.actualResults);
-      if (formData.status) submitData.append('status', formData.status);
-      if (formData.requestedBy) submitData.append('requested_by', formData.requestedBy);
-      if (formData.venue) submitData.append('venue', formData.venue);
-      if (formData.trainingEvaluation) submitData.append('training_evaluation', formData.trainingEvaluation);
-      if (formData.evaluationBy) submitData.append('evaluation_by', formData.evaluationBy);
-      submitData.append('send_notification', formData.send_notification);
+      if (formData.trainingTitle)
+        submitData.append("training_title", formData.trainingTitle);
+      if (formData.typeOfTraining)
+        submitData.append("type_of_training", formData.typeOfTraining);
+      if (formData.expectedResults)
+        submitData.append("expected_results", formData.expectedResults);
+      if (formData.actualResults)
+        submitData.append("actual_results", formData.actualResults);
+      if (formData.status) submitData.append("status", formData.status);
+      if (formData.requestedBy)
+        submitData.append("requested_by", formData.requestedBy);
+      if (formData.venue) submitData.append("venue", formData.venue);
+      if (formData.trainingEvaluation)
+        submitData.append("training_evaluation", formData.trainingEvaluation);
+      if (formData.evaluationBy)
+        submitData.append("evaluation_by", formData.evaluationBy);
+      submitData.append("send_notification", formData.send_notification);
 
-      if (datePlanned) submitData.append('date_planned', datePlanned);
-      if (dateConducted) submitData.append('date_conducted', dateConducted);
-      if (startTime) submitData.append('start_time', startTime);
-      if (endTime) submitData.append('end_time', endTime);
-      if (evaluationDate) submitData.append('evaluation_date', evaluationDate);
+      if (datePlanned) submitData.append("date_planned", datePlanned);
+      if (dateConducted) submitData.append("date_conducted", dateConducted);
+      if (startTime) submitData.append("start_time", startTime);
+      if (endTime) submitData.append("end_time", endTime);
+      if (evaluationDate) submitData.append("evaluation_date", evaluationDate);
 
-      selectedAttendees.forEach(attendeeId => {
-        submitData.append('training_attendees', attendeeId);
+      selectedAttendees.forEach((attendeeId) => {
+        submitData.append("training_attendees", attendeeId);
       });
 
       // Add attachment if any
       if (formData.attachment) {
-        submitData.append('attachment', formData.attachment);
+        submitData.append("attachment", formData.attachment);
       }
 
-      console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+      console.log(
+        "Sending draft data:",
+        Object.fromEntries(submitData.entries())
+      );
 
       const response = await axios.post(
         `${BASE_URL}/qms/training/draft-create/`,
         submitData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            "Content-Type": "multipart/form-data",
           },
         }
       );
 
       setDraftLoading(false);
 
+      setShowDraftTrainingSuccessModal(true);
       setTimeout(() => {
-        navigate('/company/qms/draft-training');
+        setShowDraftTrainingSuccessModal(false);
+        navigate("/company/qms/draft-training");
       }, 1500);
-
     } catch (err) {
       setDraftLoading(false);
-      const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+      const errorMessage = err.response?.data?.detail || "Failed to save Draft";
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError(errorMessage);
-      console.error('Error saving Draft:', err.response?.data || err);
+      console.error("Error saving Draft:", err.response?.data || err);
     }
   };
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
         <h1 className="add-training-head">Add Training</h1>
+
+        <AddTrainingSuccessModal
+          showAddTrainingSuccessModal={showAddTrainingSuccessModal}
+          onClose={() => {
+            setShowAddTrainingSuccessModal(false);
+          }}
+        />
+
+        <ErrorModal
+          showErrorModal={showErrorModal}
+          onClose={() => {
+            setShowErrorModal(false);
+          }}
+        />
+
+        <AddTrainingDraftSuccessModal
+          showDraftTrainingSuccessModal={showDraftTrainingSuccessModal}
+          onClose={() => {
+            setShowDraftTrainingSuccessModal(false);
+          }}
+        />
+
         <button
           className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
           onClick={() => handleQmsListTraining()}
@@ -349,7 +413,10 @@ const QmsAddTraining = () => {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
+      >
         {/* Training Title */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
@@ -425,13 +492,15 @@ const QmsAddTraining = () => {
             onChange={handleAttendeesChange}
             className="add-training-inputs !h-[151px] overflow-y-auto"
           >
-            {users.map(user => (
+            {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.first_name} {user.last_name}
               </option>
             ))}
           </select>
-          <p className="text-xs text-[#AAAAAA]">Hold Ctrl/Cmd to select multiple attendees</p>
+          <p className="text-xs text-[#AAAAAA]">
+            Hold Ctrl/Cmd to select multiple attendees
+          </p>
         </div>
 
         {/* Status */}
@@ -465,8 +534,10 @@ const QmsAddTraining = () => {
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
             >
-              <option value="" disabled>Select</option>
-              {users.map(user => (
+              <option value="" disabled>
+                Select
+              </option>
+              {users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.first_name} {user.last_name}
                 </option>
@@ -498,7 +569,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>dd</option>
+                <option value="" disabled>
+                  dd
+                </option>
                 {generateOptions(1, 31)}
               </select>
               <ChevronDown
@@ -520,7 +593,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>mm</option>
+                <option value="" disabled>
+                  mm
+                </option>
                 {generateOptions(1, 12)}
               </select>
               <ChevronDown
@@ -542,7 +617,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>yyyy</option>
+                <option value="" disabled>
+                  yyyy
+                </option>
                 {generateOptions(2023, 2030)}
               </select>
               <ChevronDown
@@ -572,7 +649,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>dd</option>
+                <option value="" disabled>
+                  dd
+                </option>
                 {generateOptions(1, 31)}
               </select>
               <ChevronDown
@@ -594,7 +673,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>mm</option>
+                <option value="" disabled>
+                  mm
+                </option>
                 {generateOptions(1, 12)}
               </select>
               <ChevronDown
@@ -616,7 +697,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>yyyy</option>
+                <option value="" disabled>
+                  yyyy
+                </option>
                 {generateOptions(2023, 2030)}
               </select>
               <ChevronDown
@@ -646,7 +729,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>Hour</option>
+                <option value="" disabled>
+                  Hour
+                </option>
                 {generateOptions(0, 23)}
               </select>
               <ChevronDown
@@ -668,7 +753,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>Min</option>
+                <option value="" disabled>
+                  Min
+                </option>
                 {generateOptions(0, 59)}
               </select>
               <ChevronDown
@@ -698,7 +785,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>Hour</option>
+                <option value="" disabled>
+                  Hour
+                </option>
                 {generateOptions(0, 23)}
               </select>
               <ChevronDown
@@ -720,7 +809,9 @@ const QmsAddTraining = () => {
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 required
               >
-                <option value="" disabled>Min</option>
+                <option value="" disabled>
+                  Min
+                </option>
                 {generateOptions(0, 59)}
               </select>
               <ChevronDown
@@ -767,10 +858,14 @@ const QmsAddTraining = () => {
             </label>
           </div>
           {formData.attachment && (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              {formData.attachment.name}
+            </p>
           )}
           {!formData.attachment && (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              No file chosen
+            </p>
           )}
         </div>
 
@@ -786,7 +881,7 @@ const QmsAddTraining = () => {
         </div>
 
         {/* Evaluation Date */}
-        <div className='flex flex-col gap-5'>
+        <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
             <label className="add-training-label">
               Evaluation Date <span className="text-red-500">*</span>
@@ -803,7 +898,9 @@ const QmsAddTraining = () => {
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                   required
                 >
-                  <option value="" disabled>dd</option>
+                  <option value="" disabled>
+                    dd
+                  </option>
                   {generateOptions(1, 31)}
                 </select>
                 <ChevronDown
@@ -825,7 +922,9 @@ const QmsAddTraining = () => {
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                   required
                 >
-                  <option value="" disabled>mm</option>
+                  <option value="" disabled>
+                    mm
+                  </option>
                   {generateOptions(1, 12)}
                 </select>
                 <ChevronDown
@@ -847,7 +946,9 @@ const QmsAddTraining = () => {
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                   required
                 >
-                  <option value="" disabled>yyyy</option>
+                  <option value="" disabled>
+                    yyyy
+                  </option>
                   {generateOptions(2023, 2030)}
                 </select>
                 <ChevronDown
@@ -871,8 +972,10 @@ const QmsAddTraining = () => {
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
               >
-                <option value="" disabled>Select</option>
-                {users.map(user => (
+                <option value="" disabled>
+                  Select
+                </option>
+                {users.map((user) => (
                   <option key={user.id} value={user.id}>
                     {user.first_name} {user.last_name}
                   </option>
@@ -913,10 +1016,10 @@ const QmsAddTraining = () => {
               disabled={draftLoading}
               className="request-correction-btn duration-200"
             >
-              {draftLoading ? 'Saving...' : 'Save as Draft'}
+              {draftLoading ? "Saving..." : "Save as Draft"}
             </button>
           </div>
-          <div className='flex gap-5'>
+          <div className="flex gap-5">
             <button
               type="button"
               onClick={handleCancel}
@@ -929,7 +1032,7 @@ const QmsAddTraining = () => {
               disabled={loading}
               className="save-btn duration-200"
             >
-              {loading ? 'Saving...' : 'Save'}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
@@ -938,4 +1041,4 @@ const QmsAddTraining = () => {
   );
 };
 
-export default QmsAddTraining
+export default QmsAddTraining;
