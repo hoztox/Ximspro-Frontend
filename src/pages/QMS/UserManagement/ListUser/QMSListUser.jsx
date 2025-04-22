@@ -331,7 +331,7 @@ const QMSListUser = () => {
                   <td className="px-5 add-user-datas">{user.first_name} {user.last_name}</td>
                   <td className="px-5 add-user-datas">{user.email}</td>
                   <td className="px-5 add-user-datas">
-                    <span className={`px-2 py-1 rounded text-xs ${user.status === 'active' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}`}>
+                    <span className={`px-2 py-1 rounded text-xs ${user.status === 'active' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-red-900 text-red-300'}`}>
                       {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                     </span>
                   </td>
