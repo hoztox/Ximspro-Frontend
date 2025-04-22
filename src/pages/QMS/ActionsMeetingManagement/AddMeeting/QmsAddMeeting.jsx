@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import "./qmsaddmeeting.css"
+import "./qmsaddmeeting.css";
+import CausesModal from '../CausesModal';
+  // Import the modal component
 
 const QmsAddMeeting = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -33,6 +36,20 @@ const QmsAddMeeting = () => {
         navigate('/company/qms/list-meeting')
     }
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleAddCause = (cause) => {
+        setFormData({
+            ...formData,
+            cause: cause
+        });
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -89,6 +106,13 @@ const QmsAddMeeting = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+            {/* Modal component */}
+            <CausesModal 
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onAddCause={handleAddCause}
+            />
+
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Add Meeting</h1>
                 <button
@@ -134,7 +158,7 @@ const QmsAddMeeting = () => {
                                 {generateOptions(1, 31)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-1/3 transform   transition-transform duration-300
+                                className={`absolute right-3 top-1/3 transform transition-transform duration-300
            ${focusedDropdown === "dateConducted.day" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
@@ -155,7 +179,7 @@ const QmsAddMeeting = () => {
                                 {generateOptions(1, 12)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-1/3 transform   transition-transform duration-300
+                                className={`absolute right-3 top-1/3 transform transition-transform duration-300
            ${focusedDropdown === "dateConducted.month" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
@@ -176,13 +200,12 @@ const QmsAddMeeting = () => {
                                 {generateOptions(2023, 2030)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-1/3 transform   transition-transform duration-300
+                                className={`absolute right-3 top-1/3 transform transition-transform duration-300
            ${focusedDropdown === "dateConducted.year" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
                     </div>
                 </div>
 
@@ -190,7 +213,7 @@ const QmsAddMeeting = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
                     <label className="add-training-label">Select Cause :</label>
-                     <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
+                     {/* <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button> */}
                     </div>
                     <select
                         name="cause"
@@ -204,14 +227,21 @@ const QmsAddMeeting = () => {
                         <option value="Manager">Manager</option>
                         <option value="Employee">Employee</option>
                         <option value="HR">HR</option>
+                        {/* The newly added cause would appear here as well */}
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[45%] transform transition-transform duration-300 
        ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>View / Add Causes </button>
+                    <button 
+                        type="button" 
+                        className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
+                        onClick={handleOpenModal}
+                    >
+                        View / Add Causes 
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
@@ -230,13 +260,13 @@ const QmsAddMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[45%] transform transition-transform duration-300 
        ${focusedDropdown === "meetingType" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
-                <div >
+                <div>
                 </div>
 
                 {/* Status */}
@@ -295,13 +325,12 @@ const QmsAddMeeting = () => {
                                 {generateOptions(0, 59)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-1/3 transform  transition-transform duration-300
+                                className={`absolute right-3 top-1/3 transform transition-transform duration-300
            ${focusedDropdown === "startTime.min" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
                     </div>
                 </div>
 
@@ -345,13 +374,12 @@ const QmsAddMeeting = () => {
                                 {generateOptions(0, 59)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-1/3 transform  transition-transform duration-300
+                                className={`absolute right-3 top-1/3 transform transition-transform duration-300
            ${focusedDropdown === "endTime.min" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
                     </div>
                 </div>
 
@@ -436,4 +464,4 @@ const QmsAddMeeting = () => {
         </div>
     );
 };
-export default QmsAddMeeting
+export default QmsAddMeeting;

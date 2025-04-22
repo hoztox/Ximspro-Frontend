@@ -189,7 +189,7 @@ const QmsEditMeeting = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
                         <label className="add-training-label">Select Cause :</label>
-                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
+                         
                     </div>
                     <select
                         name="cause"
@@ -205,12 +205,12 @@ const QmsEditMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
         ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>View / Add Causes </button>
+                     
                 </div>
 
                 <div className="flex flex-col gap-3 relative">

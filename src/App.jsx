@@ -232,6 +232,15 @@ import QmsViewCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisf
 import QmsDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsDraftCustomerSurvey";
 import QmsEditDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsEditDraftCustomerSurvey";
 import QmsViewDraftCustomerSurvey from "./pages/QMS/CustomerManagement/CustomerSatisfactionSurvey/QmsViewDraftCustomerSurvey";
+import QmsAddSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsAddSupplier";
+import QmsListSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsListSupplier";
+import QmsEditSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsEditSupplier";
+import QmsViewSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsViewSupplier";
+import QmsDraftSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsDraftSupplier";
+import QmsDraftEditSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsDraftEditSupplier";
+import QmsDraftViewSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsDraftViewSupplier";
+import QmsAddSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsAddSupplierProblem";
+import QmsSupplierProblemLog from "./pages/QMS/SupplierManagement/SupplierProblems/QmsSupplierProblemLog";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -428,6 +437,23 @@ const ThemedApp = () => {
           <Route path="qms/edit-draft-customer-survey" element={<QmsEditDraftCustomerSurvey/>} />
           <Route path="qms/view-draft-customer-survey" element={<QmsViewDraftCustomerSurvey/>} />
 
+
+
+
+
+
+          {/* QMS Supplier Management*/}
+          <Route path="qms/add-supplier" element={<QmsAddSupplier/>} />
+          <Route path="qms/list-supplier" element={<QmsListSupplier/>} />
+          <Route path="qms/edit-supplier" element={<QmsEditSupplier/>} />
+          <Route path="qms/view-supplier" element={<QmsViewSupplier/>} />
+          <Route path="qms/draft-supplier" element={<QmsDraftSupplier/>} />
+          <Route path="qms/draft-edit-supplier" element={<QmsDraftEditSupplier/>} />
+          <Route path="qms/draft-view-supplier" element={<QmsDraftViewSupplier/>} />
+
+          <Route path="qms/add-supplier-problem" element={<QmsAddSupplierProblem/>} />
+
+          <Route path="qms/supplier-problem-log" element={<QmsSupplierProblemLog/>} />
           
 
 

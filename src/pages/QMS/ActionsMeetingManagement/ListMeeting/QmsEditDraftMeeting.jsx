@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CausesModal from '../CausesModal';
 
 const QmsEditDraftMeeting = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -26,11 +28,26 @@ const QmsEditDraftMeeting = () => {
         calledBy: '',
     });
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
     const handleQmsListDraftMeeting = () => {
         navigate('/company/qms/draft-meeting')
     }
+
+    const handleAddCause = (cause) => {
+        setFormData({
+            ...formData,
+            cause: cause
+        });
+    };
 
 
     const handleChange = (e) => {
@@ -90,6 +107,14 @@ const QmsEditDraftMeeting = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Draft Meeting</h1>
+
+                <CausesModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    onAddCause={handleAddCause}
+                />
+
+
                 <button
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
                     onClick={() => handleQmsListDraftMeeting()}
@@ -210,7 +235,9 @@ const QmsEditDraftMeeting = () => {
                         size={20}
                         color="#AAAAAA"
                     />
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>View / Add Causes </button>
+                    <button className='flex justify-start add-training-label !text-[#1E84AF]'
+                        onClick={handleOpenModal}
+                    >View / Add Causes </button>
                 </div>
 
                 <div className="flex flex-col gap-3 relative">

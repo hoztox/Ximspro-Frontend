@@ -5,7 +5,7 @@ import procedure from "../../../../assets/images/Company-Sidebar/manual.svg";
 import record from "../../../../assets/images/Company-Sidebar/record-format.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const SupplierManagementSubmenu = () => {
+const SupplierManagementSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -14,13 +14,21 @@ const SupplierManagementSubmenu = () => {
             id: "add-supplier",
             label: "Add Supplier",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/add-supplier",
+            relatedPaths: [
+                "/company/qms/list-supplier",
+                "/company/qms/edit-supplier",
+                "/company/qms/view-supplier",
+                "/company/qms/draft-supplier",
+                "/company/qms/draft-edit-supplier",
+                "/company/qms/draft-view-supplier",
+            ]
         },
         {
             id: "enter-supplier-problems",
             label: "Enter Supplier Problems",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/add-supplier-problem",
         },
         {
             id: "supplier-problem-log",
@@ -28,7 +36,7 @@ const SupplierManagementSubmenu = () => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/procedure",
+            path: "/company/qms/supplier-problem-log",
         },
         {
             id: "supplier-Performance-evaluation",
@@ -41,7 +49,10 @@ const SupplierManagementSubmenu = () => {
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     // Handle clicking on a submenu item
