@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import CausesModal from '../CausesModal';
 
 const QmsEditMeeting = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -54,10 +56,18 @@ const QmsEditMeeting = () => {
         }
     };
 
-    const handleFileChange = (e) => {
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleEditAgenda = (cause) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0]
+            cause: cause
         });
     };
 
@@ -88,6 +98,13 @@ const QmsEditMeeting = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+
+            <CausesModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onAddCause={handleEditAgenda}
+            />
+
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Meeting</h1>
                 <button
@@ -188,8 +205,8 @@ const QmsEditMeeting = () => {
 
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
-                        <label className="add-training-label">Select Cause :</label>
-                         
+                        <label className="add-training-label">Meeting Agenda</label>
+
                     </div>
                     <select
                         name="cause"
@@ -205,12 +222,18 @@ const QmsEditMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
         ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
-                     
+                    <button
+                        type="button"
+                        className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
+                        onClick={handleOpenModal}
+                    >
+                        View / Add Agenda
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-3 relative">

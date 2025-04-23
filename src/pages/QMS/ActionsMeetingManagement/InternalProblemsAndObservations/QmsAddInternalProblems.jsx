@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import InternalProblemsModal from '../InternalProblemsModal';
 
 const QmsAddInternalProblems = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
-         cause: 'Internal',
-         description: '',
-         action: '',
-         executor: '',
-         solved: '',
-         dateProblem: {
+        cause: 'Internal',
+        description: '',
+        action: '',
+        executor: '',
+        solved: '',
+        dateProblem: {
             day: '',
             month: '',
             year: ''
         },
-         correctiveAction: '',
-         send_notification: false
+        correctiveAction: '',
+        send_notification: false
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -25,9 +27,17 @@ const QmsAddInternalProblems = () => {
         navigate('/company/qms/list-internal-problems-observations')
     }
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        
+
         // Handle checkboxes
         if (type === 'checkbox') {
             setFormData({
@@ -53,6 +63,13 @@ const QmsAddInternalProblems = () => {
                 [name]: value
             });
         }
+    };
+
+    const handleAddCause = (cause) => {
+        setFormData({
+            ...formData,
+            cause: cause
+        });
     };
 
     const handleSubmit = (e) => {
@@ -82,6 +99,14 @@ const QmsAddInternalProblems = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+
+            <InternalProblemsModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onAddCause={handleAddCause}
+            />
+
+
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Add Internal Problems and Observations</h1>
                 <button
@@ -93,11 +118,10 @@ const QmsAddInternalProblems = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
-                 
+
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Select Causes / Root Cause</label>
-                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Cause List</button>
                     </div>
                     <div className="relative">
                         <select
@@ -118,12 +142,16 @@ const QmsAddInternalProblems = () => {
                             color="#AAAAAA"
                         />
                     </div>
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>Add Causes / Root Causes</button>
+                    <button className='flex justify-start add-training-label !text-[#1E84AF]'
+                        onClick={handleOpenModal}
+                    >
+                        Add Causes / Root Causes
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                    Problem/ Observation Description <span className="text-red-500">*</span>
+                        Problem/ Observation Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                         name="description"
@@ -149,7 +177,7 @@ const QmsAddInternalProblems = () => {
                 <div className="flex flex-col gap-5">
                     <div className='flex flex-col gap-3 relative'>
                         <label className="add-training-label">
-                        Executor:
+                            Executor:
                         </label>
                         <select
                             name="executor"
@@ -185,7 +213,7 @@ const QmsAddInternalProblems = () => {
                             <option value="" disabled>Select</option>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
-                             
+
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 

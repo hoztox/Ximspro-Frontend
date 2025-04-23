@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
- 
+import CausesModal from '../CausesModal';
+
 
 const QmsEditDraftMeeting = () => {
     const navigate = useNavigate();
- 
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -28,9 +29,9 @@ const QmsEditDraftMeeting = () => {
         calledBy: '',
     });
 
-    
 
-    
+
+
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
@@ -38,7 +39,15 @@ const QmsEditDraftMeeting = () => {
         navigate('/company/qms/draft-meeting')
     }
 
-    const handleAddCause = (cause) => {
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleEditAgenda = (cause) => {
         setFormData({
             ...formData,
             cause: cause
@@ -103,8 +112,12 @@ const QmsEditDraftMeeting = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Draft Meeting</h1>
+                <CausesModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    onAddCause={handleEditAgenda}
+                />
 
-                
 
 
                 <button
@@ -205,7 +218,7 @@ const QmsEditDraftMeeting = () => {
 
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
-                        <label className="add-training-label">Select Cause :</label>
+                        <label className="add-training-label">Meeting Agenda</label>
                     </div>
                     <select
                         name="cause"
@@ -221,11 +234,19 @@ const QmsEditDraftMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
         ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
+
+                    <button
+                        type="button"
+                        className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
+                        onClick={handleOpenModal}
+                    >
+                        View / Add Agenda
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
@@ -244,7 +265,7 @@ const QmsEditDraftMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
         ${focusedDropdown === "meetingType" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
