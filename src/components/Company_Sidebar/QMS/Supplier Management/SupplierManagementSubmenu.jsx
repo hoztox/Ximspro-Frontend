@@ -43,7 +43,6 @@ const SupplierManagementSubmenu = (props) => {
                 "/company/qms/drafts-supplier-problem",
                 "/company/qms/edit-drafts-supplier-problem",
                 "/company/qms/view-drafts-supplier-problem",
-                // "/company/qms/draft-view-supplier",
             ]
         },
         {
@@ -52,7 +51,14 @@ const SupplierManagementSubmenu = (props) => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/record-format",
+            path: "/company/qms/list-suppliers-performance",
+            relatedPaths: [
+                "/company/qms/add-supplier-evaluation",
+                // "/company/qms/views-supplier-problem",
+                // "/company/qms/drafts-supplier-problem",
+                // "/company/qms/edit-drafts-supplier-problem",
+                // "/company/qms/view-drafts-supplier-problem",
+            ]
         },
     ]
 

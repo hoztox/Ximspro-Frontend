@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import CausesModal from '../CausesModal';
+ 
 
 const QmsEditDraftMeeting = () => {
     const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+ 
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -28,13 +28,9 @@ const QmsEditDraftMeeting = () => {
         calledBy: '',
     });
 
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
-    };
+    
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-    };
+    
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
@@ -108,11 +104,7 @@ const QmsEditDraftMeeting = () => {
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Draft Meeting</h1>
 
-                <CausesModal
-                    isOpen={isModalOpen}
-                    onClose={handleCloseModal}
-                    onAddCause={handleAddCause}
-                />
+                
 
 
                 <button
@@ -214,7 +206,6 @@ const QmsEditDraftMeeting = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
                         <label className="add-training-label">Select Cause :</label>
-                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
                     </div>
                     <select
                         name="cause"
@@ -230,14 +221,11 @@ const QmsEditDraftMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
         ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'
-                        onClick={handleOpenModal}
-                    >View / Add Causes </button>
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
@@ -256,7 +244,7 @@ const QmsEditDraftMeeting = () => {
                         <option value="HR">HR</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform   transition-transform duration-300 
+                        className={`absolute right-3 top-[60%] transform   transition-transform duration-300 
         ${focusedDropdown === "meetingType" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
@@ -282,7 +270,7 @@ const QmsEditDraftMeeting = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 w-[65.5%]">
+                <div className="flex flex-col gap-3 ">
                     <label className="add-training-label">Start</label>
                     <div className="grid grid-cols-2 gap-5">
 
@@ -332,7 +320,7 @@ const QmsEditDraftMeeting = () => {
                 </div>
 
 
-                <div className="flex flex-col gap-3 w-[65.5%]">
+                <div className="flex flex-col gap-3">
                     <label className="add-training-label">End</label>
                     <div className="grid grid-cols-2 gap-5">
 

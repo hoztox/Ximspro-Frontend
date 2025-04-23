@@ -212,7 +212,7 @@ const QmsAddMeeting = () => {
 
                 <div className="flex flex-col gap-3 relative">
                     <div className="flex items-center justify-between">
-                    <label className="add-training-label">Select Cause :</label>
+                    <label className="add-training-label">Meeting Agenda</label>
                      {/* <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button> */}
                     </div>
                     <select
@@ -240,7 +240,7 @@ const QmsAddMeeting = () => {
                         className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
                         onClick={handleOpenModal}
                     >
-                        View / Add Causes 
+                        View / Add Agenda
                     </button>
                 </div>
 
@@ -286,7 +286,7 @@ const QmsAddMeeting = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 w-[65.5%]">
+                <div className="flex flex-col gap-3">
                     <label className="add-training-label">Start</label>
                     <div className="grid grid-cols-2 gap-5">
 
@@ -335,7 +335,7 @@ const QmsAddMeeting = () => {
                 </div>
 
 
-                <div className="flex flex-col gap-3 w-[65.5%]">
+                <div className="flex flex-col gap-3">
                     <label className="add-training-label">End</label>
                     <div className="grid grid-cols-2 gap-5">
 

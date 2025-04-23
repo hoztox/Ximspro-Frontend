@@ -246,6 +246,8 @@ import QmsViewSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProbl
 import QmsDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsDraftSupplierProblem";
 import QmsEditDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsEditDraftSupplierProblem";
 import QmsViewDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsViewDraftSupplierProblem";
+import QmsSupplierPerformace from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsSupplierPerformace";
+import QmsAddSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsAddSupplierPerformance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -381,13 +383,13 @@ const ThemedApp = () => {
           <Route path="qms/list-draft" element={<QmsListDraftSystemMessaging />} />
           <Route path="qms/compose" element={<QmsComposeSystemMessaging />} />
 
-          <Route path="qms/list-internal-problems-observations" element={<QmsListInternalProblems/>} />
-          <Route path="qms/add-internal-problems-observations" element={<QmsAddInternalProblems/>} />
-          <Route path="qms/edit-internal-problems-observations" element={<QmsEditInternalProblems/>} />
-          <Route path="qms/view-internal-problems-observations" element={<QmsViewInternalProblems/>} />
-          <Route path="qms/draft-internal-problems-observations" element={<QmsDraftInternalProblems/>} />
-          <Route path="qms/edit-draft-internal-problems-observations" element={<QmsEditDraftInternalProblems/>} />
-          <Route path="qms/view-draft-internal-problems-observations" element={<QmsViewDraftInternalProblems/>} />
+          <Route path="qms/list-internal-problems-observations" element={<QmsListInternalProblems />} />
+          <Route path="qms/add-internal-problems-observations" element={<QmsAddInternalProblems />} />
+          <Route path="qms/edit-internal-problems-observations" element={<QmsEditInternalProblems />} />
+          <Route path="qms/view-internal-problems-observations" element={<QmsViewInternalProblems />} />
+          <Route path="qms/draft-internal-problems-observations" element={<QmsDraftInternalProblems />} />
+          <Route path="qms/edit-draft-internal-problems-observations" element={<QmsEditDraftInternalProblems />} />
+          <Route path="qms/view-draft-internal-problems-observations" element={<QmsViewDraftInternalProblems />} />
 
 
 
@@ -395,21 +397,21 @@ const ThemedApp = () => {
 
 
           {/* QMS Audits & Inspection management */}
-          <Route path="qms/list-audit" element={<QmsListAudit/>} />
-          <Route path="qms/add-audit" element={<QmsAddAudit/>} />
-          <Route path="qms/edit-audit" element={<QmsEditAudit/>} />
-          <Route path="qms/view-audit" element={<QmsViewAudit/>} />
-          <Route path="qms/draft-audit" element={<QmsDraftAudit/>} />
-          <Route path="qms/edit-draft-audit" element={<QmsEditDraftAudit/>} />
-          <Route path="qms/view-draft-audit" element={<QmsViewDraftAudit/>} />
+          <Route path="qms/list-audit" element={<QmsListAudit />} />
+          <Route path="qms/add-audit" element={<QmsAddAudit />} />
+          <Route path="qms/edit-audit" element={<QmsEditAudit />} />
+          <Route path="qms/view-audit" element={<QmsViewAudit />} />
+          <Route path="qms/draft-audit" element={<QmsDraftAudit />} />
+          <Route path="qms/edit-draft-audit" element={<QmsEditDraftAudit />} />
+          <Route path="qms/view-draft-audit" element={<QmsViewDraftAudit />} />
 
-          <Route path="qms/list-inspection" element={<QmsListInspection/>} />
-          <Route path="qms/add-inspection" element={<QmsAddInspection/>} />
-          <Route path="qms/edit-inspection" element={<QmsEditInspection/>} />
-          <Route path="qms/view-inspection" element={<QmsViewInspection/>} />
-          <Route path="qms/draft-inspection" element={<QmsDraftInspection/>} />
-          <Route path="qms/edit-draft-inspection" element={<QmsEditDraftInspections/>} />
-          <Route path="qms/view-draft-inspection" element={<QmsViewDraftInspection/>} />
+          <Route path="qms/list-inspection" element={<QmsListInspection />} />
+          <Route path="qms/add-inspection" element={<QmsAddInspection />} />
+          <Route path="qms/edit-inspection" element={<QmsEditInspection />} />
+          <Route path="qms/view-inspection" element={<QmsViewInspection />} />
+          <Route path="qms/draft-inspection" element={<QmsDraftInspection />} />
+          <Route path="qms/edit-draft-inspection" element={<QmsEditDraftInspections />} />
+          <Route path="qms/view-draft-inspection" element={<QmsViewDraftInspection />} />
 
 
 
@@ -417,30 +419,30 @@ const ThemedApp = () => {
 
 
           {/* QMS Customer Management */}
-          <Route path="qms/add-customer" element={<QmsAddCustomer/>} />
+          <Route path="qms/add-customer" element={<QmsAddCustomer />} />
 
-          <Route path="qms/list-customer" element={<QmsListCustomer/>} />
-          <Route path="qms/edit-customer" element={<QmsEditCustomer/>} />
-          <Route path="qms/view-customer" element={<QmsViewCustomer/>} />
-          <Route path="qms/draft-customer" element={<QmsDraftCustomer/>} />
-          <Route path="qms/edit-draft-customer" element={<QmsEditDraftCustomer/>} />
-          <Route path="qms/view-draft-customer" element={<QmsViewDraftCustomer/>} />
+          <Route path="qms/list-customer" element={<QmsListCustomer />} />
+          <Route path="qms/edit-customer" element={<QmsEditCustomer />} />
+          <Route path="qms/view-customer" element={<QmsViewCustomer />} />
+          <Route path="qms/draft-customer" element={<QmsDraftCustomer />} />
+          <Route path="qms/edit-draft-customer" element={<QmsEditDraftCustomer />} />
+          <Route path="qms/view-draft-customer" element={<QmsViewDraftCustomer />} />
 
-          <Route path="qms/add-complaints" element={<QmsAddComplaints/>} />
-          <Route path="qms/list-complaints" element={<QmsListComplaints/>} />
-          <Route path="qms/edit-complaints" element={<QmsEditComplaints/>} />
-          <Route path="qms/view-complaints" element={<QmsViewComplaints/>} />
-          <Route path="qms/draft-complaints" element={<QmsDraftComplaints/>} />
-          <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints/>} />
-          <Route path="qms/view-draft-complaints" element={<QmsDraftViewComplaints/>} />
+          <Route path="qms/add-complaints" element={<QmsAddComplaints />} />
+          <Route path="qms/list-complaints" element={<QmsListComplaints />} />
+          <Route path="qms/edit-complaints" element={<QmsEditComplaints />} />
+          <Route path="qms/view-complaints" element={<QmsViewComplaints />} />
+          <Route path="qms/draft-complaints" element={<QmsDraftComplaints />} />
+          <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints />} />
+          <Route path="qms/view-draft-complaints" element={<QmsDraftViewComplaints />} />
 
-          <Route path="qms/list-customer-survey" element={<QmsListCustomerSurvey/>} />
-          <Route path="qms/add-customer-survey" element={<QmsAddCustomerSurvey/>} />
-          <Route path="qms/edit-customer-survey" element={<QmsEditCustomerSurvey/>} />
-          <Route path="qms/view-customer-survey" element={<QmsViewCustomerSurvey/>} />
-          <Route path="qms/draft-customer-survey" element={<QmsDraftCustomerSurvey/>} />
-          <Route path="qms/edit-draft-customer-survey" element={<QmsEditDraftCustomerSurvey/>} />
-          <Route path="qms/view-draft-customer-survey" element={<QmsViewDraftCustomerSurvey/>} />
+          <Route path="qms/list-customer-survey" element={<QmsListCustomerSurvey />} />
+          <Route path="qms/add-customer-survey" element={<QmsAddCustomerSurvey />} />
+          <Route path="qms/edit-customer-survey" element={<QmsEditCustomerSurvey />} />
+          <Route path="qms/view-customer-survey" element={<QmsViewCustomerSurvey />} />
+          <Route path="qms/draft-customer-survey" element={<QmsDraftCustomerSurvey />} />
+          <Route path="qms/edit-draft-customer-survey" element={<QmsEditDraftCustomerSurvey />} />
+          <Route path="qms/view-draft-customer-survey" element={<QmsViewDraftCustomerSurvey />} />
 
 
 
@@ -448,22 +450,24 @@ const ThemedApp = () => {
 
 
           {/* QMS Supplier Management*/}
-          <Route path="qms/add-supplier" element={<QmsAddSupplier/>} />
-          <Route path="qms/list-supplier" element={<QmsListSupplier/>} />
-          <Route path="qms/edit-supplier" element={<QmsEditSupplier/>} />
-          <Route path="qms/view-supplier" element={<QmsViewSupplier/>} />
-          <Route path="qms/draft-supplier" element={<QmsDraftSupplier/>} />
-          <Route path="qms/draft-edit-supplier" element={<QmsDraftEditSupplier/>} />
-          <Route path="qms/draft-view-supplier" element={<QmsDraftViewSupplier/>} />
+          <Route path="qms/add-supplier" element={<QmsAddSupplier />} />
+          <Route path="qms/list-supplier" element={<QmsListSupplier />} />
+          <Route path="qms/edit-supplier" element={<QmsEditSupplier />} />
+          <Route path="qms/view-supplier" element={<QmsViewSupplier />} />
+          <Route path="qms/draft-supplier" element={<QmsDraftSupplier />} />
+          <Route path="qms/draft-edit-supplier" element={<QmsDraftEditSupplier />} />
+          <Route path="qms/draft-view-supplier" element={<QmsDraftViewSupplier />} />
 
-          <Route path="qms/add-supplier-problem" element={<QmsAddSupplierProblem/>} />
-          <Route path="qms/supplier-problem-log" element={<QmsSupplierProblemLog/>} />
-          <Route path="qms/edits-supplier-problem" element={<QmsEditSupplierProblem/>} />
-          <Route path="qms/views-supplier-problem" element={<QmsViewSupplierProblem/>} />
-          <Route path="qms/drafts-supplier-problem" element={<QmsDraftSupplierProblem/>} />
-          <Route path="qms/edit-drafts-supplier-problem" element={<QmsEditDraftSupplierProblem/>} />
-          <Route path="qms/view-drafts-supplier-problem" element={<QmsViewDraftSupplierProblem/>} />
-          
+          <Route path="qms/add-supplier-problem" element={<QmsAddSupplierProblem />} />
+          <Route path="qms/supplier-problem-log" element={<QmsSupplierProblemLog />} />
+          <Route path="qms/edits-supplier-problem" element={<QmsEditSupplierProblem />} />
+          <Route path="qms/views-supplier-problem" element={<QmsViewSupplierProblem />} />
+          <Route path="qms/drafts-supplier-problem" element={<QmsDraftSupplierProblem />} />
+          <Route path="qms/edit-drafts-supplier-problem" element={<QmsEditDraftSupplierProblem />} />
+          <Route path="qms/view-drafts-supplier-problem" element={<QmsViewDraftSupplierProblem />} />
+
+          <Route path="qms/list-suppliers-performance" element={<QmsSupplierPerformace />} />
+          <Route path="qms/add-supplier-evaluation" element={<QmsAddSupplierPerformance />} />
 
 
 
