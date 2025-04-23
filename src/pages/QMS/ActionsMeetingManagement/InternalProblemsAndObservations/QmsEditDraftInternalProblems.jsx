@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import InternalProblemsModal from '../InternalProblemsModal';
 
 const QmsEditDraftInternalProblems = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         cause: 'Internal',
         description: '',
@@ -55,6 +57,21 @@ const QmsEditDraftInternalProblems = () => {
         }
     };
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleEditCause = (cause) => {
+        setFormData({
+            ...formData,
+            cause: cause
+        });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         // Handle form submission
@@ -84,6 +101,14 @@ const QmsEditDraftInternalProblems = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Draft Internal Problems and Observations</h1>
+
+                <InternalProblemsModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    onAddCause={handleEditCause}
+                />
+
+
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
                     onClick={() => handleListDraftInternalProblems()}
@@ -97,7 +122,6 @@ const QmsEditDraftInternalProblems = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Select Causes / Root Cause</label>
-                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Cause List</button>
                     </div>
                     <div className="relative">
                         <select
@@ -118,7 +142,9 @@ const QmsEditDraftInternalProblems = () => {
                             color="#AAAAAA"
                         />
                     </div>
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>Add Causes / Root Causes</button>
+                    <button className='flex justify-start add-training-label !text-[#1E84AF]'
+                        onClick={handleOpenModal}
+                    >Add Causes / Root Causes</button>
                 </div>
 
                 <div className="flex flex-col gap-3">

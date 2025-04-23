@@ -79,7 +79,7 @@ const InternalProblemsModal = ({ isOpen, onClose }) => {
 
                     <div className="mb-4 px-5">
                         <label className="block mb-3 agenda-list-label">
-                            causes Title <span className="text-[#F9291F]">*</span>
+                            Causes Title <span className="text-[#F9291F]">*</span>
                         </label>
                         <input
                             type="text"
