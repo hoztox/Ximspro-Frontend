@@ -19,7 +19,10 @@ const DocumentationSubmenu = (props) => {
       label: "Policy",
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
       path: "/company/qms/policy",
-      relatedPaths: ["/company/qms/addpolicy"]
+      relatedPaths: [
+        "/company/qms/addpolicy",
+        "/company/qms/editpolicy/",
+      ]
     },
     {
       id: "manual",
@@ -95,8 +98,11 @@ const DocumentationSubmenu = (props) => {
       icon: (
         <img src={scope} alt="Scope Statements" className="w-[15px] h-[15px]" />
       ),
-      path: "/company/qms/scope-statements",
-      relatedPaths: []
+      path: "/company/qms/scope",
+      relatedPaths: [
+        "/company/qms/addscope",
+        "/company/qms/editscope", 
+      ]
     },
   ];
 

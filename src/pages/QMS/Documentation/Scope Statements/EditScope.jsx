@@ -26,7 +26,7 @@ import "./addqmspolicys.css"
 import EditQmsPolicySuccessModal from './Modals/EditQmsPolicySuccessModal';
 import EditQmsPolicyErrorModal from './Modals/EditQmsPolicyErrorModal';
 
-const EditQmsPolicy = () => {
+const EditScope = () => {
   const { id } = useParams(); // Get policy ID from URL
   const navigate = useNavigate();
   const [qmsPolicies, setQmsPolicies] = useState([]);
@@ -152,7 +152,7 @@ const EditQmsPolicy = () => {
       console.log('Fetching policy with ID:', id);
 
       // Fetch specific policy details using the ID from URL
-      const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {
+      const response = await axios.get(`${BASE_URL}/qms/scope-get/${id}/`, {
 
       });
       const policyData = response.data;
@@ -696,7 +696,7 @@ const EditQmsPolicy = () => {
       editorRef.current.innerHTML = '<p><br></p>';
     }
 
-    navigate('/company/qms/policy')
+    navigate('/company/qms/scope')
   };
 
   useEffect(() => {
@@ -743,7 +743,7 @@ const EditQmsPolicy = () => {
       }
 
       const response = await axios.put(
-        `${BASE_URL}/qms/policy/${id}/update/`,
+        `${BASE_URL}/qms/scope/${id}/update/`,
         apiFormData,
         {
           headers: {
@@ -756,7 +756,7 @@ const EditQmsPolicy = () => {
         setShowEditPolicySuccessModal(true)
         setTimeout(() => {
           setShowEditPolicySuccessModal(false)
-          navigate('/company/qms/policy');
+          navigate('/company/qms/scope');
         }, 2000);
 
       } else {
@@ -848,7 +848,7 @@ const EditQmsPolicy = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
-      <h1 className="add-policy-head">Edit Policy</h1>
+      <h1 className="add-policy-head">Edit Scope</h1>
 
       <EditQmsPolicySuccessModal
         showEditPolicySuccessModal={showEditPolicySuccessModal}
@@ -864,7 +864,7 @@ const EditQmsPolicy = () => {
 
       {/* Add Title Input Field */}
       <div className="mb-5">
-        <label className="block text-white mb-2 text-sm font-medium">Policy Title</label>
+        <label className="block text-white mb-2 text-sm font-medium">Scope Title</label>
         <input
           type="text"
           value={formData.title}
@@ -874,8 +874,6 @@ const EditQmsPolicy = () => {
           required
         />
       </div>
-
-
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
@@ -1074,7 +1072,7 @@ const EditQmsPolicy = () => {
 
       {/* File Upload Section */}
       <div className="flex items-center justify-between mt-8 mb-[23px]">
-        <label className="attach-policy-text">Attach Quality Policy:</label>
+        <label className="attach-policy-text">Attach Quality Scope Statements:</label>
         <div className="flex items-center ">
           <button
             className='flex items-center text-[#1E84AF] gap-2 mr-3 click-view-file-btn'
@@ -1115,7 +1113,7 @@ const EditQmsPolicy = () => {
       <div className="flex justify-end gap-[21px]">
         <button
           className="cancel-btn duration-200"
-          onClick={() => navigate('/company/qms/policy')}
+          onClick={() => navigate('/company/qms/scope')}
         >
           Cancel
         </button>
@@ -1131,4 +1129,4 @@ const EditQmsPolicy = () => {
   );
 };
 
-export default EditQmsPolicy
+export default EditScope

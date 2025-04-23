@@ -30,6 +30,7 @@ const AddQmsPolicy = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
+    title: '',
     content: '',
     energyPolicy: null
   });
@@ -52,8 +53,8 @@ const AddQmsPolicy = () => {
     orderedList: false,
     indent: false,
     outdent: false,
-    textColor: '#FFFFFF', // Default text color
-    bgColor: 'transparent' // Default background color
+    textColor: '#FFFFFF',  
+    bgColor: 'transparent' 
   });
 
   const colorPalette = [
@@ -100,6 +101,14 @@ const AddQmsPolicy = () => {
         energyPolicy: file
       });
     }
+  };
+
+  // Handle title change
+  const handleTitleChange = (e) => {
+    setFormData({
+      ...formData,
+      title: e.target.value
+    });
   };
 
   // Handle image upload for the editor
@@ -592,6 +601,7 @@ const AddQmsPolicy = () => {
   const handleCancel = () => {
     // Reset form data
     setFormData({
+      title: '',
       content: '',
       energyPolicy: null
     });
@@ -603,6 +613,7 @@ const AddQmsPolicy = () => {
 
     navigate('/company/qms/policy')
   };
+  
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -644,7 +655,12 @@ const AddQmsPolicy = () => {
   const handleSave = async () => {
     const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
 
-    if (!editorContent.trim() || editorContent === '\n\n\n\n\n') {
+    if (!formData.title.trim()) {
+      toast.error('Please enter a policy title');
+      return;
+    }
+
+    if (!editorContent.trim() || editorContent === '<p><br></p>') {
       toast.error('Please enter policy content');
       return;
     }
@@ -662,19 +678,22 @@ const AddQmsPolicy = () => {
         return;
       }
 
-      // Debug company ID
+   
       console.log("Debug Info:", { companyId });
 
-      // Create FormData
+  
       const apiFormData = new FormData();
 
-      // Add policy content
+ 
+      apiFormData.append('title', formData.title);
+      
+ 
       apiFormData.append('text', editorContent);
 
-      // Add only company ID
+ 
       apiFormData.append('company', companyId);
 
-      // Add policy file if it exists
+ 
       if (formData.energyPolicy) {
         apiFormData.append('energy_policy', formData.energyPolicy);
       }
@@ -691,19 +710,10 @@ const AddQmsPolicy = () => {
         setShowAddPolicySuccessModal(true);
         setTimeout(() => {
           setShowAddPolicySuccessModal(false);
-          navigate('/company/qms/policy');
+          navigate('/company/qms/policy');  
+          resetForm();
+          
         }, 1500);
-
-        // Reset form
-        setFormData({
-          content: '',
-          energyPolicy: null
-        });
-
-        // Clear editor
-        if (editorRef.current) {
-          editorRef.current.innerHTML = '\n\n\n\n\n';
-        }
       } else {
         setShowAddPolicyErrorModal(true);
         setTimeout(() => {
@@ -722,6 +732,20 @@ const AddQmsPolicy = () => {
     }
   };
 
+  // New function to reset the form
+  const resetForm = () => {
+    // Reset form data
+    setFormData({
+      title: '',
+      content: '',
+      energyPolicy: null
+    });
+
+    // Clear editor content
+    if (editorRef.current) {
+      editorRef.current.innerHTML = '<p><br></p>';
+    }
+  };
 
   // Dropdown component to show selected option
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
@@ -807,8 +831,21 @@ const AddQmsPolicy = () => {
         onClose={() => { setShowAddPolicyErrorModal(false) }}
       />
 
-
       <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
+
+      {/* Title Field */}
+      <div className="mb-4">
+        <label htmlFor="policyTitle" className="block text-sm font-medium text-gray-300 mb-2">Policy Title</label>
+        <input
+          type="text"
+          id="policyTitle"
+          value={formData.title}
+          onChange={handleTitleChange}
+          className="bg-[#24242D] text-white px-4 py-2 w-full rounded-[4px] border border-[#383840] focus:outline-none focus:border-blue-500"
+          placeholder="Enter policy title"
+          maxLength={50}
+        />
+      </div>
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
@@ -835,6 +872,8 @@ const AddQmsPolicy = () => {
         </button>
 
         {/* Alignment */}
+
+     
         <button
           className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'left' ? 'bg-gray-700' : ''}`}
           onClick={() => execCommand('justifyLeft')}

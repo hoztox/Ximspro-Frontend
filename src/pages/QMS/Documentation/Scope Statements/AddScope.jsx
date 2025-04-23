@@ -1,7 +1,4 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import bold from "../../../../assets/images/Company Documentation/bold.svg"
 import itallic from "../../../../assets/images/Company Documentation/itallic.svg"
 import underline from "../../../../assets/images/Company Documentation/underline.svg"
@@ -20,29 +17,27 @@ import addlinks from "../../../../assets/images/Company Documentation/add-link.s
 import removelinks from "../../../../assets/images/Company Documentation/remove-link.svg"
 import textcolor from "../../../../assets/images/Company Documentation/text-color.svg"
 import textbgcolor from "../../../../assets/images/Company Documentation/bg-color.svg"
-import { ChevronDown, Eye } from 'lucide-react';
-import { BASE_URL } from "../../../../Utils/Config";
+import { ChevronDown } from 'lucide-react';
+import axios from 'axios';
 import "./addqmspolicys.css"
-import EditQmsPolicySuccessModal from './Modals/EditQmsPolicySuccessModal';
-import EditQmsPolicyErrorModal from './Modals/EditQmsPolicyErrorModal';
+import { toast } from 'react-hot-toast';
+import { BASE_URL } from "../../../../Utils/Config";
+import { useNavigate } from 'react-router-dom';
+import AddQmsPolicySuccessModal from './Modals/AddQmsPolicySuccessModal';
+import AddQmsPolicyErrorModal from './Modals/AddQmsPolicyErrorModal';
 
-const EditQmsPolicy = () => {
-  const { id } = useParams(); // Get policy ID from URL
+const AddScope = () => {
   const navigate = useNavigate();
-  const [qmsPolicies, setQmsPolicies] = useState([]);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    existingPolicy: null,
-    newPolicy: null
+    energyPolicy: null
   });
-  const [isLoading, setIsLoading] = useState(true);
 
-  const [showEditPolicySuccessModal, setShowEditPolicySuccessModal] = useState(false);
-  const [showEditPolicyErrorModal, setShowEditPolicyErrorModal] = useState(false);
+  const [showAddPolicySuccessModal, setShowAddPolicySuccessModal] = useState(false);
+  const [showAddPolicyErrorModal, setShowAddPolicyErrorModal] = useState(false);
+
 
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -58,8 +53,8 @@ const EditQmsPolicy = () => {
     orderedList: false,
     indent: false,
     outdent: false,
-    textColor: '#FFFFFF',
-    bgColor: 'transparent'
+    textColor: '#FFFFFF',  
+    bgColor: 'transparent' 
   });
 
   const colorPalette = [
@@ -69,6 +64,7 @@ const EditQmsPolicy = () => {
     '#000080', '#FFA500', '#A52A2A', '#F5F5DC', '#FFD700'
   ];
 
+  // Font options
   const fontSizes = [
     { label: 'Small', value: '1' },
     { label: 'Normal', value: '3' },
@@ -91,54 +87,23 @@ const EditQmsPolicy = () => {
     { label: 'Preformatted', value: 'pre' }
   ];
 
-  const [selectedFontSize, setSelectedFontSize] = useState(fontSizes[1].label);
-  const [selectedFontStyle, setSelectedFontStyle] = useState(fontStyles[0].label);
-  const [selectedFontFormat, setSelectedFontFormat] = useState(fontFormats[0].label);
+  // Add state for selected dropdown values
+  const [selectedFontSize, setSelectedFontSize] = useState(fontSizes[1].label); // 'Normal'
+  const [selectedFontStyle, setSelectedFontStyle] = useState(fontStyles[0].label); // 'Arial'
+  const [selectedFontFormat, setSelectedFontFormat] = useState(fontFormats[0].label); // 'Paragraph'
 
-
-  useEffect(() => {
-    fetchPolicyDetails();
-  }, [id]);
-
-  const getUserCompanyId = () => {
-    // First check if company_id is stored directly
-    const storedCompanyId = localStorage.getItem("company_id");
-    if (storedCompanyId) return storedCompanyId;
-
-    // If user data exists with company_id
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
-        }
-      }
-    }
-    return null;
-  };
-  const companyId = getUserCompanyId();
-  console.log("Stored Company ID:", companyId);
-
-  const extractFilenameFromUrl = (url) => {
-    if (!url) return null;
-    const parts = url.split('/');
-    return parts[parts.length - 1];
-  };
-
-  const handleViewFile = () => {
-    // Check if there's an existing policy with a URL to open
-    if (formData.existingPolicy && formData.existingPolicy.url) {
-      // Open the URL in a new tab
-      window.open(formData.existingPolicy.url, '_blank');
-    } else {
-      toast.error('No file is available to view');
+  // Handle file selection for policy attachment
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({
+        ...formData,
+        energyPolicy: file
+      });
     }
   };
+
+  // Handle title change
   const handleTitleChange = (e) => {
     setFormData({
       ...formData,
@@ -146,59 +111,7 @@ const EditQmsPolicy = () => {
     });
   };
 
-
-  const fetchPolicyDetails = async () => {
-    try {
-      console.log('Fetching policy with ID:', id);
-
-      // Fetch specific policy details using the ID from URL
-      const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {
-
-      });
-      const policyData = response.data;
-      console.log("Policy data:", response.data);
-      
-      // Set form data with the title
-      setFormData(prev => ({
-        ...prev,
-        title: policyData.title || ''
-      }));
-      
-      // Set editor content
-      if (editorRef.current && policyData.text) {
-        editorRef.current.innerHTML = policyData.text;
-      }
-
-      // Set file information if exists
-      if (policyData.energy_policy) {
-        const filename = extractFilenameFromUrl(policyData.energy_policy);
-        setFormData(prev => ({
-          ...prev,
-          existingPolicy: {
-            name: filename,
-            url: policyData.energy_policy
-          }
-        }));
-      }
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching policy details:', error);
-      toast.error('Failed to load policy details');
-      setIsLoading(false);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        newPolicy: file
-      }));
-    }
-  };
-
+  // Handle image upload for the editor
   const handleImageUpload = (e) => {
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
@@ -245,6 +158,7 @@ const EditQmsPolicy = () => {
     }
   };
 
+  // Initialize the editor with default formatting
   const initializeDefaultStyles = () => {
     if (!editorRef.current) return;
 
@@ -261,6 +175,7 @@ const EditQmsPolicy = () => {
     document.execCommand('formatBlock', false, fontFormats[0].value);
   };
 
+  // Apply formatting to the text
   const execCommand = (command, value = null) => {
     // Make sure editor has focus before executing command
     if (editorRef.current) {
@@ -581,34 +496,34 @@ const EditQmsPolicy = () => {
     // Add a stylesheet for the editor
     const style = document.createElement('style');
     style.textContent = `
-          [contenteditable] {
-            outline: none;
-            word-wrap: break-word;
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-          }
-          [contenteditable] ul {
-            display: block;
-            list-style-type: disc;
-            padding-left: 40px;
-            margin-left: 0;
-          }
-          [contenteditable] ol {
-            display: block;
-            list-style-type: decimal;
-            padding-left: 40px;
-            margin-left: 0;
-          }
-          [contenteditable] li {
-            display: list-item;
-          }
-          [contenteditable] img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 10px 0;
-          }
-        `;
+      [contenteditable] {
+        outline: none;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+      [contenteditable] ul {
+        display: block;
+        list-style-type: disc;
+        padding-left: 40px;
+        margin-left: 0;
+      }
+      [contenteditable] ol {
+        display: block;
+        list-style-type: decimal;
+        padding-left: 40px;
+        margin-left: 0;
+      }
+      [contenteditable] li {
+        display: list-item;
+      }
+      [contenteditable] img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 10px 0;
+      }
+    `;
     document.head.appendChild(style);
 
     // Ensure the editor has proper styling
@@ -696,9 +611,9 @@ const EditQmsPolicy = () => {
       editorRef.current.innerHTML = '<p><br></p>';
     }
 
-    navigate('/company/qms/policy')
+    navigate('/company/qms/scope')
   };
-
+  
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -715,68 +630,124 @@ const EditQmsPolicy = () => {
   }, []);
 
 
+  const getUserCompanyId = () => {
+    // First check if company_id is stored directly
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+
+    // If user data exists with company_id
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      // Try to get company_id from user data that was stored during login
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
   const handleSave = async () => {
+    const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
+
+    if (!formData.title.trim()) {
+      toast.error('Please enter a policy title');
+      return;
+    }
+
+    if (!editorContent.trim() || editorContent === '<p><br></p>') {
+      toast.error('Please enter policy content');
+      return;
+    }
+
     try {
-      setIsSubmitting(true); // Set loading state to true when starting the update
+      // Set the saving state to true
+      setIsSaving(true);
 
-      const editorContent = editorRef.current ? editorRef.current.innerHTML.trim() : '';
+      // Get company ID using getUserCompanyId function
+      const companyId = getUserCompanyId();
 
-      if (!editorContent.length) {
-        toast.error('Please enter policy content');
-        setIsSubmitting(false); // Reset loading state on error
+      if (!companyId) {
+        toast.error("Company ID not found.");
+        setIsSaving(false);
         return;
       }
 
-      if (!formData.title.trim()) {
-        toast.error('Please enter a policy title');
-        setIsSubmitting(false); // Reset loading state on error
-        return;
-      }
+   
+      console.log("Debug Info:", { companyId });
 
+  
       const apiFormData = new FormData();
+
+ 
       apiFormData.append('title', formData.title);
+      
+ 
       apiFormData.append('text', editorContent);
 
-      // Add policy file if selected
-      if (formData.newPolicy) {
-        apiFormData.append('energy_policy', formData.newPolicy);
+ 
+      apiFormData.append('company', companyId);
+
+ 
+      if (formData.energyPolicy) {
+        apiFormData.append('energy_policy', formData.energyPolicy);
       }
 
-      const response = await axios.put(
-        `${BASE_URL}/qms/policy/${id}/update/`,
-        apiFormData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          }
+      console.log("Request data:", Object.fromEntries(apiFormData.entries()));
+
+      const response = await axios.post(`${BASE_URL}/qms/scope/`, apiFormData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-      );
+      });
 
-      if (response?.status === 200 || response?.status === 201) {
-        setShowEditPolicySuccessModal(true)
+      if (response && (response.status === 200 || response.status === 201)) {
+        setShowAddPolicySuccessModal(true);
         setTimeout(() => {
-          setShowEditPolicySuccessModal(false)
-          navigate('/company/qms/policy');
-        }, 2000);
-
+          setShowAddPolicySuccessModal(false);
+          navigate('/company/qms/scope');  
+          resetForm();
+          
+        }, 1500);
       } else {
-        setShowEditPolicyErrorModal(true);
+        setShowAddPolicyErrorModal(true);
         setTimeout(() => {
-          setShowEditPolicyErrorModal(false);
+          setShowAddPolicyErrorModal(false);
         }, 3000);
-        setIsSubmitting(false); // Reset loading state on error
       }
     } catch (error) {
       console.error('Error details:', error.response?.data || error.message);
-      setShowEditPolicyErrorModal(true);
+      setShowAddPolicyErrorModal(true);
       setTimeout(() => {
-        setShowEditPolicyErrorModal(false);
+        setShowAddPolicyErrorModal(false);
       }, 3000);
-      setIsSubmitting(false); // Reset loading state on error
+    } finally {
+      // Set the saving state back to false regardless of success or failure
+      setIsSaving(false);
     }
   };
 
+  // New function to reset the form
+  const resetForm = () => {
+    // Reset form data
+    setFormData({
+      title: '',
+      content: '',
+      energyPolicy: null
+    });
 
+    // Clear editor content
+    if (editorRef.current) {
+      editorRef.current.innerHTML = '<p><br></p>';
+    }
+  };
+
+  // Dropdown component to show selected option
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
     const displayTitle = selectedValue || title;
@@ -848,34 +819,33 @@ const EditQmsPolicy = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
-      <h1 className="add-policy-head">Edit Policy</h1>
+      <h1 className="add-policy-head">Add Scope Statements</h1>
 
-      <EditQmsPolicySuccessModal
-        showEditPolicySuccessModal={showEditPolicySuccessModal}
-        onClose={() => { setShowEditPolicySuccessModal(false) }}
+      <AddQmsPolicySuccessModal
+        showAddPolicySuccessModal={showAddPolicySuccessModal}
+        onClose={() => { setShowAddPolicySuccessModal(false) }}
       />
 
-      <EditQmsPolicyErrorModal
-        showEditPolicyErrorModal={showEditPolicyErrorModal}
-        onClose={() => { setShowEditPolicyErrorModal(false) }}
+      <AddQmsPolicyErrorModal
+        showAddPolicyErrorModal={showAddPolicyErrorModal}
+        onClose={() => { setShowAddPolicyErrorModal(false) }}
       />
 
       <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
 
-      {/* Add Title Input Field */}
-      <div className="mb-5">
-        <label className="block text-white mb-2 text-sm font-medium">Policy Title</label>
+      {/* Title Field */}
+      <div className="mb-4">
+        <label htmlFor="policyTitle" className="block text-sm font-medium text-gray-300 mb-2">Scope Statements Title</label>
         <input
           type="text"
+          id="policyTitle"
           value={formData.title}
           onChange={handleTitleChange}
-          className="w-full px-4 py-2 bg-[#24242D] border border-[#383840] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="Enter policy title"
-          required
+          className="bg-[#24242D] text-white px-4 py-2 w-full rounded-[4px] border border-[#383840] focus:outline-none focus:border-blue-500"
+          placeholder="Enter  title"
+          maxLength={50}
         />
       </div>
-
-
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
@@ -902,6 +872,8 @@ const EditQmsPolicy = () => {
         </button>
 
         {/* Alignment */}
+
+     
         <button
           className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'left' ? 'bg-gray-700' : ''}`}
           onClick={() => execCommand('justifyLeft')}
@@ -1074,15 +1046,8 @@ const EditQmsPolicy = () => {
 
       {/* File Upload Section */}
       <div className="flex items-center justify-between mt-8 mb-[23px]">
-        <label className="attach-policy-text">Attach Quality Policy:</label>
+        <label className="attach-policy-text">Attach Quality Scope Statements:</label>
         <div className="flex items-center ">
-          <button
-            className='flex items-center text-[#1E84AF] gap-2 mr-3 click-view-file-btn'
-            onClick={handleViewFile}
-          >
-            Click to view file
-            <Eye size={18} className='text-[#1E84AF]' />
-          </button>
           <label className="flex justify-center gap-[10px] items-center w-[326px] h-[44px] px-[10px] text-[#AAAAAA] rounded-md border border-[#383840] cursor-pointer transition">
             Choose File
             <img src={files} alt="File Icon" />
@@ -1093,10 +1058,8 @@ const EditQmsPolicy = () => {
               accept=".pdf,.doc,.docx"
             />
           </label>
-          <div className="mt-1 ml-2 text-sm text-white">
-            {formData.existingPolicy
-              ? formData.existingPolicy.name
-              : "No file chosen"}
+          <div className="mt-1 ml-2 text-sm text-[#54545B]">
+            {formData.energyPolicy?.name ? formData.energyPolicy.name : "No file chosen"}
           </div>
 
         </div>
@@ -1112,23 +1075,25 @@ const EditQmsPolicy = () => {
         accept="image/*"
         style={{ display: 'none' }}
       />
+
+      {/* Form Actions */}
       <div className="flex justify-end gap-[21px]">
         <button
           className="cancel-btn duration-200"
-          onClick={() => navigate('/company/qms/policy')}
+          onClick={handleCancel}
         >
           Cancel
         </button>
         <button
           className="save-btn duration-200"
           onClick={handleSave}
-          disabled={isSubmitting} // Disable button when submitting
+          disabled={isSaving}
         >
-          {isSubmitting ? 'Updating...' : 'Update'}
+          {isSaving ? 'Saving...' : 'Save Policy'}
         </button>
       </div>
     </div>
   );
 };
 
-export default EditQmsPolicy
+export default AddScope;

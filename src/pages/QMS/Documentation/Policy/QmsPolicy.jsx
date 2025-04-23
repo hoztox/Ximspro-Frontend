@@ -3,7 +3,6 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronUp, X, FileText, Plus, Eye } from 'lucide-react';
-// import plus from "../../../../assets/images/Company Documentation/plus icon.svg";
 import arrow from '../../../../assets/images/Company Documentation/arrow.svg';
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import edit from "../../../../assets/images/Company Documentation/edit.svg";
@@ -17,32 +16,27 @@ import DeleteQmsPolicyErrorModal from './Modals/DeleteQmsPolicyErrorModal';
 
 const QmsPolicy = () => {
   const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedPolicy, setExpandedPolicy] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [qmsPolicies, setQmsPolicies] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [policyToDelete, setPolicyToDelete] = useState(null);
-
   const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
   const [showDeleteErrorModal, setShowDeleteErrorModal] = useState(false);
-
-
   const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     fetchPolicies();
   }, []);
+
   const getUserCompanyId = () => {
-    // First check if company_id is stored directly
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
 
-    // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-      // Try to get company_id from user data that was stored during login
       const userData = localStorage.getItem("user_company_id");
       if (userData) {
         try {
@@ -55,13 +49,13 @@ const QmsPolicy = () => {
     }
     return null;
   };
+
   const companyId = getUserCompanyId();
-  console.log("Stored Company ID:", companyId);
 
   const fetchPolicies = async () => {
     try {
       const companyId = getUserCompanyId();
-      console.log("Fetching manuals for Company ID:", companyId);
+      console.log("Fetching policies for Company ID:", companyId);
       const response = await axios.get(`${BASE_URL}/qms/policy/${companyId}/`);
       setQmsPolicies(response.data);
       console.log("Policies loaded:", response.data);
@@ -69,13 +63,16 @@ const QmsPolicy = () => {
       console.error("Error fetching policies:", error);
     }
   };
+
   const handleAddQMSPolicy = () => {
     navigate('/company/qms/addpolicy');
   };
+
   const handleViewPolicy = (policy) => {
     setSelectedPolicy(policy);
     setShowViewModal(true);
   };
+
   const handleCloseModal = () => {
     setShowViewModal(false);
     setSelectedPolicy(null);
@@ -90,7 +87,6 @@ const QmsPolicy = () => {
     if (policyToDelete) {
       try {
         await axios.delete(`${BASE_URL}/qms/policy/${policyToDelete}/update/`);
-        // Refresh the list after deletion
         fetchPolicies();
         setShowDeleteSuccessModal(true);
         setTimeout(() => {
@@ -112,7 +108,6 @@ const QmsPolicy = () => {
     setShowDeleteModal(false);
     setPolicyToDelete(null);
   };
-
 
   const handleEditPolicy = (policyId) => {
     navigate(`/company/qms/editpolicy/${policyId}`);
@@ -144,47 +139,31 @@ const QmsPolicy = () => {
     }
   };
 
-  // const downloadFile = (url, filename) => {
-  //   // Create a hidden anchor element
-  //   const a = document.createElement('a');
-  //   a.href = url;
-  //   a.download = filename || 'policy-document';
-  //   document.body.appendChild(a);
-  //   a.click();
-  //   document.body.removeChild(a);
-  // };
-  // Function to extract file name from URL
   const getFileNameFromUrl = (url) => {
     if (!url) return 'document';
     const parts = url.split('/');
     return parts[parts.length - 1].split('?')[0];
   };
-  // Function to render HTML content safely
+
   const createMarkup = (htmlContent) => {
     return { __html: htmlContent };
   };
-  // Function to render file type icon based on file extension
-  // const getFileIcon = (url) => {
-  //   if (!url) return null;
-  //   const extension = url.split('.').pop().toLowerCase();
 
-  //   switch (extension) {
-  //     case 'pdf':
-  //       return <FileText className="text-red-400 w-5 h-5" />;
-  //     case 'png':
-  //     case 'jpg':
-  //     case 'jpeg':
-  //     case 'gif':
-  //       return <img src={url} alt="Preview" className="w-10 h-10 object-cover rounded" />;
-  //     default:
-  //       return <FileText className="text-blue-400 w-5 h-5" />;
-  //   }
-  // };
-  // Filter policies based on search term
   const filteredPolicies = qmsPolicies.filter(policy => {
     const policyText = policy.text || '';
-    return policyText.toLowerCase().includes(searchTerm.toLowerCase());
+    const policyTitle = policy.title || '';
+    return policyText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      policyTitle.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  const togglePolicy = (policyId) => {
+    if (expandedPolicy === policyId) {
+      setExpandedPolicy(null);
+    } else {
+      setExpandedPolicy(policyId);
+    }
+  };
+
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white p-5">
       <h1 className="list-policy-head">List Policy</h1>
@@ -205,12 +184,12 @@ const QmsPolicy = () => {
         onClose={() => setShowDeleteErrorModal(false)}
       />
 
-
       <div className="flex items-center gap-3 pb-6 mb-6 border-b border-[#383840]">
         <span className="doc-path-text">Documentation</span>
         <span className="text-gray-400"><img src={arrow} alt="Arrow" /></span>
         <span className='policy-path-text'>Policy</span>
       </div>
+
       <div className="flex justify-between items-center mb-6">
         <div className="relative flex">
           <input
@@ -224,44 +203,40 @@ const QmsPolicy = () => {
             <Search className="text-white w-[18px]" />
           </div>
         </div>
-        {qmsPolicies.length === 0 && (
-          <button
-            className="bg-transparent border border-[#858585] text-[#858585] rounded-[4px] p-[10px] flex items-center justify-center gap-[10px] transition-all duration-200 w-[140px] h-[42px] add-policy-btn hover:bg-[#858585] hover:text-white group"
-            onClick={handleAddQMSPolicy}
-          >
-            <span>Add Policy</span>
-            <Plus size={22} className='text-[#858585] group-hover:text-white transition-colors duration-200' />
-          </button>
-        )}
 
-      </div>
-      <div className="bg-[#24242D] rounded-md overflow-hidden">
-        <div
-          className={`flex justify-between items-center px-5 pt-5 pb-6 border-b border-[#383840] 
-    ${qmsPolicies.length === 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          onClick={() => {
-            if (qmsPolicies.length > 0) {
-              setIsExpanded(!isExpanded);
-            }
-          }}
+        <button
+          className="bg-transparent border border-[#858585] text-[#858585] rounded-[4px] p-[10px] flex items-center justify-center gap-[10px] transition-all duration-200 w-[140px] h-[42px] add-policy-btn hover:bg-[#858585] hover:text-white group"
+          onClick={handleAddQMSPolicy}
         >
-          <h2 className="policy-list-head">Policy</h2>
-          <ChevronUp
-            className={`h-5 w-5 transition-transform duration-300 ease-in-out text-[#AAAAAA] 
-    ${isExpanded ? '' : 'rotate-180'}`}
-          />
-        </div>
+          <span>Add Policy</span>
+          <Plus size={22} className='text-[#858585] group-hover:text-white transition-colors duration-200' />
+        </button>
+      </div>
 
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
-          {filteredPolicies.length > 0 ? (
-            filteredPolicies.map((policy) => (
-              <div key={policy.id} className="px-5 pt-6 pb-5 border-b border-gray-700 flex justify-start space-x-[50px] items-center last:border-b-0">
-                <div className="flex items-center gap-[50px]">
-                  <div className='gap-[15px] flex flex-col max-w-xl'>
-                    <span className="policy-name text-[#858585] truncate">
-                      Quality Policy
-                    </span>
-                    <div className="flex gap-4">
+      {filteredPolicies.length > 0 ? (
+        <div className="space-y-4">
+          {filteredPolicies.map((policy) => (
+            <div key={policy.id} className="bg-[#24242D] rounded-md overflow-hidden">
+              <div
+                className="flex justify-between items-center px-5 py-4 cursor-pointer hover:bg-[#2a2a35]"
+                onClick={() => togglePolicy(policy.id)}
+              >
+                <h3 className="font-medium text-lg">
+                  {policy.title || "Quality Policy"}
+                </h3>
+                <ChevronUp
+                  className={`h-5 w-5 transition-transform duration-300 ease-in-out text-[#AAAAAA] 
+                    ${expandedPolicy === policy.id ? '' : 'rotate-180'}`}
+                />
+              </div>
+
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${expandedPolicy === policy.id ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="px-5 pt-6 pb-3 border-t border-[#383840] ">
+
+                  <div className="flex justify-start gap-10 items-center mb-4">
+
+                    <div className="flex gap-4 flex-col">
+                      <p className='actions-text'>Quality policy</p>
                       <button
                         className='flex justify-center items-center gap-2 hover:text-blue-400 transition-colors'
                         onClick={() => handleViewPolicy(policy)}
@@ -270,30 +245,35 @@ const QmsPolicy = () => {
                         <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                       </button>
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-[60px]">
-                  <div className="flex flex-col items-center gap-[15px]">
-                    <span className="actions-text">Edit</span>
-                    <button onClick={() => handleEditPolicy(policy.id)}>
-                      <img src={edit} alt="Edit Icon" className='w-[16px] h-[16px]' />
-                    </button>
+                    <div className="flex items-center gap-[30px]">
+                      <div className="flex flex-col items-center gap-[15px]">
+                        <span className="actions-text">Edit</span>
+                        <button onClick={() => handleEditPolicy(policy.id)}>
+                          <img src={edit} alt="Edit Icon" className='w-[16px] h-[16px]' />
+                        </button>
+                      </div>
+                      <div className="flex flex-col items-center gap-[15px]">
+                        <span className="actions-text">Delete</span>
+                        <button onClick={() => handleDeleteClick(policy.id)}>
+                          <img src={deleteIcon} alt="Delete Icon" className='w-[16px] h-[16px]' />
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center gap-[15px]">
-                    <span className="actions-text">Delete</span>
-                    <button onClick={() => handleDeleteClick(policy.id)}>
-                      <img src={deleteIcon} alt="Delete Icon" className='w-[16px] h-[16px]' />
-                    </button>
-                  </div>
+
+
                 </div>
               </div>
-            ))
-          ) : (
-            <p className="text-center text-gray-500 p-5">No policies found.</p>
-          )}
+            </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="bg-[#24242D] rounded-md p-5 text-center">
+          <p className="text-gray-500">No policies found.</p>
+        </div>
+      )}
+
       {/* View Policy Modal */}
       <AnimatePresence>
         {showViewModal && selectedPolicy && (
@@ -312,9 +292,8 @@ const QmsPolicy = () => {
                 stiffness: 300,
                 damping: 20
               }}
-              className="bg-[#1C1C24] rounded-lg w-full max-w-[700px] max-h-auto overflow-auto shadow-lg"
+              className="bg-[#1C1C24] rounded-lg w-full max-w-[700px] max-h-[80vh] overflow-auto shadow-lg"
             >
-              {/* Modal content remains the same as in the previous version */}
               <div className="flex justify-between items-center mx-5 mt-5 mb-[27px] border-b border-[#383840] pb-[21px]">
                 <h2 className="qms-policy-modal-head">QMS Policy</h2>
                 <button
@@ -328,10 +307,10 @@ const QmsPolicy = () => {
               <div className="px-5 pb-5">
                 <h2 className="policy-content-head mb-3">Policy Content</h2>
                 <div className="bg-[#24242D] p-5 rounded-md">
-                  {selectedPolicy.text.startsWith('<') ? (
+                  {selectedPolicy.text && selectedPolicy.text.startsWith('<') ? (
                     <div className="policy-content" dangerouslySetInnerHTML={createMarkup(selectedPolicy.text)} />
                   ) : (
-                    <p>{selectedPolicy.text}</p>
+                    <p>{selectedPolicy.text || 'No text content available'}</p>
                   )}
                 </div>
 
@@ -339,7 +318,6 @@ const QmsPolicy = () => {
                   <div className="mt-5">
                     <h2 className="attached-document-head pb-3">Attached Document</h2>
                     <div className="flex justify-between items-center gap-5">
-
                       <div className="flex">
                         <a
                           href={selectedPolicy.energy_policy}

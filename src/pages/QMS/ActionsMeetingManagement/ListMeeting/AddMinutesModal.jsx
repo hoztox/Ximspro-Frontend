@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown} from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 
 const AddMinutesModal = ({ 
@@ -12,36 +12,43 @@ const AddMinutesModal = ({
 }) => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [minutesData, setMinutesData] = useState({
-    date: {
-      day: '',
-      month: '',
-      year: ''
-    },
+    minutes: '',
+    file: null, // Changed to null since we're storing actual file object
+    fileNames: [], // Add this to store file names for display
+    date: { day: '', month: '', year: '' },
     meetingType: '',
     venue: '',
     startTime: { hour: '', min: '' },
-    endTime: { hour: '', min: '' },
-    minutes: '',
-    attachment: [],
+    endTime: { hour: '', min: '' }
   });
 
-  // Reset form when a new meeting is selected
+  // Populate form with meeting data when selectedMeeting changes
   useEffect(() => {
     if (selectedMeeting) {
-      // You could pre-populate form with meeting data if needed
-      setMinutesData({
+      // Parse date if it exists
+      const dateParts = selectedMeeting.date ? selectedMeeting.date.split('-') : ['', '', ''];
+      const startTimeParts = selectedMeeting.start_time ? selectedMeeting.start_time.split(':') : ['', ''];
+      const endTimeParts = selectedMeeting.end_time ? selectedMeeting.end_time.split(':') : ['', ''];
+
+      setMinutesData(prev => ({
+        ...prev,
         date: {
-          day: '',
-          month: '',
-          year: ''
+          day: dateParts[2] || '',
+          month: dateParts[1] || '',
+          year: dateParts[0] || ''
         },
-        meetingType: '',
-        venue: '',
-        startTime: { hour: '', min: '' },
-        endTime: { hour: '', min: '' },
-        minutes: '',
-        attachment: [],
-      });
+        meetingType: selectedMeeting.meeting_type || '',
+        venue: selectedMeeting.venue || '',
+        startTime: { 
+          hour: startTimeParts[0] || '', 
+          min: startTimeParts[1] || '' 
+        },
+        endTime: { 
+          hour: endTimeParts[0] || '', 
+          min: endTimeParts[1] || '' 
+        },
+        minutes: selectedMeeting.minutes || ''
+      }));
     }
   }, [selectedMeeting]);
 
@@ -57,7 +64,6 @@ const AddMinutesModal = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Handle nested objects
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setMinutesData({
@@ -76,31 +82,39 @@ const AddMinutesModal = ({
   };
 
   const handleFileChange = (e) => {
-    // This would handle file attachments in a real implementation
-    const files = Array.from(e.target.files);
-    setMinutesData({
-      ...minutesData,
-      attachment: [...minutesData.attachment, ...files.map(file => file.name)]
-    });
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      setMinutesData({
+        ...minutesData,
+        file: selectedFile,
+        fileNames: [selectedFile.name]
+      });
+    }
   };
 
   const handleSave = () => {
-    onSave(minutesData);
-  };
+ 
+    const formData = new FormData();
+    formData.append('minutes', minutesData.minutes);
+    
+    if (minutesData.file) {
+        formData.append('file', minutesData.file);
+    }
+    
+    onSave(formData);
+};
 
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div
-        className={`absolute inset-0 bg-black transition-opacity ${isExiting ? 'bg-opacity-0' : 'bg-opacity-50'}`}
-      ></div>
+      <div className={`absolute inset-0 bg-black transition-opacity ${isExiting ? 'bg-opacity-0' : 'bg-opacity-50'}`}></div>
       <div className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-5 transform transition-all duration-300 ease-in-out ${isAnimating ? 'modal-enter' : ''} ${isExiting ? 'modal-exit' : ''}`}>
         <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
           <h3 className="list-awareness-training-head">Add Meeting Minutes</h3>
         </div>
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6 py-5 px-[102px]">
-          {/* Date */}
+          {/* Date - Readonly */}
           <div className="flex flex-col gap-3">
             <label className="add-training-label">Date</label>
             <div className="grid grid-cols-3 gap-5">
@@ -113,6 +127,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("date.day")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>dd</option>
                   {generateOptions(1, 31)}
@@ -134,6 +149,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("date.month")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>mm</option>
                   {generateOptions(1, 12)}
@@ -155,6 +171,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("date.year")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>yyyy</option>
                   {generateOptions(2023, 2030)}
@@ -169,7 +186,7 @@ const AddMinutesModal = ({
             </div>
           </div>
 
-          {/* Meeting Type */}
+          {/* Meeting Type - Readonly */}
           <div className="flex flex-col gap-3 relative">
             <label className="add-training-label">Meeting Type</label>
             <div className="relative">
@@ -180,9 +197,11 @@ const AddMinutesModal = ({
                 onFocus={() => setFocusedDropdown("meetingType")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                disabled
               >
                 <option value="">Select type</option>
                 <option value="Normal">Normal</option>
+                <option value="Specific">Specific</option>
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300 
@@ -193,26 +212,23 @@ const AddMinutesModal = ({
             </div>
           </div>
 
-          {/* Venue */}
+          {/* Venue - Readonly */}
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Venue
-            </label>
+            <label className="add-training-label">Venue</label>
             <input
               type="text"
               name="venue"
               value={minutesData.venue}
               onChange={handleChange}
               className="add-training-inputs"
-              required
+              disabled
             />
           </div>
 
-          {/* Start Time */}
+          {/* Start Time - Readonly */}
           <div className="flex flex-col gap-3 w-2/3">
             <label className="add-training-label">Start</label>
             <div className="grid grid-cols-2 gap-5">
-              {/* Hour */}
               <div className="relative">
                 <select
                   name="startTime.hour"
@@ -221,6 +237,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("startTime.hour")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>Hour</option>
                   {generateOptions(0, 23)}
@@ -232,8 +249,6 @@ const AddMinutesModal = ({
                   color="#AAAAAA"
                 />
               </div>
-
-              {/* Minute */}
               <div className="relative">
                 <select
                   name="startTime.min"
@@ -242,6 +257,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("startTime.min")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>Min</option>
                   {generateOptions(0, 59)}
@@ -256,11 +272,10 @@ const AddMinutesModal = ({
             </div>
           </div>
 
-          {/* End Time */}
+          {/* End Time - Readonly */}
           <div className="flex flex-col gap-3 w-2/3">
             <label className="add-training-label">End</label>
             <div className="grid grid-cols-2 gap-5">
-              {/* Hour */}
               <div className="relative">
                 <select
                   name="endTime.hour"
@@ -269,6 +284,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("endTime.hour")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>Hour</option>
                   {generateOptions(0, 23)}
@@ -280,8 +296,6 @@ const AddMinutesModal = ({
                   color="#AAAAAA"
                 />
               </div>
-
-              {/* Minute */}
               <div className="relative">
                 <select
                   name="endTime.min"
@@ -290,6 +304,7 @@ const AddMinutesModal = ({
                   onFocus={() => setFocusedDropdown("endTime.min")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  disabled
                 >
                   <option value="" disabled>Min</option>
                   {generateOptions(0, 59)}
@@ -304,22 +319,19 @@ const AddMinutesModal = ({
             </div>
           </div>
 
-          {/* Minutes */}
+          {/* Minutes - Editable */}
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Minutes
-            </label>
-            <input
-              type="text"
+            <label className="add-training-label">Minutes</label>
+            <textarea
               name="minutes"
               value={minutesData.minutes}
               onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
+              className="add-training-inputs focus:outline-none h-[100px]"
               required
             />
           </div>
 
-          {/* Upload Attachments */}
+          {/* Upload Attachments - Editable */}
           <div className="flex flex-col gap-3">
             <label className="add-training-label">Minutes Attached</label>
             <div className="flex">
@@ -338,8 +350,8 @@ const AddMinutesModal = ({
               </label>
             </div>
             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-              {minutesData.attachment && minutesData.attachment.length > 0
-                ? minutesData.attachment.join(', ')
+              {minutesData.fileNames.length > 0
+                ? minutesData.fileNames.join(', ')
                 : 'No file chosen'}
             </p>
           </div>
