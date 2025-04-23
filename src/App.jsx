@@ -253,6 +253,7 @@ import QmsViewSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierP
 import QmsDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsDraftSupplierPerformance";
 import QmsEditDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsEditDraftSupplierPerformance";
 import QmsViewDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsViewDraftSupplierPerformance";
+import QmsEmployeePerformanceGraph from "./pages/QMS/EmployeeTraining/EmployeePerformanceEvaluation/QmsEmployeePerformanceGraph";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -352,6 +353,7 @@ const ThemedApp = () => {
           <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance />} />
           <Route path="qms/edit-draft-employee-performance/:id" element={<QmsEditDraftEmployeePerformance />} />
           <Route path="qms/view-draft-employee-performance/:id" element={<QmsViewDraftEmployeePerformance />} />
+          <Route path="qms/employees-performance-graph" element={<QmsEmployeePerformanceGraph/>} />
 
           <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction />} />
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction />} />

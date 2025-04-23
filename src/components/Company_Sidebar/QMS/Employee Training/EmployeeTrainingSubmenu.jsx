@@ -66,6 +66,7 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/draft-employee-performance",
                 "/company/qms/edit-draft-employee-performance",
                 "/company/qms/view-draft-employee-performance",
+                "/company/qms/employees-performance-graph",
                 
 
             ]

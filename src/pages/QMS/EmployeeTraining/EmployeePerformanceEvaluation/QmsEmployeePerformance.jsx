@@ -326,9 +326,9 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                   </button>
                   <button className="save-btn duration-200"
                     onClick={() => {
-                      
-                        onClose();
-            
+
+                      onClose();
+
                     }}
                   >
                     Done
@@ -694,6 +694,10 @@ const QmsEmployeePerformance = () => {
     navigate(`/company/qms/edit-employee-performance/${id}`);
   };
 
+  const handleResultGraph = () => {
+    navigate('/company/qms/employees-performance-graph');
+  }
+
   // Open delete confirmation modal
   const openDeleteModal = (performance) => {
     setPerformanceToDelete(performance);
@@ -852,7 +856,9 @@ const QmsEmployeePerformance = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas">
-                    <button className="text-[#1E84AF]">See Result Graph</button>
+                    <button className="text-[#1E84AF]"
+                      onClick={handleResultGraph}
+                    >See Result Graph</button>
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
