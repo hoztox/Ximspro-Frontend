@@ -136,7 +136,7 @@ const QmsEditInspection = () => {
           <div className="flex items-end justify-start">
             <label className="flex items-center">
               <span className="permissions-texts cursor-pointer pr-3">
-                If not external auditor
+              If not Inspector
               </span>
               <input
                 type="checkbox"

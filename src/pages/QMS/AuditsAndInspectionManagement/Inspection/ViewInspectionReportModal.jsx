@@ -1,5 +1,5 @@
 import React from 'react'
-import { X } from 'lucide-react';
+import { X, Eye } from 'lucide-react';
 
 const ViewInspectionReportModal = ({
   isVisible,
@@ -17,7 +17,7 @@ const ViewInspectionReportModal = ({
       ></div>
       <div className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-6 transform transition-all duration-300 ease-in-out ${isAnimating ? 'modal-enter' : ''} ${isExiting ? 'modal-exit' : ''}`}>
         <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-          <h2 className="view-employee-head">Inspection Report</h2>
+          <h2 className="view-employee-head">Inspection Report Information</h2>
           <button
             onClick={onClose}
             className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -26,8 +26,25 @@ const ViewInspectionReportModal = ({
           </button>
         </div>
         <div>
+          <div className="grid grid-cols-2">
+            <div className='border-r border-[#383840] mt-5'>
+              <label className="block view-employee-label mb-[6px]">
+              Inspection Report
+              </label>
+              <button className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn">
+                Click to view file <Eye size={18} />
+              </button>
+            </div>
 
-          Inspection Report
+            <div className='mt-5 ml-5'>
+              <label className="block view-employee-label mb-[6px]">
+              Non conformities
+              </label>
+              <button className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn">
+                Click to view file <Eye size={18} />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
