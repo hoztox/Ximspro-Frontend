@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsSupplierProblemLog = () => {
+const QmsDraftSupplierProblem = () => {
     const initialData = [
         { id: 1, supplier_name: 'Anonymous', problem: 'Anonymous', car: '123', date: '03-12-2024', status: 'Solved' },
         { id: 2, supplier_name: 'Anonymous', problem: 'Anonymous', car: '123', date: '03-12-2024', status: 'Not Solved' },
@@ -55,20 +54,16 @@ const QmsSupplierProblemLog = () => {
 
 
 
-    const handleAddSupplierProblem = () => {
-        navigate('/company/qms/add-supplier-problem')
+    const handleClose = () => {
+        navigate('/company/qms/supplier-problem-log')
     }
 
-    const handleDraftSupplierProblem = () => {
-        navigate('/company/qms/drafts-supplier-problem')
+    const handleQmsViewDraftSupplierProblem = () => {
+        navigate('/company/qms/view-drafts-supplier-problem')
     }
 
-    const handleQmsViewSupplierProblem = () => {
-        navigate('/company/qms/views-supplier-problem')
-    }
-
-    const handleQmsEditSupplierProblem = () => {
-        navigate('/company/qms/edits-supplier-problem')
+    const handleQmsEditDraftSupplierProblem = () => {
+        navigate('/company/qms/edit-drafts-supplier-problem')
     }
 
 
@@ -86,7 +81,7 @@ const QmsSupplierProblemLog = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">Supplier Problem Log</h1>
+                <h1 className="list-manual-head">Draft Supplier Problem Log</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -100,19 +95,9 @@ const QmsSupplierProblemLog = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftSupplierProblem}
-                    >
-                        <span>Drafts</span>
 
-                    </button>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddSupplierProblem}
-                    >
-                        <span>Enter Supplier Problem</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
                     </button>
                 </div>
             </div>
@@ -126,10 +111,8 @@ const QmsSupplierProblemLog = () => {
                             <th className="px-2 text-left add-manual-theads">Supplier Name</th>
                             <th className="px-2 text-left add-manual-theads">Problem</th>
                             <th className="px-2 text-left add-manual-theads">Date</th>
-                            <th className="px-2 text-left add-manual-theads">CAR</th>
-                            <th className="px-2 text-center add-manual-theads">Status</th>
+                            <th className="px-2 text-left add-manual-theads">Action</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
-                            <th className="px-2 text-center add-manual-theads">Edit</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
                         </tr>
                     </thead>
@@ -140,21 +123,14 @@ const QmsSupplierProblemLog = () => {
                                 <td className="px-2 add-manual-datas">{supplier.supplier_name}</td>
                                 <td className="px-2 add-manual-datas">{supplier.problem}</td>
                                 <td className="px-2 add-manual-datas">{supplier.date}</td>
-                                <td className="px-2 add-manual-datas">{supplier.car}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${supplier.status === 'Solved' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'
-                                        }`}>
-                                        {supplier.status}
-                                    </span>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewSupplierProblem}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                <td className="px-2 add-manual-datas !text-left">
+                                    <button onClick={handleQmsEditDraftSupplierProblem} className='text-[#1E84AF]'>
+                                        Click to continue
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditSupplierProblem}>
-                                        <img src={editIcon} alt="Edit Icon" />
+                                    <button onClick={handleQmsViewDraftSupplierProblem}>
+                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
@@ -203,4 +179,4 @@ const QmsSupplierProblemLog = () => {
         </div>
     );
 };
-export default QmsSupplierProblemLog
+export default QmsDraftSupplierProblem

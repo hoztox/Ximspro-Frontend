@@ -241,6 +241,11 @@ import QmsDraftEditSupplier from "./pages/QMS/SupplierManagement/SupplierManagem
 import QmsDraftViewSupplier from "./pages/QMS/SupplierManagement/SupplierManagement/QmsDraftViewSupplier";
 import QmsAddSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsAddSupplierProblem";
 import QmsSupplierProblemLog from "./pages/QMS/SupplierManagement/SupplierProblems/QmsSupplierProblemLog";
+import QmsEditSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsEditSupplierProblem";
+import QmsViewSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsViewSupplierProblem";
+import QmsDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsDraftSupplierProblem";
+import QmsEditDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsEditDraftSupplierProblem";
+import QmsViewDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsViewDraftSupplierProblem";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -452,8 +457,12 @@ const ThemedApp = () => {
           <Route path="qms/draft-view-supplier" element={<QmsDraftViewSupplier/>} />
 
           <Route path="qms/add-supplier-problem" element={<QmsAddSupplierProblem/>} />
-
           <Route path="qms/supplier-problem-log" element={<QmsSupplierProblemLog/>} />
+          <Route path="qms/edits-supplier-problem" element={<QmsEditSupplierProblem/>} />
+          <Route path="qms/views-supplier-problem" element={<QmsViewSupplierProblem/>} />
+          <Route path="qms/drafts-supplier-problem" element={<QmsDraftSupplierProblem/>} />
+          <Route path="qms/edit-drafts-supplier-problem" element={<QmsEditDraftSupplierProblem/>} />
+          <Route path="qms/view-drafts-supplier-problem" element={<QmsViewDraftSupplierProblem/>} />
           
 
 

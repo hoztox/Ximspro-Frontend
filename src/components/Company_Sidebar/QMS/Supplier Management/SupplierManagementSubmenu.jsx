@@ -37,6 +37,14 @@ const SupplierManagementSubmenu = (props) => {
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
             path: "/company/qms/supplier-problem-log",
+            relatedPaths: [
+                "/company/qms/edits-supplier-problem",
+                "/company/qms/views-supplier-problem",
+                "/company/qms/drafts-supplier-problem",
+                "/company/qms/edit-drafts-supplier-problem",
+                "/company/qms/view-drafts-supplier-problem",
+                // "/company/qms/draft-view-supplier",
+            ]
         },
         {
             id: "supplier-Performance-evaluation",
