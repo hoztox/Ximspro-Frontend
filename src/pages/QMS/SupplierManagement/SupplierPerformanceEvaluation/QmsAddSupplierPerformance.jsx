@@ -221,12 +221,12 @@ const QmsAddSupplierPerformance = () => {
         }
     };
 
-    const handleListCustomerSurvey = () => {
-        navigate('/company/qms/list-supplier-evaluation')
+    const   handleListSupplierEvaluation = () => {
+        navigate('/company/qms/lists-supplier-evaluation')
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-supplier-evaluation')
+        navigate('/company/qms/lists-supplier-evaluation')
     };
 
     const dayOptions = Array.from({ length: 31 }, (_, i) => {
@@ -263,12 +263,12 @@ const QmsAddSupplierPerformance = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
-                    <h1 className="add-employee-performance-head">Add Customer Satisfaction Survey</h1>
+                    <h1 className="add-employee-performance-head">Add Supplier Evaluation</h1>
                     <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
-                        onClick={handleListCustomerSurvey}
+                        onClick={handleListSupplierEvaluation}
                     >
-                        List Customer Satisfaction Survey
+                        List Supplier Evaluation
                     </button>
                 </div>
 
@@ -303,7 +303,7 @@ const QmsAddSupplierPerformance = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
                             <label className="block employee-performace-label">
-                                Survey Title <span className="text-red-500">*</span>
+                            Evaluation Title <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -387,7 +387,7 @@ const QmsAddSupplierPerformance = () => {
                         </div>
 
                         <div className="md:row-span-2 col-span-2">
-                            <label className="block employee-performace-label">Survey Description</label>
+                            <label className="block employee-performace-label">Evaluation Description</label>
                             <textarea
                                 name="description"
                                 value={formData.description}
@@ -395,7 +395,6 @@ const QmsAddSupplierPerformance = () => {
                                 className="w-full h-full min-h-[84px] employee-performace-inputs"
                             />
                         </div>
-
                     </div>
 
 

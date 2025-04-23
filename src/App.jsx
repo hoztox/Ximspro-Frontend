@@ -248,6 +248,11 @@ import QmsEditDraftSupplierProblem from "./pages/QMS/SupplierManagement/Supplier
 import QmsViewDraftSupplierProblem from "./pages/QMS/SupplierManagement/SupplierProblems/QmsViewDraftSupplierProblem";
 import QmsSupplierPerformace from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsSupplierPerformace";
 import QmsAddSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsAddSupplierPerformance";
+import QmsEditSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsEditSupplierPerformance";
+import QmsViewSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsViewSupplierPerformance";
+import QmsDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsDraftSupplierPerformance";
+import QmsEditDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsEditDraftSupplierPerformance";
+import QmsViewDraftSupplierPerformance from "./pages/QMS/SupplierManagement/SupplierPerformanceEvaluation/QmsViewDraftSupplierPerformance";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -466,8 +471,13 @@ const ThemedApp = () => {
           <Route path="qms/edit-drafts-supplier-problem" element={<QmsEditDraftSupplierProblem />} />
           <Route path="qms/view-drafts-supplier-problem" element={<QmsViewDraftSupplierProblem />} />
 
-          <Route path="qms/list-suppliers-performance" element={<QmsSupplierPerformace />} />
+          <Route path="qms/lists-supplier-evaluation" element={<QmsSupplierPerformace />} />
           <Route path="qms/add-supplier-evaluation" element={<QmsAddSupplierPerformance />} />
+          <Route path="qms/edits-supplier-evaluation" element={<QmsEditSupplierPerformance />} />
+          <Route path="qms/views-supplier-evaluation" element={<QmsViewSupplierPerformance />} />
+          <Route path="qms/drafts-supplier-evaluation" element={<QmsDraftSupplierPerformance />} />
+          <Route path="qms/edits-drafts-supplier-evaluation" element={<QmsEditDraftSupplierPerformance />} />
+          <Route path="qms/views-drafts-supplier-evaluation" element={<QmsViewDraftSupplierPerformance />} />
 
 
 

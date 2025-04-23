@@ -678,17 +678,17 @@ const QmsSupplierPerformace = () => {
 
     // Go to drafts
     const handleDraftSupplierEvaluation = () => {
-        navigate('/company/qms/draft-supplier-evaluation');
+        navigate('/company/qms/drafts-supplier-evaluation');
     };
 
     // View evaluation
     const handleView = (id) => {
-        navigate(`/company/qms/view-supplier-evaluation`);
+        navigate(`/company/qms/views-supplier-evaluation`);
     };
 
     // Edit evaluation
     const handleEdit = (id) => {
-        navigate(`/company/qms/edit-supplier-evaluation`);
+        navigate(`/company/qms/edits-supplier-evaluation`);
     };
 
     // Open delete confirmation modal

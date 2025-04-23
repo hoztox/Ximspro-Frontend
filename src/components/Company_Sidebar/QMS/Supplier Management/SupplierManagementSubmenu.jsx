@@ -51,13 +51,14 @@ const SupplierManagementSubmenu = (props) => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            path: "/company/qms/list-suppliers-performance",
+            path: "/company/qms/lists-supplier-evaluation",
             relatedPaths: [
                 "/company/qms/add-supplier-evaluation",
-                // "/company/qms/views-supplier-problem",
-                // "/company/qms/drafts-supplier-problem",
-                // "/company/qms/edit-drafts-supplier-problem",
-                // "/company/qms/view-drafts-supplier-problem",
+                "/company/qms/edits-supplier-evaluation",
+                "/company/qms/views-supplier-evaluation",
+                "/company/qms/drafts-supplier-evaluation",
+                "/company/qms/edits-drafts-supplier-evaluation",
+                "/company/qms/views-drafts-supplier-evaluation",
             ]
         },
     ]
