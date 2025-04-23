@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { ChevronDown, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
+import CategoryModal from '../CategoryModal';
 
 const QmsDraftEditComplaints = () => {
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         category: 'Internal',
         details: '',
@@ -63,6 +65,21 @@ const QmsDraftEditComplaints = () => {
         });
     };
 
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    };
+
+    const handleEditCategory = (category) => {
+        setFormData({
+            ...formData,
+            category: category
+        });
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         // Handle form submission
@@ -92,6 +109,14 @@ const QmsDraftEditComplaints = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Edit Draft Complaints and Feedbacks</h1>
+
+                <CategoryModal
+                    isOpen={isModalOpen}
+                    onClose={handleCloseModal}
+                    onAddCause={handleEditCategory}
+                />
+
+
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
                     onClick={() => handleListDraftComplaints()}
@@ -133,7 +158,6 @@ const QmsDraftEditComplaints = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Category <span className="text-red-500">*</span></label>
-                        <button className='add-training-label !text-[12px] !text-[#1E84AF]'>Reload Agenda List</button>
                     </div>
                     <div className="relative">
                         <select
@@ -154,7 +178,13 @@ const QmsDraftEditComplaints = () => {
                             color="#AAAAAA"
                         />
                     </div>
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'>View / Add Category Item </button>
+                    <button
+                        type="button"
+                        className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
+                        onClick={handleOpenModal}
+                    >
+                        View / Add Category Item
+                    </button>
                 </div>
 
                 <div className="flex flex-col gap-3">
