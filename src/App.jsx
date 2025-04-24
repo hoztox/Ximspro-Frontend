@@ -263,6 +263,13 @@ import QmsViewCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventive
 import QmsDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsDraftCorrectionActions";
 import QmsEditDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsEditDraftCorrectionActions";
 import QmsViewDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsViewDraftCorrectionActions";
+import QmsListPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsListPreventiveActions";
+import QmsAddPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsAddPreventiveActions";
+import QmsEditPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsEditPreventiveActions";
+import QmsViewPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsViewPreventiveActions";
+import QmsDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsDraftPreventiveActions";
+import QmsEditDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsEditDraftPreventiveActions";
+import QmsViewDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsViewDraftPreventiveActions";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -545,11 +552,6 @@ const ThemedApp = () => {
 
 
 
-
-
-
-
-
           {/* QMS Correction Corrective Actions & Preventive Actions*/}
           <Route path="qms/list-correction-actions" element={<QmsListCorrectionActions />} />
           <Route path="qms/add-correction-actions" element={<QmsAddCorrectionActions />} />
@@ -559,9 +561,13 @@ const ThemedApp = () => {
           <Route path="qms/edit-draft-correction-actions" element={<QmsEditDraftCorrectionActions />} />
           <Route path="qms/view-draft-correction-actions" element={<QmsViewDraftCorrectionActions />} />
 
-
-
-
+          <Route path="qms/list-preventive-actions" element={<QmsListPreventiveActions />} />
+          <Route path="qms/add-preventive-actions" element={<QmsAddPreventiveActions />} />
+          <Route path="qms/edit-preventive-actions" element={<QmsEditPreventiveActions />} />
+          <Route path="qms/view-preventive-actions" element={<QmsViewPreventiveActions />} />
+          <Route path="qms/draft-preventive-actions" element={<QmsDraftPreventiveActions />} />
+          <Route path="qms/edit-draft-preventive-actions" element={<QmsEditDraftPreventiveActions />} />
+          <Route path="qms/view-draft-preventive-actions" element={<QmsViewDraftPreventiveActions />} />
 
 
 

@@ -26,7 +26,15 @@ const CorrectionPreventiveSubmenu = (props) => {
             id: "preventive-actions",
             label: "Preventive Actions",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/list-preventive-actions",
+            relatedPaths: [
+                "/company/qms/add-preventive-actions",
+                "/company/qms/edit-preventive-actions",
+                "/company/qms/view-preventive-actions",
+                "/company/qms/draft-preventive-actions",
+                "/company/qms/edit-draft-preventive-actions",
+                "/company/qms/view-draft-preventive-actions",
+            ]
         },
     ]
 
