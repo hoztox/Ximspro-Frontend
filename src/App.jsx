@@ -256,6 +256,10 @@ import QmsEmployeePerformanceGraph from "./pages/QMS/EmployeeTraining/EmployeePe
 import QmsScope from "./pages/QMS/Documentation/Scope Statements/QmsScope";
 import AddScope from "./pages/QMS/Documentation/Scope Statements/AddScope";
 import EditScope from "./pages/QMS/Documentation/Scope Statements/EditScope";
+import QmsListCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsListCorrectionActions";
+import QmsAddCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsAddCorrectionActions";
+import QmsEditCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsEditCorrectionActions";
+import QmsViewCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsViewCorrectionActions";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -332,7 +336,7 @@ const ThemedApp = () => {
 
           <Route path="qms/scope" element={<QmsScope />} />
           <Route path="qms/addscope" element={<AddScope />} />
-          <Route path="qms/editscope/:id" element={<EditScope />} /> 
+          <Route path="qms/editscope/:id" element={<EditScope />} />
 
 
           {/* QMS Employee Training */}
@@ -357,7 +361,7 @@ const ThemedApp = () => {
           <Route path="qms/draft-employee-performance" element={<QmsDraftEmployeePerformance />} />
           <Route path="qms/edit-draft-employee-performance/:id" element={<QmsEditDraftEmployeePerformance />} />
           <Route path="qms/view-draft-employee-performance/:id" element={<QmsViewDraftEmployeePerformance />} />
-          <Route path="qms/employees-performance-graph" element={<QmsEmployeePerformanceGraph/>} />
+          <Route path="qms/employees-performance-graph" element={<QmsEmployeePerformanceGraph />} />
 
           <Route path="qms/list-satisfaction-survey" element={<QmsEmployeeSatisfaction />} />
           <Route path="qms/add-satisfaction-survey" element={<AddQmsEmployeeSatisfaction />} />
@@ -529,6 +533,39 @@ const ThemedApp = () => {
           <Route path="qms/draft-sustainability" element={<QmsDraftSustainability />} />
           <Route path="qms/edit-draft-sustainability/:id" element={<QmsEditDraftSustainability />} />
           <Route path="qms/view-draft-sustainability/:id" element={<QmsViewDraftSustainability />} />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          {/* QMS Compliance*/}
+          <Route path="qms/list-correction-actions" element={<QmsListCorrectionActions />} />
+          <Route path="qms/add-correction-actions" element={<QmsAddCorrectionActions />} />
+          <Route path="qms/edit-correction-actions" element={<QmsEditCorrectionActions />} />
+          <Route path="qms/view-correction-actions" element={<QmsViewCorrectionActions />} />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
           {/* QMS User Management */}
