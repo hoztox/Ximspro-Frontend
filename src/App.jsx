@@ -260,6 +260,9 @@ import QmsListCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventive
 import QmsAddCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsAddCorrectionActions";
 import QmsEditCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsEditCorrectionActions";
 import QmsViewCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsViewCorrectionActions";
+import QmsDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsDraftCorrectionActions";
+import QmsEditDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsEditDraftCorrectionActions";
+import QmsViewDraftCorrectionActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/CorrectionActions/QmsViewDraftCorrectionActions";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -547,11 +550,14 @@ const ThemedApp = () => {
 
 
 
-          {/* QMS Compliance*/}
+          {/* QMS Correction Corrective Actions & Preventive Actions*/}
           <Route path="qms/list-correction-actions" element={<QmsListCorrectionActions />} />
           <Route path="qms/add-correction-actions" element={<QmsAddCorrectionActions />} />
           <Route path="qms/edit-correction-actions" element={<QmsEditCorrectionActions />} />
           <Route path="qms/view-correction-actions" element={<QmsViewCorrectionActions />} />
+          <Route path="qms/draft-correction-actions" element={<QmsDraftCorrectionActions />} />
+          <Route path="qms/edit-draft-correction-actions" element={<QmsEditDraftCorrectionActions />} />
+          <Route path="qms/view-draft-correction-actions" element={<QmsViewDraftCorrectionActions />} />
 
 
 

@@ -17,6 +17,9 @@ const CorrectionPreventiveSubmenu = (props) => {
                 "/company/qms/add-correction-actions",
                 "/company/qms/edit-correction-actions",
                 "/company/qms/view-correction-actions",
+                "/company/qms/draft-correction-actions",
+                "/company/qms/edit-draft-correction-actions",
+                "/company/qms/view-draft-correction-actions",
             ]
         },
         {

@@ -4,7 +4,8 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 
-const QmsViewCorrectionActions = () => {
+
+const QmsViewDraftCorrectionActions = () => {
     const [formData, setFormData] = useState({
         source: "Anonymous",
         title: "Anonymous",
@@ -23,17 +24,8 @@ const QmsViewCorrectionActions = () => {
     const navigate = useNavigate();
 
     const handleClose = () => {
-        navigate("/company/qms/list-correction-actions");
+        navigate("/company/qms/draft-correction-actions");
     };
-
-    const handleEdit = () => {
-        navigate("/company/qms/edit-correction-actions");
-    };
-
-    const handleDelete = () => {
-        console.log("Delete button clicked");
-    };
-
 
 
     return (
@@ -118,35 +110,10 @@ const QmsViewCorrectionActions = () => {
                             </label>
                             <div className="view-employee-data">{formData.status}</div>
                         </div>
-
-                        <div className="flex space-x-10 justify-end">
-                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
-                                Edit
-                                <button onClick={handleEdit}>
-                                    <img
-                                        src={edits}
-                                        alt="Edit Iocn"
-                                        className="w-[18px] h-[18px]"
-                                    />
-                                </button>
-                            </div>
-
-                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
-                                Delete
-                                <button onClick={handleDelete}>
-                                    <img
-                                        src={deletes}
-                                        alt="Delete Icon"
-                                        className="w-[18px] h-[18px]"
-                                    />
-                                </button>
-                            </div>
-                        </div>
                     </div>
-
                 </div>
             </div>
         </div>
     );
 };
-export default QmsViewCorrectionActions
+export default QmsViewDraftCorrectionActions
