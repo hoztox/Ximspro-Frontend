@@ -2,23 +2,28 @@ import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import InternalProblemsModal from '../InternalProblemsModal';
+import AddCarNumberModal from '../AddCarNumberModal';
 
 const QmsAddInternalProblems = () => {
     const navigate = useNavigate();
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCauseModalOpen, setIsCauseModalOpen] = useState(false);
+    const [isCarModalOpen, setIsCarModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         cause: 'Internal',
         description: '',
         action: '',
         executor: '',
         solved: '',
+        causes: [],
         dateProblem: {
             day: '',
             month: '',
             year: ''
         },
         correctiveAction: '',
-        send_notification: false
+        corrections: '',
+        car: '',
+        cars: [],
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -27,12 +32,18 @@ const QmsAddInternalProblems = () => {
         navigate('/company/qms/list-internal-problems-observations')
     }
 
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
+    const handleOpenCauseModal = () => {
+        setIsCauseModalOpen(true);
+    };
+    const handleOpenCarModal = () => {
+        setIsCarModalOpen(true);
     };
 
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
+    const handleCloseCauseModal = () => {
+        setIsCauseModalOpen(false);
+    };
+    const handleCloseCarModal = () => {
+        setIsCarModalOpen(false);
     };
 
     const handleChange = (e) => {
@@ -65,11 +76,19 @@ const QmsAddInternalProblems = () => {
         }
     };
 
-    const handleAddCause = (cause) => {
+    const handleAddCause = (causes) => {
         setFormData({
             ...formData,
-            cause: cause
+            causes: causes
         });
+    };
+
+    const handleAddCar = (cars) => {
+        setFormData({
+            ...formData,
+            cars: cars
+        });
+      
     };
 
     const handleSubmit = (e) => {
@@ -101,10 +120,20 @@ const QmsAddInternalProblems = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
 
             <InternalProblemsModal
-                isOpen={isModalOpen}
-                onClose={handleCloseModal}
+                isOpen={isCauseModalOpen}
+                onClose={handleCloseCauseModal}
                 onAddCause={handleAddCause}
             />
+
+            <AddCarNumberModal
+                isOpen={isCarModalOpen}
+                onClose={handleCloseCarModal}
+                onAddCause={handleAddCar}
+            />
+
+             
+
+
 
 
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
@@ -142,10 +171,12 @@ const QmsAddInternalProblems = () => {
                             color="#AAAAAA"
                         />
                     </div>
-                    <button className='flex justify-start add-training-label !text-[#1E84AF]'
-                        onClick={handleOpenModal}
+                    <button
+                        type="button"
+                        className='flex justify-start add-training-label !text-[#1E84AF]'
+                        onClick={handleOpenCauseModal}
                     >
-                        Add Causes / Root Causes
+                        Add Causes / Causes
                     </button>
                 </div>
 
@@ -317,26 +348,58 @@ const QmsAddInternalProblems = () => {
                     </div>
                 </div>
 
-                <div></div>
-                <div className="flex items-end justify-end mt-3">
-                    <label className="flex items-center">
-                        <input
-                            type="checkbox"
-                            name="send_notification"
-                            className="mr-2 form-checkboxes"
-                            checked={formData.send_notification}
-                            onChange={handleChange}
-                        />
-                        <span className="permissions-texts cursor-pointer">
-                            Send Notification
-                        </span>
-                    </label>
-                </div>
+                {/* Conditionally render Corrections and Number CAR fields */}
+                {formData.correctiveAction === 'Yes' && (
+                    <>
+                        <div className="flex flex-col gap-3">
+                            <label className="add-training-label">Corrections</label>
+                            <input
+                                type='text'
+                                name="corrections"
+                                value={formData.corrections}
+                                onChange={handleChange}
+                                className="add-training-inputs"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-3">
+                            <label className="add-training-label">Number CAR</label>
+                            <div className="relative">
+                                <select
+                                    name="car"
+                                    value={formData.car}
+                                    onChange={handleChange}
+                                    onFocus={() => setFocusedDropdown("car")}
+                                    onBlur={() => setFocusedDropdown(null)}
+                                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                >
+                                    <option value="" disabled>Select</option>
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-1/3 transform transition-transform duration-300
+                                    ${focusedDropdown === "car" ? "rotate-180" : ""}`}
+                                    size={20}
+                                    color="#AAAAAA"
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                className='flex justify-start add-training-label !text-[#1E84AF]'
+                                onClick={handleOpenCarModal}
+                            >
+                                Add CAR Number
+                            </button>
+                        </div>
+                    </>
+                )}
 
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
-                        <button className='request-correction-btn duration-200'>
+                        <button
+                            type="button"
+                            className='request-correction-btn duration-200'
+                        >
                             Save as Draft
                         </button>
                     </div>

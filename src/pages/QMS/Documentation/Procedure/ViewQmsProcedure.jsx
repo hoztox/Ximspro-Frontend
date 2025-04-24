@@ -302,7 +302,7 @@ const ViewQmsprocedure = () => {
     const canReview = (() => {
         // Exclude the written_by user from requesting corrections
         if (isCurrentUserWrittenBy) {
-            return false;
+            return true;
         }
     
         if (manualDetails.status === "Pending for Review/Checking") {

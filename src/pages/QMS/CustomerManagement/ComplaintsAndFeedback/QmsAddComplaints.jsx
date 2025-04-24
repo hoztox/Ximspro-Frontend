@@ -3,11 +3,13 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import CategoryModal from '../CategoryModal';
+import AddCarNumberModal from '../AddCarNumberModal';
 
 
 const QmsAddComplaints = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCarModalOpen, setIsCarModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     category: 'Internal',
     details: '',
@@ -20,6 +22,9 @@ const QmsAddComplaints = () => {
       year: ''
     },
     correctiveAction: '',
+    corrections: '',
+    carnumber: '',
+    cars: [],
     send_notification: false
   });
 
@@ -57,6 +62,22 @@ const QmsAddComplaints = () => {
         [name]: value
       });
     }
+  };
+
+  const handleOpenCarModal = () => {
+    setIsCarModalOpen(true);
+  };
+
+  const handleCloseCarModal = () => {
+    setIsCarModalOpen(false);
+  };
+
+  const handleAddCar = (cars) => {
+    setFormData({
+      ...formData,
+      cars: cars
+    });
+
   };
 
 
@@ -117,9 +138,16 @@ const QmsAddComplaints = () => {
           onAddCause={handleAddCategory}
         />
 
+        <AddCarNumberModal
+          isOpen={isCarModalOpen}
+          onClose={handleCloseCarModal}
+          onAddCause={handleAddCar}
+        />
+
 
         <h1 className="add-training-head">Add Complaints and Feedbacks</h1>
         <button
+          type="button"
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
           onClick={() => handleListComplaints()}
         >
@@ -160,7 +188,7 @@ const QmsAddComplaints = () => {
         <div className="flex flex-col gap-3 relative">
           <div className='flex justify-between'>
             <label className="add-training-label">Category <span className="text-red-500">*</span></label>
-            
+
           </div>
           <div className="relative">
             <select
@@ -330,8 +358,6 @@ const QmsAddComplaints = () => {
           />
         </div>
 
-
-
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Corrective Action Needed ?</label>
           <div className="relative">
@@ -355,6 +381,51 @@ const QmsAddComplaints = () => {
             />
           </div>
         </div>
+
+        {/* Conditionally render Corrections and CAR Number fields */}
+        {formData.correctiveAction === 'Yes' && (
+          <>
+            <div className="flex flex-col gap-3">
+              <label className="add-training-label">
+                Corrections
+              </label>
+              <input
+                type='text'
+                name="corrections"
+                value={formData.corrections}
+                onChange={handleChange}
+                className="add-training-inputs"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 relative">
+              <label className="add-training-label">CAR Number</label>
+              <select
+                name="carnumber"
+                value={formData.carnumber}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("carnumber")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>Select</option>
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-[45%] transform transition-transform duration-300 
+                             ${focusedDropdown === "carnumber" ? "rotate-180" : ""}`}
+                size={20}
+                color="#AAAAAA"
+              />
+              <button
+                type="button"
+                className='flex justify-start add-training-label !text-[#1E84AF]'
+                onClick={handleOpenCarModal}
+              >
+                Add CAR Number
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Upload Attachments</label>
@@ -384,7 +455,10 @@ const QmsAddComplaints = () => {
         {/* Form Actions */}
         <div className="md:col-span-2 flex gap-4 justify-between">
           <div>
-            <button className='request-correction-btn duration-200'>
+            <button
+              type="button"
+              className='request-correction-btn duration-200'
+            >
               Save as Draft
             </button>
           </div>
@@ -409,4 +483,4 @@ const QmsAddComplaints = () => {
   );
 };
 
-export default QmsAddComplaints
+export default QmsAddComplaints;

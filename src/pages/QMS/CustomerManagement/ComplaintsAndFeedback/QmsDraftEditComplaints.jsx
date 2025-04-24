@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { ChevronDown, Eye } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import CategoryModal from '../CategoryModal';
+import AddCarNumberModal from '../AddCarNumberModal';
 
 const QmsDraftEditComplaints = () => {
     const navigate = useNavigate();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCarModalOpen, setIsCarModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         category: 'Internal',
         details: '',
@@ -19,6 +21,9 @@ const QmsDraftEditComplaints = () => {
             year: ''
         },
         correctiveAction: '',
+        corrections: '',
+        carnumber: '',
+        cars: [],
         send_notification: false
     });
 
@@ -58,12 +63,22 @@ const QmsDraftEditComplaints = () => {
         }
     };
 
-    const handleFileChange = (e) => {
+    const handleOpenCarModal = () => {
+        setIsCarModalOpen(true);
+    };
+
+    const handleCloseCarModal = () => {
+        setIsCarModalOpen(false);
+    };
+
+    const handleAddCar = (cars) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0]
+            cars: cars
         });
+
     };
+
 
     const handleOpenModal = () => {
         setIsModalOpen(true);
@@ -73,10 +88,17 @@ const QmsDraftEditComplaints = () => {
         setIsModalOpen(false);
     };
 
-    const handleEditCategory = (category) => {
+    const handleAddCategory = (category) => {
         setFormData({
             ...formData,
             category: category
+        });
+    };
+
+    const handleFileChange = (e) => {
+        setFormData({
+            ...formData,
+            attachment: e.target.files[0]
         });
     };
 
@@ -108,16 +130,23 @@ const QmsDraftEditComplaints = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-                <h1 className="add-training-head">Edit Draft Complaints and Feedbacks</h1>
 
                 <CategoryModal
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
-                    onAddCause={handleEditCategory}
+                    onAddCause={handleAddCategory}
+                />
+
+                <AddCarNumberModal
+                    isOpen={isCarModalOpen}
+                    onClose={handleCloseCarModal}
+                    onAddCause={handleAddCar}
                 />
 
 
+                <h1 className="add-training-head">Edit Draft Complaints and Feedbacks</h1>
                 <button
+                    type="button"
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
                     onClick={() => handleListDraftComplaints()}
                 >
@@ -147,7 +176,7 @@ const QmsDraftEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                                ${focusedDropdown === "name" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "name" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -158,6 +187,7 @@ const QmsDraftEditComplaints = () => {
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Category <span className="text-red-500">*</span></label>
+
                     </div>
                     <div className="relative">
                         <select
@@ -173,7 +203,7 @@ const QmsDraftEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                                ${focusedDropdown === "category" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "category" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -230,7 +260,7 @@ const QmsDraftEditComplaints = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                                ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -254,7 +284,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                        ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
+                                     ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -275,7 +305,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                        ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
+                                     ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -296,7 +326,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                        ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
+                                     ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -321,13 +351,11 @@ const QmsDraftEditComplaints = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                                ${focusedDropdown === "solved" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "solved" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
-
-
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Corrective Action Needed ?</label>
@@ -346,12 +374,57 @@ const QmsDraftEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "correctiveAction" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "correctiveAction" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
                     </div>
                 </div>
+
+                {/* Conditionally render Corrections and CAR Number fields */}
+                {formData.correctiveAction === 'Yes' && (
+                    <>
+                        <div className="flex flex-col gap-3">
+                            <label className="add-training-label">
+                                Corrections
+                            </label>
+                            <input
+                                type='text'
+                                name="corrections"
+                                value={formData.corrections}
+                                onChange={handleChange}
+                                className="add-training-inputs"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-3 relative">
+                            <label className="add-training-label">CAR Number</label>
+                            <select
+                                name="carnumber"
+                                value={formData.carnumber}
+                                onChange={handleChange}
+                                onFocus={() => setFocusedDropdown("carnumber")}
+                                onBlur={() => setFocusedDropdown(null)}
+                                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                            >
+                                <option value="" disabled>Select</option>
+                            </select>
+                            <ChevronDown
+                                className={`absolute right-3 top-[45%] transform transition-transform duration-300 
+                             ${focusedDropdown === "carnumber" ? "rotate-180" : ""}`}
+                                size={20}
+                                color="#AAAAAA"
+                            />
+                            <button
+                                type="button"
+                                className='flex justify-start add-training-label !text-[#1E84AF]'
+                                onClick={handleOpenCarModal}
+                            >
+                                Add CAR Number
+                            </button>
+                        </div>
+                    </>
+                )}
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Upload Attachments</label>
@@ -370,36 +443,27 @@ const QmsDraftEditComplaints = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    <div className='flex justify-between'>
-                        <button className='flex items-center click-view-file-btn gap-2 text-[#1E84AF]'>
-                            Click to view file <Eye size={18} />
-                        </button>
-
-                        <div>
-                            {formData.attachment && (
-                                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
-                            )}
-                            {!formData.attachment && (
-                                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
-                            )}
-                        </div>
-                    </div>
+                    {formData.attachment && (
+                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
+                    )}
+                    {!formData.attachment && (
+                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
+                    )}
                 </div>
 
-
-                <div className=" flex items-end gap-4 w-full">
-
-                    <div className='flex gap-5 w-full'>
+                {/* Form Actions */}
+                <div className="md:col-span-2 flex gap-4 justify-end">
+                    <div className='flex gap-5'>
                         <button
                             type="button"
                             onClick={handleCancel}
-                            className="cancel-btn duration-200 !w-full"
+                            className="cancel-btn duration-200"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="save-btn duration-200 !w-full"
+                            className="save-btn duration-200"
                         >
                             Save
                         </button>
@@ -409,5 +473,6 @@ const QmsDraftEditComplaints = () => {
         </div>
     );
 };
+
 
 export default QmsDraftEditComplaints

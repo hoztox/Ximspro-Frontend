@@ -153,21 +153,21 @@ const QmsComposeSystemMessaging = () => {
 
                 <div className='flex justify-between'>
                     <div>
-                        <button className='request-correction-btn duration-200'>
+                        <button className='request-correction-btn duration-200 2xl:!w-[140px] !p-[8px]'> 
                             Save as Draft
                         </button>
                     </div>
-                    <div className='flex gap-5'>
+                    <div className='flex gap-5 w-[63%] 2xl:w-full justify-end'> 
                         <button
                             type="button"
                             onClick={handleCancel}
-                            className="cancel-btn duration-200  "
+                            className="cancel-btn duration-200 "
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="save-btn duration-200  "
+                            className="save-btn duration-200"
                         >
                             Save
                         </button>
