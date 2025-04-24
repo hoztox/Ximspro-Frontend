@@ -19,7 +19,6 @@ const QmsViewSupplier = () => {
         fax: 'test',
         contact_person: "test",
         qualified_supply: 'test',
-        qualified_supply: 'test',
         notes: 'test',
         approved_by: 'test',
         status: 'test',

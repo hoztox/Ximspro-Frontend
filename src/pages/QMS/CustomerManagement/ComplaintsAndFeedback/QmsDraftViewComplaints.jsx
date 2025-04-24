@@ -12,7 +12,6 @@ const QmsDraftViewComplaints = () => {
         date: "test",
         corrective_action: "test",
         solved: "test",
-        corrective_action: "test",
 
     });
     const navigate = useNavigate();
