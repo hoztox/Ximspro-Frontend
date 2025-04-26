@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
@@ -43,7 +43,7 @@ const QmsDraftSupplier = () => {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/suppliers-draft/${companyId}/`);
                 console.log('Drafted Suppliers:', response);
-                
+
                 const formattedData = response.data.map((supplier, index) => ({
                     id: index + 1,
                     supplier_id: supplier.id,
@@ -106,6 +106,10 @@ const QmsDraftSupplier = () => {
         navigate(`/company/qms/edit-supplier/${supplierId}`);
     };
 
+    const handleClose = () => {
+        
+    }
+
     // Pagination
     const itemsPerPage = 10;
     const totalItems = suppliers.length;
@@ -163,19 +167,10 @@ const QmsDraftSupplier = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftSupplier}
-                    >
-                        <span>Drafts</span>
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
                     </button>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddSupplier}
-                    >
-                        <span>Add Supplier</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
-                    </button>
+
                 </div>
             </div>
 
