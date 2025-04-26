@@ -1,34 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../../../../Utils/Config';
 
 const QmsListSupplier = () => {
-    const initialData = [
-        { id: 1, supplier_name: 'Anonymous', product: 'Anonymous', car: '123', date: '03-12-2024', status: 'Approved' },
-        { id: 2, supplier_name: 'Anonymous', product: 'Anonymous', car: '123', date: '03-12-2024', status: 'Not Approved' },
-        { id: 3, supplier_name: 'Anonymous', product: 'Anonymous', car: '123', date: '03-12-2024', status: 'Provisional' },
-        { id: 4, supplier_name: 'Anonymous', product: 'Anonymous', car: '123', date: '03-12-2024', status: 'Approved' },
-    ];
-
     // State
-    const [suppliers, setSuppliers] = useState(initialData);
+    const [suppliers, setSuppliers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
 
+    const getUserCompanyId = () => {
+        const role = localStorage.getItem("role");
 
+        if (role === "company") {
+            return localStorage.getItem("company_id");
+        } else if (role === "user") {
+            try {
+                const userCompanyId = localStorage.getItem("user_company_id");
+                return userCompanyId ? JSON.parse(userCompanyId) : null;
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
+        }
+
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
+    // Fetch suppliers data
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
+                const formattedData = response.data.map((supplier, index) => ({
+                    id: index + 1,
+                    supplier_id: supplier.id,
+                    supplier_name: supplier.company_name || 'Anonymous',
+                    product: supplier.qualified_to_supply || 'Anonymous',
+                    date: supplier.approved_date || 'N/A',
+                    status: supplier.status || 'Not Approved',
+                    active: supplier.active === 'active'
+                }));
+                setSuppliers(formattedData);
+                setError(null);
+                console.log('suppliers', response);
+                
+            } catch (err) {
+                setError('Failed to fetch suppliers data');
+                console.error('Error fetching suppliers:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchSuppliers();
+    }, [companyId]);
+
+    // Handle search
     const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchQuery(value);
-        setSearchTerm(value); // Update searchTerm as well
+        setSearchQuery(e.target.value);
         setCurrentPage(1);
     };
 
+    // Handle block/unblock supplier
+    const handleToggleActive = async (supplierId, currentStatus) => {
+        try {
+            const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+
+            await axios.put(`${BASE_URL}/qms/suppliers/${supplierId}/`, {
+                active: newStatus
+            });
+
+            // Update the state locally
+            setSuppliers(suppliers.map(supplier =>
+                supplier.supplier_id === supplierId
+                    ? { ...supplier, active: newStatus === 'active' }
+                    : supplier
+            ));
+        } catch (err) {
+            console.error('Error updating supplier status:', err);
+            alert('Failed to update supplier status');
+        }
+    };
+
+    // Handle delete supplier
+    const handleDeleteSupplier = async (supplierId) => {
+        if (window.confirm('Are you sure you want to delete this supplier?')) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/suppliers/${supplierId}/`);
+                setSuppliers(suppliers.filter(supplier => supplier.supplier_id !== supplierId));
+            } catch (err) {
+                console.error('Error deleting supplier:', err);
+                alert('Failed to delete supplier');
+            }
+        }
+    };
+
+    // Navigation handlers
+    const handleAddSupplier = () => {
+        navigate('/company/qms/add-supplier');
+    };
+
+    const handleDraftSupplier = () => {
+        navigate('/company/qms/draft-supplier');
+    };
+
+    const handleViewSupplier = (supplierId) => {
+        navigate(`/company/qms/view-supplier/${supplierId}`);
+    };
+
+    const handleEditSupplier = (supplierId) => {
+        navigate(`/company/qms/edit-supplier/${supplierId}`);
+    };
 
     // Pagination
     const itemsPerPage = 10;
@@ -38,36 +132,14 @@ const QmsListSupplier = () => {
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = suppliers.slice(indexOfFirstItem, indexOfLastItem);
 
-    // Search functionality
-    const filteredSupplier = currentItems.filter(supplier =>
+    // Search and filter
+    const filteredSuppliers = suppliers.filter(supplier =>
         supplier.supplier_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        supplier.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        supplier.car.toLowerCase().includes(searchQuery.toLowerCase())
+        supplier.product.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleAddSupplier = () => {
-        navigate('/company/qms/add-supplier')
-    }
-
-    const handleDraftSupplier = () => {
-        navigate('/company/qms/draft-supplier')
-    }
-
-    const handleViewSupplier = () => {
-        navigate('/company/qms/view-supplier')
-    }
-
-    const handleEditSupplier = () => {
-        navigate('/company/qms/edit-supplier')
-    }
-
-
-    // Delete supplier
-    const handleDeleteInternalProblems = (id) => {
-        setSuppliers(suppliers.filter(supplier => supplier.id !== id));
-    };
+    const currentItems = filteredSuppliers.slice(indexOfFirstItem, indexOfLastItem);
 
     // Get status color
     const getStatusColor = (status) => {
@@ -83,18 +155,13 @@ const QmsListSupplier = () => {
         }
     };
 
-    // Change page
+    // Pagination handlers
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-
-
-    const [isBlocked, setIsBlocked] = useState(false);
-
-    const handleToggle = () => {
-        setIsBlocked(prev => !prev);
-    };
+    if (loading) return <div className="flex justify-center items-center h-64 text-white">Loading suppliers...</div>;
+    if (error) return <div className="flex justify-center items-center h-64 text-red-500">{error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -119,7 +186,6 @@ const QmsListSupplier = () => {
                         onClick={handleDraftSupplier}
                     >
                         <span>Drafts</span>
-
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -148,85 +214,91 @@ const QmsListSupplier = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredSupplier.map((supplier, index) => (
-                            <tr key={supplier.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{supplier.id}</td>
-                                <td className="px-2 add-manual-datas">{supplier.supplier_name}</td>
-                                <td className="px-2 add-manual-datas">{supplier.product}</td>
-                                <td className="px-2 add-manual-datas">{supplier.date}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${getStatusColor(supplier.status)}`}>
-                                        {supplier.status}
-                                    </span>
-                                </td>
-                                <td className="px-5 add-user-datas text-center">
-                                    <div className="flex justify-center items-center w-full">
-                                        <button
-                                            className={`items-center rounded-full p-1 toggle ${isBlocked ? "toggleblock" : "toggleactive"}`}
-                                            onClick={handleToggle}
-                                        >
-                                            <div
-                                                className={`rounded-full transform transition-transform bar ${isBlocked ? "translate-x-2" : "translate-x-0"}`}
-                                            />
+                        {currentItems.length > 0 ? (
+                            currentItems.map((supplier, index) => (
+                                <tr key={supplier.supplier_id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.supplier_name}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.product}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.date}</td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${getStatusColor(supplier.status)}`}>
+                                            {supplier.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 add-user-datas text-center">
+                                        <div className="flex justify-center items-center w-full">
+                                            <button
+                                                className={`items-center rounded-full p-1 toggle ${supplier.active ? "toggleactive" : "toggleblock"}`}
+                                                onClick={() => handleToggleActive(supplier.supplier_id, supplier.active ? 'active' : 'blocked')}
+                                            >
+                                                <div
+                                                    className={`rounded-full transform transition-transform bar ${supplier.active ? "translate-x-0" : "translate-x-2"}`}
+                                                />
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleViewSupplier(supplier.supplier_id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                         </button>
-                                    </div>
-                                </td>
-
-
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleViewSupplier}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleEditSupplier}>
-                                        <img src={editIcon} alt="Edit Icon" />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={() => handleDeleteInternalProblems(supplier.id)}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleEditSupplier(supplier.supplier_id)}>
+                                            <img src={editIcon} alt="Edit Icon" />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteSupplier(supplier.supplier_id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="9" className="text-center py-4">No suppliers found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-between items-center mt-6 text-sm">
-                <div className='text-white total-text'>Total-{totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            {totalItems > 0 && (
+                <div className="flex justify-between items-center mt-6 text-sm">
+                    <div className='text-white total-text'>Total-{totalItems}</div>
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            onClick={prevPage}
+                            disabled={currentPage === 1}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                    >
-                        Next
-                    </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                            <button
+                                key={number}
+                                onClick={() => paginate(number)}
+                                className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                            >
+                                {number}
+                            </button>
+                        ))}
+
+                        <button
+                            onClick={nextPage}
+                            disabled={currentPage === totalPages}
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
+
 export default QmsListSupplier;

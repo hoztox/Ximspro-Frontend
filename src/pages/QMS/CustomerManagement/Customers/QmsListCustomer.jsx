@@ -1,25 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
+import axios from 'axios';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
- 
-
+import { BASE_URL } from '../../../../Utils/Config';
 
 const QmsListCustomer = () => {
+    // State
+    const [customers, setCustomers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
- 
- 
 
-    // Demo data
-    const [customers, setCustomers] = useState([
-        { id: 1, name: 'Anonymous', email: 'user@gmail.com', mailing_address: '123 Home, Bangalore',   date: '03-04-2025' },
-        { id: 2, name: 'Anonymous', email: 'user@gmail.com', mailing_address: 'Xyz Street, Norway',   date: '03-04-2025' },
-    ]);
+    // Get company ID function (reused from supplier component)
+    const getUserCompanyId = () => {
+        const role = localStorage.getItem("role");
+
+        if (role === "company") {
+            return localStorage.getItem("company_id");
+        } else if (role === "user") {
+            try {
+                const userCompanyId = localStorage.getItem("user_company_id");
+                return userCompanyId ? JSON.parse(userCompanyId) : null;
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
+        }
+
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
+    // Fetch customers data
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/customers/company/${companyId}/`);
+                const formattedData = response.data.map((customer, index) => ({
+                    id: index + 1,
+                    customer_id: customer.id,
+                    name: customer.name || 'Anonymous',
+                    email: customer.email || 'user@gmail.com',
+                    mailing_address: customer.street_address || 'N/A',
+                    date: customer.created_at || new Date().toLocaleDateString('en-US')
+                }));
+                setCustomers(formattedData);
+                setError(null);
+                console.log('customers', response);
+            } catch (err) {
+                setError('Failed to fetch customers data');
+                console.error('Error fetching customers:', err);
+                // Use demo data if API fails
+                setCustomers([
+                    { id: 1, customer_id: 1, name: 'Anonymous', email: 'user@gmail.com', mailing_address: '123 Home, Bangalore', date: '03-04-2025' },
+                    { id: 2, customer_id: 2, name: 'Anonymous', email: 'user@gmail.com', mailing_address: 'Xyz Street, Norway', date: '03-04-2025' },
+                ]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchCustomers();
+    }, [companyId]);
 
     const itemsPerPage = 10;
     const totalItems = customers.length;
@@ -41,25 +91,36 @@ const QmsListCustomer = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteItem = (id) => {
-        setCustomers(customers.filter(item => item.id !== id));
+    const handleDeleteItem = async (customerId) => {
+        if (window.confirm('Are you sure you want to delete this customer?')) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/customers/${customerId}/`);
+                setCustomers(customers.filter(item => item.customer_id !== customerId));
+            } catch (err) {
+                console.error('Error deleting customer:', err);
+                alert('Failed to delete customer');
+            }
+        }
     };
 
     const handleAddCustomer = () => {
         navigate('/company/qms/add-customer');
     };
 
-    const handleDraftCutsomer = () => {
+    const handleDraftCustomer = () => {
         navigate('/company/qms/draft-customer');
     };
 
-    const handleEditCustomer = () => {
-        navigate('/company/qms/edit-customer');
+    const handleEditCustomer = (customerId) => {
+        navigate(`/company/qms/edit-customer/${customerId}`);
     };
 
-    const handleViewCustomer = () => {
-        navigate('/company/qms/view-customer');
+    const handleViewCustomer = (customerId) => {
+        navigate(`/company/qms/view-customer/${customerId}`);
     };
+
+    if (loading) return <div className="flex justify-center items-center h-64 text-white">Loading customers...</div>;
+    if (error && customers.length === 0) return <div className="flex justify-center items-center h-64 text-red-500">{error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -80,7 +141,7 @@ const QmsListCustomer = () => {
                     </div>
                     <button
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleDraftCutsomer}
+                        onClick={handleDraftCustomer}
                     >
                         <span>Draft</span>
                     </button>
@@ -108,36 +169,42 @@ const QmsListCustomer = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentItems.map((item, index) => (
-                            <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
-                                <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.name}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.email}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.mailing_address}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.date}</td>
-                                <td className="list-awareness-training-datas text-center ">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleViewCustomer}>
-                                            <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleEditCustomer}>
-                                            <img src={edits} alt="Edit Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={() => handleDeleteItem(item.id)}>
-                                            <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
+                        {currentItems.length > 0 ? (
+                            currentItems.map((item, index) => (
+                                <tr key={item.customer_id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                    <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.name}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.email}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.mailing_address}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.date}</td>
+                                    <td className="list-awareness-training-datas text-center ">
+                                        <div className='flex justify-center items-center h-[50px]'>
+                                            <button onClick={() => handleViewCustomer(item.customer_id)}>
+                                                <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <div className='flex justify-center items-center h-[50px]'>
+                                            <button onClick={() => handleEditCustomer(item.customer_id)}>
+                                                <img src={edits} alt="Edit Icon" className='w-[16px] h-[16px]' />
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <div className='flex justify-center items-center h-[50px]'>
+                                            <button onClick={() => handleDeleteItem(item.customer_id)}>
+                                                <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="8" className="text-center py-4">No customers found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -175,4 +242,5 @@ const QmsListCustomer = () => {
         </div>
     );
 };
-export default QmsListCustomer
+
+export default QmsListCustomer;

@@ -1,26 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import { Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
+import { useNavigate } from 'react-router-dom';
+
 
 const AddAuditReportModal = ({
   isVisible,
   onClose,
   onSave,
   isExiting,
-  isAnimating
+  isAnimating,
+  selectedAudit // Add this prop
 }) => {
-
-
   const [formData, setFormData] = useState({
-    audit_report: '',
-    non_conformities_report: '',
+    upload_audit_report: '',
+    upload_non_coformities_report: '',
   });
-
+  
+  
   // State to store object URLs for previewing files
   const [fileURLs, setFileURLs] = useState({
     audit_report: '',
     non_conformities_report: '',
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const submissionData = new FormData();
+      console.log("sssssssss",formData)
+      
+      if (formData.audit_report instanceof File) {
+        submissionData.append('upload_audit_report', formData.audit_report);
+      }
+      
+      if (formData.non_conformities_report instanceof File) {
+        submissionData.append('upload_non_coformities_report', formData.non_conformities_report);
+      }
+      
+
+      // Use selectedAudit.id instead of id from useParams
+      if (!selectedAudit || !selectedAudit.id) {
+        throw new Error('No audit selected or audit ID is missing');
+      }
+
+      const response = await axios.post(`${BASE_URL}/qms/audits/${selectedAudit.id}/upload-reports/`, submissionData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('Audit updated successfully:', response.data);
+      onSave && onSave(response.data); // Call onSave if provided
+      setTimeout(() => {
+        navigate('/company/qms/list-audit');
+      }, 1500);
+    } catch (error) {
+      console.error('Error updating audit:', error);
+      setError('Failed to update audit. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Create and clean up object URLs when files change
   useEffect(() => {
@@ -87,99 +137,111 @@ const AddAuditReportModal = ({
         <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
           <h3 className="list-awareness-training-head">Add Audit Report</h3>
         </div>
-        <div className='px-[102px] flex justify-between gap-5'>
-          <div className="flex flex-col gap-3 mt-5 w-full">
-            <label className="add-training-label">Upload Audit Report</label>
-            <div className="flex">
-              <input
-                type="file"
-                id="inspection-report-upload"
-                onChange={(e) => handleFileChange(e, 'audit_report')}
-                className="hidden"
-              />
-              <label
-                htmlFor="inspection-report-upload"
-                className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-              >
-                <span className="text-[#AAAAAA] choose-file">Choose File</span>
-                <img src={file} alt="" />
-              </label>
+        
+        <form onSubmit={handleSubmit}>
+          <div className='px-[102px] flex justify-between gap-5'>
+            <div className="flex flex-col gap-3 mt-5 w-full">
+              <label className="add-training-label">Upload Audit Report</label>
+              <div className="flex">
+                <input
+                  type="file"
+                  id="audit-report-upload"
+                  onChange={(e) => handleFileChange(e, 'audit_report')}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="audit-report-upload"
+                  className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+                >
+                  <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                  <img src={file} alt="" />
+                </label>
+              </div>
+
+              <div className='flex items-center justify-between'>
+                <button
+                  onClick={(e) => handleViewFile('audit_report', e)}
+                  disabled={!fileURLs.audit_report}
+                  className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
+                >
+                  Click to view file <Eye size={17} />
+                </button>
+                {formData.audit_report && (
+                  <p className="no-file !text-white flex justify-end !mt-0" title={formData.audit_report.name}>
+                    {truncateFileName(formData.audit_report.name)}
+                  </p>
+                )}
+                {!formData.audit_report && (
+                  <p className="no-file !text-white flex justify-end !mt-0">No file chosen</p>
+                )}
+              </div>
             </div>
 
-            <div className='flex items-center justify-between'>
-              <button
-                onClick={(e) => handleViewFile('audit_report', e)}
-                disabled={!fileURLs.audit_report}
-                className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
-              >
-                Click to view file <Eye size={17} />
-              </button>
-              {formData.audit_report && (
-                <p className="no-file !text-white flex justify-end !mt-0" title={formData.audit_report.name}>
-                  {truncateFileName(formData.audit_report.name)}
-                </p>
-              )}
-              {!formData.audit_report && (
-                <p className="no-file !text-white flex justify-end !mt-0">No file chosen</p>
-              )}
+            <div className="flex flex-col gap-3 mt-5 w-full">
+              <label className="add-training-label">Upload Non Conformities Report</label>
+              <div className="flex">
+                <input
+                  type="file"
+                  id="non-conformities-upload"
+                  onChange={(e) => handleFileChange(e, 'non_conformities_report')}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="non-conformities-upload"
+                  className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+                >
+                  <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                  <img src={file} alt="" />
+                </label>
+              </div>
+
+              <div className='flex items-center justify-between'>
+                <button
+                  onClick={(e) => handleViewFile('non_conformities_report', e)}
+                  disabled={!fileURLs.non_conformities_report}
+                  className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
+                >
+                  Click to view file <Eye size={17} />
+                </button>
+                {formData.non_conformities_report && (
+                  <p className="no-file !text-white flex justify-end !mt-0" title={formData.non_conformities_report.name}>
+                    {truncateFileName(formData.non_conformities_report.name)}
+                  </p>
+                )}
+                {!formData.non_conformities_report && (
+                  <p className="no-file !text-white flex justify-end !mt-0">No file chosen</p>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 mt-5 w-full">
-            <label className="add-training-label">Upload Non Conformities Report</label>
-            <div className="flex">
-              <input
-                type="file"
-                id="non-conformities-upload"
-                onChange={(e) => handleFileChange(e, 'non_conformities_report')}
-                className="hidden"
-              />
-              <label
-                htmlFor="non-conformities-upload"
-                className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-              >
-                <span className="text-[#AAAAAA] choose-file">Choose File</span>
-                <img src={file} alt="" />
-              </label>
+          {error && (
+            <div className="text-red-500 mt-3 text-center">
+              {error}
             </div>
+          )}
 
-            <div className='flex items-center justify-between'>
-              <button
-                onClick={(e) => handleViewFile('non_conformities_report', e)}
-                disabled={!fileURLs.non_conformities_report}
-                className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
-              >
-                Click to view file <Eye size={17} />
-              </button>
-              {formData.non_conformities_report && (
-                <p className="no-file !text-white flex justify-end !mt-0" title={formData.non_conformities_report.name}>
-                  {truncateFileName(formData.non_conformities_report.name)}
-                </p>
-              )}
-              {!formData.non_conformities_report && (
-                <p className="no-file !text-white flex justify-end !mt-0">No file chosen</p>
-              )}
-            </div>
-            <div className="flex gap-5 mt-5">
-              <button
-                onClick={onClose}
-                className="cancel-btn duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => onSave(formData)}
-                className="save-btn duration-200"
-              >
-                Save
-              </button>
-            </div>
+          <div className="flex justify-end gap-5 mt-8 px-[102px]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="cancel-btn duration-200"
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="save-btn duration-200"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save'}
+            </button>
           </div>
-        </div>
-
+        </form>
       </div>
     </div>
   );
 };
 
-export default AddAuditReportModal
+export default AddAuditReportModal;

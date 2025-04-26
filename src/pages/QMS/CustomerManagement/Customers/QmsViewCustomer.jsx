@@ -1,42 +1,83 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, X } from "lucide-react";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
-import { useNavigate } from "react-router-dom";
-
+import { useNavigate, useParams } from "react-router-dom";
+import { BASE_URL } from '../../../../Utils/Config';
+import axios from "axios";
 
 const QmsViewCustomer = () => {
-    const [formData, setFormData] = useState({
-        name: "Anonymous",
-        city: "Anonymous",
-        street_address: "test",
-        state: "test",
-        zip_code: "test",
-        country: "test",
-        corrective_action: "test",
-        email: "test@gamil.com",
-        contact_person: "test",
-        phone: "0987456",
-        alternative_phone: "0987456",
-        fax: 'test',
-        notes: 'test',
-
-    });
+    const [customer, setCustomer] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const { id } = useParams();
+    
+    useEffect(() => {
+        const fetchCustomerData = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/customers/${id}/`);
+                setCustomer(response.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching customer data:", err);
+                setError("Failed to load customer data");
+                setLoading(false);
+            }
+        };
+
+        if (id) {
+            fetchCustomerData();
+        }
+    }, [id]);
 
     const handleClose = () => {
         navigate("/company/qms/list-customer");
     };
 
-    const handleEdit = () => {
-        navigate("/company/qms/edit-customer");
+    const handleEdit = (id) => {
+        navigate(`/company/qms/edit-customer/${id}`);
     };
 
-    const handleDelete = () => {
-        console.log("Delete button clicked");
+    const handleDelete = async (id) => {
+        if (window.confirm("Are you sure you want to delete this customer?")) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/customers/${id}/`);
+                alert("Customer deleted successfully");
+                navigate("/company/qms/list-customer");
+            } catch (err) {
+                console.error("Error deleting customer:", err);
+                alert("Failed to delete customer");
+            }
+        }
     };
 
+    const handleViewDocument = (url) => {
+        if (url) {
+            window.open(url, "_blank");
+        } else {
+            alert("No document available");
+        }
+    };
 
+    if (loading) return (
+        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
+            Loading customer data...
+        </div>
+    );
+
+    if (error) return (
+        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
+            {error}
+        </div>
+    );
+
+    if (!customer) return (
+        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
+            Customer not found
+        </div>
+    );
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -59,58 +100,58 @@ const QmsViewCustomer = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Name
                         </label>
-                        <div className="view-employee-data">{formData.name}</div>
+                        <div className="view-employee-data">{customer.name}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             City
                         </label>
-                        <div className="view-employee-data">{formData.city}</div>
+                        <div className="view-employee-data">{customer.city}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Street Address
                         </label>
-                        <div className="view-employee-data">{formData.street_address}</div>
+                        <div className="view-employee-data">{customer.street_address}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             State
                         </label>
-                        <div className="view-employee-data">{formData.state}</div>
+                        <div className="view-employee-data">{customer.state}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                            Zip Code
                         </label>
-                        <div className="view-employee-data">{formData.zip_code}</div>
+                        <div className="view-employee-data">{customer.zip_code}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Country
                         </label>
-                        <div className="view-employee-data">{formData.country}</div>
+                        <div className="view-employee-data">{customer.country}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Email
                         </label>
-                        <div className="view-employee-data">{formData.email}</div>
+                        <div className="view-employee-data">{customer.email}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Contact Person
                         </label>
-                        <div className="view-employee-data">{formData.contact_person}</div>
+                        <div className="view-employee-data">{customer.contact_person}</div>
                     </div>
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Phone
                             </label>
-                            <div className="view-employee-data">{formData.phone}</div>
+                            <div className="view-employee-data">{customer.phone}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -118,7 +159,7 @@ const QmsViewCustomer = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Alternative Phone
                             </label>
-                            <div className="view-employee-data">{formData.alternative_phone}</div>
+                            <div className="view-employee-data">{customer.alternate_phone}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -126,7 +167,7 @@ const QmsViewCustomer = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Fax
                             </label>
-                            <div className="view-employee-data">{formData.fax}</div>
+                            <div className="view-employee-data">{customer.fax}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -134,7 +175,7 @@ const QmsViewCustomer = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Notes
                             </label>
-                            <div className="view-employee-data">{formData.notes}</div>
+                            <div className="view-employee-data">{customer.notes}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -142,7 +183,10 @@ const QmsViewCustomer = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Document
                             </label>
-                           <button className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn">
+                           <button 
+                             onClick={() => handleViewDocument(customer.document)} 
+                             className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                           >
                             Click to view file <Eye size={18}/>
                            </button>
                         </div>
@@ -151,7 +195,7 @@ const QmsViewCustomer = () => {
                     <div className="flex space-x-10 justify-end">
                         <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                             Edit
-                            <button onClick={handleEdit}>
+                            <button onClick={() => handleEdit(id)}>
                                 <img
                                     src={edits}
                                     alt="Edit Iocn"
@@ -162,7 +206,7 @@ const QmsViewCustomer = () => {
 
                         <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                             Delete
-                            <button onClick={handleDelete}>
+                            <button onClick={() => handleDelete(id)}>
                                 <img
                                     src={deletes}
                                     alt="Delete Icon"
@@ -177,4 +221,4 @@ const QmsViewCustomer = () => {
     );
 };
 
-export default QmsViewCustomer
+export default QmsViewCustomer;

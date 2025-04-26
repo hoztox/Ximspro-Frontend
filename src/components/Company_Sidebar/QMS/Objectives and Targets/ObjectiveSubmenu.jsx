@@ -3,7 +3,7 @@ import policy from "../../../../assets/images/Company-Sidebar/policy.svg";
 import manual from "../../../../assets/images/Company-Sidebar/manual.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const ObjectiveSubmenu = () => {
+const ObjectiveSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -12,7 +12,7 @@ const ObjectiveSubmenu = () => {
             id: "objectives-and-kpis",
             label: "Objectives and KPIs",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/list-objectives",
         },
         {
             id: "targets-and-programs",
@@ -23,7 +23,10 @@ const ObjectiveSubmenu = () => {
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     const handleCategoryClick = (category) => {

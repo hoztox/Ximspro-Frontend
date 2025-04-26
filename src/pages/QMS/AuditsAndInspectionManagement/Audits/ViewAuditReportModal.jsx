@@ -1,12 +1,51 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react';
 import { X, Eye } from 'lucide-react';
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const ViewAuditReportModal = ({
     isVisible,
     onClose,
+    selectedAudit,
     isExiting,
     isAnimating
 }) => {
+    const [reportData, setReportData] = useState({
+        audit_report: null,
+        non_conformities_report: null
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (isVisible && selectedAudit && selectedAudit.id) {
+            fetchAuditReports();
+        }
+    }, [isVisible, selectedAudit]);
+
+    const fetchAuditReports = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/audit/${selectedAudit.id}/report/`);
+            setReportData({
+                audit_report: response.data.data.upload_audit_report,
+                non_conformities_report: response.data.data.upload_non_coformities_report
+            });
+            setError(null);
+        } catch (err) {
+            console.error("Error fetching audit reports:", err);
+            setError("Failed to load audit reports");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleViewFile = (fileUrl) => {
+        if (fileUrl) {
+            window.open(fileUrl, '_blank');
+        }
+    };
+
     if (!isVisible) return null;
 
     return (
@@ -25,29 +64,55 @@ const ViewAuditReportModal = ({
                         <X className="text-white" />
                     </button>
                 </div>
-                <div>
-                    <div className="grid grid-cols-2">
-                        <div className='border-r border-[#383840] mt-5'>
-                            <label className="block view-employee-label mb-[6px]">
-                                Audit Report
-                            </label>
-                            <button className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn">
-                                Click to view file <Eye size={18} />
-                            </button>
-                        </div>
+                
+                {loading ? (
+                    <div className="flex justify-center items-center py-12">
+                        <p className="text-white">Loading audit reports...</p>
+                    </div>
+                ) : error ? (
+                    <div className="flex justify-center items-center py-12">
+                        <p className="text-red-500">{error}</p>
+                    </div>
+                ) : (
+                    <div>
+                        <div className="grid grid-cols-2">
+                            <div className='border-r border-[#383840] mt-5'>
+                                <label className="block view-employee-label mb-[6px]">
+                                    Audit Report
+                                </label>
+                                {reportData.audit_report ? (
+                                    <button 
+                                        className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                                        onClick={() => handleViewFile(reportData.audit_report)}
+                                    >
+                                        Click to view file <Eye size={18} />
+                                    </button>
+                                ) : (
+                                    <p className="text-gray-400">No audit report available</p>
+                                )}
+                            </div>
 
-                        <div className='mt-5 ml-5'>
-                            <label className="block view-employee-label mb-[6px]">
-                                Non conformities
-                            </label>
-                            <button className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn">
-                                Click to view file <Eye size={18} />
-                            </button>
+                            <div className='mt-5 ml-5'>
+                                <label className="block view-employee-label mb-[6px]">
+                                    Non Conformities Report
+                                </label>
+                                {reportData.non_conformities_report ? (
+                                    <button 
+                                        className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                                        onClick={() => handleViewFile(reportData.non_conformities_report)}
+                                    >
+                                        Click to view file <Eye size={18} />
+                                    </button>
+                                ) : (
+                                    <p className="text-gray-400">No non-conformities report available</p>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
 };
-export default ViewAuditReportModal
+
+export default ViewAuditReportModal;
