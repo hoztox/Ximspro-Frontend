@@ -35,6 +35,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
     const [animateClass, setAnimateClass] = useState('');
     const [rootCauses, setRootCauses] = useState([]);
     const [users, setUsers] = useState([]);
+    const [suppliers, setSuppliers] = useState([]); // State for suppliers
     const [isLoading, setIsLoading] = useState(false);
     const [nextActionNo, setNextActionNo] = useState("1"); // Initialize with "1" as default
     const [error, setError] = useState('');
@@ -45,10 +46,31 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             fetchRootCauses();
             fetchUsers();
             fetchNextActionNumber();
+            fetchSuppliers(); // Fetch suppliers when modal opens
         } else {
             setAnimateClass('opacity-0 scale-95');
         }
     }, [isOpen]);
+
+    // Fetch suppliers
+    const fetchSuppliers = async () => {
+        try {
+            setIsLoading(true);
+            if (!companyId) return;
+
+            const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
+            // Filter only active suppliers with Approved status
+            const activeSuppliers = response.data.filter(supplier =>
+                supplier.active === 'active' && supplier.status === 'Approved'
+            );
+            setSuppliers(activeSuppliers);
+        } catch (err) {
+            console.error('Error fetching suppliers:', err);
+            setError('Failed to fetch suppliers data');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleOpenRootCauseModal = () => {
         setIsRootCauseModalOpen(true);
@@ -69,6 +91,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
         executor: '',
         description: '',
         action_or_corrections: '',
+        supplier: '', // Added supplier field
         date_raised: {
             day: '',
             month: '',
@@ -227,6 +250,11 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                 is_draft: asDraft
             };
 
+            // Add supplier only if source is 'Supplier'
+            if (formData.source === 'Supplier') {
+                submissionData.supplier = formData.supplier;
+            }
+
             // Submit to API
             const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
 
@@ -243,6 +271,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                 executor: '',
                 description: '',
                 action_or_corrections: '',
+                supplier: '',
                 date_raised: { day: '', month: '', year: '' },
                 date_completed: { day: '', month: '', year: '' },
                 status: 'Pending',
@@ -319,7 +348,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "source" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "source" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -353,27 +382,41 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         />
                     </div>
 
-                    <div className="flex flex-col gap-3 relative">
-                        <label className="add-training-label">Supplier <span className="text-red-500">*</span></label>
-                        <select
-                            name="supplier"
-                            value={formData.supplier}
-                            onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("supplier")}
-                            onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
-                        >
-                            <option value="" disabled>Select</option>
-                             
-                        </select>
-                        <ChevronDown
-                            className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+                    {formData.source === 'Supplier' ? (
+                        <div className="flex flex-col gap-3 relative">
+                            <label className="add-training-label">Supplier <span className="text-red-500">*</span></label>
+                            <select
+                                name="supplier"
+                                value={formData.supplier}
+                                onChange={handleChange}
+                                onFocus={() => setFocusedDropdown("supplier")}
+                                onBlur={() => setFocusedDropdown(null)}
+                                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
+                            >
+                                <option value="" disabled>
+                                    {isLoading ? "Loading suppliers..." : "Select Supplier"}
+                                </option>
+                                {suppliers && suppliers.length > 0 ? (
+                                    suppliers.map(supplier => (
+                                        <option key={supplier.id} value={supplier.id}>
+                                            {supplier.company_name}
+                                        </option>
+                                    ))
+                                ) : !isLoading && (
+                                    <option value="" disabled>No approved suppliers found</option>
+                                )}
+                            </select>
+                            <ChevronDown
+                                className={`absolute right-3 top-[60%] transform transition-transform duration-300 
                             ${focusedDropdown === "supplier" ? "rotate-180" : ""}`}
-                            size={20}
-                            color="#AAAAAA"
-                        />
-                    </div>
+                                size={20}
+                                color="#AAAAAA"
+                            />
+                        </div>
+                    ) : (
+                        <div></div>
+                    )}
 
                     <div className="flex flex-col gap-3 relative">
                         <label className="add-training-label">Root Cause</label>
@@ -400,7 +443,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                ${focusedDropdown === "root_cause" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "root_cause" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -439,7 +482,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -487,7 +530,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_raised.day" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_raised.day" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -508,7 +551,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_raised.month" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_raised.month" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -529,7 +572,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_raised.year" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_raised.year" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -555,7 +598,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_completed.day" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_completed.day" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -576,7 +619,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_completed.month" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_completed.month" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -597,7 +640,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                    ${focusedDropdown === "date_completed.year" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date_completed.year" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -621,7 +664,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "status" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "status" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -670,9 +713,8 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </div>
                     </div>
                 </form>
-            </div >
-        </div >
+            </div>
+        </div>
     )
 }
-
 export default AddCarNumberModal
