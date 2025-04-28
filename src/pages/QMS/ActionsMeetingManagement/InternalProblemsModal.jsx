@@ -33,6 +33,8 @@ const InternalProblemsModal = ({ isOpen, onClose, onAddCause }) => {
         }
         
         const response = await axios.get(`${BASE_URL}/qms/cause/company/${companyId}/`);
+        console.log('Causes:',response);
+        
         setCauses(response.data);
       } catch (error) {
         console.error('Error fetching causes:', error);

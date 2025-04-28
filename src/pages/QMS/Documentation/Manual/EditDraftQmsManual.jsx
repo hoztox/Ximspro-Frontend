@@ -397,7 +397,7 @@ const EditDraftQmsManual = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/manuals/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/manual/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }

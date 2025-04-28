@@ -446,7 +446,8 @@ const QmsAddTraining = () => {
             >
               <option value="Internal">Internal</option>
               <option value="External">External</option>
-              <option value="Client/Legal">Client/Legal</option>
+              <option value="Legal/Regulatory">Legal/Regulatory</option>
+              <option value="Client">Client</option>
               <option value="Online">Online</option>
             </select>
             <ChevronDown

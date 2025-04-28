@@ -3,6 +3,11 @@ import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import "./causesmodal.css";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from 'axios';
+import AddAgendaSuccessModal from './Modals/AddAgendaSuccessModal';
+import ErrorModal from './Modals/ErrorModal';
+import DeleteAgendaSuccessModal from './Modals/DeleteAgendaSuccessModal';
+import DeleteAgendaConfirmModal from './Modals/DeleteAgendaConfirmModal';
+
 
 const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
   const [animateClass, setAnimateClass] = useState('');
@@ -11,7 +16,12 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+
+  const [showAddAgendaSuccessModal, setShowAddAgendaSuccessModal] = useState(false);
+  const [agendaToDelete, setAgendaToDelete] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteAgendaSuccessModal, setShowDeleteAgendaSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   // Animation effect when modal opens/closes
   useEffect(() => {
@@ -23,7 +33,6 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
     }
   }, [isOpen]);
 
- 
   const fetchAgendaItems = async () => {
     setLoading(true);
     try {
@@ -32,7 +41,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
         setError('Company ID not found. Please log in again.');
         return;
       }
-      
+
       const response = await axios.get(`${BASE_URL}/qms/agenda/company/${companyId}/`);
       setAgendaItems(response.data);
     } catch (error) {
@@ -78,30 +87,56 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
     return null;
   };
 
-  // Handle delete agenda item
-  const handleDelete = async (id) => {
+  // Show delete confirmation modal
+  const confirmDelete = (agendaId) => {
+    setAgendaToDelete(agendaId);
+    setShowDeleteModal(true);
+  };
+
+  // Handle delete agenda item after confirmation
+  const handleDelete = async () => {
+    if (!agendaToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/agenda/${id}/`);
+      await axios.delete(`${BASE_URL}/qms/agenda/${agendaToDelete}/`);
       // Update local state to reflect deletion
-      setAgendaItems(agendaItems.filter(item => item.id !== id));
-      setSuccessMessage('Agenda deleted successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setAgendaItems(agendaItems.filter(item => item.id !== agendaToDelete));
+
+      // Close confirmation modal and show success modal
+      setShowDeleteModal(false);
+      setShowDeleteAgendaSuccessModal(true);
+
+      // Auto-close success modal after a delay
+      setTimeout(() => {
+        setShowDeleteAgendaSuccessModal(false);
+      }, 1500);
     } catch (error) {
       console.error('Error deleting agenda item:', error);
       setError('Failed to delete agenda item. Please try again.');
-      setTimeout(() => setError(''), 3000);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setAgendaToDelete(null);
     }
+  };
+
+  // Handle cancel delete
+  const cancelDelete = () => {
+    setAgendaToDelete(null);
+    setShowDeleteModal(false);
   };
 
   // Handle save new agenda item
   const handleSave = async () => {
     if (!newAgendaTitle.trim()) return;
-    
+
     setIsAdding(true);
     try {
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-      
+
       if (!companyId) {
         setError('Company ID not found. Please log in again.');
         setIsAdding(false);
@@ -116,19 +151,25 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
       // Add the new agenda to the list
       setAgendaItems([...agendaItems, response.data]);
-      
+
       // If callback exists, call it with the new agenda item
       if (onAddCause && typeof onAddCause === 'function') {
         onAddCause(response.data);
       }
-      
+
       setNewAgendaTitle('');
-      setSuccessMessage('Agenda added successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      setShowAddAgendaSuccessModal(true);
+      setTimeout(() => {
+        setShowAddAgendaSuccessModal(false);
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error('Error adding agenda item:', error);
       setError('Failed to add agenda item. Please try again.');
-      setTimeout(() => setError(''), 3000);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsAdding(false);
     }
@@ -148,16 +189,32 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
       <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
         {/* Success or error messages */}
-        {successMessage && (
-          <div className="bg-green-800 text-white p-2 mb-4 rounded">
-            {successMessage}
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-800 text-white p-2 mb-4 rounded">
-            {error}
-          </div>
-        )}
+        <AddAgendaSuccessModal
+          showAddAgendaSuccessModal={showAddAgendaSuccessModal}
+          onClose={() => {
+            setShowAddAgendaSuccessModal(false);
+          }}
+        />
+
+        <DeleteAgendaSuccessModal
+          showDeleteAgendaSuccessModal={showDeleteAgendaSuccessModal}
+          onClose={() => {
+            setShowDeleteAgendaSuccessModal(false);
+          }}
+        />
+
+        <DeleteAgendaConfirmModal
+          showDeleteModal={showDeleteModal}
+          onConfirm={handleDelete}
+          onCancel={cancelDelete}
+        />
+
+        <ErrorModal
+          showErrorModal={showErrorModal}
+          onClose={() => {
+            setShowErrorModal(false);
+          }}
+        />
 
         {/* Agenda List Section */}
         <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
@@ -171,7 +228,6 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
                   <tr className="rounded-[4px]">
                     <th className="px-3 w-[10%] agenda-thead">No</th>
                     <th className="px-3 w-[60%] agenda-thead">Title</th>
-        
                     <th className="px-3 text-center w-[15%] agenda-thead">Delete</th>
                   </tr>
                 </thead>
@@ -181,7 +237,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
                   <tbody>
                     {agendaItems.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="text-center py-4">No agenda items found</td>
+                        <td colSpan="4" className="text-center py-4 not-found">No agenda items found</td>
                       </tr>
                     ) : (
                       agendaItems.map((item, index) => (
@@ -189,11 +245,8 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
                           <td className="px-3 agenda-data w-[10%]">{index + 1}</td>
                           <td className="px-3 agenda-data w-[60%]">{item.title}</td>
                           <td className="px-3 agenda-data text-center w-[15%]">
-                             
-                          </td>
-                          <td className="px-3 agenda-data text-center w-[15%]">
                             <div className="flex items-center justify-center h-[42px]">
-                              <button onClick={() => handleDelete(item.id)}>
+                              <button onClick={() => confirmDelete(item.id)}>
                                 <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
                               </button>
                             </div>

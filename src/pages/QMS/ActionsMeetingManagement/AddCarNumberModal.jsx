@@ -61,7 +61,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
             // Filter only active suppliers with Approved status
             const activeSuppliers = response.data.filter(supplier =>
-                supplier.active === 'active' && supplier.status === 'Approved'
+                supplier.active === 'active'
             );
             setSuppliers(activeSuppliers);
         } catch (err) {
@@ -86,7 +86,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        action_no: '1', // Initialize with "1" as default
+        next_action_no: '', // Initialize with "1" as default
         root_cause: '',
         executor: '',
         description: '',
@@ -114,32 +114,34 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
         try {
             const companyId = getUserCompanyId();
             if (!companyId) {
-                // If no company ID, default to "1"
+                // If no company ID, default to empty string
                 setNextActionNo("1");
                 setFormData(prevData => ({
                     ...prevData,
-                    action_no: "1"
+                    next_action_no: "1"
                 }));
                 return;
             }
 
             const response = await axios.get(`${BASE_URL}/qms/car-number/next-action/${companyId}/`);
-            if (response.data && response.data.next_action_number) {
+            if (response.data && response.data.next_action_no) {  // Changed from next_action_number to next_action_no
                 // Convert to string to ensure consistent display
-                const actionNumber = String(response.data.next_action_number);
+                const actionNumber = String(response.data.next_action_no);
                 setNextActionNo(actionNumber);
+
+                console.log('Action Number:', actionNumber);
 
                 // Update the form data with the new action number
                 setFormData(prevData => ({
                     ...prevData,
-                    action_no: actionNumber
+                    next_action_no: actionNumber
                 }));
             } else {
                 // If response doesn't contain a valid number, default to "1"
                 setNextActionNo("1");
                 setFormData(prevData => ({
                     ...prevData,
-                    action_no: "1"
+                    next_action_no: "1"
                 }));
             }
         } catch (error) {
@@ -148,7 +150,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             setNextActionNo("1");
             setFormData(prevData => ({
                 ...prevData,
-                action_no: "1"
+                next_action_no: "1"
             }));
         }
     };
@@ -189,8 +191,8 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Skip changes to action_no field since it's auto-generated
-        if (name === 'action_no') return;
+        // Skip changes to next_action_no field since it's auto-generated
+        if (name === 'next_action_no') return;
 
         // Handle nested objects (dates)
         if (name.includes('.')) {
@@ -244,7 +246,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                 date_completed: dateCompleted,
                 status: formData.status,
                 executor: formData.executor,
-                action_no: formData.action_no, // Use the action number from form data
+                next_action_no: formData.next_action_no, // Use the action number from form data
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
                 is_draft: asDraft
@@ -258,6 +260,9 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             // Submit to API
             const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
 
+            console.log('Added CAR:', submissionData);
+
+
             setIsLoading(false);
             onClose();
             if (onSuccess) onSuccess(response.data);
@@ -266,7 +271,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             setFormData({
                 source: '',
                 title: '',
-                action_no: '1', // Reset to default
+                next_action_no: '1', // Reset to default
                 root_cause: '',
                 executor: '',
                 description: '',
@@ -374,8 +379,8 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         </label>
                         <input
                             type="text"
-                            name="action_no"
-                            value={formData.action_no} // Use formData.action_no directly
+                            name="next_action_no"
+                            value={formData.next_action_no} // Use formData.next_action_no directly
                             className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                             readOnly
                             title="Auto-generated action number"

@@ -222,7 +222,7 @@ const QmsAddCustomer = () => {
                 },
             });
 
-            console.log('Added Customer--', submissionData);
+            console.log('Added Customer:', submissionData);
 
             setShowSuccessModal(true);
             setTimeout(() => {

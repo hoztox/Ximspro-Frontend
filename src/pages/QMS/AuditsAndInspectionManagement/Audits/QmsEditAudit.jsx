@@ -13,7 +13,7 @@ const QmsEditAudit = () => {
 
     const [procedureOptions, setProcedureOptions] = useState([]);
     const [userOptions, setUserOptions] = useState([]);
-    
+
     // Search states
     const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
     const [userSearchTerm, setUserSearchTerm] = useState("");
@@ -21,7 +21,7 @@ const QmsEditAudit = () => {
     // Custom field states
     const [showCustomProcedureField, setShowCustomProcedureField] = useState(false);
     const [showCustomUserField, setShowCustomUserField] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         title: '',
         certification_body: '',
@@ -62,14 +62,14 @@ const QmsEditAudit = () => {
             setFetchLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/audit-get/${id}/`);
             const auditData = response.data;
-            
+
             // Format dates for form data
             const proposedDate = auditData.proposed_date ? new Date(auditData.proposed_date) : null;
             const dateConducted = auditData.date_conducted ? new Date(auditData.date_conducted) : null;
-            
+
             // Check if this is an internal or external audit
             const hasInternalAuditors = auditData.audit_from_internal && auditData.audit_from_internal.length > 0;
-            
+
             setFormData({
                 title: auditData.title || '',
                 certification_body: auditData.certification_body || '',
@@ -93,11 +93,11 @@ const QmsEditAudit = () => {
                 custom_procedures: auditData.custom_procedures || '',
                 custom_internal_auditors: auditData.custom_internal_auditors || ''
             });
-            
+
             // Set custom field flags if they exist
             setShowCustomProcedureField(!!auditData.custom_procedures);
             setShowCustomUserField(!!auditData.custom_internal_auditors);
-            
+
             setError(null);
         } catch (error) {
             console.error("Failed to fetch audit data", error);
@@ -259,7 +259,7 @@ const QmsEditAudit = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-    
+
         // Handle checkbox specifically - especially for the auditor toggle
         if (type === 'checkbox') {
             if (name === 'check_auditor') {
@@ -270,12 +270,12 @@ const QmsEditAudit = () => {
                     [name]: checked,
                     ...(checked ? { audit_from: '' } : { audit_from_internal: [], custom_internal_auditors: '' })
                 }));
-                
+
                 // Also reset the custom field display when switching
                 if (!checked) {
                     setShowCustomUserField(false);
                 }
-                
+
                 return;
             } else {
                 setFormData({
@@ -285,7 +285,7 @@ const QmsEditAudit = () => {
                 return;
             }
         }
-    
+
         // Handle nested objects
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
@@ -306,26 +306,26 @@ const QmsEditAudit = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-    
+
         try {
             const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
-            
+
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
                 setLoading(false);
                 return;
             }
-    
+
             // Format dates properly
             const proposedDate = formData.proposedDate.year && formData.proposedDate.month && formData.proposedDate.day
                 ? `${formData.proposedDate.year}-${formData.proposedDate.month}-${formData.proposedDate.day}`
                 : null;
-    
+
             const dateConducted = formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day
                 ? `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`
                 : null;
-    
+
             const submissionData = new FormData();
             submissionData.append('company', companyId);
             submissionData.append('user', userId);
@@ -334,12 +334,12 @@ const QmsEditAudit = () => {
             submissionData.append('audit_type', formData.audit_type);
             submissionData.append('area', formData.area);
             submissionData.append('notes', formData.notes);
-    
+
             // Exclusive handling of audit_from vs audit_from_internal
             if (formData.check_auditor) {
                 // Using internal auditors
                 submissionData.append('audit_from', ''); // Clear external auditor
-                
+
                 // Handle internal auditors
                 if (showCustomUserField && formData.custom_internal_auditors) {
                     submissionData.append('custom_internal_auditors', formData.custom_internal_auditors);
@@ -353,15 +353,15 @@ const QmsEditAudit = () => {
                 submissionData.append('audit_from', formData.audit_from);
                 // Don't include audit_from_internal at all to ensure it's cleared
             }
-    
+
             if (proposedDate) {
                 submissionData.append('proposed_date', proposedDate);
             }
-    
+
             if (dateConducted) {
                 submissionData.append('date_conducted', dateConducted);
             }
-    
+
             // Handle multi-select procedures
             if (showCustomProcedureField && formData.custom_procedures) {
                 submissionData.append('custom_procedures', formData.custom_procedures);
@@ -370,22 +370,22 @@ const QmsEditAudit = () => {
                     submissionData.append('procedures', procedureId);
                 });
             }
-    
+
             // If there are files, add them to the form data
             if (formData.upload_audit_report instanceof File) {
                 submissionData.append('upload_audit_report', formData.upload_audit_report);
             }
-            
+
             if (formData.upload_non_coformities_report instanceof File) {
                 submissionData.append('upload_non_coformities_report', formData.upload_non_coformities_report);
             }
-    
+
             const response = await axios.put(`${BASE_URL}/qms/audit-get/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-    
+
             console.log('Audit updated successfully:', response.data);
             setTimeout(() => {
                 navigate('/company/qms/list-audit');
@@ -526,10 +526,10 @@ const QmsEditAudit = () => {
                                     placeholder="Search auditors..."
                                     className="w-full add-training-inputs pl-8 focus:outline-none"
                                 />
-                               
+
                             </div>
 
-                            
+
 
                             {showCustomUserField ? (
                                 <input
@@ -585,7 +585,7 @@ const QmsEditAudit = () => {
                         <option value="External">External</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[50px] transform transition-transform duration-300 
                         ${focusedDropdown === "audit_type" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
@@ -610,7 +610,7 @@ const QmsEditAudit = () => {
                         Procedure
                     </label>
 
-                    
+
                     {showCustomProcedureField ? (
                         <input
                             type="text"
@@ -630,7 +630,7 @@ const QmsEditAudit = () => {
                                     placeholder="Search procedures..."
                                     className="w-full add-training-inputs pl-8 focus:outline-none"
                                 />
-                              
+
                             </div>
 
                             <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
@@ -813,22 +813,22 @@ const QmsEditAudit = () => {
                     </div>
                 </div>
 
-               
-                    <div className='flex items-end gap-5 w-full'>
-                        <button
-                            type="button"
-                            onClick={handleCancel}
-                            className="cancel-btn duration-200 !w-full"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="save-btn duration-200 !w-full"
-                        >
-                            Save
-                        </button>
-                    </div>
+
+                <div className='flex items-end gap-5 w-full'>
+                    <button
+                        type="button"
+                        onClick={handleCancel}
+                        className="cancel-btn duration-200 !w-full"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        className="save-btn duration-200 !w-full"
+                    >
+                        Save
+                    </button>
+                </div>
             </form>
         </div>
     );

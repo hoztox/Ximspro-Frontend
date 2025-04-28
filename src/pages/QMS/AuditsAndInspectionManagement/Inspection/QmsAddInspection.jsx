@@ -569,7 +569,7 @@ const QmsAddInspection = () => {
                         <option value="External">External</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[50px] transform transition-transform duration-300 
                         ${focusedDropdown === "inspection_type" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"

@@ -5,10 +5,14 @@ import "./qmsaddmeeting.css";
 import CausesModal from '../CausesModal';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import AddMeetingSuccessModal from '../Modals/AddMeetingSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import AddMeetingDraftSuccessModal from '../Modals/AddMeetingDraftSuccessModal';
 
 
 const QmsAddMeeting = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [agendaItems, setAgendaItems] = useState([]);
@@ -18,7 +22,14 @@ const QmsAddMeeting = () => {
     const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
     const [filteredAttendees, setFilteredAttendees] = useState([]);
     const [draftLoading, setDraftLoading] = useState(false);
-const [error, setError] = useState('');
+    const [error, setError] = useState('');
+
+    const [showAddMeetingSuccessModal, setShowAddMeetingSuccessModal] = useState(false);
+    const [showDraftMeetingSuccessModal, setShowDraftMeetingSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
+
+
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -222,6 +233,7 @@ const [error, setError] = useState('');
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        setLoading(true);
 
         // Format the data for API submission
         const formattedData = {
@@ -247,9 +259,21 @@ const [error, setError] = useState('');
     const submitMeeting = async (data) => {
         try {
             await axios.post(`${BASE_URL}/qms/meeting/create/`, data);
-            navigate('/company/qms/list-meeting');
+
+            setShowAddMeetingSuccessModal(true);
+            setTimeout(() => {
+                setShowAddMeetingSuccessModal(false);
+                navigate('/company/qms/list-meeting');
+            }, 1500);
+
         } catch (error) {
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Error submitting meeting:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -274,26 +298,26 @@ const [error, setError] = useState('');
         try {
             setDraftLoading(true);
             setError('');
-    
+
             const companyId = getUserCompanyId();
             const userId = getRelevantUserId();
-    
+
             if (!companyId || !userId) {
                 setError('Company ID or User ID not found. Please log in again.');
                 setDraftLoading(false);
                 return;
             }
-    
+
             // Format dates and times properly
             const date = formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day ?
                 `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}` : null;
-    
+
             const startTime = formData.startTime.hour && formData.startTime.min ?
                 `${formData.startTime.hour}:${formData.startTime.min}:00` : null;
-    
+
             const endTime = formData.endTime.hour && formData.endTime.min ?
                 `${formData.endTime.hour}:${formData.endTime.min}:00` : null;
-    
+
             const draftData = {
                 company: companyId,
                 user: userId,
@@ -309,22 +333,31 @@ const [error, setError] = useState('');
                 agenda: formData.agendas || [],
                 attendees: formData.attendees || []
             };
-    
+
             // Remove null values from the data
             const payload = Object.fromEntries(
                 Object.entries(draftData).filter(([_, v]) => v !== null)
             );
-    
+
             console.log('Saving draft meeting:', payload);
-    
+
             const response = await axios.post(
                 `${BASE_URL}/qms/meeting/draft-create/`,
                 payload
             );
-    
+
             setDraftLoading(false);
-            navigate('/company/qms/draft-meeting'); 
+
+            setShowDraftMeetingSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftMeetingSuccessModal(false);
+                navigate('/company/qms/draft-meeting');
+            }, 1500);
         } catch (err) {
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setDraftLoading(false);
             const errorMessage = err.response?.data?.detail || 'Failed to save draft meeting';
             setError(errorMessage);
@@ -340,6 +373,27 @@ const [error, setError] = useState('');
                 onAddCause={handleAddAgenda}
                 agendaItems={agendaItems}
                 selectedAgendas={selectedAgendas}
+            />
+
+            <AddMeetingSuccessModal
+                showAddMeetingSuccessModal={showAddMeetingSuccessModal}
+                onClose={() => {
+                    setShowAddMeetingSuccessModal(false);
+                }}
+            />
+
+            <AddMeetingDraftSuccessModal
+                showDraftMeetingSuccessModal={showDraftMeetingSuccessModal}
+                onClose={() => {
+                    setShowDraftMeetingSuccessModal(false);
+                }}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => {
+                    setShowErrorModal(false);
+                }}
             />
 
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
@@ -479,7 +533,7 @@ const [error, setError] = useState('');
                                 </div>
                             ))
                         ) : (
-                            <div className="text-sm text-[#AAAAAA] p-2">No agendas found</div>
+                            <div className="not-found p-2">No agendas found</div>
                         )}
                     </div>
                     <button
@@ -725,9 +779,10 @@ const [error, setError] = useState('');
                         <button
                             type="button"
                             onClick={handleSaveAsDraft}
+                            disabled={draftLoading}
                             className='request-correction-btn duration-200'
                         >
-                            Save as Draft
+                           {draftLoading ? "Saving..." : "Save as Draft"}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -740,9 +795,10 @@ const [error, setError] = useState('');
                         </button>
                         <button
                             type="submit"
+                            disabled={loading}
                             className="save-btn duration-200"
                         >
-                            Save
+                            {loading ? "Saving..." : "Save"}
                         </button>
                     </div>
                 </div>

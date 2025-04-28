@@ -122,15 +122,22 @@ const QmsViewInspection = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Inspector From
+                        Inspector(s) Name
                         </label>
                         <div className="view-employee-data">
-                            {formData.inspector_from
-                                ? formData.inspector_from
-                                : (formData.inspector_from_internal && formData.inspector_from_internal.length > 0
-                                    ? formData.inspector_from_internal.map(user => `${user.first_name} ${user.last_name}`).join(", ")
-                                    : "Not specified")}
+                            {formData.inspector_from ? (
+                                <div>{formData.inspector_from}</div>
+                            ) : formData.inspector_from_internal && formData.inspector_from_internal.length > 0 ? (
+                                <ul className="list-disc pl-5">
+                                    {formData.inspector_from_internal.map((user, index) => (
+                                        <li key={index}>{`${user.first_name} ${user.last_name}`}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div>Not specified</div>
+                            )}
                         </div>
+
                     </div>
 
                     <div>

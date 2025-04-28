@@ -23,7 +23,7 @@ const QmsViewDraftAudit = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -65,7 +65,7 @@ const QmsViewDraftAudit = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return "Not specified";
-        
+
         try {
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', {
@@ -81,33 +81,32 @@ const QmsViewDraftAudit = () => {
     // Format procedures list for display
     const formatProcedures = () => {
         if (formData.custom_procedures) {
-            return formData.custom_procedures;
+            return [formData.custom_procedures]; // Wrap it as an array
         }
-        
+    
         if (formData.procedures && formData.procedures.length > 0) {
-            return formData.procedures.map(proc => proc.title).join(", ");
+            return formData.procedures.map(proc => proc.title); // Return array directly
         }
-        
-        return "None specified";
+    
+        return ["None specified"]; // Return "None specified" also as an array
     };
+    
 
     // Format auditors for display
     const formatAuditors = () => {
-        // If using internal auditors
         if (formData.audit_from_internal && formData.audit_from_internal.length > 0) {
-            return formData.audit_from_internal.map(user => 
+            return formData.audit_from_internal.map(user =>
                 `${user.first_name} ${user.last_name}`
-            ).join(", ");
-        } 
-        
-        // If custom internal auditors are specified
-        if (formData.custom_internal_auditors) {
-            return formData.custom_internal_auditors;
+            ); // <<< return array, not join
         }
-        
-        // Otherwise show external auditor
-        return formData.audit_from || "None specified";
+
+        if (formData.custom_internal_auditors) {
+            return formData.custom_internal_auditors.split(",").map(auditor => auditor.trim());
+        }
+
+        return [formData.audit_from || "None specified"];
     };
+
 
     if (loading) {
         return (
@@ -169,46 +168,60 @@ const QmsViewDraftAudit = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Auditor(s)
+                            Audit From
                         </label>
-                        <div className="view-employee-data">{formatAuditors()}</div>
+                        <div className="view-employee-data">
+                            <ul className="list-disc pl-5">
+                                {formatAuditors().map((auditor, index) => (
+                                    <li key={index}>{auditor}</li>
+                                ))}
+                            </ul>
+                        </div>
+
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Audit Type
                         </label>
                         <div className="view-employee-data">{formData.audit_type || "Not specified"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Area / Function
                         </label>
                         <div className="view-employee-data">{formData.area || "Not specified"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Procedures
                         </label>
-                        <div className="view-employee-data">{formatProcedures()}</div>
+                        <div className="view-employee-data">
+                            <ul className="list-disc list-inside">
+                                {formatProcedures().map((procedure, index) => (
+                                    <li key={index}>{procedure}</li>
+                                ))}
+                            </ul>
+                        </div>
+
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Proposed Date for Audit
                         </label>
                         <div className="view-employee-data">{formatDate(formData.proposed_date)}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Date Conducted
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_conducted)}</div>
                     </div>
-                    
+
                     <div className="md:col-span-2">
                         <label className="block view-employee-label mb-[6px]">
                             Notes
@@ -223,9 +236,9 @@ const QmsViewDraftAudit = () => {
                                 Audit Report
                             </label>
                             <div className="view-employee-data">
-                                <a 
-                                    href={formData.upload_audit_report} 
-                                    target="_blank" 
+                                <a
+                                    href={formData.upload_audit_report}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
@@ -241,9 +254,9 @@ const QmsViewDraftAudit = () => {
                                 Non-Conformities Report
                             </label>
                             <div className="view-employee-data">
-                                <a 
-                                    href={formData.upload_non_coformities_report} 
-                                    target="_blank" 
+                                <a
+                                    href={formData.upload_non_coformities_report}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >

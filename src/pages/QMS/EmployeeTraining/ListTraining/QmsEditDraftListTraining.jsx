@@ -241,22 +241,22 @@ const QmsEditDraftListTraining = () => {
     // Format dates correctly (YYYY-MM-DD)
     const formattedDatePlanned =
       formData.date_planned.year &&
-      formData.date_planned.month &&
-      formData.date_planned.day
+        formData.date_planned.month &&
+        formData.date_planned.day
         ? `${formData.date_planned.year}-${formData.date_planned.month}-${formData.date_planned.day}`
         : "";
 
     const formattedDateConducted =
       formData.date_conducted.year &&
-      formData.date_conducted.month &&
-      formData.date_conducted.day
+        formData.date_conducted.month &&
+        formData.date_conducted.day
         ? `${formData.date_conducted.year}-${formData.date_conducted.month}-${formData.date_conducted.day}`
         : "";
 
     const formattedEvaluationDate =
       formData.evaluation_date.year &&
-      formData.evaluation_date.month &&
-      formData.evaluation_date.day
+        formData.evaluation_date.month &&
+        formData.evaluation_date.day
         ? `${formData.evaluation_date.year}-${formData.evaluation_date.month}-${formData.evaluation_date.day}`
         : "";
 
@@ -451,16 +451,16 @@ const QmsEditDraftListTraining = () => {
             >
               <option value="Internal">Internal</option>
               <option value="External">External</option>
-              <option value="Client/Legal">Client/Legal</option>
+              <option value="Legal/Regulatory">Legal/Regulatory</option>
+              <option value="Client">Client</option>
               <option value="Online">Online</option>
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "type_of_training"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "type_of_training"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -558,11 +558,10 @@ const QmsEditDraftListTraining = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "requested_by"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "requested_by"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -593,12 +592,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_planned.day"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_planned.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -622,12 +620,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_planned.month"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_planned.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -651,12 +648,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_planned.year"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_planned.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -688,12 +684,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_conducted.day"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_conducted.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -717,12 +712,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_conducted.month"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_conducted.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -746,12 +740,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${
-                                            focusedDropdown ===
-                                            "date_conducted.year"
-                                              ? "rotate-180"
-                                              : ""
-                                          }`}
+                                          ${focusedDropdown ===
+                    "date_conducted.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -787,11 +780,10 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "start_time.hour"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "start_time.hour"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -821,11 +813,10 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "start_time.min"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "start_time.min"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -861,11 +852,10 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "end_time.hour"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "end_time.hour"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -895,11 +885,10 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "end_time.min"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "end_time.min"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -989,12 +978,11 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${
-                                                    focusedDropdown ===
-                                                    "evaluation_date.day"
-                                                      ? "rotate-180"
-                                                      : ""
-                                                  }`}
+                                                  ${focusedDropdown ===
+                        "evaluation_date.day"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1018,12 +1006,11 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${
-                                                    focusedDropdown ===
-                                                    "evaluation_date.month"
-                                                      ? "rotate-180"
-                                                      : ""
-                                                  }`}
+                                                  ${focusedDropdown ===
+                        "evaluation_date.month"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1047,12 +1034,11 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${
-                                                    focusedDropdown ===
-                                                    "evaluation_date.year"
-                                                      ? "rotate-180"
-                                                      : ""
-                                                  }`}
+                                                  ${focusedDropdown ===
+                        "evaluation_date.year"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1083,11 +1069,10 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "evaluation_by"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "evaluation_by"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

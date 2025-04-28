@@ -9,6 +9,8 @@ const QmsAddSupplierProblem = () => {
     const navigate = useNavigate();
     const [isCarModalOpen, setIsCarModalOpen] = useState(false);
     const [suppliers, setSuppliers] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [carNumbers, setCarNumbers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
@@ -33,19 +35,21 @@ const QmsAddSupplierProblem = () => {
     const [submitting, setSubmitting] = useState(false);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
-    // Get company ID from local storage (same as in list component)
+    // Get company ID from local storage
     const getUserCompanyId = () => {
-        const role = localStorage.getItem("role");
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
 
-        if (role === "company") {
-            return localStorage.getItem("company_id");
-        } else if (role === "user") {
-            try {
-                const userCompanyId = localStorage.getItem("user_company_id");
-                return userCompanyId ? JSON.parse(userCompanyId) : null;
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
             }
         }
         return null;
@@ -60,8 +64,8 @@ const QmsAddSupplierProblem = () => {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
                 // Filter only active suppliers with Approved status
-                const activeSuppliers = response.data.filter(supplier => 
-                    supplier.active === 'active' && supplier.status === 'Approved'
+                const activeSuppliers = response.data.filter(supplier =>
+                    supplier.active === 'active'
                 );
                 setSuppliers(activeSuppliers);
                 setError(null);
@@ -75,6 +79,68 @@ const QmsAddSupplierProblem = () => {
 
         if (companyId) {
             fetchSuppliers();
+        }
+    }, [companyId]);
+
+    // Fetch users for executor dropdown
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                if (!companyId) {
+                    setError('Company ID not found. Please log in again.');
+                    return;
+                }
+
+                const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+
+                console.log("API Response (Users):", response.data);
+
+                if (Array.isArray(response.data)) {
+                    setUsers(response.data);
+                    console.log("Users loaded:", response.data);
+                } else {
+                    setUsers([]);
+                    console.error("Unexpected response format:", response.data);
+                }
+            } catch (err) {
+                console.error("Error fetching users:", err);
+                setError("Failed to load users. Please check your connection and try again.");
+            }
+        };
+
+        if (companyId) {
+            fetchUsers();
+        }
+    }, [companyId]);
+
+    // Fetch CAR numbers
+    useEffect(() => {
+        const fetchCarNumbers = async () => {
+            try {
+                if (!companyId) {
+                    setError('Company ID not found. Please log in again.');
+                    return;
+                }
+
+                const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
+                console.log("API Response (CAR Numbers):", response.data);
+
+                setCarNumbers(response.data);
+                // Update formData.cars with the fetched CAR numbers
+                if (Array.isArray(response.data)) {
+                    setFormData(prev => ({
+                        ...prev,
+                        cars: response.data.map(item => item.car_no)
+                    }));
+                }
+            } catch (err) {
+                console.error("Error fetching CAR numbers:", err);
+                setError("Failed to load CAR numbers. Please check your connection and try again.");
+            }
+        };
+
+        if (companyId) {
+            fetchCarNumbers();
         }
     }, [companyId]);
 
@@ -144,7 +210,7 @@ const QmsAddSupplierProblem = () => {
 
     const formatFormDataForSubmission = () => {
         const formattedDate = `${formData.date.year}-${formData.date.month}-${formData.date.day}`;
-        
+
         return {
             company_id: companyId,
             supplier_id: formData.supplier_id,
@@ -155,7 +221,7 @@ const QmsAddSupplierProblem = () => {
             is_solved: formData.solved === 'yes',
             corrective_action_needed: formData.corrective_action === 'yes',
             corrections: formData.corrections || '',
-            car_numbers: formData.cars,
+            car_numbers: formData.car ? [formData.car] : [], // Using selected CAR number
             is_draft: isDraft,
         };
     };
@@ -163,16 +229,15 @@ const QmsAddSupplierProblem = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        
+
         try {
             const submissionData = formatFormDataForSubmission();
-            
+
             // Submit to the API
             await axios.post(`${BASE_URL}/qms/supplier-problems/`, submissionData);
 
-          console.log('Supplier Problems:', submissionData);
-          
-            
+            console.log('Supplier Problems:', submissionData);
+
             // Navigate back to list on success
             navigate('/company/qms/supplier-problem-log');
         } catch (err) {
@@ -185,14 +250,14 @@ const QmsAddSupplierProblem = () => {
 
     const handleSaveDraft = async () => {
         setIsDraft(true);
-        
+
         try {
             const submissionData = formatFormDataForSubmission();
             submissionData.is_draft = true;
-            
+
             // Submit as draft to the API
             await axios.post(`${BASE_URL}/qms/supplier-problems/`, submissionData);
-            
+
             // Navigate back to list on success
             navigate('/company/qms/supplier-problem-log');
         } catch (err) {
@@ -258,12 +323,12 @@ const QmsAddSupplierProblem = () => {
                         required
                     >
                         <option value="" disabled>Select</option>
-                        {suppliers.length > 0 ? 
+                        {suppliers.length > 0 ?
                             suppliers.map(supplier => (
                                 <option key={supplier.id} value={supplier.id}>
                                     {supplier.company_name}
                                 </option>
-                            )) : 
+                            )) :
                             <option value="" disabled>No suppliers available</option>
                         }
                     </select>
@@ -385,11 +450,17 @@ const QmsAddSupplierProblem = () => {
                         required
                     >
                         <option value="" disabled>Select</option>
-                        <option value="Manager">Manager</option>
-                        <option value="Employee">Employee</option>
-                        <option value="HR">HR</option>
-                        <option value="QA">QA</option>
-                        <option value="Supplier">Supplier</option>
+                        {users.length > 0 ? (
+                            users.map(user => (
+                                <option key={user.id} value={user.id}>
+                                    {user.first_name} {user.last_name}
+                                </option>
+                            ))
+                        ) : (
+                            <>
+                                <option value=""> </option>
+                            </>
+                        )}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
@@ -459,9 +530,9 @@ const QmsAddSupplierProblem = () => {
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
                                 <option value="" disabled>Select</option>
-                                {formData.cars.map((car, index) => (
-                                    <option key={index} value={car}>
-                                        {car}
+                                {carNumbers.map(car => (
+                                    <option key={car.id} value={car.id}>
+                                        {car.action_no}
                                     </option>
                                 ))}
                             </select>

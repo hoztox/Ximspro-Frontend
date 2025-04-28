@@ -138,6 +138,8 @@ const QmsAddAudit = () => {
         setLoading(true);
 
         try {
+            console.log('audit',formData);
+            
             const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
             console.log('Form Data State:', formData);
@@ -582,7 +584,7 @@ const QmsAddAudit = () => {
                         <option value="External">External</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[45%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[50px] transform transition-transform duration-300 
                         ${focusedDropdown === "audit_type" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"

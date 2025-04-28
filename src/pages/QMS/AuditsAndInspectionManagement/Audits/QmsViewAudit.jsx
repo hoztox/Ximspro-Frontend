@@ -123,12 +123,21 @@ const QmsViewAudit = () => {
                             Audit From
                         </label>
                         <div className="view-employee-data">
-                            {formData.audit_from
-                                ? formData.audit_from
-                                : (formData.audit_from_internal && formData.audit_from_internal.length > 0
-                                    ? formData.audit_from_internal.map(user => `${user.first_name} ${user.last_name}`).join(", ")
-                                    : "Not specified")}
+                            {formData.audit_from ? (
+                                formData.audit_from
+                            ) : formData.audit_from_internal && formData.audit_from_internal.length > 0 ? (
+                                <ul className="list-disc list-inside">
+                                    {formData.audit_from_internal.map((user, index) => (
+                                        <li key={index}>
+                                            {user.first_name} {user.last_name}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                "Not specified"
+                            )}
                         </div>
+
                     </div>
 
 

@@ -23,7 +23,7 @@ const QmsViewDraftInspection = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -65,7 +65,7 @@ const QmsViewDraftInspection = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return "Not specified";
-        
+
         try {
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', {
@@ -81,32 +81,29 @@ const QmsViewDraftInspection = () => {
     // Format procedures list for display
     const formatProcedures = () => {
         if (formData.custom_procedures) {
-            return formData.custom_procedures;
+            return [formData.custom_procedures]; // return as array
         }
-        
+    
         if (formData.procedures && formData.procedures.length > 0) {
-            return formData.procedures.map(proc => proc.title).join(", ");
+            return formData.procedures.map(proc => proc.title); // already an array
         }
-        
-        return "None specified";
+    
+        return ["None specified"]; // also as array
     };
-
+    
     // Format inspectors for display
     const formatInspectors = () => {
-        // If using internal inspectors
         if (formData.inspector_from_internal && formData.inspector_from_internal.length > 0) {
-            return formData.inspector_from_internal.map(user => 
+            return formData.inspector_from_internal.map(user =>
                 `${user.first_name} ${user.last_name}`
-            ).join(", ");
-        } 
-        
-        // If custom internal inspectors are specified
-        if (formData.custom_internal_inspectors) {
-            return formData.custom_internal_inspectors;
+            );
         }
-        
-        // Otherwise show external inspector
-        return formData.inspector_from || "None specified";
+
+        if (formData.custom_internal_inspectors) {
+            return [formData.custom_internal_inspectors];
+        }
+
+        return [formData.inspector_from || "None specified"];
     };
 
     if (loading) {
@@ -169,46 +166,56 @@ const QmsViewDraftInspection = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Inspector(s)
+                            Inspector(s) Name
                         </label>
-                        <div className="view-employee-data">{formatInspectors()}</div>
+                        <ul className="view-employee-data list-disc pl-5">
+                            {formatInspectors().map((inspector, index) => (
+                                <li key={index}>{inspector}</li>
+                            ))}
+                        </ul>
+
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Inspection Type
                         </label>
                         <div className="view-employee-data">{formData.inspection_type || "Not specified"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Area / Function
                         </label>
                         <div className="view-employee-data">{formData.area || "Not specified"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Procedures
                         </label>
-                        <div className="view-employee-data">{formatProcedures()}</div>
+                        <ul className="view-employee-data list-disc list-inside">
+                            {formatProcedures().map((procedure, index) => (
+                                <li key={index}>{procedure}</li>
+                            ))}
+                        </ul>
+
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Proposed Date for Inspection
                         </label>
                         <div className="view-employee-data">{formatDate(formData.proposed_date)}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Date Conducted
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_conducted)}</div>
                     </div>
-                    
+
                     <div className="md:col-span-2">
                         <label className="block view-employee-label mb-[6px]">
                             Notes
@@ -223,9 +230,9 @@ const QmsViewDraftInspection = () => {
                                 Inspection Report
                             </label>
                             <div className="view-employee-data">
-                                <a 
-                                    href={formData.upload_inspection_report} 
-                                    target="_blank" 
+                                <a
+                                    href={formData.upload_inspection_report}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >
@@ -241,9 +248,9 @@ const QmsViewDraftInspection = () => {
                                 Non-Conformities Report
                             </label>
                             <div className="view-employee-data">
-                                <a 
-                                    href={formData.upload_non_coformities_report} 
-                                    target="_blank" 
+                                <a
+                                    href={formData.upload_non_coformities_report}
+                                    target="_blank"
                                     rel="noopener noreferrer"
                                     className="text-blue-400 hover:underline"
                                 >

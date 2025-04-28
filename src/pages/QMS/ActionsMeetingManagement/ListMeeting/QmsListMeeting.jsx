@@ -140,22 +140,23 @@ const QmsListMeeting = () => {
         setSelectedMeeting(meeting);
         setAddMinutesVisible(true);
         setAddMinutesAnimating(true);
-        setTimeout(() => setAddMinutesAnimating(false), 300);
+        // Remove animation class after animation completes
+        setTimeout(() => setAddMinutesAnimating(false));
     };
-
     const openViewMinutesModal = (meeting) => {
         setSelectedMeeting(meeting);
         setViewMinutesVisible(true);
         setViewMinutesAnimating(true);
-        setTimeout(() => setViewMinutesAnimating(false), 300);
+        setTimeout(() => setViewMinutesAnimating(false));
     };
 
     const closeAddMinutesModal = () => {
         setAddMinutesExiting(true);
+        // Wait for animation to complete before hiding the modal
         setTimeout(() => {
             setAddMinutesVisible(false);
             setAddMinutesExiting(false);
-        }, 200);
+        }, 300); // Match this to your CSS transition duration
     };
 
     const closeViewMinutesModal = () => {
@@ -163,7 +164,7 @@ const QmsListMeeting = () => {
         setTimeout(() => {
             setViewMinutesVisible(false);
             setViewMinutesExiting(false);
-        }, 200);
+        }, 300);
     };
     const handleSaveMinutes = async (formData) => {
         if (selectedMeeting) {

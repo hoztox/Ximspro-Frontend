@@ -257,7 +257,7 @@ const QmsListSupplier = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="9" className="text-center py-4">No suppliers found</td>
+                                <td colSpan="9" className="text-center py-4 not-found">No suppliers found</td>
                             </tr>
                         )}
                     </tbody>

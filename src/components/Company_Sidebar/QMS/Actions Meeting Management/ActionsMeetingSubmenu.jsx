@@ -21,7 +21,7 @@ const ActionsMeetingSubmenu = (props) => {
                 "/company/qms/draft-meeting",
                 "/company/qms/edit-draft-meeting",
                 "/company/qms/view-draft-meeting",
-              ]
+            ]
         },
         {
             id: "add-meeting",
@@ -40,7 +40,7 @@ const ActionsMeetingSubmenu = (props) => {
                 "/company/qms/list-outbox",
                 "/company/qms/list-draft",
                 "/company/qms/compose",
-              ]
+            ]
         },
         {
             id: "Internal-problems-observations",
@@ -48,14 +48,14 @@ const ActionsMeetingSubmenu = (props) => {
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            path: "/company/qms/list-internal-problems-observations",
-            relatedPaths: ["/company/qms/add-internal-problems-observations",
-                "/company/qms/edit-internal-problems-observations",
-                "/company/qms/view-internal-problems-observations",
-                "/company/qms/draft-internal-problems-observations",
-                "/company/qms/edit-draft-internal-problems-observations",
-                "/company/qms/view-draft-internal-problems-observations",
-              ]
+            path: "/company/qms/list-internal-problem",
+            relatedPaths: ["/company/qms/add-internal-problem",
+                "/company/qms/edit-internal-problem",
+                "/company/qms/view-internal-problem",
+                "/company/qms/draft-internal-problem",
+                "/company/qms/edit-draft-internal-problem",
+                "/company/qqms/view-draft-internal-problem",
+            ]
         },
         {
             id: "actions",

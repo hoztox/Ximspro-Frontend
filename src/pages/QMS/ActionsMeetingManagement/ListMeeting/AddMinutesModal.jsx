@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import "./addminutesmodal.css"
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 
-const AddMinutesModal = ({ 
-  isVisible, 
-  selectedMeeting, 
-  onClose, 
+const AddMinutesModal = ({
+  isVisible,
+  selectedMeeting,
+  onClose,
   onSave,
   isExiting,
   isAnimating
@@ -39,13 +40,13 @@ const AddMinutesModal = ({
         },
         meetingType: selectedMeeting.meeting_type || '',
         venue: selectedMeeting.venue || '',
-        startTime: { 
-          hour: startTimeParts[0] || '', 
-          min: startTimeParts[1] || '' 
+        startTime: {
+          hour: startTimeParts[0] || '',
+          min: startTimeParts[1] || ''
         },
-        endTime: { 
-          hour: endTimeParts[0] || '', 
-          min: endTimeParts[1] || '' 
+        endTime: {
+          hour: endTimeParts[0] || '',
+          min: endTimeParts[1] || ''
         },
         minutes: selectedMeeting.minutes || ''
       }));
@@ -93,23 +94,30 @@ const AddMinutesModal = ({
   };
 
   const handleSave = () => {
- 
     const formData = new FormData();
     formData.append('minutes', minutesData.minutes);
-    
+
     if (minutesData.file) {
-        formData.append('file', minutesData.file);
+      formData.append('file', minutesData.file);
     }
-    
+
     onSave(formData);
-};
+  };
 
   if (!isVisible) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className={`absolute inset-0 bg-black transition-opacity ${isExiting ? 'bg-opacity-0' : 'bg-opacity-50'}`}></div>
-      <div className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-5 transform transition-all duration-300 ease-in-out ${isAnimating ? 'modal-enter' : ''} ${isExiting ? 'modal-exit' : ''}`}>
+      <div
+        className={`absolute inset-0 bg-black modal-backdrop ${isExiting ? 'opacity-0' : 'opacity-50'}`}
+        onClick={onClose}
+      ></div>
+      <div
+        className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-5  
+      ${isAnimating ? 'modal-enter' : ''} 
+      ${!isAnimating && !isExiting ? 'modal-enter-active' : ''} 
+      ${isExiting ? 'modal-exit' : ''}`}
+      >
         <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
           <h3 className="list-awareness-training-head">Add Meeting Minutes</h3>
         </div>
@@ -382,3 +390,4 @@ const AddMinutesModal = ({
 };
 
 export default AddMinutesModal;
+

@@ -13,8 +13,6 @@ const QmsViewSupplier = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     console.log('supplier id', id);
-    
-    
 
     useEffect(() => {
         const fetchSupplierData = async () => {
@@ -64,6 +62,13 @@ const QmsViewSupplier = () => {
         }
     };
 
+    // Helper function to safely render field values
+    const renderFieldValue = (value) => {
+        if (value === null || value === undefined) return "N/A";
+        if (typeof value === 'object') return JSON.stringify(value);
+        return value;
+    };
+
     if (loading) return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
             Loading supplier data...
@@ -103,58 +108,58 @@ const QmsViewSupplier = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Company Name
                         </label>
-                        <div className="view-employee-data">{supplier.company_name}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.company_name)}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Web Site
                         </label>
-                        <div className="view-employee-data">{supplier.website}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.website)}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Email
                         </label>
-                        <div className="view-employee-data">{supplier.email}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.email)}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             City
                         </label>
-                        <div className="view-employee-data">{supplier.city}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.city)}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Address
                         </label>
-                        <div className="view-employee-data">{supplier.address}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.address)}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             State
                         </label>
-                        <div className="view-employee-data">{supplier.state}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.state)}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Postal Code
                         </label>
-                        <div className="view-employee-data">{supplier.postal_code}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.postal_code)}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Country
                         </label>
-                        <div className="view-employee-data">{supplier.country}</div>
+                        <div className="view-employee-data">{renderFieldValue(supplier.country)}</div>
                     </div>
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Phone
                             </label>
-                            <div className="view-employee-data">{supplier.phone}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.phone)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -162,7 +167,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Alternate Phone
                             </label>
-                            <div className="view-employee-data">{supplier.alternate_phone}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.alternate_phone)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -170,7 +175,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Fax
                             </label>
-                            <div className="view-employee-data">{supplier.fax}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.fax)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -178,7 +183,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Contact Person
                             </label>
-                            <div className="view-employee-data">{supplier.contact_person}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.contact_person)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -186,7 +191,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Qualified To Supply
                             </label>
-                            <div className="view-employee-data">{supplier.qualified_to_supply}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.qualified_to_supply)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -194,7 +199,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Notes
                             </label>
-                            <div className="view-employee-data">{supplier.notes}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.notes)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -202,7 +207,10 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Approved By
                             </label>
-                            <div className="view-employee-data">{supplier.approved_by}</div>
+                            <div className="view-employee-data">
+                                {renderFieldValue(`${supplier.approved_by.first_name} ${supplier.approved_by.last_name}`)}
+                            </div>
+
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -210,7 +218,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Status
                             </label>
-                            <div className="view-employee-data">{supplier.status}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.status)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -218,7 +226,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Selection Criteria
                             </label>
-                            <div className="view-employee-data">{supplier.selection_criteria}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.selection_criteria)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -226,7 +234,7 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Approval Date
                             </label>
-                            <div className="view-employee-data">{supplier.approved_date}</div>
+                            <div className="view-employee-data">{renderFieldValue(supplier.approved_date)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">
@@ -234,8 +242,8 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Pre Qualification
                             </label>
-                            <button 
-                                onClick={() => handleViewDocument(supplier.pre_qualification)} 
+                            <button
+                                onClick={() => handleViewDocument(supplier.pre_qualification)}
                                 className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
                             >
                                 Click to view file <Eye size={18} />
@@ -248,8 +256,8 @@ const QmsViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Upload Document
                             </label>
-                            <button 
-                                onClick={() => handleViewDocument(supplier.documents)} 
+                            <button
+                                onClick={() => handleViewDocument(supplier.documents)}
                                 className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
                             >
                                 Click to view file <Eye size={18} />
@@ -258,7 +266,7 @@ const QmsViewSupplier = () => {
                         <div className="flex space-x-10">
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Edit
-                                <button onClick={()=>handleEdit(id)}>
+                                <button onClick={() => handleEdit(id)}>
                                     <img
                                         src={edits}
                                         alt="Edit Icon"
@@ -269,7 +277,7 @@ const QmsViewSupplier = () => {
 
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Delete
-                                <button onClick={()=>handleDelete(id)}>
+                                <button onClick={() => handleDelete(id)}>
                                     <img
                                         src={deletes}
                                         alt="Delete Icon"

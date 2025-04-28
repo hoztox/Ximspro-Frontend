@@ -107,7 +107,7 @@ const QmsDraftSupplier = () => {
     };
 
     const handleClose = () => {
-        
+        navigate('/company/qms/list-supplier');
     }
 
     // Pagination
@@ -153,7 +153,7 @@ const QmsDraftSupplier = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">List Supplier</h1>
+                <h1 className="list-manual-head">Draft Supplier</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -196,7 +196,7 @@ const QmsDraftSupplier = () => {
                                     <td className="px-2 add-manual-datas">{supplier.supplier_name}</td>
                                     <td className="px-2 add-manual-datas">{supplier.product}</td>
                                     <td className="px-2 add-manual-datas">{supplier.date}</td>
-                                    <td className="px-2 add-manual-datas !text-left text-[#1E84AF]">
+                                    <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                                         <button onClick={() => handleEditSupplier(supplier.supplier_id)}>
                                             Click to Continue
                                         </button>

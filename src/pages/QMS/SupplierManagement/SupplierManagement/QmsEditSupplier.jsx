@@ -209,7 +209,7 @@ const QmsEditSupplier = () => {
                 notes: supplierData.notes || '',
                 analysis_needed: supplierData.analysis_needed || false,
                 resolution: supplierData.resolution || '',
-                approved_by: supplierData.approved_by || '',
+                approved_by: supplierData.approved_by?.id || supplierData.approved_by || '',
                 status: supplierData.status || '',
                 selection_criteria: supplierData.selection_criteria || '',
                 approved_date: {
@@ -237,11 +237,12 @@ const QmsEditSupplier = () => {
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
 
+            // Make sure the response data is in the expected format
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
+                console.error("Unexpected users data format:", response.data);
                 setUsers([]);
-                console.error("Unexpected response format:", response.data);
             }
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -692,21 +693,15 @@ const QmsEditSupplier = () => {
                         name="approved_by"
                         value={formData.approved_by}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("approved_by")}
-                        onBlur={() => setFocusedDropdown(null)}
                         className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.approved_by ? 'border-red-500' : ''}`}
                         required
                     >
                         <option value="" disabled>Select Approved By</option>
-                        {users.length > 0 ? (
-                            users.map(user => (
-                                <option key={user.id} value={user.id}>
-                                    {user.first_name} {user.last_name}
-                                </option>
-                            ))
-                        ) : (
-                            <option disabled>Loading users...</option>
-                        )}
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>
+                                {user.first_name} {user.last_name}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
@@ -869,7 +864,7 @@ const QmsEditSupplier = () => {
                         )}
                     </div>
                 </div>
-                
+
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Upload Documents</label>
                     <div className="flex">

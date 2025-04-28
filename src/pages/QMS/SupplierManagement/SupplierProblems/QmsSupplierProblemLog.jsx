@@ -1,86 +1,123 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from '../../../../Utils/Config';
 
 const QmsSupplierProblemLog = () => {
-    const initialData = [
-        { id: 1, supplier_name: 'Anonymous', problem: 'Anonymous', car: '123', date: '03-12-2024', status: 'Solved' },
-        { id: 2, supplier_name: 'Anonymous', problem: 'Anonymous', car: '123', date: '03-12-2024', status: 'Not Solved' },
-        { id: 3, supplier_name: 'Anonymous', problem: 'Anonymous', car: '123', date: '03-12-2024', status: 'Solved' },
-    ];
-
-    // State
-    const [suppliers, setSuppliers] = useState(initialData);
+    const [suppliers, setSuppliers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const [formData, setFormData] = useState({
-        supplier_name: '',
-        problem: '',
-        date: '',
-        car: '',
-        status: 'Solved'  // Default status set to 'Requested'
-    });
+    const [totalItems, setTotalItems] = useState(0);
+
+    // Get company ID from local storage
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
+    // Fetch supplier problems from API
+    useEffect(() => {
+        const fetchSupplierProblems = async () => {
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/supplier-problems/company/${companyId}/`, {
+                    params: {
+                        page: currentPage,
+                        search: searchQuery
+                    }
+                });
+                console.log('Supplier Problmsssss:', response);
+
+
+                setSuppliers(response.data.results);
+                setTotalItems(response.data.count);
+                setError(null);
+            } catch (err) {
+                setError('Failed to fetch supplier problems');
+                console.error('Error fetching supplier problems:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (companyId) {
+            fetchSupplierProblems();
+        }
+    }, [companyId, currentPage, searchQuery]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        setSearchTerm(value); // Update searchTerm as well
-        setCurrentPage(1);
+        setSearchTerm(value);
+        setCurrentPage(1); // Reset to first page on new search
     };
-
 
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = suppliers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-    // Get current items
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = suppliers.slice(indexOfFirstItem, indexOfLastItem);
-
-    // Search functionality
-
-    const filteredSuppliers = currentItems.filter(supplier =>
-        supplier.supplier_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        supplier.problem.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        supplier.car.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-
-
     const handleAddSupplierProblem = () => {
-        navigate('/company/qms/add-supplier-problem')
-    }
+        navigate('/company/qms/add-supplier-problem');
+    };
 
     const handleDraftSupplierProblem = () => {
-        navigate('/company/qms/drafts-supplier-problem')
-    }
+        navigate('/company/qms/drafts-supplier-problem');
+    };
 
-    const handleQmsViewSupplierProblem = () => {
-        navigate('/company/qms/views-supplier-problem')
-    }
+    const handleQmsViewSupplierProblem = (id) => {
+        navigate(`/company/qms/views-supplier-problem/${id}`);
+    };
 
-    const handleQmsEditSupplierProblem = () => {
-        navigate('/company/qms/edits-supplier-problem')
-    }
+    const handleQmsEditSupplierProblem = (id) => {
+        navigate(`/company/qms/edits-supplier-problem/${id}`);
+    };
 
-
-    // Delete  supplier
-    const handleDeleteSupplierProblem = (id) => {
-        setSuppliers(suppliers.filter(supplier => supplier.id !== id));
+    // Delete supplier problem
+    const handleDeleteSupplierProblem = async (id) => {
+        if (window.confirm('Are you sure you want to delete this supplier problem?')) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/supplier-problems/${id}/`);
+                setSuppliers(suppliers.filter(supplier => supplier.id !== id));
+                alert('Supplier problem deleted successfully');
+            } catch (err) {
+                console.error('Error deleting supplier problem:', err);
+                alert('Failed to delete supplier problem');
+            }
+        }
     };
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+    if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Loading supplier problems...</div>;
+    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">{error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -105,7 +142,6 @@ const QmsSupplierProblemLog = () => {
                         onClick={handleDraftSupplierProblem}
                     >
                         <span>Drafts</span>
-
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -134,36 +170,44 @@ const QmsSupplierProblemLog = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredSuppliers.map((supplier, index) => (
-                            <tr key={supplier.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{supplier.id}</td>
-                                <td className="px-2 add-manual-datas">{supplier.supplier_name}</td>
-                                <td className="px-2 add-manual-datas">{supplier.problem}</td>
-                                <td className="px-2 add-manual-datas">{supplier.date}</td>
-                                <td className="px-2 add-manual-datas">{supplier.car}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${supplier.status === 'Solved' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'
-                                        }`}>
-                                        {supplier.status}
-                                    </span>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewSupplierProblem}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditSupplierProblem}>
-                                        <img src={editIcon} alt="Edit Icon" />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleDeleteSupplierProblem}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                        {suppliers && suppliers.length > 0 ? (
+                            suppliers.map((supplier, index) => (
+                                <tr key={supplier.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{index + 1 + (currentPage - 1) * itemsPerPage}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.supplier_name || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.problem_description || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{new Date(supplier.problem_date).toLocaleDateString() || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">
+                                        {supplier.car_numbers && supplier.car_numbers.length > 0 ?
+                                            supplier.car_numbers.join(', ') : 'N/A'}
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${supplier.is_solved ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'}`}>
+                                            {supplier.is_solved ? 'Solved' : 'Not Solved'}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsViewSupplierProblem(supplier.id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsEditSupplierProblem(supplier.id)}>
+                                            <img src={editIcon} alt="Edit Icon" />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteSupplierProblem(supplier.id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="9" className="text-center py-4">No supplier problems found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -180,16 +224,27 @@ const QmsSupplierProblemLog = () => {
                         Previous
                     </button>
 
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
-                        <button
-                            key={number}
-                            onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
-                        >
-                            {number}
-                        </button>
-                    ))}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                            pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                        } else {
+                            pageNum = currentPage - 2 + i;
+                        }
+                        return (
+                            <button
+                                key={pageNum}
+                                onClick={() => paginate(pageNum)}
+                                className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
 
                     <button
                         onClick={nextPage}
@@ -203,4 +258,5 @@ const QmsSupplierProblemLog = () => {
         </div>
     );
 };
-export default QmsSupplierProblemLog
+
+export default QmsSupplierProblemLog;
