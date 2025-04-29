@@ -102,14 +102,8 @@ const QmsDraftMeeting = () => {
         }
     };
 
-    const handleAddMeeting = () => {
-        navigate('/company/qms/add-meeting');
-    };
-
-    const handleDraftMeeting = () => {
-        navigate('/company/qms/draft-meeting');
-    };
-
+     
+ 
     const handleEditMeeting = (id) => {
         navigate(`/company/qms/edit-draft-meeting/${id}`)
     };

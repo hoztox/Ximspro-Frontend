@@ -33,24 +33,39 @@ const QmsDraftSupplier = () => {
 
         return null;
     };
+    // const companyId = getUserCompanyId();
 
-    const companyId = getUserCompanyId();
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+
     // Fetch suppliers data
     useEffect(() => {
         const fetchSuppliers = async () => {
             try {
-                const companyId = getUserCompanyId();
+                const userId = getRelevantUserId();
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/suppliers-draft/${companyId}/`);
+                const response = await axios.get(`${BASE_URL}/qms/suppliers-draft/${userId}/`);
                 console.log('Drafted Suppliers:', response);
 
                 const formattedData = response.data.map((supplier, index) => ({
                     id: index + 1,
                     supplier_id: supplier.id,
-                    supplier_name: supplier.company_name || 'Anonymous',
-                    product: supplier.qualified_to_supply || 'Anonymous',
-                    date: supplier.approved_date || 'N/A',
-                    status: supplier.status || 'Not Approved',
+                    supplier_name: supplier.company_name  ,
+                    product: supplier.qualified_to_supply  ,
+                    date: supplier.approved_date  ,
+                    status: supplier.status  ,
                     active: supplier.active === 'active'
                 }));
                 setSuppliers(formattedData);
@@ -66,7 +81,7 @@ const QmsDraftSupplier = () => {
         };
 
         fetchSuppliers();
-    }, [companyId]);
+    }, []);
 
     // Handle search
     const handleSearchChange = (e) => {
@@ -89,21 +104,12 @@ const QmsDraftSupplier = () => {
         }
     };
 
-    // Navigation handlers
-    const handleAddSupplier = () => {
-        navigate('/company/qms/add-supplier');
-    };
-
-    const handleDraftSupplier = () => {
-        navigate('/company/qms/draft-supplier');
-    };
-
     const handleViewSupplier = (supplierId) => {
-        navigate(`/company/qms/view-supplier/${supplierId}`);
+        navigate(`/company/qms/draft-view-supplier/${supplierId}`);
     };
 
     const handleEditSupplier = (supplierId) => {
-        navigate(`/company/qms/edit-supplier/${supplierId}`);
+        navigate(`/company/qms/draft-edit-supplier/${supplierId}`);
     };
 
     const handleClose = () => {

@@ -17,7 +17,7 @@ const QmsViewDraftSupplierPerformance = () => {
         const fetchPerformanceData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation-get/${id}/`);
                 setPerformanceData(response.data);
                 setError(null);
             } catch (err) {
@@ -85,7 +85,7 @@ const QmsViewDraftSupplierPerformance = () => {
                     <div>
                         <label className="block view-employee-label mb-[6px]">Evaluation Title</label>
                         <div className="view-employee-data">
-                            {performanceData.survey_title || 'Anonymous'}
+                            {performanceData.title || 'No title provided'}
                         </div>
                     </div>
 
@@ -96,16 +96,17 @@ const QmsViewDraftSupplierPerformance = () => {
                         </div>
                     </div>
 
-
                     <div>
-                        <label className="block view-employee-label mb-[6px]">Survey Description</label>
+                        <label className="block view-employee-label mb-[6px]">Description</label>
                         <div className="view-employee-data">
                             {performanceData.description || 'No description provided'}
                         </div>
                     </div>
+ 
                 </div>
             </div>
         </div>
     );
 };
-export default QmsViewDraftSupplierPerformance
+
+export default QmsViewDraftSupplierPerformance;

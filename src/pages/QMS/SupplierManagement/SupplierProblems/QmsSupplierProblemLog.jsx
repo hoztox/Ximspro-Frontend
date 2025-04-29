@@ -9,6 +9,7 @@ import axios from 'axios';
 import { BASE_URL } from '../../../../Utils/Config';
 
 const QmsSupplierProblemLog = () => {
+    // State
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -16,7 +17,6 @@ const QmsSupplierProblemLog = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const [totalItems, setTotalItems] = useState(0);
 
     // Get company ID from local storage
     const getUserCompanyId = () => {
@@ -45,17 +45,22 @@ const QmsSupplierProblemLog = () => {
         const fetchSupplierProblems = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/supplier-problems/company/${companyId}/`, {
-                    params: {
-                        page: currentPage,
-                        search: searchQuery
-                    }
-                });
-                console.log('Supplier Problmsssss:', response);
+                if (!companyId) {
+                    setError('Company ID not found. Please log in again.');
+                    setLoading(false);
+                    return;
+                }
 
+                const response = await axios.get(`${BASE_URL}/qms/supplier-problems/company/${companyId}/`);
+                console.log("Supplier Problems:", response.data);
 
-                setSuppliers(response.data.results);
-                setTotalItems(response.data.count);
+                // Filter out drafts for the main view
+                const activeProblems = response.data.filter(problem => !problem.is_draft);
+
+                // Sort by date (newest first)
+                activeProblems.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                setSuppliers(activeProblems);
                 setError(null);
             } catch (err) {
                 setError('Failed to fetch supplier problems');
@@ -65,21 +70,39 @@ const QmsSupplierProblemLog = () => {
             }
         };
 
-        if (companyId) {
-            fetchSupplierProblems();
-        }
-    }, [companyId, currentPage, searchQuery]);
+        fetchSupplierProblems();
+    }, [companyId]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
         setSearchTerm(value);
-        setCurrentPage(1); // Reset to first page on new search
+        setCurrentPage(1);
     };
 
     // Pagination
     const itemsPerPage = 10;
+    const totalItems = suppliers.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+    // Get current items
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = suppliers.slice(indexOfFirstItem, indexOfLastItem);
+
+    // Search functionality
+    const filteredSuppliers = currentItems.filter(supplier => {
+        const searchString = searchQuery.toLowerCase();
+
+        const problemMatch = typeof supplier.problem === 'string' && supplier.problem.toLowerCase().includes(searchString);
+        const supplierNameMatch = supplier.supplier && typeof supplier.supplier.company_name === 'string' &&
+            supplier.supplier.company_name.toLowerCase().includes(searchString);
+
+        const carMatch = supplier.no_car && typeof supplier.no_car.title === 'string' &&
+            supplier.no_car.title.toLowerCase().includes(searchString);
+
+        return problemMatch || supplierNameMatch || carMatch;
+    });
 
     const handleAddSupplierProblem = () => {
         navigate('/company/qms/add-supplier-problem');
@@ -99,15 +122,31 @@ const QmsSupplierProblemLog = () => {
 
     // Delete supplier problem
     const handleDeleteSupplierProblem = async (id) => {
-        if (window.confirm('Are you sure you want to delete this supplier problem?')) {
+        if (window.confirm("Are you sure you want to delete this supplier problem?")) {
             try {
                 await axios.delete(`${BASE_URL}/qms/supplier-problems/${id}/`);
+                // Update state to remove the deleted problem
                 setSuppliers(suppliers.filter(supplier => supplier.id !== id));
-                alert('Supplier problem deleted successfully');
             } catch (err) {
-                console.error('Error deleting supplier problem:', err);
-                alert('Failed to delete supplier problem');
+                console.error("Error deleting supplier problem:", err);
+                alert("Failed to delete supplier problem. Please try again.");
             }
+        }
+    };
+
+    // Format date to readable format
+    const formatDate = (dateString) => {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            }).replace(/\//g, '-');
+        } catch (e) {
+            console.error('Error formatting date:', e);
+            return dateString;
         }
     };
 
@@ -116,8 +155,25 @@ const QmsSupplierProblemLog = () => {
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-    if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Loading supplier problems...</div>;
-    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">{error}</div>;
+    if (loading) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+                <div className="flex justify-center items-center h-64">
+                    <p className="text-lg">Loading supplier problems...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+                <div className="flex justify-center items-center h-64">
+                    <p className="text-lg text-red-500">{error}</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -170,25 +226,34 @@ const QmsSupplierProblemLog = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {suppliers && suppliers.length > 0 ? (
-                            suppliers.map((supplier, index) => (
+                        {filteredSuppliers.length > 0 ? (
+                            filteredSuppliers.map((supplier, index) => (
                                 <tr key={supplier.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                    <td className="pl-5 pr-2 add-manual-datas">{index + 1 + (currentPage - 1) * itemsPerPage}</td>
-                                    <td className="px-2 add-manual-datas">{supplier.supplier_name || 'N/A'}</td>
-                                    <td className="px-2 add-manual-datas">{supplier.problem_description || 'N/A'}</td>
-                                    <td className="px-2 add-manual-datas">{new Date(supplier.problem_date).toLocaleDateString() || 'N/A'}</td>
+                                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{supplier.supplier?.company_name || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {supplier.car_numbers && supplier.car_numbers.length > 0 ?
-                                            supplier.car_numbers.join(', ') : 'N/A'}
+                                        {supplier.problem && supplier.problem.length > 50
+                                            ? `${supplier.problem.substring(0, 50)}...`
+                                            : supplier.problem}
                                     </td>
+                                    <td className="px-2 add-manual-datas">{formatDate(supplier.date)}</td>
+
+                                    <td className="px-2 add-manual-datas">{supplier.no_car?.action_no || 'N/A'}</td> 
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${supplier.is_solved ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363611] text-[#dd3636]'}`}>
-                                            {supplier.is_solved ? 'Solved' : 'Not Solved'}
+                                        <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${supplier.solved === 'Yes'
+                                                ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                                : 'bg-[#dd363611] text-[#dd3636]'
+                                            }`}>
+                                            {supplier.solved === 'Yes' ? 'Solved' : 'Not Solved'}
                                         </span>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
                                         <button onClick={() => handleQmsViewSupplierProblem(supplier.id)}>
-                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                            <img
+                                                src={viewIcon}
+                                                alt="View Icon"
+                                                style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }}
+                                            />
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
@@ -204,8 +269,10 @@ const QmsSupplierProblemLog = () => {
                                 </tr>
                             ))
                         ) : (
-                            <tr>
-                                <td colSpan="9" className="text-center py-4">No supplier problems found</td>
+                            <tr className="border-b border-[#383840] h-[50px]">
+                                <td colSpan="9" className="text-center not-found">
+                                    {searchQuery ? 'No matching supplier problems found' : 'No supplier problems available'}
+                                </td>
                             </tr>
                         )}
                     </tbody>
@@ -213,48 +280,38 @@ const QmsSupplierProblemLog = () => {
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-between items-center mt-6 text-sm">
-                <div className='text-white total-text'>Total-{totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                    >
-                        Previous
-                    </button>
+            {totalItems > 0 && (
+                <div className="flex justify-between items-center mt-6 text-sm">
+                    <div className='text-white total-text'>Total-{totalItems}</div>
+                    <div className="flex items-center gap-5">
+                        <button
+                            onClick={prevPage}
+                            disabled={currentPage === 1}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                        >
+                            Previous
+                        </button>
 
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                            pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                            pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i;
-                        } else {
-                            pageNum = currentPage - 2 + i;
-                        }
-                        return (
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
                             <button
-                                key={pageNum}
-                                onClick={() => paginate(pageNum)}
-                                className={`${currentPage === pageNum ? 'pagin-active' : 'pagin-inactive'}`}
+                                key={number}
+                                onClick={() => paginate(number)}
+                                className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
                             >
-                                {pageNum}
+                                {number}
                             </button>
-                        );
-                    })}
+                        ))}
 
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                    >
-                        Next
-                    </button>
+                        <button
+                            onClick={nextPage}
+                            disabled={currentPage === totalPages}
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

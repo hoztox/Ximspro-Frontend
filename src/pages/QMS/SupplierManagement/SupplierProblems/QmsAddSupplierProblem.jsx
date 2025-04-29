@@ -14,8 +14,7 @@ const QmsAddSupplierProblem = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [formData, setFormData] = useState({
-        supplier_name: '',
-        supplier_id: '',
+        supplier: '',
         date: {
             day: '',
             month: '',
@@ -24,11 +23,10 @@ const QmsAddSupplierProblem = () => {
         problem: '',
         immediate_action: '',
         executor: '',
-        audit_type: '',
-        solved: '',
-        corrective_action: '',
+        solved: 'No',
+        corrective_action_need: 'No',  
         corrections: '',
-        car: '',
+        no_car: '', // Changed from car to match backend field name
         cars: [],
     });
     const [isDraft, setIsDraft] = useState(false);
@@ -53,6 +51,11 @@ const QmsAddSupplierProblem = () => {
             }
         }
         return null;
+    };
+
+    // Get relevant user ID
+    const getRelevantUserId = () => {
+        return localStorage.getItem("user_id") || "";
     };
 
     const companyId = getUserCompanyId();
@@ -130,7 +133,7 @@ const QmsAddSupplierProblem = () => {
                 if (Array.isArray(response.data)) {
                     setFormData(prev => ({
                         ...prev,
-                        cars: response.data.map(item => item.car_no)
+                        cars: response.data.map(item => item.car_no || item.action_no)
                     }));
                 }
             } catch (err) {
@@ -179,17 +182,6 @@ const QmsAddSupplierProblem = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Special handling for supplier selection to store both name and ID
-        if (name === 'supplier_name') {
-            const selectedSupplier = suppliers.find(supplier => supplier.id === value);
-            setFormData({
-                ...formData,
-                supplier_name: selectedSupplier ? selectedSupplier.company_name : '',
-                supplier_id: value
-            });
-            return;
-        }
-
         // Handle nested objects
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
@@ -212,16 +204,16 @@ const QmsAddSupplierProblem = () => {
         const formattedDate = `${formData.date.year}-${formData.date.month}-${formData.date.day}`;
 
         return {
-            company_id: companyId,
-            supplier_id: formData.supplier_id,
-            problem_date: formattedDate,
-            problem_description: formData.problem,
+            company: companyId,
+            supplier: formData.supplier,
+            date: formattedDate,
+            problem: formData.problem,
             immediate_action: formData.immediate_action,
             executor: formData.executor,
-            is_solved: formData.solved === 'yes',
-            corrective_action_needed: formData.corrective_action === 'yes',
+            solved: formData.solved,
+            corrective_action_need: formData.corrective_action_need,
             corrections: formData.corrections || '',
-            car_numbers: formData.car ? [formData.car] : [], // Using selected CAR number
+            no_car: formData.no_car || null,
             is_draft: isDraft,
         };
     };
@@ -232,17 +224,31 @@ const QmsAddSupplierProblem = () => {
 
         try {
             const submissionData = formatFormDataForSubmission();
+            const userId = getRelevantUserId();
+            console.log('Submission data:', submissionData);
+
+            if (!companyId) {
+                setError("Company ID not found. Please log in again.");
+                setSubmitting(false);
+                return;
+            }
+
+            // Add user ID to the request data
+            const finalSubmissionData = {
+                ...submissionData,
+                user: userId
+            };
 
             // Submit to the API
-            await axios.post(`${BASE_URL}/qms/supplier-problems/`, submissionData);
+            const response = await axios.post(`${BASE_URL}/qms/supplier-problems/`, finalSubmissionData);
 
-            console.log('Supplier Problems:', submissionData);
+            console.log('Supplier Problems Response:', response.data);
 
             // Navigate back to list on success
             navigate('/company/qms/supplier-problem-log');
         } catch (err) {
             console.error('Error submitting supplier problem:', err);
-            alert('Failed to submit supplier problem. Please try again.');
+            setError('Failed to submit supplier problem. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -252,17 +258,29 @@ const QmsAddSupplierProblem = () => {
         setIsDraft(true);
 
         try {
+            setFormData(prev => ({
+                ...prev,
+                is_draft: true
+            }));
+
             const submissionData = formatFormDataForSubmission();
             submissionData.is_draft = true;
 
-            // Submit as draft to the API
-            await axios.post(`${BASE_URL}/qms/supplier-problems/`, submissionData);
+            const userId = getRelevantUserId();
 
-            // Navigate back to list on success
-            navigate('/company/qms/supplier-problem-log');
+            // Add user ID
+            const finalSubmissionData = {
+                ...submissionData,
+                user: userId
+            };
+
+            // Submit as draft to the API
+            const response = await axios.post(`${BASE_URL}/qms/supplier-problems/draft-create/`, finalSubmissionData);
+            console.log('Draft saved supplier problem:', response.data);
+            navigate('/company/qms/drafts-supplier-problem');
         } catch (err) {
             console.error('Error saving draft:', err);
-            alert('Failed to save draft. Please try again.');
+            setError('Failed to save draft. Please try again.');
         } finally {
             setIsDraft(false);
         }
@@ -287,7 +305,7 @@ const QmsAddSupplierProblem = () => {
     };
 
     // Check if corrective action is needed to display conditional fields
-    const showCorrectiveFields = formData.corrective_action === 'yes';
+    const showCorrectiveFields = formData.corrective_action_need === 'Yes';
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Loading suppliers data...</div>;
 
@@ -314,10 +332,10 @@ const QmsAddSupplierProblem = () => {
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Supplier Name <span className="text-red-500">*</span></label>
                     <select
-                        name="supplier_name"
-                        value={formData.supplier_id}
+                        name="supplier"
+                        value={formData.supplier}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("supplier_name")}
+                        onFocus={() => setFocusedDropdown("supplier")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                         required
@@ -334,7 +352,7 @@ const QmsAddSupplierProblem = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${focusedDropdown === "supplier_name" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "supplier" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -457,9 +475,7 @@ const QmsAddSupplierProblem = () => {
                                 </option>
                             ))
                         ) : (
-                            <>
-                                <option value=""> </option>
-                            </>
+                            <option value="" disabled>No users available</option>
                         )}
                     </select>
                     <ChevronDown
@@ -482,8 +498,8 @@ const QmsAddSupplierProblem = () => {
                         required
                     >
                         <option value="" disabled>Select</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
@@ -496,54 +512,58 @@ const QmsAddSupplierProblem = () => {
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Corrective Action Needed <span className="text-red-500">*</span></label>
                     <select
-                        name="corrective_action"
-                        value={formData.corrective_action}
+                        name="corrective_action_need"
+                        value={formData.corrective_action_need}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("corrective_action")}
+                        onFocus={() => setFocusedDropdown("corrective_action_need")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                         required
                     >
                         <option value="" disabled>Select</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[54px] transform transition-transform duration-300 
-                        ${focusedDropdown === "corrective_action" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "corrective_action_need" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
 
-                {/* Conditional rendering based on corrective_action value */}
+                {/* Conditional rendering based on corrective_action_need value */}
                 {showCorrectiveFields && (
                     <>
                         <div className="flex flex-col gap-3 relative">
                             <label className="add-training-label">CAR Number</label>
                             <select
-                                name="car"
-                                value={formData.car}
+                                name="no_car"
+                                value={formData.no_car}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("car")}
+                                onFocus={() => setFocusedDropdown("no_car")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
                                 <option value="" disabled>Select</option>
-                                {carNumbers.map(car => (
-                                    <option key={car.id} value={car.id}>
-                                        {car.action_no}
-                                    </option>
-                                ))}
+                                {carNumbers && carNumbers.length > 0 ? (
+                                    carNumbers.map(car => (
+                                        <option key={car.id} value={car.id}>
+                                            {car.action_no || car.car_no}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option value="" disabled>No CAR numbers available</option>
+                                )}
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[42%] transform transition-transform duration-300 
-                                ${focusedDropdown === "car" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "no_car" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                             <button
-                                className='flex justify-start add-training-label !text-[#1E84AF]'
+                                className="flex justify-start add-training-label !text-[#1E84AF]"
                                 type="button"
                                 onClick={handleOpenCarModal}
                             >
@@ -571,14 +591,14 @@ const QmsAddSupplierProblem = () => {
                     <div>
                         <button
                             type="button"
-                            className='request-correction-btn duration-200'
+                            className="request-correction-btn duration-200"
                             onClick={handleSaveDraft}
                             disabled={submitting}
                         >
                             {submitting && isDraft ? 'Saving...' : 'Save as Draft'}
                         </button>
                     </div>
-                    <div className='flex gap-5'>
+                    <div className="flex gap-5">
                         <button
                             type="button"
                             onClick={handleCancel}

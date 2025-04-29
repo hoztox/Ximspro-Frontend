@@ -495,11 +495,11 @@ const ThemedApp = () => {
 
           <Route path="qms/lists-supplier-evaluation" element={<QmsSupplierPerformace />} />
           <Route path="qms/add-supplier-evaluation" element={<QmsAddSupplierPerformance />} />
-          <Route path="qms/edits-supplier-evaluation" element={<QmsEditSupplierPerformance />} />
-          <Route path="qms/views-supplier-evaluation" element={<QmsViewSupplierPerformance />} />
+          <Route path="qms/edits-supplier-evaluation/:id" element={<QmsEditSupplierPerformance />} />
+          <Route path="qms/views-supplier-evaluation/:id" element={<QmsViewSupplierPerformance />} />
           <Route path="qms/drafts-supplier-evaluation" element={<QmsDraftSupplierPerformance />} />
-          <Route path="qms/edits-drafts-supplier-evaluation" element={<QmsEditDraftSupplierPerformance />} />
-          <Route path="qms/views-drafts-supplier-evaluation" element={<QmsViewDraftSupplierPerformance />} />
+          <Route path="qms/edits-drafts-supplier-evaluation/:id" element={<QmsEditDraftSupplierPerformance />} />
+          <Route path="qms/views-drafts-supplier-evaluation/:id" element={<QmsViewDraftSupplierPerformance />} />
 
 
 

@@ -17,7 +17,7 @@ const QmsViewSupplierPerformance = () => {
         const fetchPerformanceData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation-get/${id}/`);
                 setPerformanceData(response.data);
                 setError(null);
             } catch (err) {
@@ -44,7 +44,7 @@ const QmsViewSupplierPerformance = () => {
     const handleDelete = async () => {
         if (window.confirm("Are you sure you want to delete this evaluation?")) {
             try {
-                await axios.delete(`${BASE_URL}/qms/survey/${id}/update/`);
+                await axios.delete(`${BASE_URL}/qms/supplier/evaluation/${id}/update/`);
                 alert("Supplier evaluation deleted successfully");
                 navigate('/company/qms/lists-supplier-evaluation');
             } catch (err) {
@@ -102,7 +102,7 @@ const QmsViewSupplierPerformance = () => {
                     <div>
                         <label className="block view-employee-label mb-[6px]">Evaluation Title</label>
                         <div className="view-employee-data">
-                            {performanceData.survey_title || 'Anonymous'}
+                            {performanceData.title || 'No title provided'}
                         </div>
                     </div>
 
@@ -113,18 +113,14 @@ const QmsViewSupplierPerformance = () => {
                         </div>
                     </div>
 
-
                     <div>
-                        <label className="block view-employee-label mb-[6px]">Survey Description</label>
+                        <label className="block view-employee-label mb-[6px]">Description</label>
                         <div className="view-employee-data">
                             {performanceData.description || 'No description provided'}
                         </div>
                     </div>
 
-
-
-
-                    <div className="flex justify-end items-end space-x-10 md:col-start-2">
+                    <div className="flex justify-end items-end space-x-10 ">
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
                             Edit
                             <button onClick={handleEdit}>
@@ -144,4 +140,5 @@ const QmsViewSupplierPerformance = () => {
         </div>
     );
 };
-export default QmsViewSupplierPerformance
+
+export default QmsViewSupplierPerformance;

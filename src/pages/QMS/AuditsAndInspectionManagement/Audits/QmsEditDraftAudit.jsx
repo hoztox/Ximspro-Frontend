@@ -529,11 +529,7 @@ const QmsEditDraftAudit = () => {
                     {/* Conditionally render user selection when check_auditor is true */}
                     {formData.check_auditor && (
                         <div className="flex flex-col mt-3">
-                            <div className="flex justify-between items-center mb-2">
-                                <h3 className="add-training-label">Internal Auditors</h3>
-                                 
-                            </div>
-
+                        
                             <div className="relative mb-2">
                                 {!showCustomUserField && (
                                     <div className="relative mb-2">

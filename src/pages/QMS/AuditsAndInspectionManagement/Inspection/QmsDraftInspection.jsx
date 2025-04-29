@@ -13,7 +13,7 @@ const QmsDraftInspection = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    
+
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
         if (role === "company") {
@@ -30,11 +30,26 @@ const QmsDraftInspection = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+
     const fetchInspections = async () => {
         setLoading(true);
         try {
-            const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/inspection-draft/${companyId}/`, {
+            const userId = getRelevantUserId();
+            const response = await axios.get(`${BASE_URL}/qms/inspection-draft/${userId}/`, {
                 params: { is_draft: true }
             });
             setInspections(response.data);

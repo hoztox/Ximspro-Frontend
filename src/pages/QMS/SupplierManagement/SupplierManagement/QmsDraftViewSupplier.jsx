@@ -16,7 +16,7 @@ const QmsDraftViewSupplier = () => {
         const fetchDraftSupplierData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/draft-suppliers/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/suppliers/${id}/`);
                 setSupplier(response.data);
                 setLoading(false);
             } catch (err) {

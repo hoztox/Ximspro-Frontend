@@ -5,17 +5,17 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import AddEmployeeSatisfactionSuccessModal from '../Modals/AddEmployeeSatisfactionSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
-import DraftEmployeeSatisfactionSuccessModal from '../Modals/DraftEmployeeSatisfactionSuccessModal';
-const QmsAddSupplierPerformance = () => {
+import DraftEmployeeSatisfactionSuccessModal from '../Modals/DraftEmployeeSatisfactionSuccessModal'; 
+
+const QmsAddSupplierEvaluation = () => {
     const [formData, setFormData] = useState({
-        evaluation_title: '',
+        title: '',
         description: '',
         valid_till: {
             day: '',
             month: '',
             year: ''
         },
-
     });
 
     const [showAddEmployeeSatisfactionSuccessModal, setShowAddEmployeeSatisfactionSuccessModal] = useState(false);
@@ -90,7 +90,7 @@ const QmsAddSupplierPerformance = () => {
         }
 
         const companyId = localStorage.getItem("company_id");
-        if (companyId) return companyId;
+        if (companyId) return companyId; 
 
         return null;
     };
@@ -98,8 +98,8 @@ const QmsAddSupplierPerformance = () => {
     // Validate the form data
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.evaluation_title.trim()) {
-            newErrors.evaluation_title = 'evaluation title is required';
+        if (!formData.title.trim()) {
+            newErrors.title = 'Evaluation title is required';
         }
 
         // Validate date if any part is filled
@@ -134,7 +134,7 @@ const QmsAddSupplierPerformance = () => {
         const submissionData = new FormData();
         submissionData.append('company', companyId);
         submissionData.append('user', userId);
-        submissionData.append('evaluation_title', formData.evaluation_title);
+        submissionData.append('title', formData.title);
         submissionData.append('description', formData.description || '');
 
         // Format and append valid_till date if all parts are filled
@@ -168,16 +168,19 @@ const QmsAddSupplierPerformance = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/evaluation/create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/supplier/evaluation/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
 
+            console.log('supplier evaluationssss',submissionData);
+            
+
             setShowAddEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowAddEmployeeSatisfactionSuccessModal(false);
-                navigate('/company/qms/list-supplier-evaluation');
+                navigate('/company/qms/lists-supplier-evaluation'); 
             }, 1500);
         } catch (error) {
             console.error('Error submitting form:', error);
@@ -185,7 +188,7 @@ const QmsAddSupplierPerformance = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            setError(error.response?.data?.message || 'Failed to save   Satisfaction Survey. Please try again.');
+            setError(error.response?.data?.message || 'Failed to save Supplier Evaluation. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -202,7 +205,7 @@ const QmsAddSupplierPerformance = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/evaluation/draft-create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/supplier/evaluation/draft-create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -211,7 +214,7 @@ const QmsAddSupplierPerformance = () => {
             setShowDraftEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowDraftEmployeeSatisfactionSuccessModal(false);
-                navigate('/company/qms/draft-supplier-evaluation');
+                navigate('/company/qms/drafts-supplier-evaluation');
             }, 1500);
         } catch (err) {
             setDraftLoading(false);
@@ -221,8 +224,8 @@ const QmsAddSupplierPerformance = () => {
         }
     };
 
-    const   handleListSupplierEvaluation = () => {
-        navigate('/company/qms/lists-supplier-evaluation')
+    const handleListSupplierEvaluation = () => {
+        navigate('/company/qms/list-supplier-evaluation')
     };
 
     const handleCancel = () => {
@@ -293,12 +296,6 @@ const QmsAddSupplierPerformance = () => {
                     }}
                 />
 
-                {/* {error && (
-                    <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 my-3 rounded mx-[104px]">
-                        {error}
-                    </div>
-                )} */}
-
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -307,14 +304,14 @@ const QmsAddSupplierPerformance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="evaluation_title"
-                                value={formData.evaluation_title}
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
-                                className={`w-full employee-performace-inputs ${errors.evaluation_title ? 'border-red-500' : ''}`}
+                                className={`w-full employee-performace-inputs ${errors.title ? 'border-red-500' : ''}`}
                                 required
                             />
-                            {errors.evaluation_title && (
-                                <p className="text-red-500 text-sm mt-1">{errors.evaluation_title}</p>
+                            {errors.title && (
+                                <p className="text-red-500 text-sm mt-1">{errors.title}</p>
                             )}
                         </div>
 
@@ -397,8 +394,6 @@ const QmsAddSupplierPerformance = () => {
                         </div>
                     </div>
 
-
-
                     <div className="flex justify-between space-x-5 mt-5">
                         <div>
                             <button
@@ -432,4 +427,5 @@ const QmsAddSupplierPerformance = () => {
         </div>
     );
 };
-export default QmsAddSupplierPerformance
+
+export default QmsAddSupplierEvaluation;

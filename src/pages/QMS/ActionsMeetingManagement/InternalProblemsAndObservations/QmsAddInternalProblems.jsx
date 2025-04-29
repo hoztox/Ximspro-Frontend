@@ -17,26 +17,26 @@ const QmsAddInternalProblems = () => {
     const [users, setUsers] = useState([]);
     const [formData, setFormData] = useState({
         cause: '',
-        description: '',
-        action: '',
+        problem: '',
+        immediate_action: '',
         executor: '',
-        solved: 'Yes',
-        causes: [],
+        solve_after_action: 'Yes',
+        corrective_action: 'Yes',
+        correction: '',
+        car_no: '',
+        is_draft: false,
         dateProblem: {
             day: '',
             month: '',
             year: ''
         },
-        correctiveAction: '',
-        corrections: '',
-        car: '',
+        causes: [],
         cars: [],
     });
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [isDraft, setIsDraft] = useState(false);
-    
- 
+    const [draftLoading, setDraftLoading] = useState(false);
+
     // Fetch all necessary data on component mount
     useEffect(() => {
         fetchCauses();
@@ -65,17 +65,18 @@ const QmsAddInternalProblems = () => {
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
-    
+
         if (userRole === "user") {
-          const userId = localStorage.getItem("user_id");
-          if (userId) return userId;
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
         }
-    
+
         const companyId = localStorage.getItem("company_id");
         if (companyId) return companyId;
-    
+
         return null;
-      };
+    };
+
     const fetchCauses = async () => {
         setLoading(true);
         try {
@@ -84,7 +85,7 @@ const QmsAddInternalProblems = () => {
                 setError('Company ID not found. Please log in again.');
                 return;
             }
-            
+
             const response = await axios.get(`${BASE_URL}/qms/cause/company/${companyId}/`);
             setCauses(response.data);
         } catch (error) {
@@ -103,7 +104,7 @@ const QmsAddInternalProblems = () => {
                 setError('Company ID not found. Please log in again.');
                 return;
             }
-            
+
             const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
             setCarNumbers(response.data);
         } catch (error) {
@@ -121,11 +122,8 @@ const QmsAddInternalProblems = () => {
                 setError('Company ID not found. Please log in again.');
                 return;
             }
-            
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
-            console.log("API Response:", response.data);
 
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
@@ -136,13 +134,13 @@ const QmsAddInternalProblems = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load manuals. Please check your connection and try again.");
+            setError("Failed to load users. Please check your connection and try again.");
         }
     };
 
     const handleListInternalProblems = () => {
-        navigate('/company/qms/list-internal-problem')
-    }
+        navigate('/company/qms/list-internal-problem');
+    };
 
     const handleOpenCauseModal = () => {
         setIsCauseModalOpen(true);
@@ -214,45 +212,48 @@ const QmsAddInternalProblems = () => {
         return `${year}-${month}-${day}`;
     };
 
-    const handleSubmit = async (e, isDraftMode = false) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
         setError(null);
-        
+
         try {
             const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
+                setIsSaving(false);
                 return;
             }
-            
+
             const formattedDate = formatDate();
-            
+
             // Prepare data for API
             const payload = {
                 company: companyId,
-                user :userId,
+                user: userId,
                 cause: formData.cause,
-                problem: formData.description,
-                immediate_action: formData.action,
+                problem: formData.problem,
+                immediate_action: formData.immediate_action,
                 executor: formData.executor,
                 date: formattedDate,
-                solve_after_action: formData.solved,
-                corrective_action: formData.correctiveAction,
-                correction: formData.corrections,
-                car_no: formData.car,
-                is_draft: isDraftMode
+                solve_after_action: formData.solve_after_action,
+                corrective_action: formData.corrective_action,
+                correction: formData.correction,
+                car_no: formData.car_no,
+                is_draft: false
             };
-            
+
+            console.log('Submitting form data:', payload);
+
             // Send data to API
             const response = await axios.post(`${BASE_URL}/qms/internal-problems/create/`, payload);
-            
+
             console.log('Form submitted successfully:', response.data);
-            
+
             // Redirect to list page on success
             navigate('/company/qms/list-internal-problem');
-            
+
         } catch (error) {
             console.error('Error submitting form:', error);
             setError('Failed to save internal problem. Please check your inputs and try again.');
@@ -260,57 +261,62 @@ const QmsAddInternalProblems = () => {
             setIsSaving(false);
         }
     };
-  const [draftLoading, setDraftLoading] = useState(false);
-    const handleSaveAsDraft = async () => {
+
+    const handleSaveAsDraft = async (e) => {
+        e.preventDefault();
+        setDraftLoading(true);
+        setError(null);
+
         try {
-            setDraftLoading(true);
-            setError('');
-    
-            const companyId = getUserCompanyId();
             const userId = getRelevantUserId();
-    
-            if (!companyId || !userId) {
-                setError('Company ID or User ID not found. Please log in again.');
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
                 setDraftLoading(false);
                 return;
             }
-    
-            const draftData = {
+
+            const formattedDate = formatDate();
+
+            // Prepare data for API
+            const payload = {
                 company: companyId,
                 user: userId,
-                is_draft: true,
                 cause: formData.cause || null,
                 problem: formData.problem || null,
                 immediate_action: formData.immediate_action || null,
                 executor: formData.executor || null,
-                date: formData.date || null,
+                date: formattedDate,
                 solve_after_action: formData.solve_after_action || 'Yes',
                 corrective_action: formData.corrective_action || 'Yes',
                 correction: formData.correction || null,
-                car_no: formData.car_no || null
+                car_no: formData.car_no || null,
+                is_draft: true
             };
-    
+
             // Remove null values from the data
-            const payload = Object.fromEntries(
-                Object.entries(draftData).filter(([_, v]) => v !== null)
+            const cleanPayload = Object.fromEntries(
+                Object.entries(payload).filter(([_, v]) => v !== null)
             );
-    
-            console.log('Saving draft internal problem:', payload);
-    
-            const response = await axios.post(
-                `${BASE_URL}/qms/internal-problems/draft-create/`,
-                payload
-            );
-    
-            setDraftLoading(false);
-            navigate('/company/qms/draft-internal-problem'); 
-        } catch (err) {
-            setDraftLoading(false);
-            const errorMessage = err.response?.data?.detail || 
-                                err.response?.data?.message || 
-                                'Failed to save draft internal problem';
+
+            console.log('Saving draft internal problem:', cleanPayload);
+
+            // Send data to API
+            const response = await axios.post(`${BASE_URL}/qms/internal-problems/draft-create/`, cleanPayload);
+
+            console.log('Draft saved successfully:', response.data);
+
+            // Redirect to drafts page on success
+            navigate('/company/qms/draft-internal-problem');
+
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            const errorMessage = error.response?.data?.detail ||
+                error.response?.data?.message ||
+                'Failed to save draft internal problem';
             setError(errorMessage);
-            console.error('Error saving draft internal problem:', err.response?.data || err);
+        } finally {
+            setDraftLoading(false);
         }
     };
 
@@ -368,7 +374,7 @@ const QmsAddInternalProblems = () => {
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+            <form className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3 relative">
                     <div className='flex justify-between'>
                         <label className="add-training-label">Select Causes / Root Cause</label>
@@ -410,8 +416,8 @@ const QmsAddInternalProblems = () => {
                         Problem/ Observation Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
-                        name="description"
-                        value={formData.description}
+                        name="problem"
+                        value={formData.problem}
                         onChange={handleChange}
                         className="add-training-inputs !h-[152px]"
                         required
@@ -421,8 +427,8 @@ const QmsAddInternalProblems = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Immediate Action Taken :</label>
                     <textarea
-                        name="action"
-                        value={formData.action}
+                        name="immediate_action"
+                        value={formData.immediate_action}
                         onChange={handleChange}
                         className="add-training-inputs !h-[151px]"
                     >
@@ -462,10 +468,10 @@ const QmsAddInternalProblems = () => {
                     <div className="flex flex-col gap-3 relative">
                         <label className="add-training-label">Solved After Action?</label>
                         <select
-                            name="solved"
-                            value={formData.solved}
+                            name="solve_after_action"
+                            value={formData.solve_after_action}
                             onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("solved")}
+                            onFocus={() => setFocusedDropdown("solve_after_action")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
                         >
@@ -474,7 +480,7 @@ const QmsAddInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "solved" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "solve_after_action" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -553,10 +559,10 @@ const QmsAddInternalProblems = () => {
                     <label className="add-training-label">Corrective Action Needed ?</label>
                     <div className="relative">
                         <select
-                            name="correctiveAction"
-                            value={formData.correctiveAction}
+                            name="corrective_action"
+                            value={formData.corrective_action}
                             onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("correctiveAction")}
+                            onFocus={() => setFocusedDropdown("corrective_action")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
                         >
@@ -566,7 +572,7 @@ const QmsAddInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${focusedDropdown === "correctiveAction" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "corrective_action" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -574,14 +580,14 @@ const QmsAddInternalProblems = () => {
                 </div>
 
                 {/* Conditionally render Corrections and Number CAR fields */}
-                {formData.correctiveAction === 'Yes' && (
+                {formData.corrective_action === 'Yes' && (
                     <>
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">Corrections</label>
                             <input
                                 type='text'
-                                name="corrections"
-                                value={formData.corrections}
+                                name="correction"
+                                value={formData.correction}
                                 onChange={handleChange}
                                 className="add-training-inputs"
                             />
@@ -591,10 +597,10 @@ const QmsAddInternalProblems = () => {
                             <label className="add-training-label">Number CAR</label>
                             <div className="relative">
                                 <select
-                                    name="car"
-                                    value={formData.car}
+                                    name="car_no"
+                                    value={formData.car_no}
                                     onChange={handleChange}
-                                    onFocus={() => setFocusedDropdown("car")}
+                                    onFocus={() => setFocusedDropdown("car_no")}
                                     onBlur={() => setFocusedDropdown(null)}
                                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
                                 >
@@ -607,7 +613,7 @@ const QmsAddInternalProblems = () => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                    ${focusedDropdown === "car" ? "rotate-180" : ""}`}
+                                    ${focusedDropdown === "car_no" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -630,9 +636,9 @@ const QmsAddInternalProblems = () => {
                             type="button"
                             className='request-correction-btn duration-200'
                             onClick={handleSaveAsDraft}
-                            disabled={isSaving}
+                            disabled={draftLoading || isSaving}
                         >
-                            {isSaving && isDraft ? 'Saving...' : 'Save as Draft'}
+                            {draftLoading ? 'Saving...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -640,16 +646,17 @@ const QmsAddInternalProblems = () => {
                             type="button"
                             onClick={handleCancel}
                             className="cancel-btn duration-200"
-                            disabled={isSaving}
+                            disabled={draftLoading || isSaving}
                         >
                             Cancel
                         </button>
                         <button
-                            type="submit"
+                            type="button"
+                            onClick={handleSubmit}
                             className="save-btn duration-200"
-                            disabled={isSaving}
+                            disabled={draftLoading || isSaving}
                         >
-                            {isSaving && !isDraft ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

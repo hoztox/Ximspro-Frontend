@@ -24,10 +24,11 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [users, setUsers] = useState([]);
-    const [evaluations, setevaluations] = useState([]);
+    const [evaluations, setEvaluations] = useState([]);
 
     const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -35,10 +36,12 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
                 const companyId = getUserCompanyId();
 
                 const response = await axios.get(
-                    `${BASE_URL}/qms/evaluation/${companyId}/evaluation/${evaluationId}/`
+                    `${BASE_URL}/qms/supplier/evaluation/${companyId}/evaluation/${evaluationId}/`
                 );
 
                 setUsers(response.data);
+                console.log('fetch suplliers evaluationnnn:', response);
+                
             } catch (error) {
                 console.error('Error fetching unsubmitted users:', error);
             }
@@ -51,7 +54,7 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
 
 
     useEffect(() => {
-        const fetchevaluationData = async () => {
+        const fetchEvaluationData = async () => {
             setLoading(true);
             try {
                 const companyId = getUserCompanyId();
@@ -61,8 +64,8 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
                     return;
                 }
 
-                const response = await axios.get(`${BASE_URL}/qms/evaluation/${companyId}/`);
-                setevaluations(response.data);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation/${companyId}/`);
+                setEvaluations(response.data);
                 setError(null);
             } catch (err) {
                 setError('Failed to load supplier evaluation data');
@@ -72,12 +75,9 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
             }
         };
 
-        // Fetch supplier for dropdown
-
-
-        fetchevaluationData();
-
+        fetchEvaluationData();
     }, []);
+
     // Fetch questions when modal opens
     useEffect(() => {
         if (isOpen && evaluationId) {
@@ -86,14 +86,12 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
     }, [isOpen, evaluationId]);
 
 
-
-
     const fetchQuestions = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${BASE_URL}/qms/evaluation/${evaluationId}/questions/`);
+            const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation/${evaluationId}/questions/`);
             setQuestions(response.data);
-            console.log('Fetched questionsssss:', response.data);
+            console.log('Fetched questions:', response.data);
         } catch (err) {
             console.error('Error fetching questions:', err);
             setError('Failed to load questions');
@@ -105,7 +103,7 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
 
     const handleAnswerChange = async (questionId, rating) => {
         if (selectedSupplier === 'Select Supplier') {
-            setError('Please select an supplier first');
+            setError('Please select a supplier first');
             return;
         }
 
@@ -114,7 +112,6 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
         );
         setQuestions(updatedQuestions);
 
-
         console.log("Submitting answer change with data:", {
             questionId,
             answer: rating,
@@ -122,14 +119,14 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
         });
 
         try {
-            await axios.patch(`${BASE_URL}/qms/evaluation/question/answer/${questionId}/`, {
+            await axios.patch(`${BASE_URL}/qms/supplier/evaluation/question/answer/${questionId}/`, {
                 answer: rating,
                 user_id: selectedSupplier
             });
             setShowAddRatingSuccessModal(true);
             setTimeout(() => {
                 setShowAddRatingSuccessModal(false);
-                navigate('/company/qms/list-evaluation');
+                navigate('/company/qms/lists-supplier-evaluation');
             }, 1500);
         } catch (err) {
             console.error('Error updating answer:', err);
@@ -140,7 +137,6 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
             setError('Failed to save answer');
         }
     };
-
 
 
     const combinedOptions = [...(supplierList || []), ...(users || [])].reduce((unique, item) => {
@@ -236,7 +232,7 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
 
                                         </select>
 
-                                        <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
+                                        <div className="absolute -top-[9px] right-[160px] flex items-center pr-2 pointer-events-none mt-6">
                                             <ChevronDown
                                                 size={20}
                                                 className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? 'rotate-180' : ''}`}
@@ -324,7 +320,6 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
                                     </button>
                                     <button className="save-btn duration-200"
                                         onClick={() => {
-
                                             onClose();
                                         }}
                                     >
@@ -363,7 +358,7 @@ const QuestionsModal = ({ isOpen, onClose, evaluationId }) => {
             if (evaluationId) {
                 setLoading(true);
                 try {
-                    const response = await axios.get(`${BASE_URL}/qms/evaluation/${evaluationId}/questions/`);
+                    const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation/${evaluationId}/questions/`);
                     setQuestions(response.data);
                 } catch (err) {
                     console.error('Error fetching questions:', err);
@@ -400,8 +395,8 @@ const QuestionsModal = ({ isOpen, onClose, evaluationId }) => {
 
         setLoading(true);
         try {
-            const response = await axios.post(`${BASE_URL}/qms/evaluation/question-add/`, {
-                evaluation: evaluationId,
+            const response = await axios.post(`${BASE_URL}/qms/supplier/evaluation/question-add/`, {
+                supp_evaluation: evaluationId,
                 question_text: formData.question
             });
 
@@ -410,7 +405,7 @@ const QuestionsModal = ({ isOpen, onClose, evaluationId }) => {
             setShowAddQuestionSuccessModal(true);
             setTimeout(() => {
                 setShowAddQuestionSuccessModal(false);
-                navigate("/company/qms/list-evaluation");
+                navigate("/company/qms/lists-supplier-evaluation");
             }, 1500);
             setError('');
         } catch (err) {
@@ -444,7 +439,7 @@ const QuestionsModal = ({ isOpen, onClose, evaluationId }) => {
 
         setLoading(true);
         try {
-            await axios.delete(`${BASE_URL}/qms/evaluation/question/${questionToDelete.id}/delete/`);
+            await axios.delete(`${BASE_URL}/qms/supplier/evaluation/question/${questionToDelete.id}/delete/`);
             setQuestions(questions.filter(q => q.id !== questionToDelete.id));
             setShowDeleteModal(false);
             setShowDeleteQuestionSuccessModal(true);
@@ -614,7 +609,7 @@ const QmsSupplierPerformace = () => {
 
     // Delete related modal states
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [evaluationToDelete, setSatisfactionToDelete] = useState(null);
+    const [evaluationToDelete, setEvaluationToDelete] = useState(null);
     const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -647,7 +642,7 @@ const QmsSupplierPerformace = () => {
                     return;
                 }
 
-                const response = await axios.get(`${BASE_URL}/qms/evaluation/${companyId}/`);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation/${companyId}/`);
                 setEvaluations(response.data);
                 setError(null);
             } catch (err) {
@@ -668,10 +663,10 @@ const QmsSupplierPerformace = () => {
 
     // Filter evaluations based on search term
     const filteredEvaluations = evaluations.filter(evaluation =>
-        evaluation.evaluation_title?.toLowerCase().includes(searchTerm.toLowerCase())
+        evaluation.title?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // Add new supplier evaluation evaluation
+    // Add new supplier evaluation
     const handleAddSupplierEvaluation = () => {
         navigate('/company/qms/add-supplier-evaluation');
     };
@@ -683,24 +678,24 @@ const QmsSupplierPerformace = () => {
 
     // View evaluation
     const handleView = (id) => {
-        navigate(`/company/qms/views-supplier-evaluation`);
+        navigate(`/company/qms/views-supplier-evaluation/${id}`);
     };
 
     // Edit evaluation
     const handleEdit = (id) => {
-        navigate(`/company/qms/edits-supplier-evaluation`);
+        navigate(`/company/qms/edits-supplier-evaluation/${id}`);
     };
 
     // Open delete confirmation modal
     const openDeleteModal = (evaluation) => {
-        setSatisfactionToDelete(evaluation);
+        setEvaluationToDelete(evaluation);
         setShowDeleteModal(true);
     };
 
     // Handle delete confirmation
     const confirmDelete = async () => {
         try {
-            await axios.delete(`${BASE_URL}/qms/evaluation/${evaluationToDelete.id}/update/`);
+            await axios.delete(`${BASE_URL}/qms/supplier/evaluation/${evaluationToDelete.id}/update/`);
             setEvaluations(evaluations.filter(evaluation => evaluation.id !== evaluationToDelete.id));
             setShowDeleteModal(false);
             setShowDeleteEmployeeSatisfactionSuccessModal(true);
@@ -708,7 +703,7 @@ const QmsSupplierPerformace = () => {
                 setShowDeleteEmployeeSatisfactionSuccessModal(false);
             }, 2000);
         } catch (err) {
-            console.error('Error deleting evaluation evaluation:', err);
+            console.error('Error deleting evaluation:', err);
             setShowDeleteModal(false);
             setErrorMessage('Failed to delete the evaluation');
             setShowErrorModal(true);
@@ -721,7 +716,7 @@ const QmsSupplierPerformace = () => {
     // Cancel delete
     const cancelDelete = () => {
         setShowDeleteModal(false);
-        setSatisfactionToDelete(null);
+        setEvaluationToDelete(null);
     };
 
     // Open evaluation modal
@@ -757,10 +752,6 @@ const QmsSupplierPerformace = () => {
         return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
     }
 
-    // if (error) {
-    //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-    // }
-
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header and Search Bar */}
@@ -772,7 +763,7 @@ const QmsSupplierPerformace = () => {
                         <input
                             type="text"
                             placeholder="Search..."
-                            className="bg-[#1C1C24] text-white px-[10px] h-[42px] rounded-md   border border-[#383840] outline-none"
+                            className="bg-[#1C1C24] text-white px-[10px] h-[42px] rounded-md border border-[#383840] outline-none"
                             value={searchTerm}
                             onChange={handleSearch}
                         />
@@ -820,7 +811,7 @@ const QmsSupplierPerformace = () => {
                             currentItems.map((evaluation, index) => (
                                 <tr key={evaluation.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{evaluation.evaluation_title || 'Anonymous'}</td>
+                                    <td className="px-2 add-manual-datas">{evaluation.title || 'Anonymous'}</td>
                                     <td className="px-2 add-manual-datas">{formatDate(evaluation.valid_till)}</td>
                                     <td className="px-2 add-manual-datas">
                                         <button
@@ -842,12 +833,12 @@ const QmsSupplierPerformace = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleView()}>
+                                        <button onClick={() => handleView(evaluation.id)}>
                                             <img src={viewIcon} alt="View Icon" className='action-btn' />
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleEdit()}>
+                                        <button onClick={() => handleEdit(evaluation.id)}>
                                             <img src={editIcon} alt="Edit Icon" className='action-btn' />
                                         </button>
                                     </td>

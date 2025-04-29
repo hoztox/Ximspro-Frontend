@@ -48,10 +48,7 @@ const QmsViewDraftInternalProblems = () => {
         navigate("/company/qms/draft-internal-problem");
     };
 
-    const handleEdit = () => {
-        navigate(`/company/qms/edit-draft-internal-problem/${id}`);
-    };
-
+   
   
     const handleDelete = async () => {
         try {

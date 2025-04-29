@@ -14,10 +14,9 @@ const QmsEditDraftSupplierPerformance = () => {
     const [success, setSuccess] = useState(null);
 
     const [formData, setFormData] = useState({
-        evaluation_title: '',
+        title: '',
         description: '',
         valid_till: null,
-
     });
 
     const [showEditEmployeeSatisfactionSuccessModal, setShowEditEmployeeSatisfactionSuccessModal] = useState(false);
@@ -35,17 +34,17 @@ const QmsEditDraftSupplierPerformance = () => {
     const handleFocus = (field) => setFocusedField(field);
     const handleBlur = () => setFocusedField("");
 
-    // Fetch survey data on component mount
+    // Fetch supplier evaluation data on component mount
     useEffect(() => {
-        const fetchsurveyData = async () => {
+        const fetchSupplierEvaluation = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation-get/${id}/`);
                 const data = response.data;
 
                 // Set the main form data
                 setFormData({
-                    evaluation_title: data.evaluation_title || '',
+                    title: data.title || '',
                     description: data.description || '',
                     valid_till: data.valid_till || null,
                 });
@@ -70,12 +69,12 @@ const QmsEditDraftSupplierPerformance = () => {
         };
 
         if (id) {
-            fetchsurveyData();
+            fetchSupplierEvaluation();
         }
     }, [id]);
 
     const validateForm = () => {
-        if (!formData.evaluation_title) {
+        if (!formData.title) {
             setError("Evaluation title is required");
             return false;
         }
@@ -144,18 +143,13 @@ const QmsEditDraftSupplierPerformance = () => {
         setError(null);
 
         try {
-            await axios.put(`${BASE_URL}/qms/survey/${id}/update/`, submissionData);
-            setSuccess("survey evaluation updated successfully");
-
-            // Navigate after a brief delay to show success message
-            setTimeout(() => {
-
-            }, 1500);
+            await axios.put(`${BASE_URL}/qms/supplier/evaluation/${id}/update/`, submissionData);
+            setSuccess("Supplier evaluation updated successfully");
 
             setShowEditEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowEditEmployeeSatisfactionSuccessModal(false);
-                navigate("/company/qms/lists-supplier-evaluation");
+                navigate("/company/qms/drafts-supplier-evaluation");
             }, 1500);
         } catch (err) {
             console.error("Error updating supplier evaluation:", err);
@@ -203,10 +197,10 @@ const QmsEditDraftSupplierPerformance = () => {
         );
     });
 
-    if (loading && !formData.evaluation_title) {
+    if (loading && !formData.title) {
         return (
             <div className="bg-[#1C1C24] text-white p-5 flex justify-center items-center h-screen">
-                <p>Loading survey data...</p>
+                <p>Loading supplier evaluation data...</p>
             </div>
         );
     }
@@ -238,18 +232,6 @@ const QmsEditDraftSupplierPerformance = () => {
                     }}
                 />
 
-                {/* {error && (
-                    <div className="mx-[104px] mt-4 p-3 bg-red-900/30 border border-red-500 rounded text-red-400">
-                        {error}
-                    </div>
-                )} */}
-                {/* 
-                {success && (
-                    <div className="mx-[104px] mt-4 p-3 bg-green-900/30 border border-green-500 rounded text-green-400">
-                        {success}
-                    </div>
-                )} */}
-
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -258,8 +240,8 @@ const QmsEditDraftSupplierPerformance = () => {
                             </label>
                             <input
                                 type="text"
-                                name="evaluation_title"
-                                value={formData.evaluation_title}
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
                                 className="w-full employee-performace-inputs"
                                 required
@@ -340,10 +322,6 @@ const QmsEditDraftSupplierPerformance = () => {
                                 className="w-full h-full min-h-[151px] employee-performace-inputs"
                             />
                         </div>
-
-
-
-
                     </div>
 
                     <div className="flex justify-end space-x-5 mt-5">
@@ -368,4 +346,5 @@ const QmsEditDraftSupplierPerformance = () => {
         </div>
     );
 };
-export default QmsEditDraftSupplierPerformance
+
+export default QmsEditDraftSupplierPerformance;

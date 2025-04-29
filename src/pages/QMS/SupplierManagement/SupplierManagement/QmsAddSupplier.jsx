@@ -322,6 +322,9 @@ const QmsAddSupplier = () => {
         },
       });
 
+      console.log('Drafte supp:', formData);
+      
+
       setShowDraftSuccessModal(true);
       setTimeout(() => {
         setShowDraftSuccessModal(false);

@@ -8,19 +8,20 @@ import { BASE_URL } from "../../../../Utils/Config";
 import DeleteEmployeeSatisfactionConfirmModal from '../Modals/DeleteEmployeeSatisfactionConfirmModal';
 import DeleteEmployeeSatisfactionSuccessModal from '../Modals/DeleteEmployeeSatisfactionSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
+
 const QmsDraftSupplierPerformance = () => {
     const { id } = useParams();
     const navigate = useNavigate();
 
     // State for modals
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [evaluationToDelete, setSatisfactionToDelete] = useState(null);
+    const [evaluationToDelete, setEvaluationToDelete] = useState(null);
     const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
 
     // State for data management
-    const [evaluationData, setevaluationData] = useState([]);
+    const [evaluationData, setEvaluationData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -38,13 +39,15 @@ const QmsDraftSupplierPerformance = () => {
     };
 
     useEffect(() => {
-        const fetchevaluationData = async () => {
+        const fetchEvaluationData = async () => {
             try {
                 const id = getRelevantUserId();
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/evaluation-draft/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/supplier/evaluation-draft/${id}/`);
 
-                setevaluationData(response.data);
+                // Filter evaluations where is_draft is true
+                const draftEvaluations = response.data.filter(item => item.is_draft === true);
+                setEvaluationData(draftEvaluations);
                 setError(null);
             } catch (err) {
                 setError("Failed to load draft supplier evaluation data");
@@ -54,7 +57,7 @@ const QmsDraftSupplierPerformance = () => {
             }
         };
 
-        fetchevaluationData();
+        fetchEvaluationData();
     }, []);
 
     // Handle search
@@ -62,9 +65,9 @@ const QmsDraftSupplierPerformance = () => {
         setSearchTerm(e.target.value);
     };
 
-    // Filter evaluation data based on search term
-    const filteredevaluationData = evaluationData.filter(item =>
-        (item.evaluation_title && item.evaluation_title.toLowerCase().includes(searchTerm.toLowerCase()))
+    // Filter evaluation data based on search term - now using 'title' field from model
+    const filteredEvaluationData = evaluationData.filter(item =>
+        (item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const handleCloseDraftSupplierEvaluation = () => {
@@ -82,14 +85,14 @@ const QmsDraftSupplierPerformance = () => {
 
     // Open delete confirmation modal
     const openDeleteModal = (evaluation) => {
-        setSatisfactionToDelete(evaluation);
+        setEvaluationToDelete(evaluation);
         setShowDeleteModal(true);
     };
 
     // Close delete confirmation modal
     const closeDeleteModal = () => {
         setShowDeleteModal(false);
-        setSatisfactionToDelete(null);
+        setEvaluationToDelete(null);
     };
 
     // Delete supplier evaluation
@@ -97,9 +100,9 @@ const QmsDraftSupplierPerformance = () => {
         if (!evaluationToDelete) return;
 
         try {
-            await axios.delete(`${BASE_URL}/qms/evaluation/${evaluationToDelete.id}/update/`);
+            await axios.delete(`${BASE_URL}/qms/supplier/evaluation/${evaluationToDelete.id}/update/`);
             // Remove the deleted item from state
-            setevaluationData(evaluationData.filter(item => item.id !== evaluationToDelete.id));
+            setEvaluationData(evaluationData.filter(item => item.id !== evaluationToDelete.id));
             // Close delete modal and show success modal
             setShowDeleteModal(false);
             setShowDeleteEmployeeSatisfactionSuccessModal(true);
@@ -109,7 +112,7 @@ const QmsDraftSupplierPerformance = () => {
         } catch (err) {
             // Close delete modal and show error modal
             setShowDeleteModal(false);
-            setErrorMessage("Failed to delete evaluation evaluation");
+            setErrorMessage("Failed to delete supplier evaluation");
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -121,8 +124,8 @@ const QmsDraftSupplierPerformance = () => {
     const itemsPerPage = 10;
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredevaluationData.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredevaluationData.length / itemsPerPage);
+    const currentItems = filteredEvaluationData.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredEvaluationData.length / itemsPerPage);
 
     // Format date function
     const formatDate = (dateString) => {
@@ -133,6 +136,14 @@ const QmsDraftSupplierPerformance = () => {
             month: '2-digit',
             year: 'numeric'
         }).replace(/\//g, '-');
+    };
+
+    // Truncate description for display
+    const truncateDescription = (description, maxLength = 50) => {
+        if (!description) return "No description";
+        return description.length > maxLength
+            ? `${description.substring(0, maxLength)}...`
+            : description;
     };
 
     return (
@@ -175,6 +186,7 @@ const QmsDraftSupplierPerformance = () => {
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Title</th>
+                                <th className="px-2 text-left add-manual-theads">Description</th>
                                 <th className="px-2 text-left add-manual-theads">Valid Till</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>
                                 <th className="px-2 text-center add-manual-theads">View</th>
@@ -186,7 +198,8 @@ const QmsDraftSupplierPerformance = () => {
                                 currentItems.map((item, index) => (
                                     <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                         <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                        <td className="px-2 add-manual-datas">{item.evaluation_title || "Untitled"}</td>
+                                        <td className="px-2 add-manual-datas">{item.title || "Untitled"}</td>
+                                        <td className="px-2 add-manual-datas">{truncateDescription(item.description)}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(item.valid_till)}</td>
                                         <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                                             <button onClick={() => handleEditDraft(item.id)}>
@@ -207,7 +220,7 @@ const QmsDraftSupplierPerformance = () => {
                                 ))
                             ) : (
                                 <tr className="border-b border-[#383840]">
-                                    <td colSpan="6" className="py-4 text-center not-found">No draft supplier performance evaluation found</td>
+                                    <td colSpan="7" className="py-4 text-center not-found">No draft supplier evaluations found</td>
                                 </tr>
                             )}
                         </tbody>
@@ -216,9 +229,9 @@ const QmsDraftSupplierPerformance = () => {
             )}
 
             {/* Pagination */}
-            {!loading && !error && filteredevaluationData.length > 0 && (
+            {!loading && !error && filteredEvaluationData.length > 0 && (
                 <div className="flex justify-between items-center mt-3">
-                    <div className='text-white total-text'>Total-{filteredevaluationData.length}</div>
+                    <div className='text-white total-text'>Total-{filteredEvaluationData.length}</div>
                     <div className="flex items-center gap-5">
                         <button
                             className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
@@ -276,9 +289,10 @@ const QmsDraftSupplierPerformance = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
+                errorMessage={errorMessage}
             />
         </div>
     );
 };
 
-export default QmsDraftSupplierPerformance
+export default QmsDraftSupplierPerformance;

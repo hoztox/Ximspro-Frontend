@@ -157,8 +157,9 @@ const QmsDraftEditSupplier = () => {
     const fetchDraftSupplierData = async () => {
         setFetchLoading(true);
         try {
-            const response = await axios.get(`${BASE_URL}/qms/draft-suppliers/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/suppliers/${id}/`);
             const supplierData = response.data;
+            
 
             // Extract date components
             let day = '';
@@ -364,7 +365,7 @@ const QmsDraftEditSupplier = () => {
                 return;
             }
 
-            await axios.put(`${BASE_URL}/qms/draft-suppliers/${id}/`, submissionData, {
+            await axios.put(`${BASE_URL}/qms/suppliers/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

@@ -398,7 +398,7 @@ const EditDraftQmsProcedure = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/procedure/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/procedure/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
