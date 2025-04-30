@@ -15,7 +15,7 @@ const QmsViewDraftCustomer = () => {
         const fetchDraftCustomerData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/draft-customers/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/customer/${id}/`);
                 setCustomer(response.data);
                 setLoading(false);
             } catch (err) {
@@ -32,23 +32,6 @@ const QmsViewDraftCustomer = () => {
 
     const handleClose = () => {
         navigate("/company/qms/draft-customer");
-    };
-
-    const handleEdit = (id) => {
-        navigate(`/company/qms/edit-draft-customer/${id}`);
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this draft customer?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/draft-customers/${id}/`);
-                alert("Draft customer deleted successfully");
-                navigate("/company/qms/draft-customer");
-            } catch (err) {
-                console.error("Error deleting draft customer:", err);
-                alert("Failed to delete draft customer");
-            }
-        }
     };
 
     const handleViewDocument = (url) => {
@@ -103,47 +86,53 @@ const QmsViewDraftCustomer = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            City
+                            Address
                         </label>
-                        <div className="view-employee-data">{customer.city}</div>
+                        <div className="view-employee-data">{customer.address}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Street Address
+                            City
                         </label>
-                        <div className="view-employee-data">{customer.street_address}</div>
+                        <div className="view-employee-data">{customer.city}</div>
                     </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             State
                         </label>
                         <div className="view-employee-data">{customer.state}</div>
                     </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Zip Code
+                            Zipcode
                         </label>
-                        <div className="view-employee-data">{customer.zip_code}</div>
+                        <div className="view-employee-data">{customer.zipcode}</div>
                     </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Country
                         </label>
                         <div className="view-employee-data">{customer.country}</div>
                     </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Email
                         </label>
                         <div className="view-employee-data">{customer.email}</div>
                     </div>
+                    
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Contact Person
                         </label>
                         <div className="view-employee-data">{customer.contact_person}</div>
                     </div>
+                    
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -152,14 +141,16 @@ const QmsViewDraftCustomer = () => {
                             <div className="view-employee-data">{customer.phone}</div>
                         </div>
                     </div>
+                    
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
-                                Alternative Phone
+                                Alternate Phone
                             </label>
-                            <div className="view-employee-data">{customer.alternate_phone || customer.alternative_phone}</div>
+                            <div className="view-employee-data">{customer.alternate_phone}</div>
                         </div>
                     </div>
+                    
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -168,6 +159,7 @@ const QmsViewDraftCustomer = () => {
                             <div className="view-employee-data">{customer.fax}</div>
                         </div>
                     </div>
+                    
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -176,13 +168,14 @@ const QmsViewDraftCustomer = () => {
                             <div className="view-employee-data">{customer.notes}</div>
                         </div>
                     </div>
+                    
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Document
                             </label>
                             <button 
-                              onClick={() => handleViewDocument(customer.document)} 
+                              onClick={() => handleViewDocument(customer.upload_attachment)} 
                               className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
                             >
                                 Click to view file <Eye size={18} />

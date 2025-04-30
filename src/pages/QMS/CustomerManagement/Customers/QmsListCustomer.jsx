@@ -69,39 +69,6 @@ const QmsListCustomer = () => {
       } catch (err) {
         setError("Failed to fetch customers data");
         console.error("Error fetching customers:", err);
-        // Use demo data if API fails
-        setCustomers([
-          {
-            id: 1,
-            customer_id: 1,
-            name: "Acme Corp",
-            email: "contact@acme.com",
-            contact_person: "John Doe",
-            phone: "123-456-7890",
-            address: "123 Main St",
-            city: "San Francisco",
-            state: "CA",
-            country: "USA",
-            zipcode: "94105",
-            is_draft: false,
-            date: "03-04-2025",
-          },
-          {
-            id: 2,
-            customer_id: 2,
-            name: "Tech Solutions",
-            email: "info@techsolutions.com",
-            contact_person: "Jane Smith",
-            phone: "987-654-3210",
-            address: "456 Market St",
-            city: "New York",
-            state: "NY",
-            country: "USA",
-            zipcode: "10001",
-            is_draft: true,
-            date: "03-04-2025",
-          },
-        ]);
       } finally {
         setLoading(false);
       }

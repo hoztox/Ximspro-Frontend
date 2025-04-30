@@ -7,29 +7,29 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsViewCustomerSurvey = () => {
-    const [performanceData, setPerformanceData] = useState(null);
+    const [surveyData, setSurveyData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();
 
     useEffect(() => {
-        const fetchPerformanceData = async () => {
+        const fetchSurveyData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
-                setPerformanceData(response.data);
+                const response = await axios.get(`${BASE_URL}/qms/customer/survey/-get/${id}/`);
+                setSurveyData(response.data);
                 setError(null);
             } catch (err) {
-                setError("Failed to load employee survey data");
-                console.error("Error fetching employee survey data:", err);
+                setError("Failed to load customer survey data");
+                console.error("Error fetching customer survey data:", err);
             } finally {
                 setLoading(false);
             }
         };
 
         if (id) {
-            fetchPerformanceData();
+            fetchSurveyData();
         }
     }, [id]);
 
@@ -38,18 +38,18 @@ const QmsViewCustomerSurvey = () => {
     };
 
     const handleEdit = () => {
-        navigate(`/company/qms/edit-customer-survey/${id}`);
+        navigate(`/company/qms/edits-customer-survey/${id}`);
     };
 
     const handleDelete = async () => {
         if (window.confirm("Are you sure you want to delete this Survey?")) {
             try {
-                await axios.delete(`${BASE_URL}/qms/survey/${id}/update/`);
-                alert("Performance evaluation deleted successfully");
+                await axios.delete(`${BASE_URL}/qms/customer/survey/${id}/update/`);
+                alert("Customer satisfaction survey deleted successfully");
                 navigate('/company/qms/satisfaction-survey');
             } catch (err) {
-                console.error("Error deleting performance evaluation:", err);
-                alert("Failed to delete performance evaluation");
+                console.error("Error deleting customer survey:", err);
+                alert("Failed to delete customer survey");
             }
         }
     };
@@ -77,7 +77,7 @@ const QmsViewCustomerSurvey = () => {
         );
     }
 
-    if (!performanceData) {
+    if (!surveyData) {
         return (
             <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
                 <p className="text-ms not-found">No data found</p>
@@ -102,26 +102,23 @@ const QmsViewCustomerSurvey = () => {
                     <div>
                         <label className="block view-employee-label mb-[6px]">Survey Title</label>
                         <div className="view-employee-data">
-                            {performanceData.survey_title || 'Anonymous'}
+                            {surveyData.title || 'No title provided'}
                         </div>
                     </div>
-
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">Valid Till</label>
                         <div className="view-employee-data">
-                            {formatDate(performanceData.valid_till)}
+                            {formatDate(surveyData.valid_till)}
                         </div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">Survey Description</label>
                         <div className="view-employee-data">
-                            {performanceData.description || 'No description provided'}
+                            {surveyData.description || 'No description provided'}
                         </div>
                     </div>
-
-
 
                     <div className="flex justify-end items-end space-x-10 md:col-start-2">
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
@@ -143,4 +140,5 @@ const QmsViewCustomerSurvey = () => {
         </div>
     );
 };
-export default QmsViewCustomerSurvey
+
+export default QmsViewCustomerSurvey;

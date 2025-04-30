@@ -1,33 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
- 
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../../../../Utils/Config';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
-import { useNavigate } from 'react-router-dom';
 
 const QmsDraftComplaints = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
+    // State for complaints data
+    const [complaints, setComplaints] = useState([]);
 
+    // Get user ID from localStorage
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
 
-    // Demo data
-    const [customers, setCustomers] = useState([
-        { id: 1, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: '123 Home, Bangalore', car: '123', date: '03-04-2025' },
-        { id: 2, customer: 'Anonymous', entered_by: 'user@gmail.com', executor: 'Xyz Street, Norway', car: '123', date: '03-04-2025' },
-    ]);
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    const userId = getRelevantUserId();
+
+    // Fetch complaints data
+    useEffect(() => {
+        const fetchComplaints = async () => {
+            if (!userId) {
+                setError("User ID not found");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const response = await axios.get(`${BASE_URL}/qms/complaints-draft/${userId}/`);
+                setComplaints(response.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching complaints:", err);
+                setError("Failed to fetch complaints data");
+                setLoading(false);
+            }
+        };
+
+        fetchComplaints();
+    }, [userId]);
 
     const itemsPerPage = 10;
-    const totalItems = customers.length;
+    const totalItems = complaints.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Filter items based on search query
-    const filteredItems = customers.filter(item =>
-        item.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.entered_by.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.executor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.car.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredItems = complaints.filter(item =>
+        (item.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.executor?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.no_car?.car_number || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Get current page items
@@ -39,22 +78,41 @@ const QmsDraftComplaints = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteItem = (id) => {
-        setCustomers(customers.filter(item => item.id !== id));
+    const handleDeleteItem = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/complaints/${id}/`);
+            setComplaints(complaints.filter(item => item.id !== id));
+        } catch (err) {
+            console.error("Error deleting complaint:", err);
+            alert("Failed to delete complaint");
+        }
     };
 
-     const handleClose = () => {
+    const handleClose = () => {
         navigate('/company/qms/list-complaints');
-     }
-
-
-    const handleEditDraftComplaints = () => {
-        navigate('/company/qms/edit-draft-complaints');
     };
 
-    const handleViewDraftComplaints = () => {
-        navigate('/company/qms/view-draft-complaints');
+    const handleEditDraftComplaints = (id) => {
+        navigate(`/company/qms/edit-draft-complaints/${id}`);
     };
+
+    const handleViewDraftComplaints = (id) => {
+        navigate(`/company/qms/view-draft-complaints/${id}`);
+    };
+
+    // Format date to DD-MM-YYYY
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-');
+    };
+
+    if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
+    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -76,7 +134,7 @@ const QmsDraftComplaints = () => {
 
                     <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
                         <X className="text-white" />
-                    </button> 
+                    </button>
                 </div>
             </div>
             <div className="overflow-hidden">
@@ -88,75 +146,86 @@ const QmsDraftComplaints = () => {
                             <th className="px-3 text-left list-awareness-training-thead">Entered By</th>
                             <th className="px-3 text-left list-awareness-training-thead">Executor</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[10%]">CAR</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Date</th>
                             <th className="px-3 text-left list-awareness-training-thead">Action</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {currentItems.map((item, index) => (
-                            <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
-                                <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.customer}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.entered_by}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.executor}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.car}</td>
-                                <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
-                                    <button onClick={handleEditDraftComplaints}>
-                                        Click to Continue
-                                    </button>
-                                </td>
-                                <td className="list-awareness-training-datas text-center ">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={handleViewDraftComplaints}>
-                                            <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                        {currentItems.length > 0 ? (
+                            currentItems.map((item, index) => (
+                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                    <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.customer?.name || 'Anonymous'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.user?.email || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.executor?.email || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.no_car?.car_number || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{formatDate(item.date)}</td>
+                                    <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
+                                        <button onClick={() => handleEditDraftComplaints(item.id)}>
+                                            Click to Continue
                                         </button>
-                                    </div>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <div className='flex justify-center items-center h-[50px]'>
-                                        <button onClick={() => handleDeleteItem(item.id)}>
-                                            <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
-                                        </button>
-                                    </div>
-                                </td>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center ">
+                                        <div className='flex justify-center items-center h-[50px]'>
+                                            <button onClick={() => handleViewDraftComplaints(item.id)}>
+                                                <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                                            </button>
+                                        </div>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <div className='flex justify-center items-center h-[50px]'>
+                                            <button onClick={() => handleDeleteItem(item.id)}>
+                                                <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr className="border-b border-[#383840] h-[50px]">
+                                <td colSpan="9" className="px-3 not-found text-center">No draft complaints found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
-            <div className="flex justify-between items-center mt-3">
-                <div className='text-white total-text'>Total: {totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                        disabled={currentPage === 1}
-                        onClick={() => handlePageChange(currentPage - 1)}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            {totalItems > 0 && (
+                <div className="flex justify-between items-center mt-3">
+                    <div className='text-white total-text'>Total: {totalItems}</div>
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
-                            onClick={() => handlePageChange(number)}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                        disabled={currentPage === totalPages}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                    >
-                        Next
-                    </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                            <button
+                                key={number}
+                                className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                                onClick={() => handlePageChange(number)}
+                            >
+                                {number}
+                            </button>
+                        ))}
+
+                        <button
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
-export default QmsDraftComplaints
+
+export default QmsDraftComplaints;

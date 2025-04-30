@@ -457,19 +457,19 @@ const ThemedApp = () => {
 
           <Route path="qms/add-complaints" element={<QmsAddComplaints />} />
           <Route path="qms/list-complaints" element={<QmsListComplaints />} />
-          <Route path="qms/edit-complaints" element={<QmsEditComplaints />} />
-          <Route path="qms/view-complaints" element={<QmsViewComplaints />} />
+          <Route path="qms/edit-complaints/:id" element={<QmsEditComplaints />} />
+          <Route path="qms/view-complaints/:id" element={<QmsViewComplaints />} />
           <Route path="qms/draft-complaints" element={<QmsDraftComplaints />} />
-          <Route path="qms/edit-draft-complaints" element={<QmsDraftEditComplaints />} />
-          <Route path="qms/view-draft-complaints" element={<QmsDraftViewComplaints />} />
+          <Route path="qms/edit-draft-complaints/:id" element={<QmsDraftEditComplaints />} />
+          <Route path="qms/view-draft-complaints/:id" element={<QmsDraftViewComplaints />} />
 
           <Route path="qms/list-customer-survey" element={<QmsListCustomerSurvey />} />
           <Route path="qms/add-customer-survey" element={<QmsAddCustomerSurvey />} />
-          <Route path="qms/edit-customer-survey" element={<QmsEditCustomerSurvey />} />
-          <Route path="qms/view-customer-survey" element={<QmsViewCustomerSurvey />} />
+          <Route path="qms/edits-customer-survey/:id" element={<QmsEditCustomerSurvey />} />
+          <Route path="qms/view-customer-survey/:id" element={<QmsViewCustomerSurvey />} />
           <Route path="qms/draft-customer-survey" element={<QmsDraftCustomerSurvey />} />
-          <Route path="qms/edit-draft-customer-survey" element={<QmsEditDraftCustomerSurvey />} />
-          <Route path="qms/view-draft-customer-survey" element={<QmsViewDraftCustomerSurvey />} />
+          <Route path="qms/edit-draft-customer-survey/:id" element={<QmsEditDraftCustomerSurvey />} />
+          <Route path="qms/view-draft-customer-survey/:id" element={<QmsViewDraftCustomerSurvey />} />
 
 
 

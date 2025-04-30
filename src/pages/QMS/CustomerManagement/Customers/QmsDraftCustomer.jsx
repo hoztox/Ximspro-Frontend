@@ -14,37 +14,39 @@ const QmsDraftCustomer = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
 
-    const getUserCompanyId = () => {
-        const role = localStorage.getItem("role");
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
 
-        if (role === "company") {
-            return localStorage.getItem("company_id");
-        } else if (role === "user") {
-            try {
-                const userCompanyId = localStorage.getItem("user_company_id");
-                return userCompanyId ? JSON.parse(userCompanyId) : null;
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
-                return null;
-            }
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
         }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
 
         return null;
     };
 
-    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     // Fetch customers data
     useEffect(() => {
         const fetchCustomers = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/customers-draft/${companyId}/`);
-                const formattedData = response.data.map((customer, index) => ({
+                const response = await axios.get(`${BASE_URL}/qms/customer-draft/${userId}/`);
+                const formattedData = response.data.map((customer) => ({
                     id: customer.id,
                     name: customer.name || 'Anonymous',
                     email: customer.email || 'N/A',
-                    mailing_address: customer.mailing_address || 'N/A',
+                    address: customer.address || 'N/A',
+                    city: customer.city || 'N/A',
+                    state: customer.state || 'N/A',
+                    zipcode: customer.zipcode || 'N/A',
+                    country: customer.country || 'N/A',
+                    contact_person: customer.contact_person || 'N/A',
+                    phone: customer.phone || 'N/A',
                     date: customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'
                 }));
                 setCustomers(formattedData);
@@ -58,10 +60,10 @@ const QmsDraftCustomer = () => {
             }
         };
 
-        if (companyId) {
+        if (userId) {
             fetchCustomers();
         }
-    }, [companyId]);
+    }, [userId]);
 
     // Handle search
     const handleSearchChange = (e) => {
@@ -73,7 +75,7 @@ const QmsDraftCustomer = () => {
     const handleDeleteCustomer = async (customerId) => {
         if (window.confirm('Are you sure you want to delete this draft customer?')) {
             try {
-                await axios.delete(`${BASE_URL}/qms/customers/${customerId}/`);
+                await axios.delete(`${BASE_URL}/qms/customer/${customerId}/`);
                 setCustomers(customers.filter(customer => customer.id !== customerId));
             } catch (err) {
                 console.error('Error deleting draft customer:', err);
@@ -102,9 +104,12 @@ const QmsDraftCustomer = () => {
 
     // Filter items based on search query
     const filteredItems = customers.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.mailing_address.toLowerCase().includes(searchQuery.toLowerCase())
+        item.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.contact_person?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.phone?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Get current page items
@@ -143,7 +148,7 @@ const QmsDraftCustomer = () => {
                 </div>
             </div>
 
-            <div className="overflow-hidden">
+            <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead className='bg-[#24242D]'>
                         <tr className='h-[48px]'>
@@ -163,7 +168,7 @@ const QmsDraftCustomer = () => {
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.name}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.email}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.mailing_address}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.address}</td> 
                                     <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
                                         <button onClick={() => handleEditDraftCustomer(item.id)}>
                                             Click to Continue
@@ -187,7 +192,7 @@ const QmsDraftCustomer = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="7" className="text-center py-4">No draft customers found</td>
+                                <td colSpan="11" className="text-center py-4 not-found">No draft customers found</td>
                             </tr>
                         )}
                     </tbody>

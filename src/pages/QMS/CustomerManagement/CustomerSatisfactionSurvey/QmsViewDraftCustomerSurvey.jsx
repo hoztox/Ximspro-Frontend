@@ -5,7 +5,7 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsViewDraftCustomerSurvey = () => {
-    const [surveyData, setsurveyData] = useState(null);
+    const [surveyData, setSurveyData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -13,29 +13,28 @@ const QmsViewDraftCustomerSurvey = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchsurveyData = async () => {
+        const fetchSurveyData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
-                setsurveyData(response.data);
+                const response = await axios.get(`${BASE_URL}/qms/customer/survey/-get/${id}/`);
+                setSurveyData(response.data);
                 setError(null);
             } catch (err) {
-                setError("Failed to load employee survey data");
-                console.error("Error fetching employee survey data:", err);
+                setError("Failed to load customer satisfaction survey data");
+                console.error("Error fetching customer satisfaction survey data:", err);
             } finally {
                 setLoading(false);
             }
         };
 
         if (id) {
-            fetchsurveyData();
+            fetchSurveyData();
         }
     }, [id]);
 
     const handleClose = () => {
         navigate('/company/qms/draft-customer-survey');
     };
-
 
     // Format date function
     const formatDate = (dateString) => {
@@ -78,10 +77,9 @@ const QmsViewDraftCustomerSurvey = () => {
                         <div>
                             <label className="block view-employee-label mb-[6px]">Survey Title</label>
                             <div className="view-employee-data">
-                                {surveyData.survey_title || 'No title provided'}
+                                {surveyData.title || 'No title provided'}
                             </div>
                         </div>
-
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">Valid Till</label>
@@ -96,11 +94,11 @@ const QmsViewDraftCustomerSurvey = () => {
                                 {surveyData.description || 'No description provided'}
                             </div>
                         </div>
-
                     </div>
                 </div>
             )}
         </div>
     );
 };
-export default QmsViewDraftCustomerSurvey
+
+export default QmsViewDraftCustomerSurvey;

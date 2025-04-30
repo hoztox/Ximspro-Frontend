@@ -22,141 +22,11 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [users, setUsers] = useState([]);
-  const [surveys, setsurveys] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [surveys, setSurveys] = useState([]);
 
   const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
-        );
-
-        setUsers(response.data);
-      } catch (error) {
-        console.error('Error fetching unsubmitted users:', error);
-      }
-    };
-
-    if (isOpen && surveyId) {
-      fetchUsers();
-    }
-  }, [isOpen, surveyId]);
-
-
-  useEffect(() => {
-    const fetchsurveyData = async () => {
-      setLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError('Company ID not found');
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
-        setsurveys(response.data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load customer survey data');
-        console.error('Error fetching customer survey data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Fetch customer for dropdown
-
-
-    fetchsurveyData();
-
-  }, []);
-  // Fetch questions when modal opens
-  useEffect(() => {
-    if (isOpen && surveyId) {
-      fetchQuestions();
-    }
-  }, [isOpen, surveyId]);
-
-
-
-
-  const fetchQuestions = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${BASE_URL}/qms/survey/${surveyId}/questions/`);
-      setQuestions(response.data);
-      console.log('Fetched questionsssss:', response.data);
-    } catch (err) {
-      console.error('Error fetching questions:', err);
-      setError('Failed to load questions');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const handleAnswerChange = async (questionId, rating) => {
-    if (selectedCustomer === 'Select Customer') {
-      setError('Please select an customer first');
-      return;
-    }
-
-    const updatedQuestions = questions.map(q =>
-      q.id === questionId ? { ...q, answer: rating } : q
-    );
-    setQuestions(updatedQuestions);
-
-
-    console.log("Submitting answer change with data:", {
-      questionId,
-      answer: rating,
-      user_id: selectedCustomer
-    });
-
-    try {
-      await axios.patch(`${BASE_URL}/qms/survey/question/answer/${questionId}/`, {
-        answer: rating,
-        user_id: selectedCustomer
-      });
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        navigate('/company/qms/list-satisfaction-survey');
-      }, 1500);
-    } catch (err) {
-      console.error('Error updating answer:', err);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
-      setError('Failed to save answer');
-    }
-  };
-
-
-
-  const combinedOptions = [...(customerList || []), ...(users || [])].reduce((unique, item) => {
-    const exists = unique.find(x => x.id === item.id);
-    if (!exists) {
-      unique.push(item);
-    }
-    return unique;
-  }, []);
-
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const toggleDropdown = (questionId) => {
-    setOpenDropdown(openDropdown === questionId ? null : questionId);
-  };
-
-
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
     if (role === "company") {
@@ -172,6 +42,130 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
     }
     return null;
   };
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const companyId = getUserCompanyId();
+
+        const response = await axios.get(
+          `${BASE_URL}/qms/customer/survey/${companyId}/evaluation/${surveyId}/`
+        );
+
+        setCustomers(response.data);
+        console.log('fetch customers survey:', response);
+
+      } catch (error) {
+        console.error('Error fetching unsubmitted users:', error);
+      }
+    };
+
+    if (isOpen && surveyId) {
+      fetchCustomers();
+    }
+  }, [isOpen, surveyId]);
+
+
+  useEffect(() => {
+    const fetchSurveyData = async () => {
+      setLoading(true);
+      try {
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+          setError('Company ID not found');
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/qms/customer/survey/${companyId}/`);
+        setSurveys(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load customer survey data');
+        console.error('Error fetching customer survey data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSurveyData();
+
+  }, []);
+
+  // Fetch questions when modal opens
+  useEffect(() => {
+    if (isOpen && surveyId) {
+      fetchQuestions();
+    }
+  }, [isOpen, surveyId]);
+
+
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/customer/survey/${surveyId}/questions/`);
+      setQuestions(response.data);
+      console.log('Fetched questions:', response.data);
+    } catch (err) {
+      console.error('Error fetching questions:', err);
+      setError('Failed to load questions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleAnswerChange = async (questionId, rating) => {
+    if (selectedCustomer === 'Select Customer') {
+      setError('Please select a customer first');
+      return;
+    }
+
+    const updatedQuestions = questions.map(q =>
+      q.id === questionId ? { ...q, answer: rating } : q
+    );
+    setQuestions(updatedQuestions);
+
+    console.log("Submitting answer change with data:", {
+      questionId,
+      answer: rating,
+      user_id: selectedCustomer
+    });
+
+    try {
+      await axios.patch(`${BASE_URL}/qms/customer/survey/question/answer/${questionId}/`, {
+        answer: rating,
+        user_id: selectedCustomer
+      });
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        navigate('/company/qms/list-customer-survey');
+      }, 1500);
+    } catch (err) {
+      console.error('Error updating answer:', err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError('Failed to save answer');
+    }
+  };
+
+  const combinedOptions = [...(customerList || []), ...(customers || [])].reduce((unique, item) => {
+    const exists = unique.find(x => x.id === item.id);
+    if (!exists) {
+      unique.push(item);
+    }
+    return unique;
+  }, []);
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const toggleDropdown = (questionId) => {
+    setOpenDropdown(openDropdown === questionId ? null : questionId);
+  };
+
+
 
   return (
     <AnimatePresence>
@@ -229,10 +223,9 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                         <option key={item.id} value={item.id}>
                           {item.first_name && item.last_name
                             ? `${item.first_name} ${item.last_name}`
-                            : item.first_name || item.last_name || item.username || item.email}
+                            : item.first_name || item.last_name || item.username || item.name}
                         </option>
                       ))}
-
                     </select>
 
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
@@ -323,7 +316,6 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                   </button>
                   <button className="save-btn duration-200"
                     onClick={() => {
-
                       onClose();
                     }}
                   >
@@ -342,7 +334,8 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
 const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    question: '',
+    question_text: '',
+    answer: ''
   });
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState('');
@@ -361,7 +354,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       if (surveyId) {
         setLoading(true);
         try {
-          const response = await axios.get(`${BASE_URL}/qms/survey/${surveyId}/questions/`);
+          const response = await axios.get(`${BASE_URL}/qms/customer/survey/${surveyId}/questions/`);
           setQuestions(response.data);
         } catch (err) {
           console.error('Error fetching questions:', err);
@@ -389,7 +382,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Submitting formData:', formData);
-    if (!formData.question.trim()) {
+    if (!formData.question_text.trim()) {
       setError('Question is required');
       setErrorMessage('Question is required');
       setShowErrorModal(true);
@@ -398,17 +391,18 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${BASE_URL}/qms/survey/question-add/`, {
-        survey: surveyId,
-        question_text: formData.question
+      const response = await axios.post(`${BASE_URL}/qms/customer/survey/question-add/`, {
+        customer: surveyId, // Changed from survey to customer to match model
+        question_text: formData.question_text,
+        answer: formData.answer || null // Include answer field
       });
 
       setQuestions([...questions, response.data]);
-      setFormData({ question: '' });
+      setFormData({ question_text: '', answer: '' });
       setShowAddQuestionSuccessModal(true);
       setTimeout(() => {
         setShowAddQuestionSuccessModal(false);
-        navigate("/company/qms/list-satisfaction-survey");
+        navigate("/company/qms/list-customer-survey");
       }, 1500);
       setError('');
     } catch (err) {
@@ -442,7 +436,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
 
     setLoading(true);
     try {
-      await axios.delete(`${BASE_URL}/qms/survey/question/${questionToDelete.id}/delete/`);
+      await axios.delete(`${BASE_URL}/qms/customer/survey/question/${questionToDelete.id}/delete/`);
       setQuestions(questions.filter(q => q.id !== questionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteQuestionSuccessModal(true);
@@ -464,7 +458,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   };
 
   const handleCancel = () => {
-    setFormData({ question: '' });
+    setFormData({ question_text: '', answer: '' });
     setError('');
   };
 
@@ -479,28 +473,27 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            className="bg-[#1C1C24] rounded-lg w-[528px] max-h-[505px]"
+            className="bg-[#1C1C24] rounded-lg w-[528px] max-h-[600px]"
             initial={{ scale: 0.9, y: 20 }}
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.9, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <form onSubmit={handleSubmit} className="p-5">
-              <div className="mb-5">
+              <div className="mb-4">
                 <label className="block mb-3 add-question-label">
                   Question <span className="text-red-500">*</span>
                 </label>
                 <textarea
-                  name="question"
-                  value={formData.question}
+                  name="question_text"
+                  value={formData.question_text}
                   onChange={handleChange}
-                  className="w-full bg-[#24242D] rounded-md p-3 h-[111px] text-white outline-none add-question-inputs"
+                  className="w-full bg-[#24242D] rounded-md p-3 h-[100px] text-white outline-none add-question-inputs"
                   placeholder="Add Question"
                   disabled={loading}
                 />
                 {error && <p className="text-red-500 mt-1">{error}</p>}
               </div>
-
               <div className="flex justify-end w-full">
                 <div className='flex w-[80%] gap-5'>
                   <button
@@ -535,11 +528,12 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                       <tr className='h-[48px]'>
                         <th className="px-4 add-question-theads text-left w-[10%]">No</th>
                         <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
+
                         <th className="px-4 pr-8 add-question-theads text-right">Delete</th>
                       </tr>
                     </thead>
                   </table>
-                  <div className="max-h-[148px] overflow-y-auto">
+                  <div className="max-h-[200px] overflow-y-auto">
                     <table className="w-full text-left">
                       <tbody>
                         {questions.map((question, index) => (
@@ -644,7 +638,8 @@ const QmsListCustomerSurvey = () => {
           return;
         }
 
-        const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
+        // Updated to match the model names
+        const response = await axios.get(`${BASE_URL}/qms/customer/survey/${companyId}/`);
         setSurveys(response.data);
         setError(null);
       } catch (err) {
@@ -663,9 +658,9 @@ const QmsListCustomerSurvey = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter surveys based on search term
+  // Filter surveys based on search term - updated to match model field name
   const filteredSurveys = surveys.filter(survey =>
-    survey.survey_title?.toLowerCase().includes(searchTerm.toLowerCase())
+    survey.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Add new customer survey evaluation
@@ -680,12 +675,12 @@ const QmsListCustomerSurvey = () => {
 
   // View survey
   const handleView = (id) => {
-    navigate(`/company/qms/view-customer-survey`);
+    navigate(`/company/qms/view-customer-survey/${id}`);
   };
 
   // Edit survey
   const handleEdit = (id) => {
-    navigate(`/company/qms/edit-customer-survey`);
+    navigate(`/company/qms/edits-customer-survey/${id}`);
   };
 
   // Open delete confirmation modal
@@ -694,10 +689,10 @@ const QmsListCustomerSurvey = () => {
     setShowDeleteModal(true);
   };
 
-  // Handle delete confirmation
+  // Handle delete confirmation - updated endpoint
   const confirmDelete = async () => {
     try {
-      await axios.delete(`${BASE_URL}/qms/survey/${satisfactionToDelete.id}/update/`);
+      await axios.delete(`${BASE_URL}/qms/customer/survey/${satisfactionToDelete.id}/update/`);
       setSurveys(surveys.filter(survey => survey.id !== satisfactionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteEmployeeSatisfactionSuccessModal(true);
@@ -723,14 +718,14 @@ const QmsListCustomerSurvey = () => {
 
   // Send email
   const handleSendEmail = async (surveyId) => {
-    try {
-      await axios.post(`${BASE_URL}/qms/survey/send-email/${surveyId}/`);
-      alert('Email sent successfully');
-    } catch (err) {
-      console.error('Error sending email:', err);
-      setErrorMessage('Failed to send email');
-      setShowErrorModal(true);
-    }
+    // try {
+    //   await axios.post(`${BASE_URL}/qms/customer-satisfaction/send-email/${surveyId}/`);
+    //   alert('Email sent successfully');
+    // } catch (err) {
+    //   console.error('Error sending email:', err);
+    //   setErrorMessage('Failed to send email');
+    //   setShowErrorModal(true);
+    // }
   };
 
   // Open evaluation modal
@@ -765,10 +760,6 @@ const QmsListCustomerSurvey = () => {
   if (loading) {
     return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
   }
-
-  // if (error) {
-  //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-  // }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -829,7 +820,7 @@ const QmsListCustomerSurvey = () => {
               currentItems.map((survey, index) => (
                 <tr key={survey.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                   <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                  <td className="px-2 add-manual-datas">{survey.survey_title || 'Anonymous'}</td>
+                  <td className="px-2 add-manual-datas">{survey.title || 'Anonymous'}</td>
                   <td className="px-2 add-manual-datas">{formatDate(survey.valid_till)}</td>
                   <td className="px-2 add-manual-datas">
                     <button
@@ -859,12 +850,12 @@ const QmsListCustomerSurvey = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleView()}>
+                    <button onClick={() => handleView(survey.id)}>
                       <img src={viewIcon} alt="View Icon" className='action-btn' />
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleEdit()}>
+                    <button onClick={() => handleEdit(survey.id)}>
                       <img src={editIcon} alt="Edit Icon" className='action-btn' />
                     </button>
                   </td>

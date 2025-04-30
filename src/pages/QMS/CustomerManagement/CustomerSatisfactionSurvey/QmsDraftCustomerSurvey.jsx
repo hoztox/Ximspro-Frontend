@@ -21,7 +21,7 @@ const QmsDraftCustomerSurvey = () => {
     const [errorMessage, setErrorMessage] = useState("");
 
     // State for data management
-    const [surveyData, setsurveyData] = useState([]);
+    const [surveyData, setSurveyData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -39,23 +39,23 @@ const QmsDraftCustomerSurvey = () => {
     };
 
     useEffect(() => {
-        const fetchsurveyData = async () => {
+        const fetchSurveyData = async () => {
             try {
                 const id = getRelevantUserId();
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-draft/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/customer/survey-draft/${id}/`);
 
-                setsurveyData(response.data);
+                setSurveyData(response.data);
                 setError(null);
             } catch (err) {
-                setError("Failed to load draft employee survey data");
-                console.error("Error fetching draft employee survey data:", err);
+                setError("Failed to load draft customer satisfaction survey data");
+                console.error("Error fetching draft customer satisfaction survey data:", err);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchsurveyData();
+        fetchSurveyData();
     }, []);
 
     // Handle search
@@ -64,8 +64,8 @@ const QmsDraftCustomerSurvey = () => {
     };
 
     // Filter survey data based on search term
-    const filteredsurveyData = surveyData.filter(item =>
-        (item.survey_title && item.survey_title.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filteredSurveyData = surveyData.filter(item =>
+        (item.title && item.title.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const handleCloseDraftCustomerSurvey = () => {
@@ -76,7 +76,7 @@ const QmsDraftCustomerSurvey = () => {
         navigate(`/company/qms/view-draft-customer-survey/${id}`);
     };
 
-    // Edit employee
+    // Edit survey
     const handleEditDraft = (id) => {
         navigate(`/company/qms/edit-draft-customer-survey/${id}`);
     };
@@ -93,14 +93,14 @@ const QmsDraftCustomerSurvey = () => {
         setSatisfactionToDelete(null);
     };
 
-    // Delete employee survey
+    // Delete customer satisfaction survey
     const confirmDelete = async () => {
         if (!satisfactionToDelete) return;
 
         try {
-            await axios.delete(`${BASE_URL}/qms/survey/${satisfactionToDelete.id}/update/`);
+            await axios.delete(`${BASE_URL}/qms/customer/survey/${satisfactionToDelete.id}/update/`);
             // Remove the deleted item from state
-            setsurveyData(surveyData.filter(item => item.id !== satisfactionToDelete.id));
+            setSurveyData(surveyData.filter(item => item.id !== satisfactionToDelete.id));
             // Close delete modal and show success modal
             setShowDeleteModal(false);
             setShowDeleteEmployeeSatisfactionSuccessModal(true);
@@ -110,7 +110,7 @@ const QmsDraftCustomerSurvey = () => {
         } catch (err) {
             // Close delete modal and show error modal
             setShowDeleteModal(false);
-            setErrorMessage("Failed to delete survey evaluation");
+            setErrorMessage("Failed to delete customer satisfaction survey");
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -122,8 +122,8 @@ const QmsDraftCustomerSurvey = () => {
     const itemsPerPage = 10;
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = filteredsurveyData.slice(indexOfFirstItem, indexOfLastItem);
-    const totalPages = Math.ceil(filteredsurveyData.length / itemsPerPage);
+    const currentItems = filteredSurveyData.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(filteredSurveyData.length / itemsPerPage);
 
     // Format date function
     const formatDate = (dateString) => {
@@ -187,7 +187,7 @@ const QmsDraftCustomerSurvey = () => {
                                 currentItems.map((item, index) => (
                                     <tr key={item.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                         <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                        <td className="px-2 add-manual-datas">{item.survey_title || "Untitled"}</td>
+                                        <td className="px-2 add-manual-datas">{item.title || "Untitled"}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(item.valid_till)}</td>
                                         <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                                             <button onClick={() => handleEditDraft(item.id)}>
@@ -217,9 +217,9 @@ const QmsDraftCustomerSurvey = () => {
             )}
 
             {/* Pagination */}
-            {!loading && !error && filteredsurveyData.length > 0 && (
+            {!loading && !error && filteredSurveyData.length > 0 && (
                 <div className="flex justify-between items-center mt-3">
-                    <div className='text-white total-text'>Total-{filteredsurveyData.length}</div>
+                    <div className='text-white total-text'>Total-{filteredSurveyData.length}</div>
                     <div className="flex items-center gap-5">
                         <button
                             className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
@@ -282,4 +282,4 @@ const QmsDraftCustomerSurvey = () => {
     );
 };
 
-export default QmsDraftCustomerSurvey
+export default QmsDraftCustomerSurvey;

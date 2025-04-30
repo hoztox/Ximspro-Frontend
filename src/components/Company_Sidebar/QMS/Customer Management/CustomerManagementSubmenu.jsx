@@ -66,7 +66,7 @@ const CustomerManagementSubmenu = (props) => {
             path: "/company/qms/list-customer-survey",
             relatedPaths: [
                 "/company/qms/add-customer-survey",
-                "/company/qms/edit-customer-survey",
+                "/company/qms/edits-customer-survey",
                 "/company/qms/view-customer-survey",
                 "/company/qms/draft-customer-survey",
                 "/company/qms/edit-draft-customer-survey",

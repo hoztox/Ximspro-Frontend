@@ -9,14 +9,13 @@ import DraftEmployeeSatisfactionSuccessModal from '../Modals/DraftEmployeeSatisf
 
 const QmsAddCustomerSurvey = () => {
     const [formData, setFormData] = useState({
-        survey_title: '',
+        title: '',
         description: '',
         valid_till: {
             day: '',
             month: '',
             year: ''
         },
-
     });
 
     const [showAddEmployeeSatisfactionSuccessModal, setShowAddEmployeeSatisfactionSuccessModal] = useState(false);
@@ -99,8 +98,8 @@ const QmsAddCustomerSurvey = () => {
     // Validate the form data
     const validateForm = () => {
         const newErrors = {};
-        if (!formData.survey_title.trim()) {
-            newErrors.survey_title = 'survey title is required';
+        if (!formData.title.trim()) {
+            newErrors.title = 'Survey title is required';
         }
 
         // Validate date if any part is filled
@@ -135,7 +134,7 @@ const QmsAddCustomerSurvey = () => {
         const submissionData = new FormData();
         submissionData.append('company', companyId);
         submissionData.append('user', userId);
-        submissionData.append('survey_title', formData.survey_title);
+        submissionData.append('title', formData.title);
         submissionData.append('description', formData.description || '');
 
         // Format and append valid_till date if all parts are filled
@@ -169,11 +168,14 @@ const QmsAddCustomerSurvey = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/survey/create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/customer/survey/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
+
+            console.log('customer syrvey:', submissionData);
+            
 
             setShowAddEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
@@ -186,7 +188,7 @@ const QmsAddCustomerSurvey = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            setError(error.response?.data?.message || 'Failed to save   Satisfaction Survey. Please try again.');
+            setError(error.response?.data?.message || 'Failed to save Customer Satisfaction Survey. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -203,7 +205,7 @@ const QmsAddCustomerSurvey = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/survey/draft-create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/customer/survey/draft-create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -212,7 +214,7 @@ const QmsAddCustomerSurvey = () => {
             setShowDraftEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowDraftEmployeeSatisfactionSuccessModal(false);
-                navigate('/company/qms/draft-satisfaction-survey');
+                navigate('/company/qms/draft-customer-survey');
             }, 1500);
         } catch (err) {
             setDraftLoading(false);
@@ -294,12 +296,6 @@ const QmsAddCustomerSurvey = () => {
                     }}
                 />
 
-                {/* {error && (
-                    <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 my-3 rounded mx-[104px]">
-                        {error}
-                    </div>
-                )} */}
-
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -308,14 +304,14 @@ const QmsAddCustomerSurvey = () => {
                             </label>
                             <input
                                 type="text"
-                                name="survey_title"
-                                value={formData.survey_title}
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
-                                className={`w-full employee-performace-inputs ${errors.survey_title ? 'border-red-500' : ''}`}
+                                className={`w-full employee-performace-inputs ${errors.title ? 'border-red-500' : ''}`}
                                 required
                             />
-                            {errors.survey_title && (
-                                <p className="text-red-500 text-sm mt-1">{errors.survey_title}</p>
+                            {errors.title && (
+                                <p className="text-red-500 text-sm mt-1">{errors.title}</p>
                             )}
                         </div>
 
@@ -399,8 +395,6 @@ const QmsAddCustomerSurvey = () => {
 
                     </div>
 
-
-
                     <div className="flex justify-between space-x-5 mt-5">
                         <div>
                             <button
@@ -435,4 +429,4 @@ const QmsAddCustomerSurvey = () => {
     );
 };
 
-export default QmsAddCustomerSurvey
+export default QmsAddCustomerSurvey;

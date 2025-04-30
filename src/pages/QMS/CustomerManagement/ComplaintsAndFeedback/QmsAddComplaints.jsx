@@ -1,43 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import CategoryModal from '../CategoryModal';
 import AddCarNumberModal from '../AddCarNumberModal';
-
 
 const QmsAddComplaints = () => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCarModalOpen, setIsCarModalOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [carNumbers, setCarNumbers] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
+  const [error, setError] = useState(null);
+
   const [formData, setFormData] = useState({
-    category: 'Internal',
+    customer: '',
     details: '',
-    immediate_action: '',
-    name: '',
-    solved: '',
-    date: {
-      day: '',
-      month: '',
-      year: ''
-    },
-    correctiveAction: '',
+    executor: '',
     corrections: '',
-    carnumber: '',
-    cars: [],
-    send_notification: false
+    solved_after_action: '',
+    category: '',
+    immediate_action: '',
+    date: null,
+    corrective_action_need: '',
+    no_car: '',
+    upload_attachment: null,
+    is_draft: false
+  });
+
+  const [dateValues, setDateValues] = useState({
+    day: '',
+    month: '',
+    year: ''
   });
 
   const [focusedDropdown, setFocusedDropdown] = useState(null);
 
+  const getUserCompanyId = () => {
+    const role = localStorage.getItem("role");
+
+    if (role === "company") {
+      return localStorage.getItem("company_id");
+    } else if (role === "user") {
+      try {
+        const userCompanyId = localStorage.getItem("user_company_id");
+        return userCompanyId ? JSON.parse(userCompanyId) : null;
+      } catch (e) {
+        console.error("Error parsing user company ID:", e);
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const companyId = getUserCompanyId();
+
+  useEffect(() => {
+    if (companyId) {
+      fetchCategories();
+    }
+  }, [companyId]);
+
+  const fetchCategories = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/category/company/${companyId}/`);
+      setCategories(response.data);
+      console.log('categories:', response);
+    } catch (err) {
+      console.error("Error fetching categories:", err);
+      setError("Failed to load categories. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get(
+          `${BASE_URL}/qms/customer/company/${companyId}/`
+        );
+        setCustomers(response.data);
+      } catch (err) {
+        setError("Failed to fetch customers data");
+        console.error("Error fetching customers:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (companyId) {
+      fetchCustomers();
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    const fetchCarNumbers = async () => {
+      try {
+        if (!companyId) {
+          setError('Company ID not found. Please log in again.');
+          return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
+        setCarNumbers(response.data);
+      } catch (err) {
+        console.error("Error fetching CAR numbers:", err);
+        setError("Failed to load CAR numbers. Please check your connection and try again.");
+      }
+    };
+
+    if (companyId) {
+      fetchCarNumbers();
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    if (companyId) {
+      fetchUsers();
+    }
+  }, [companyId]);
+
+  const fetchUsers = async () => {
+    try {
+      if (!companyId) return;
+
+      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+
+      if (Array.isArray(response.data)) {
+        setUsers(response.data);
+      } else {
+        setUsers([]);
+        console.error("Unexpected response format:", response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setError("Failed to load users. Please check your connection and try again.");
+    }
+  };
+
   const handleListComplaints = () => {
-    navigate('/company/qms/list-complaints')
-  }
+    navigate('/company/qms/list-complaints');
+  };
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type, checked, files } = e.target;
 
-    // Handle checkboxes
     if (type === 'checkbox') {
       setFormData({
         ...formData,
@@ -46,22 +163,48 @@ const QmsAddComplaints = () => {
       return;
     }
 
-    // Handle nested objects
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+    if (type === 'file') {
       setFormData({
         ...formData,
-        [parent]: {
-          ...formData[parent],
-          [child]: value
-        }
+        upload_attachment: files[0]
       });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
+      return;
     }
+
+    if (name.startsWith('date.')) {
+      const datePart = name.split('.')[1];
+      setDateValues(prev => ({
+        ...prev,
+        [datePart]: value
+      }));
+
+      const updatedDateValues = {
+        ...dateValues,
+        [datePart]: value
+      };
+
+      if (updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
+        const formattedDate = `${updatedDateValues.year}-${updatedDateValues.month}-${updatedDateValues.day}`;
+        setFormData(prev => ({
+          ...prev,
+          date: formattedDate
+        }));
+      }
+      return;
+    }
+
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
+  const handleCategoryChange = (e) => {
+    const { value } = e.target;
+    setFormData({
+      ...formData,
+      category: [parseInt(value)]
+    });
   };
 
   const handleOpenCarModal = () => {
@@ -72,49 +215,116 @@ const QmsAddComplaints = () => {
     setIsCarModalOpen(false);
   };
 
-  const handleAddCar = (cars) => {
-    setFormData({
-      ...formData,
-      cars: cars
-    });
-
-  };
-
-
   const handleOpenModal = () => {
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    fetchCategories();
   };
 
-  const handleAddCategory = (category) => {
-    setFormData({
-      ...formData,
-      category: category
-    });
+  const handleSaveDraft = async () => {
+    try {
+      setDraftLoading(true);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('customer', formData.customer);
+      formDataToSend.append('details', formData.details || '');
+      formDataToSend.append('executor', formData.executor || '');
+      formDataToSend.append('corrections', formData.corrections || '');
+      formDataToSend.append('solved_after_action', formData.solved_after_action || 'Yes');
+      formDataToSend.append('immediate_action', formData.immediate_action || '');
+      if (formData.date) {
+        formDataToSend.append('date', formData.date);
+      }
+      formDataToSend.append('corrective_action_need', formData.corrective_action_need || 'Yes');
+      if (formData.no_car) {
+        formDataToSend.append('no_car', formData.no_car);
+      }
+      formDataToSend.append('is_draft', true); // Mark as draft
+      formDataToSend.append('company', companyId);
+      formData.category.forEach(catId => {
+        formDataToSend.append('category', catId);
+      });
+      if (formData.upload_attachment) {
+        formDataToSend.append('upload_attachment', formData.upload_attachment);
+      }
+
+      // Use the draft-specific endpoint
+      const response = await axios.post(
+        `${BASE_URL}/qms/complaints/draft-create/`,
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Draft saved successfully:', response.data);
+      navigate('/company/qms/list-complaints');
+    } catch (err) {
+      console.error('Error saving draft:', err);
+      setError('Failed to save draft. Please check your inputs and try again.');
+    } finally {
+      setDraftLoading(false);
+    }
   };
 
-  const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      attachment: e.target.files[0]
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log('Form data submitted:', formData);
-    // Here you would typically send the data to your backend
+    try {
+      setLoading(true);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('customer', formData.customer);
+      formDataToSend.append('details', formData.details || '');
+      formDataToSend.append('executor', formData.executor || '');
+      formDataToSend.append('corrections', formData.corrections || '');
+      formDataToSend.append('solved_after_action', formData.solved_after_action || 'Yes');
+      formDataToSend.append('immediate_action', formData.immediate_action || '');
+      if (formData.date) {
+        formDataToSend.append('date', formData.date);
+      }
+      formDataToSend.append('corrective_action_need', formData.corrective_action_need || 'Yes');
+      if (formData.no_car) {
+        formDataToSend.append('no_car', formData.no_car);
+      }
+      formDataToSend.append('is_draft', false); // Not a draft
+      formDataToSend.append('company', companyId);
+      formData.category.forEach(catId => {
+        formDataToSend.append('category', catId);
+      });
+      if (formData.upload_attachment) {
+        formDataToSend.append('upload_attachment', formData.upload_attachment);
+      }
+
+      // Use the regular complaints endpoint
+      const response = await axios.post(
+        `${BASE_URL}/qms/complaints/create/`,
+        formDataToSend,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      console.log('Complaint submitted successfully:', response.data);
+      navigate('/company/qms/list-complaints');
+    } catch (err) {
+      console.error('Error submitting complaint:', err);
+      setError('Failed to submit complaint. Please check your inputs and try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    navigate('/company/qms/list-complaints')
+    navigate('/company/qms/list-complaints');
   };
 
-  // Generate options for dropdowns
   const generateOptions = (start, end, prefix = '') => {
     const options = [];
     for (let i = start; i <= end; i++) {
@@ -131,84 +341,96 @@ const QmsAddComplaints = () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-
         <CategoryModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onAddCause={handleAddCategory}
         />
 
         <AddCarNumberModal
           isOpen={isCarModalOpen}
           onClose={handleCloseCarModal}
-          onAddCause={handleAddCar}
+          onAddCause={(cars) => console.log("CAR numbers added:", cars)}
         />
-
 
         <h1 className="add-training-head">Add Complaints and Feedbacks</h1>
         <button
           type="button"
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-          onClick={() => handleListComplaints()}
+          onClick={handleListComplaints}
         >
           List Complaints and Feedbacks
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
-
         <div className="flex flex-col gap-5">
           <div className='flex flex-col gap-3 relative'>
             <label className="add-training-label">
-              Name <span className="text-red-500">*</span>
+              Customer <span className="text-red-500">*</span>
             </label>
             <select
-              name="name"
-              value={formData.name}
+              name="customer"
+              value={formData.customer}
               onChange={handleChange}
-              onFocus={() => setFocusedDropdown("name")}
+              onFocus={() => setFocusedDropdown("customer")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
               required
             >
               <option value="" disabled>Select</option>
-              <option value="User1">User 1</option>
-              <option value="User2">User 2</option>
+              {customers.map(customer => (
+                <option key={customer.id} value={customer.id.toString()}>
+                  {customer.name}
+                </option>
+              ))}
+              {customers.length === 0 && !loading && (
+                <option value="" disabled>No customers available</option>
+              )}
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "name" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
           </div>
         </div>
 
-
         <div className="flex flex-col gap-3 relative">
           <div className='flex justify-between'>
-            <label className="add-training-label">Category <span className="text-red-500">*</span></label>
-
+            <label className="add-training-label">
+              Category <span className="text-red-500">*</span>
+            </label>
           </div>
           <div className="relative">
             <select
               name="category"
-              value={formData.category}
-              onChange={handleChange}
+              value={formData.category[0] || ''}
+              onChange={handleCategoryChange}
               onFocus={() => setFocusedDropdown("category")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              required
+              disabled={loading}
             >
-              <option value="Internal">Internal</option>
-              <option value="External">External</option>
+              <option value="" disabled>Select Category</option>
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.title}
+                </option>
+              ))}
+              {categories.length === 0 && !loading && (
+                <option value="" disabled>No categories available</option>
+              )}
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                             ${focusedDropdown === "category" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "category" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
           </div>
+          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           <button
             type="button"
             className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
@@ -227,7 +449,6 @@ const QmsAddComplaints = () => {
             value={formData.details}
             onChange={handleChange}
             className="add-training-inputs !h-[98px]"
-            required
           />
         </div>
 
@@ -238,8 +459,7 @@ const QmsAddComplaints = () => {
             value={formData.immediate_action}
             onChange={handleChange}
             className="add-training-inputs !h-[98px]"
-          >
-          </textarea>
+          />
         </div>
 
         <div className='flex flex-col gap-3 relative'>
@@ -253,28 +473,33 @@ const QmsAddComplaints = () => {
             onFocus={() => setFocusedDropdown("executor")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>Select User</option>
-            <option value="User1">User 1</option>
-            <option value="User2">User 2</option>
+            {users.length > 0 ? (
+              users.map(user => (
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name}
+                </option>
+              ))
+            ) : (
+              <option disabled>Loading users...</option>
+            )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
             size={20}
             color="#AAAAAA"
           />
         </div>
+
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Date</label>
           <div className="grid grid-cols-3 gap-5">
-
-            {/* Day */}
             <div className="relative">
               <select
                 name="date.day"
-                value={formData.date.day}
+                value={dateValues.day}
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("date.day")}
                 onBlur={() => setFocusedDropdown(null)}
@@ -285,17 +510,16 @@ const QmsAddComplaints = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
+                    ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Month */}
             <div className="relative">
               <select
                 name="date.month"
-                value={formData.date.month}
+                value={dateValues.month}
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("date.month")}
                 onBlur={() => setFocusedDropdown(null)}
@@ -306,17 +530,16 @@ const QmsAddComplaints = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
+                    ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Year */}
             <div className="relative">
               <select
                 name="date.year"
-                value={formData.date.year}
+                value={dateValues.year}
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("date.year")}
                 onBlur={() => setFocusedDropdown(null)}
@@ -327,7 +550,7 @@ const QmsAddComplaints = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
+                    ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -338,34 +561,33 @@ const QmsAddComplaints = () => {
         <div className="flex flex-col gap-3 relative">
           <label className="add-training-label">Solved After Action?</label>
           <select
-            name="solved"
-            value={formData.solved}
+            name="solved_after_action"
+            value={formData.solved_after_action}
             onChange={handleChange}
-            onFocus={() => setFocusedDropdown("solved")}
+            onFocus={() => setFocusedDropdown("solved_after_action")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
           >
             <option value="" disabled>Select</option>
             <option value="Yes">Yes</option>
             <option value="No">No</option>
-
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "solved" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "solved_after_action" ? "rotate-180" : ""}`}
             size={20}
             color="#AAAAAA"
           />
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">Corrective Action Needed ?</label>
+          <label className="add-training-label">Corrective Action Needed?</label>
           <div className="relative">
             <select
-              name="correctiveAction"
-              value={formData.correctiveAction}
+              name="corrective_action_need"
+              value={formData.corrective_action_need}
               onChange={handleChange}
-              onFocus={() => setFocusedDropdown("correctiveAction")}
+              onFocus={() => setFocusedDropdown("corrective_action_need")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
             >
@@ -375,7 +597,7 @@ const QmsAddComplaints = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                             ${focusedDropdown === "correctiveAction" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "corrective_action_need" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
@@ -383,7 +605,7 @@ const QmsAddComplaints = () => {
         </div>
 
         {/* Conditionally render Corrections and CAR Number fields */}
-        {formData.correctiveAction === 'Yes' && (
+        {formData.corrective_action_need === 'Yes' && (
           <>
             <div className="flex flex-col gap-3">
               <label className="add-training-label">
@@ -401,18 +623,27 @@ const QmsAddComplaints = () => {
             <div className="flex flex-col gap-3 relative">
               <label className="add-training-label">CAR Number</label>
               <select
-                name="carnumber"
-                value={formData.carnumber}
+                name="no_car"
+                value={formData.no_car}
                 onChange={handleChange}
-                onFocus={() => setFocusedDropdown("carnumber")}
+                onFocus={() => setFocusedDropdown("no_car")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
               >
                 <option value="" disabled>Select</option>
+                {carNumbers && carNumbers.length > 0 ? (
+                  carNumbers.map(car => (
+                    <option key={car.id} value={car.id}>
+                      {car.action_no || car.car_no}
+                    </option>
+                  ))
+                ) : (
+                  <option value="" disabled>No CAR numbers available</option>
+                )}
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[45%] transform transition-transform duration-300 
-                             ${focusedDropdown === "carnumber" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "no_car" ? "rotate-180" : ""}`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -433,7 +664,7 @@ const QmsAddComplaints = () => {
             <input
               type="file"
               id="file-upload"
-              onChange={handleFileChange}
+              onChange={handleChange}
               className="hidden"
             />
             <label
@@ -444,10 +675,10 @@ const QmsAddComplaints = () => {
               <img src={file} alt="" />
             </label>
           </div>
-          {formData.attachment && (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
+          {formData.upload_attachment && (
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.upload_attachment.name}</p>
           )}
-          {!formData.attachment && (
+          {!formData.upload_attachment && (
             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
           )}
         </div>
@@ -458,8 +689,10 @@ const QmsAddComplaints = () => {
             <button
               type="button"
               className='request-correction-btn duration-200'
+              onClick={handleSaveDraft}
+              disabled={draftLoading}
             >
-              Save as Draft
+              {draftLoading ? 'Saving...' : 'Save as Draft'}
             </button>
           </div>
           <div className='flex gap-5'>
@@ -467,14 +700,16 @@ const QmsAddComplaints = () => {
               type="button"
               onClick={handleCancel}
               className="cancel-btn duration-200"
+              disabled={loading || draftLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="save-btn duration-200"
+              disabled={loading || draftLoading}
             >
-              Save
+              {loading ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>

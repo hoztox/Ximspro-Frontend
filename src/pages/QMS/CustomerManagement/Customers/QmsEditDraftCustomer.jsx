@@ -7,7 +7,9 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import axios from 'axios';
 
 const QmsEditDraftCustomer = () => {
-    const { id } = useParams(); // Get ID from URL parameters
+    const { id } = useParams();
+    console.log('aaaa:',id);
+    
     const navigate = useNavigate();
     
     // Convert countries object to a sorted array of country names
@@ -18,16 +20,16 @@ const QmsEditDraftCustomer = () => {
     const [formData, setFormData] = useState({
         name: '',
         city: '',
-        street_address: '',
+        address: '', // Changed from street_address to address to match the model
         state: '',
-        zip_code: '',
+        zipcode: '', // Changed from zip_code to zipcode to match the model
         country: '',
         email: '',
         contact_person: '',
         phone: '',
         alternate_phone: '',
         notes: '',
-        attachment: null,
+        upload_attachment: null, // Changed from attachment to upload_attachment to match the model
         fax: '',
     });
 
@@ -88,15 +90,15 @@ const QmsEditDraftCustomer = () => {
     const fetchDraftCustomerData = async () => {
         setFetchLoading(true);
         try {
-            const response = await axios.get(`${BASE_URL}/qms/draft-customers/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/customer/${id}/`);
             const draftCustomerData = response.data;
 
             // Set the file information if available
-            if (draftCustomerData.attachment) {
-                const fileName = draftCustomerData.attachment.split('/').pop();
+            if (draftCustomerData.upload_attachment) { // Changed from attachment to upload_attachment
+                const fileName = draftCustomerData.upload_attachment.split('/').pop();
                 setAttachmentFile({
                     name: fileName,
-                    url: draftCustomerData.attachment
+                    url: draftCustomerData.upload_attachment
                 });
             }
 
@@ -104,9 +106,9 @@ const QmsEditDraftCustomer = () => {
             setFormData({
                 name: draftCustomerData.name || '',
                 city: draftCustomerData.city || '',
-                street_address: draftCustomerData.street_address || '',
+                address: draftCustomerData.address || '', // Changed from street_address to address
                 state: draftCustomerData.state || '',
-                zip_code: draftCustomerData.zip_code || '',
+                zipcode: draftCustomerData.zipcode || '', // Changed from zip_code to zipcode
                 country: draftCustomerData.country || '',
                 email: draftCustomerData.email || '',
                 contact_person: draftCustomerData.contact_person || '',
@@ -114,7 +116,7 @@ const QmsEditDraftCustomer = () => {
                 alternate_phone: draftCustomerData.alternate_phone || '',
                 notes: draftCustomerData.notes || '',
                 fax: draftCustomerData.fax || '',
-                // attachment is handled separately
+                // upload_attachment is handled separately
             });
 
         } catch (error) {
@@ -147,7 +149,7 @@ const QmsEditDraftCustomer = () => {
         if (file) {
             setFormData({
                 ...formData,
-                attachment: file
+                upload_attachment: file // Changed from attachment to upload_attachment
             });
             setAttachmentFile({
                 name: file.name,
@@ -187,9 +189,9 @@ const QmsEditDraftCustomer = () => {
         submissionData.append('user', userId);
         submissionData.append('name', formData.name);
         submissionData.append('city', formData.city || '');
-        submissionData.append('street_address', formData.street_address || '');
+        submissionData.append('address', formData.address || ''); // Changed from street_address to address
         submissionData.append('state', formData.state || '');
-        submissionData.append('zip_code', formData.zip_code || '');
+        submissionData.append('zipcode', formData.zipcode || ''); // Changed from zip_code to zipcode
         submissionData.append('country', formData.country || '');
         submissionData.append('email', formData.email || '');
         submissionData.append('contact_person', formData.contact_person || '');
@@ -199,8 +201,8 @@ const QmsEditDraftCustomer = () => {
         submissionData.append('fax', formData.fax || '');
 
         // Append file attachment if present and it's a new file (not a string URL)
-        if (formData.attachment && typeof formData.attachment !== 'string') {
-            submissionData.append('attachment', formData.attachment);
+        if (formData.upload_attachment && typeof formData.upload_attachment !== 'string') { // Changed from attachment to upload_attachment
+            submissionData.append('upload_attachment', formData.upload_attachment); // Changed from attachment to upload_attachment
         }
 
         return submissionData;
@@ -225,7 +227,7 @@ const QmsEditDraftCustomer = () => {
                 return;
             }
 
-            await axios.put(`${BASE_URL}/qms/draft-customers/${id}/`, submissionData, {
+            await axios.put(`${BASE_URL}/qms/customer/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -330,11 +332,11 @@ const QmsEditDraftCustomer = () => {
 
                 <div className="flex flex-col gap-3 col-span-2">
                     <label className="add-training-label">
-                        Street Address
+                        Address
                     </label>
                     <textarea
-                        name="street_address"
-                        value={formData.street_address}
+                        name="address" // Changed from street_address to address
+                        value={formData.address} // Changed from street_address to address
                         onChange={handleChange}
                         className="add-training-inputs !h-[84px]"
                     />
@@ -359,8 +361,8 @@ const QmsEditDraftCustomer = () => {
                     </label>
                     <input
                         type="text"
-                        name="zip_code"
-                        value={formData.zip_code}
+                        name="zipcode" // Changed from zip_code to zipcode
+                        value={formData.zipcode} // Changed from zip_code to zipcode
                         onChange={handleChange}
                         className="add-training-inputs"
                     />

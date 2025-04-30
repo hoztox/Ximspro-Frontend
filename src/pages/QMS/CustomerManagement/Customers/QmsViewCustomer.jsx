@@ -12,12 +12,12 @@ const QmsViewCustomer = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();
-    
+
     useEffect(() => {
         const fetchCustomerData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/customers/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/customer/${id}/`);
                 setCustomer(response.data);
                 setLoading(false);
             } catch (err) {
@@ -43,7 +43,7 @@ const QmsViewCustomer = () => {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this customer?")) {
             try {
-                await axios.delete(`${BASE_URL}/qms/customers/${id}/`);
+                await axios.delete(`${BASE_URL}/qms/customer/${id}/`);
                 alert("Customer deleted successfully");
                 navigate("/company/qms/list-customer");
             } catch (err) {
@@ -112,9 +112,9 @@ const QmsViewCustomer = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Street Address
+                            Address
                         </label>
-                        <div className="view-employee-data">{customer.street_address}</div>
+                        <div className="view-employee-data">{customer.address}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
@@ -124,9 +124,9 @@ const QmsViewCustomer = () => {
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                           Zip Code
+                            Zipcode
                         </label>
-                        <div className="view-employee-data">{customer.zip_code}</div>
+                        <div className="view-employee-data">{customer.zipcode}</div>
                     </div>
                     <div>
                         <label className="block view-employee-label mb-[6px]">
@@ -183,14 +183,23 @@ const QmsViewCustomer = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Document
                             </label>
-                           <button 
-                             onClick={() => handleViewDocument(customer.document)} 
-                             className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
-                           >
-                            Click to view file <Eye size={18}/>
-                           </button>
+                            <button
+                                onClick={() => handleViewDocument(customer.upload_attachment)}
+                                className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                            >
+                                Click to view file <Eye size={18} />
+                            </button>
                         </div>
                     </div>
+
+                    {customer.is_draft && (
+                        <div>
+                            <label className="block view-employee-label mb-[6px]">
+                                Status
+                            </label>
+                            <div className="view-employee-data">Draft</div>
+                        </div>
+                    )}
 
                     <div className="flex space-x-10 justify-end">
                         <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
@@ -198,7 +207,7 @@ const QmsViewCustomer = () => {
                             <button onClick={() => handleEdit(id)}>
                                 <img
                                     src={edits}
-                                    alt="Edit Iocn"
+                                    alt="Edit Icon"
                                     className="w-[18px] h-[18px]"
                                 />
                             </button>

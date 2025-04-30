@@ -14,7 +14,7 @@ const QmsEditCustomerSurvey = () => {
     const [success, setSuccess] = useState(null);
 
     const [formData, setFormData] = useState({
-        survey_title: '',
+        title: '',
         description: '',
         valid_till: null,
         is_draft: true
@@ -37,15 +37,15 @@ const QmsEditCustomerSurvey = () => {
 
     // Fetch survey data on component mount
     useEffect(() => {
-        const fetchsurveyData = async () => {
+        const fetchSurveyData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/customer/survey/-get/${id}/`);
                 const data = response.data;
 
                 // Set the main form data
                 setFormData({
-                    survey_title: data.survey_title || '',
+                    title: data.title || '',
                     description: data.description || '',
                     valid_till: data.valid_till || null,
                     is_draft: data.is_draft !== undefined ? data.is_draft : true
@@ -63,21 +63,21 @@ const QmsEditCustomerSurvey = () => {
 
                 setError(null);
             } catch (err) {
-                setError("Failed to load employee survey data");
-                console.error("Error fetching employee survey data:", err);
+                setError("Failed to load customer satisfaction survey data");
+                console.error("Error fetching customer satisfaction survey data:", err);
             } finally {
                 setLoading(false);
             }
         };
 
         if (id) {
-            fetchsurveyData();
+            fetchSurveyData();
         }
     }, [id]);
 
     const validateForm = () => {
-        if (!formData.survey_title) {
-            setError("Evaluation title is required");
+        if (!formData.title) {
+            setError("Survey title is required");
             return false;
         }
 
@@ -145,26 +145,22 @@ const QmsEditCustomerSurvey = () => {
         setError(null);
 
         try {
-            await axios.put(`${BASE_URL}/qms/survey/${id}/update/`, submissionData);
-            setSuccess("survey evaluation updated successfully");
+            await axios.put(`${BASE_URL}/qms/customer/survey/${id}/update/`, submissionData);
+            setSuccess("Customer satisfaction survey updated successfully");
 
-            // Navigate after a brief delay to show success message
-            setTimeout(() => {
-
-            }, 1500);
-
+            // Show success modal and navigate after a brief delay
             setShowEditEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
                 setShowEditEmployeeSatisfactionSuccessModal(false);
                 navigate("/company/qms/list-customer-survey");
             }, 1500);
         } catch (err) {
-            console.error("Error updating survey evaluation:", err);
+            console.error("Error updating customer satisfaction survey:", err);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            setError("Failed to update survey evaluation");
+            setError("Failed to update customer satisfaction survey");
             setLoading(false);
         }
     };
@@ -204,7 +200,7 @@ const QmsEditCustomerSurvey = () => {
         );
     });
 
-    if (loading && !formData.survey_title) {
+    if (loading && !formData.title) {
         return (
             <div className="bg-[#1C1C24] text-white p-5 flex justify-center items-center h-screen">
                 <p>Loading survey data...</p>
@@ -239,18 +235,6 @@ const QmsEditCustomerSurvey = () => {
                     }}
                 />
 
-                {/* {error && (
-                    <div className="mx-[104px] mt-4 p-3 bg-red-900/30 border border-red-500 rounded text-red-400">
-                        {error}
-                    </div>
-                )} */}
-                {/* 
-                {success && (
-                    <div className="mx-[104px] mt-4 p-3 bg-green-900/30 border border-green-500 rounded text-green-400">
-                        {success}
-                    </div>
-                )} */}
-
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
@@ -259,15 +243,13 @@ const QmsEditCustomerSurvey = () => {
                             </label>
                             <input
                                 type="text"
-                                name="survey_title"
-                                value={formData.survey_title}
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
                                 className="w-full employee-performace-inputs"
                                 required
                             />
                         </div>
-
-
 
                         <div>
                             <label className="block employee-performace-label">Valid Till</label>
@@ -343,9 +325,6 @@ const QmsEditCustomerSurvey = () => {
                                 className="w-full h-full min-h-[84px] employee-performace-inputs"
                             />
                         </div>
-
-
-
                     </div>
 
                     <div className="flex justify-end space-x-5 mt-5">
@@ -370,4 +349,4 @@ const QmsEditCustomerSurvey = () => {
         </div>
     );
 };
-export default QmsEditCustomerSurvey
+export default QmsEditCustomerSurvey;
