@@ -17,16 +17,16 @@ const QmsAddCustomer = () => {
     const [formData, setFormData] = useState({
         name: '',
         city: '',
-        street_address: '',
+        address: '', // Updated to match model field
         state: '',
-        zip_code: '',
+        zipcode: '', // Updated field name to match model
         country: '',
         email: '',
         contact_person: '',
         phone: '',
         alternate_phone: '',
         notes: '',
-        attachment: null,
+        upload_attachment: null, // Updated field name to match model
         fax: '',
     });
 
@@ -74,7 +74,7 @@ const QmsAddCustomer = () => {
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0]
+            upload_attachment: e.target.files[0] // Updated field name to match model
         });
     };
 
@@ -150,9 +150,9 @@ const QmsAddCustomer = () => {
         submissionData.append('user', userId);
         submissionData.append('name', formData.name);
         submissionData.append('city', formData.city || '');
-        submissionData.append('street_address', formData.street_address || '');
+        submissionData.append('address', formData.address || ''); // Updated field name
         submissionData.append('state', formData.state || '');
-        submissionData.append('zip_code', formData.zip_code || '');
+        submissionData.append('zipcode', formData.zipcode || ''); // Updated field name
         submissionData.append('country', formData.country || '');
         submissionData.append('email', formData.email || '');
         submissionData.append('contact_person', formData.contact_person || '');
@@ -162,8 +162,8 @@ const QmsAddCustomer = () => {
         submissionData.append('fax', formData.fax || '');
 
         // Append file attachment if present
-        if (formData.attachment) {
-            submissionData.append('attachment', formData.attachment);
+        if (formData.upload_attachment) {
+            submissionData.append('upload_attachment', formData.upload_attachment); // Updated field name
         }
 
         if (isDraft) {
@@ -216,7 +216,7 @@ const QmsAddCustomer = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/customers/create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/customer/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -252,7 +252,7 @@ const QmsAddCustomer = () => {
                 return;
             }
 
-            await axios.post(`${BASE_URL}/qms/customers/draft-create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/customer/draft-create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -351,11 +351,11 @@ const QmsAddCustomer = () => {
                 </div>
                 <div className="flex flex-col gap-3 col-span-2">
                     <label className="add-training-label">
-                        Street Address
+                        Address
                     </label>
                     <textarea
-                        name="street_address"
-                        value={formData.street_address}
+                        name="address"
+                        value={formData.address}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[84px]"
                     />
@@ -380,8 +380,8 @@ const QmsAddCustomer = () => {
                     </label>
                     <input
                         type="text"
-                        name="zip_code"
-                        value={formData.zip_code}
+                        name="zipcode"
+                        value={formData.zipcode}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
@@ -512,10 +512,10 @@ const QmsAddCustomer = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.attachment && (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
+                    {formData.upload_attachment && (
+                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.upload_attachment.name}</p>
                     )}
-                    {!formData.attachment && (
+                    {!formData.upload_attachment && (
                         <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
                     )}
                 </div>
