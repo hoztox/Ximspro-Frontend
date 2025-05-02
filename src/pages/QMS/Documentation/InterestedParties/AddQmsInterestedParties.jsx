@@ -27,8 +27,7 @@ const AddQmsInterestedParties = () => {
   const [formData, setFormData] = useState({
     name: '',
     category: 'Internal',
-    needs: '',
-    expectations: '',
+    needs_expectations: [{ needs: '', expectations: '' }], // Changed to array of objects
     special_requirements: '',
     legal_requirements: '',
     custom_legal_requirements: '',
@@ -36,10 +35,37 @@ const AddQmsInterestedParties = () => {
     company: null,
     send_notification: false,
   });
+
   const [dropdownRotation, setDropdownRotation] = useState({
     category: false,
     legal_requirements: false,
   });
+
+  const addNeedsExpectations = () => {
+    setFormData(prev => ({
+      ...prev,
+      needs_expectations: [...prev.needs_expectations, { needs: '', expectations: '' }]
+    }));
+  };
+
+  const removeNeedsExpectations = (index) => {
+    if (formData.needs_expectations.length > 1) {
+      setFormData(prev => {
+        const updated = [...prev.needs_expectations];
+        updated.splice(index, 1);
+        return { ...prev, needs_expectations: updated };
+      });
+    }
+  };
+
+  const handleNeedsExpectationsChange = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.needs_expectations];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, needs_expectations: updated };
+    });
+  };
+
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileName, setFileName] = useState('No file chosen');
   const getUserCompanyId = () => {
@@ -90,12 +116,6 @@ const AddQmsInterestedParties = () => {
       console.log("Fetched compliance data:", response.data);
     } catch (err) {
       console.error("Error fetching compliance data:", err);
-      setLegalRequirementOptions([
-        { compliance_name: 'GDPR' },
-        { compliance_name: 'HIPAA' },
-        { compliance_name: 'CCPA' },
-        { compliance_name: 'SOX' }
-      ]);
     }
   };
   const toggleDropdown = (field) => {
@@ -126,44 +146,67 @@ const AddQmsInterestedParties = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setSubmitting(true);
     setError(null);
     const userId = getRelevantUserId();
-    const submitData = new FormData();
-    // Explicitly add each field, making sure custom_legal_requirements is included
-    submitData.append('name', formData.name);
-    submitData.append('category', formData.category);
-    submitData.append('needs', formData.needs);
-    submitData.append('expectations', formData.expectations);
-    submitData.append('special_requirements', formData.special_requirements);
-    submitData.append('legal_requirements', formData.legal_requirements);
-    submitData.append('send_notification', formData.send_notification);
-    submitData.append('user', userId);
-    // Only add custom_legal_requirements if it has a value
-    if (formData.custom_legal_requirements) {
-      submitData.append('custom_legal_requirements', formData.custom_legal_requirements);
-    }
-    // Add file if it exists
-    if (formData.file instanceof File) {
-      submitData.append('file', formData.file);
-    }
-    // Add company ID
-    if (formData.company) {
-      submitData.append('company', formData.company);
-    }
-    console.log("Data being sent:", Object.fromEntries(submitData.entries()));
-    try {
-      const response = await axios.post(`${BASE_URL}/qms/interested-parties/`, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      setShowAddManualSuccessModal(true);
-      setTimeout(() => {
-        setShowAddManualSuccessModal(false);
-        navigate('/company/qms/interested-parties');
-      }, 1500)
 
+    try {
+      // Format data according to the expected structure
+      console.log('iiiiiippppppp:', formData);
+      const needsArray = formData.needs_expectations.map(item => ({
+        needs: item.needs,
+        expectation: item.expectations
+      }));
+
+      const submitData = {
+        name: formData.name,
+        company: formData.company,
+        category: formData.category,
+        special_requirements: formData.special_requirements,
+        legal_requirements: formData.legal_requirements,
+        custom_legal_requirements: formData.custom_legal_requirements || "",
+        send_notification: formData.send_notification,
+        is_draft: false,
+        needs: needsArray,
+        user: userId
+      };
+
+      console.log("Data being sent:", submitData);
+
+      // Use FormData only if there's a file to upload
+      if (formData.file instanceof File) {
+        const formDataWithFile = new FormData();
+
+        // Add the JSON data as a string
+        formDataWithFile.append('data', JSON.stringify(submitData));
+
+        // Add the file
+        formDataWithFile.append('file', formData.file);
+
+        const response = await axios.post(`${BASE_URL}/qms/interested-parties/`, formDataWithFile, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        console.log('iiipppresponse', response);
+
+
+        setShowAddManualSuccessModal(true);
+        setTimeout(() => {
+          setShowAddManualSuccessModal(false);
+          navigate('/company/qms/interested-parties');
+        }, 1500);
+      } else {
+        // If no file, send JSON directly
+        const response = await axios.post(`${BASE_URL}/qms/interested-parties/`, submitData);
+
+        setShowAddManualSuccessModal(true);
+        setTimeout(() => {
+          setShowAddManualSuccessModal(false);
+          navigate('/company/qms/interested-parties');
+        }, 1500);
+      }
     } catch (err) {
       setError("Failed to save. Please check your inputs and try again.");
       setShowAddQmsInterestedErrorModal(true);
@@ -185,7 +228,7 @@ const AddQmsInterestedParties = () => {
       </div>
     );
   }
-  const handleSaveAsDraft = async () => {
+  const handleSaveAsDraft = async () => { 
     try {
       setLoading(true);
 
@@ -198,35 +241,56 @@ const AddQmsInterestedParties = () => {
         return;
       }
 
-      const submitData = new FormData();
+      // Format the needs_expectations array to match backend expectations
+      const needsArray = formData.needs_expectations.map(item => ({
+        needs: item.needs,
+        expectation: item.expectations // Note: backend expects "expectation" not "expectations"
+      }));
 
-      submitData.append('company', companyId);
-      submitData.append('user', userId);
-      submitData.append('is_draft', true);
+      // Create the data object the way the backend expects it
+      const draftData = {
+        name: formData.name,
+        company: companyId,
+        category: formData.category,
+        special_requirements: formData.special_requirements || '',
+        legal_requirements: formData.legal_requirements || '',
+        custom_legal_requirements: formData.custom_legal_requirements || '',
+        send_notification: formData.send_notification,
+        is_draft: true,
+        user: userId,
+        needs: needsArray // This is the important part - send the array of needs objects
+      };
 
-      Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null && formData[key] !== '') {
-          submitData.append(key, formData[key]);
-        }
-      });
+      let response;
 
-      // Corrected file handling
-      if (formData.file) {
-        submitData.append('upload_attachment', formData.file);
+      // If there's a file, use FormData
+      if (formData.file instanceof File) {
+        const formDataToSend = new FormData();
+
+        // Add the JSON data as a string 
+        formDataToSend.append('data', JSON.stringify(draftData));
+
+        // Add the file separately
+        formDataToSend.append('file', formData.file);
+
+        response = await axios.post(
+          `${BASE_URL}/qms/interst/draft-create/`,
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+      } else {
+        // If no file, send the JSON data directly
+        response = await axios.post(
+          `${BASE_URL}/qms/interst/draft-create/`,
+          draftData
+        );
       }
 
-      console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
-
-      const response = await axios.post(
-        `${BASE_URL}/qms/interst/draft-create/`,
-        submitData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-
-          },
-        }
-      );
+      console.log('Draft saved:', response);
 
       setLoading(false);
       setShowDraftInterestedSuccessModal(true);
@@ -235,14 +299,15 @@ const AddQmsInterestedParties = () => {
         navigate('/company/qms/draft-interested-parties');
       }, 1500);
 
-
     } catch (err) {
       setLoading(false);
       setShowDraftInterestedErrorModal(true);
       setTimeout(() => {
         setShowDraftInterestedErrorModal(false);
       }, 3000);
-      const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+      const errorMessage = err.response?.data?.detail ||
+        err.response?.data?.name?.[0] ||
+        'Failed to save Draft';
       setError(errorMessage);
       console.error('Error saving Draft:', err.response?.data || err);
     }
@@ -316,29 +381,59 @@ const AddQmsInterestedParties = () => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block mb-3 add-qms-manual-label">Needs</label>
-              <input
-                type='text'
-                name="needs"
-                placeholder="Enter Needs"
-                value={formData.needs}
-                onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
-              />
-            </div>
-            <div>
-              <label className="block mb-3 add-qms-manual-label">Expectations</label>
-              <input
-                type="text"
-                name="expectations"
-                placeholder="Enter Expectations"
-                value={formData.expectations}
-                onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
-              />
-            </div>
+          <div className="grid grid-cols-1 gap-6 mb-6">
+            {formData.needs_expectations.map((item, index) => (
+              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block mb-3 add-qms-manual-label">
+                    Needs
+                  </label>
+                  <div className="flex">
+                    <input
+                      type='text'
+                      name={`needs_${index}`}
+                      placeholder="Enter Needs"
+                      value={item.needs}
+                      onChange={(e) => handleNeedsExpectationsChange(index, 'needs', e.target.value)}
+                      className="w-full add-qms-intertested-inputs"
+                    />
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeNeedsExpectations(index)}
+                        className="ml-2 text-red-500"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="block mb-3 add-qms-manual-label">
+                    Expectations
+                  </label>
+                  <input
+                    type="text"
+                    name={`expectations_${index}`}
+                    placeholder="Enter Expectations"
+                    value={item.expectations}
+                    onChange={(e) => handleNeedsExpectationsChange(index, 'expectations', e.target.value)}
+                    className="w-full add-qms-intertested-inputs"
+                  />
+                </div>
+                {index === formData.needs_expectations.length - 1 && (
+                  <div className="md:col-span-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={addNeedsExpectations}
+                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                      + Add More
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>

@@ -219,12 +219,12 @@ const DraftQmsInterestedParties = ({ userId }) => {
               <th className="px-4 qms-interested-parties-thead text-left">
                 Category
               </th>
-              <th className="px-4 qms-interested-parties-thead text-left">
+              {/* <th className="px-4 qms-interested-parties-thead text-left">
                 Needs
               </th>
               <th className="px-4 qms-interested-parties-thead text-left">
                 Expectations
-              </th>
+              </th> */}
               <th className="px-4 qms-interested-parties-thead text-left">
                 Date
               </th>
@@ -255,12 +255,12 @@ const DraftQmsInterestedParties = ({ userId }) => {
                   <td className="px-4 qms-interested-parties-data">
                     {item.category}
                   </td>
-                  <td className="px-4 qms-interested-parties-data">
+                  {/* <td className="px-4 qms-interested-parties-data">
                     {item.needs}
                   </td>
                   <td className="px-4 qms-interested-parties-data">
                     {item.expectations}
-                  </td>
+                  </td> */}
                   <td className="px-4 qms-interested-parties-data">
                     {item.created_at?.slice(0, 10)}
                   </td>

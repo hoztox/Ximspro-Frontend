@@ -151,7 +151,7 @@ const QmsEditDraftManagementChange = () => {
     });
 
     try {
-      const response = await axios.put(`${BASE_URL}/qms/changes/${id}/edit/`, submitData, {
+      const response = await axios.put(`${BASE_URL}/qms/changes/create/${id}/`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

@@ -567,7 +567,7 @@ const navigate = useNavigate();
                         </div>
                         <div>
                             <label className="viewmanuallabels">Relate Document / Guideline</label>
-                            <p className="viewmanuasdata">{manualDetails.retention_period || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.related_record_format || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -612,7 +612,7 @@ const navigate = useNavigate();
                         <div className='flex justify-between items-center'>
                         <div>
                             <label className="viewmanuallabels">Evaluation Remarks</label>
-                            <p className="viewmanuasdata">{manualDetails.retention_period || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.remarks || 'N/A'}</p>
                         </div>
                              {isCurrentUserWrittenBy && ( 
                              <div className='flex gap-10'>

@@ -11,7 +11,7 @@ const QmsViewComplaints = () => {
         customer: [],
         category: '',
         details: "",
-        immediate_action: "", 
+        immediate_action: "",
         executor: '',
         date: "",
         corrective_action_need: "",
@@ -25,7 +25,7 @@ const QmsViewComplaints = () => {
 
     const navigate = useNavigate();
     const { id } = useParams();
-    
+
 
     useEffect(() => {
         const fetchComplaint = async () => {
@@ -99,8 +99,8 @@ const QmsViewComplaints = () => {
                             Customer
                         </label>
                         <div className="view-employee-data">
-                            {complaint.customer && typeof complaint.customer === 'object' 
-                                ? complaint.customer.name || "N/A" 
+                            {complaint.customer && typeof complaint.customer === 'object'
+                                ? complaint.customer.name || "N/A"
                                 : "N/A"}
                         </div>
                     </div>
@@ -110,9 +110,17 @@ const QmsViewComplaints = () => {
                             Category
                         </label>
                         <div className="view-employee-data">
-                        {complaint.category && Array.isArray(complaint.category) && complaint.category.length > 0
-            ? complaint.category[0].title
-            : "N/A"}
+                            {complaint.category && Array.isArray(complaint.category) && complaint.category.length > 0 ? (
+                                <ul className="list-disc pl-5 space-y-1">
+                                    {complaint.category.map((cat, index) => (
+                                        <li key={index}>
+                                            {cat.title || "N/A"}
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                "N/A"
+                            )}
                         </div>
                     </div>
 

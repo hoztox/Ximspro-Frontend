@@ -11,6 +11,7 @@ import axios from 'axios';
 const QmsListComplaints = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [userName, setUserName] = useState('');
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,6 +52,7 @@ const QmsListComplaints = () => {
 
         setComplaints(response.data);
         setLoading(false);
+        console.log('complaintssssssssssssssssssssssssss:', response.data);
       } catch (error) {
         console.error("Error fetching complaints:", error);
         setError("Failed to fetch complaints data");
@@ -60,6 +62,47 @@ const QmsListComplaints = () => {
 
     fetchComplaints();
   }, [companyId]);
+
+  const fetchUserData = async () => {
+    try {
+      if (!storedUserId) {
+        console.error("User ID not found");
+        return;
+      }
+
+      const response = await axios.get(`${BASE_URL}/company/user/${storedUserId}/`);
+
+      console.log("User API Response:", response.data);
+
+      if (response.status === 200) {
+        // Set user data
+        if (response.data) {
+          setEntityData(response.data);
+
+          // Update user information from API response
+          if (response.data.email) {
+            setUserEmail(response.data.email);
+          }
+
+          if (response.data.first_name && response.data.last_name) {
+            setUserName(`${response.data.first_name} ${response.data.last_name}`);
+          } else if (response.data.first_name) {
+            setUserName(response.data.first_name);
+          }
+
+
+          if (response.data.user_logo) {
+            const logoUrl = response.data.user_logo;
+            setEntityLogo(logoUrl);
+            setProfileImage(logoUrl); // Use user logo as profile image
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching user data:", err);
+      fallbackToLocalStorage('user');
+    }
+  };
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -194,11 +237,11 @@ const QmsListComplaints = () => {
                     {item.customer?.name || "Anonymous"}
                   </td>
                   <td className="px-3 list-awareness-training-datas">
-                    {userId || "N/A"}
+                    {item.user ? `${item.user.first_name || ''} ${item.user.last_name || ''}`.trim() || item.user.username || "N/A" : "N/A"}
                   </td>
 
                   <td className="px-3 list-awareness-training-datas">
-                    {item.executor ? `${item.executor.first_name} ${item.executor.last_name || ""}` : "N/A"}
+                    {item.executor ? `${item.executor.first_name || ''} ${item.executor.last_name || ''}`.trim() || item.executor.username || "N/A" : "N/A"}
                   </td>
 
                   <td className="px-3 list-awareness-training-datas">{item.no_car?.action_no || "N/A"}</td>
@@ -228,7 +271,7 @@ const QmsListComplaints = () => {
               ))
             ) : (
               <tr className="border-b border-[#383840]">
-                <td colSpan="10" className="px-3 py-4 text-center list-awareness-training-datas">
+                <td colSpan="10" className="px-3 py-4 text-center not-found">
                   No complaints found
                 </td>
               </tr>

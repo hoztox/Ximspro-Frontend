@@ -270,6 +270,7 @@ const AddQmsEmployeePerformance = () => {
         <div className="bg-[#1C1C24] text-white p-5">
             <div>
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
+                     
                     <h1 className="add-employee-performance-head">Add Employee Performance Evaluation</h1>
 
                     <AddEmployeePerformanceSuccessModal

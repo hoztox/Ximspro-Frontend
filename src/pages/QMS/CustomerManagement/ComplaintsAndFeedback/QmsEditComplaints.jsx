@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
@@ -20,6 +20,8 @@ const QmsEditComplaints = () => {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [categorySearchTerm, setCategorySearchTerm] = useState('');
+    const [filteredCategories, setFilteredCategories] = useState([]);
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -81,13 +83,22 @@ const QmsEditComplaints = () => {
         }
     }, [companyId, id]);
 
+    // Filter categories based on search term
+    useEffect(() => {
+        if (categories.length > 0) {
+            const filtered = categories.filter(category =>
+                category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+            );
+            setFilteredCategories(filtered);
+        }
+    }, [categorySearchTerm, categories]);
+
     const fetchComplaintData = async (id) => {
         try {
             setLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/complaints/${id}/`);
             const data = response.data;
             console.log('edit complaints:', data);
-
 
             // Parse date if it exists
             let day = '';
@@ -188,6 +199,7 @@ const QmsEditComplaints = () => {
         try {
             const response = await axios.get(`${BASE_URL}/qms/category/company/${companyId}/`);
             setCategories(response.data);
+            setFilteredCategories(response.data);
         } catch (err) {
             console.error("Error fetching categories:", err);
             setError("Failed to load categories. Please try again.");
@@ -232,21 +244,41 @@ const QmsEditComplaints = () => {
             return;
         }
 
-        // Handle multi-select for categories
-        if (name === 'category') {
-            // If multiple selection is needed, this could be expanded
-            setFormData({
-                ...formData,
-                category: value ? [parseInt(value)] : []
-            });
-            return;
-        }
-
         // Handle all other fields
         setFormData({
             ...formData,
             [name]: value
         });
+    };
+
+    const handleCategoryToggle = (categoryId) => {
+        const categoryIdInt = parseInt(categoryId);
+
+        setFormData(prevData => {
+            if (prevData.category.includes(categoryIdInt)) {
+                return {
+                    ...prevData,
+                    category: prevData.category.filter(id => id !== categoryIdInt)
+                };
+            } else {
+                return {
+                    ...prevData,
+                    category: [...prevData.category, categoryIdInt]
+                };
+            }
+        });
+    };
+
+    const handleRemoveCategory = (categoryId) => {
+        setFormData(prevData => ({
+            ...prevData,
+            category: prevData.category.filter(id => id !== categoryId)
+        }));
+    };
+
+    const getCategoryName = (categoryId) => {
+        const category = categories.find(cat => cat.id === categoryId);
+        return category ? category.title : '';
     };
 
     const handleOpenCarModal = () => {
@@ -302,83 +334,77 @@ const QmsEditComplaints = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        
         try {
             setLoading(true);
-
-            // Create FormData object to handle file upload
-            const submitData = new FormData();
-
-            // Add user ID
-            submitData.append('user', userId);
-
-            // Add company ID
-            submitData.append('company', companyId);
-
-            // Handle category array properly
-            if (Array.isArray(formData.category) && formData.category.length > 0) {
-                // Append each category ID as a separate entry with the same field name
-                formData.category.forEach(categoryId => {
-                    submitData.append('category', categoryId);
+            
+            // Create a regular object first (not FormData)
+            const submitData = {
+                ...formData,
+                user: userId,
+                company: companyId
+            };
+    
+            // Convert to FormData only if we have a file to upload
+            let payload;
+            if (formData.upload_attachment) {
+                payload = new FormData();
+                // Append all fields except category
+                Object.keys(submitData).forEach(key => {
+                    if (key !== 'category' && submitData[key] !== null && submitData[key] !== undefined) {
+                        if (key === 'upload_attachment') {
+                            payload.append(key, submitData[key]);
+                        } else {
+                            payload.append(key, String(submitData[key]));
+                        }
+                    }
                 });
+                // Append categories separately
+                if (Array.isArray(submitData.category)) {
+                    submitData.category.forEach(catId => {
+                        payload.append('category', catId);
+                    });
+                }
+            } else {
+                // No file upload - send as JSON
+                payload = submitData;
             }
-
-            // Add all other form fields to FormData
-            Object.keys(formData).forEach(key => {
-                if (key === 'category') {
-                    // Skip as we've already handled it
-                    return;
+    
+            console.log('Submitting data:', payload);
+    
+            const config = formData.upload_attachment ? {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
                 }
-
-                if (key === 'upload_attachment' && formData[key]) {
-                    submitData.append('upload_attachment', formData[key]);
-                } else if (formData[key] !== null && formData[key] !== undefined && key !== 'category') {
-                    submitData.append(key, formData[key]);
-                }
-            });
-
-            // Explicitly set is_draft to false
-            submitData.append('is_draft', 'false');
-
-            console.log('Submitting data:', Object.fromEntries(submitData));
-
+            } : {};
+    
             let response;
-
             if (id) {
-                // Update existing complaint
                 response = await axios.put(
                     `${BASE_URL}/qms/complaints/${id}/`,
-                    submitData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    }
+                    payload,
+                    config
                 );
             } else {
-                // Create new complaint
                 response = await axios.post(
                     `${BASE_URL}/qms/complaints/`,
-                    submitData,
-                    {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
-                        }
-                    }
+                    payload,
+                    config
                 );
             }
-
-            // Redirect to list page after successful submission
+    
             navigate('/company/qms/list-complaints');
-
         } catch (err) {
             console.error("Error submitting form:", err);
+            if (err.response) {
+                console.error("Response data:", err.response.data);
+                console.error("Response status:", err.response.status);
+            }
             setError("Failed to save complaint. Please check your inputs and try again.");
         } finally {
             setLoading(false);
         }
     };
-
     const handleCancel = () => {
         navigate('/company/qms/list-complaints');
     };
@@ -466,32 +492,53 @@ const QmsEditComplaints = () => {
 
                 {/* Category Selection */}
                 <div className="flex flex-col gap-3 relative">
-                    <div className='flex justify-between'>
-                        <label className="add-training-label">Category <span className="text-red-500">*</span></label>
+                    <div className="flex items-center justify-between">
+                        <label className="add-training-label">
+                            Categories <span className="text-red-500">*</span>
+                        </label>
                     </div>
+
                     <div className="relative">
-                        <select
-                            name="category"
-                            value={formData.category[0] || ''}
-                            onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("category")}
-                            onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
-                        >
-                            <option value="" disabled>Select Category</option>
-                            {categories.map(category => (
-                                <option key={category.id} value={category.id}>
-                                    {category.title}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown
-                            className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                             ${focusedDropdown === "category" ? "rotate-180" : ""}`}
-                            size={20}
-                            color="#AAAAAA"
-                        />
+                        <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                value={categorySearchTerm}
+                                onChange={(e) => setCategorySearchTerm(e.target.value)}
+                                className="add-training-inputs !pr-10"
+                            />
+                            <Search
+                                className="absolute right-3"
+                                size={20}
+                                color="#AAAAAA"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map(category => (
+                                <div key={category.id} className="flex items-center py-2 last:border-0">
+                                    <input
+                                        type="checkbox"
+                                        id={`category-${category.id}`}
+                                        checked={formData.category.includes(category.id)}
+                                        onChange={() => handleCategoryToggle(category.id)}
+                                        className="mr-2 form-checkboxes"
+                                    />
+                                    <label
+                                        htmlFor={`category-${category.id}`}
+                                        className="text-sm text-[#AAAAAA] cursor-pointer"
+                                    >
+                                        {category.title}
+                                    </label>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-[#AAAAAA] p-2">
+                                {categories.length === 0 ? 'No categories available' : 'No matching categories found'}
+                            </div>
+                        )}
                     </div>
                     <button
                         type="button"

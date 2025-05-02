@@ -40,7 +40,8 @@ const QmsEditSustainability = () => {
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
         send_email_to_approved_by: false,
-        retention_period: ''
+        related_record_format: '',
+        remarks: ''
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -57,7 +58,7 @@ const QmsEditSustainability = () => {
         written_by: '',
         no: '',
         checked_by: '',
-        approved_by: ''
+        // approved_by: ''
     });
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
@@ -134,7 +135,8 @@ const QmsEditSustainability = () => {
                 review_frequency_month: manualDetails.review_frequency_month || '',
                 publish: manualDetails.publish || false,
                 send_notification: manualDetails.send_notification || false,
-                retention_period: manualDetails.retention_period || '',
+                related_record_format: manualDetails.related_record_format || '',
+                remarks: manualDetails.remarks || '',
 
                 // Use the direct boolean values from the API response
                 send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
@@ -288,10 +290,10 @@ const QmsEditSustainability = () => {
         }
 
         // Validate approved_by
-        if (!formData.approved_by) {
-            newErrors.approved_by = 'Approved By is required';
-            isValid = false;
-        }
+        // if (!formData.approved_by) {
+        //     newErrors.approved_by = 'Approved By is required';
+        //     isValid = false;
+        // }
 
         setFieldErrors(newErrors);
         return isValid;
@@ -372,6 +374,14 @@ const QmsEditSustainability = () => {
                 send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
                 send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
             };
+
+            if (formData.approved_by === null || formData.approved_by === '') {
+                // If approved_by is null or empty, don't include it in the submitData
+                delete apiFormData.approved_by;
+            } else if (typeof formData.approved_by === 'string') {
+                // If it's a string, convert to number (assuming IDs are numeric)
+                apiFormData.approved_by = parseInt(formData.approved_by, '');
+            }
 
             // Add all form data
             Object.keys(apiFormData).forEach(key => {
@@ -477,7 +487,7 @@ const QmsEditSustainability = () => {
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
-                            Sustainability Name/Title <span className="text-red-500">*</span>
+                                Sustainability Name/Title <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -520,7 +530,7 @@ const QmsEditSustainability = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                            Sustainability Number <span className="text-red-500">*</span>
+                                Sustainability Number <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -608,7 +618,7 @@ const QmsEditSustainability = () => {
                             <div className="flex-grow">
                                 <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
-                                        Approved By <span className="text-red-500">*</span>
+                                        Approved By
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
                                         <div className="ml-5 flex items-center h-[24px]">
@@ -657,14 +667,14 @@ const QmsEditSustainability = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
-                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
+                                {/* {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>} */}
 
                             </div>
                         </div>
 
                         <div>
                             <label className="add-qms-manual-label">
-                            Sustainability Type
+                                Sustainability Type
                             </label>
                             <div className="relative">
                                 <select
@@ -808,20 +818,20 @@ const QmsEditSustainability = () => {
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="related_record_format"
+                                value={formData.related_record_format}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
                         </div>
                         <div>
                             <label className="add-qms-manual-label">
-                             Remarks
+                                Remarks
                             </label>
                             <input
                                 type="text"
-                                name="retention_period"
-                                value={formData.retention_period}
+                                name="remarks"
+                                value={formData.remarks}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />

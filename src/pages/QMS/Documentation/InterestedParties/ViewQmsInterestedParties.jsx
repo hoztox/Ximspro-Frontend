@@ -6,15 +6,31 @@ import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+
 const ViewQmsInterestedParties = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [formData, setFormData] = useState(null);
+
     const handleClose = () => {
         navigate('/company/qms/interested-parties');
     };
-    const handleDelete = () => {
-        setFormData(null);
+
+    const handleEdit = (id) => {
+        navigate(`/company/qms/edit-interested-parties/${id}`);
+    };
+
+    const handleDelete = async () => {
+        try {
+            const confirmed = window.confirm("Are you sure you want to delete this interested party?");
+            if (confirmed) {
+                await axios.delete(`${BASE_URL}/qms/interested-parties-get/${id}/`);
+                navigate('/company/qms/interested-parties');
+            }
+        } catch (error) {
+            console.error("Failed to delete interested party", error);
+            alert("Failed to delete interested party. Please try again.");
+        }
     };
 
     useEffect(() => {
@@ -22,14 +38,15 @@ const ViewQmsInterestedParties = () => {
             try {
                 const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
                 setFormData(response.data);
-                console.log("sssssssssssss", response.data)
             } catch (error) {
                 console.error("Failed to fetch interested party data", error);
             }
         };
         fetchData();
     }, [id]);
+
     if (!formData) return <div className="text-white p-4">Loading...</div>;
+
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg w-full">
             <div className="flex justify-between items-center py-5 mx-5 border-b border-[#383840]">
@@ -41,13 +58,18 @@ const ViewQmsInterestedParties = () => {
             <div className="p-4 space-y-6">
                 <div className="flex flex-col md:flex-row">
                     <div className="md:w-1/2 md:pr-6 space-y-[40px]">
+                        {/* Left column content remains the same */}
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Name</label>
                             <div className="text-white view-interested-parties-data">{formData.name}</div>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Needs</label>
-                            <div className="text-white view-interested-parties-data">{formData.needs}</div>
+                            <ul className="text-white view-interested-parties-data list-disc pl-5">
+                                {formData.needs.map((item) => (
+                                    <li key={item.id}>{item.needs}</li>
+                                ))}
+                            </ul>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Special Requirements</label>
@@ -68,13 +90,18 @@ const ViewQmsInterestedParties = () => {
                     </div>
                     <div className="hidden md:block w-px bg-[#383840] mx-0"></div>
                     <div className="md:w-1/2 md:pl-6 space-y-[40px] mt-6 md:mt-0">
+                        {/* Right column content remains the same */}
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Category</label>
                             <div className="text-white view-interested-parties-data">{formData.category}</div>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Expectations</label>
-                            <div className="text-white view-interested-parties-data">{formData.expectations}</div>
+                            <ul className="text-white view-interested-parties-data list-disc pl-5">
+                                {formData.needs.map((item) => (
+                                    <li key={item.id}>{item.expectation}</li>
+                                ))}
+                            </ul>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Applicable Legal/Regulatory Requirements</label>
@@ -83,14 +110,19 @@ const ViewQmsInterestedParties = () => {
                                     ? formData.custom_legal_requirements
                                     : formData.legal_requirements}
                             </div>
-
                         </div>
                         <div className="flex justify-end space-x-10">
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]">
+                            <button
+                                onClick={()=> handleEdit(id)}
+                                className="flex flex-col items-center view-interested-parties-label gap-[8px] hover:opacity-80 transition-opacity"
+                            >
                                 <span>Edit</span>
                                 <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
                             </button>
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]" onClick={handleDelete}>
+                            <button
+                                onClick={()=>handleDelete(id)}
+                                className="flex flex-col items-center view-interested-parties-label gap-[8px] hover:opacity-80 transition-opacity"
+                            >
                                 <span>Delete</span>
                                 <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
                             </button>
@@ -101,4 +133,5 @@ const ViewQmsInterestedParties = () => {
         </div>
     );
 };
+
 export default ViewQmsInterestedParties;

@@ -251,7 +251,7 @@ const EditQmsDraftProcesses = () => {
     }
   
     try {
-      const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, payload, {
+      const response = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, payload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

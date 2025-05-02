@@ -129,13 +129,13 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
     console.log("Submitting answer change with data:", {
       questionId,
       answer: rating,
-      user_id: selectedCustomer
+      customer_id: selectedCustomer
     });
 
     try {
       await axios.patch(`${BASE_URL}/qms/customer/survey/question/answer/${questionId}/`, {
         answer: rating,
-        user_id: selectedCustomer
+        customer_id: selectedCustomer
       });
       setShowAddRatingSuccessModal(true);
       setTimeout(() => {

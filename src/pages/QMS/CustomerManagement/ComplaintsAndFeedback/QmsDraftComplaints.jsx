@@ -158,8 +158,12 @@ const QmsDraftComplaints = () => {
                                 <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.customer?.name || 'Anonymous'}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.user?.email || 'N/A'}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.executor?.email || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">
+                                        {item.user ? `${item.user.first_name || ''} ${item.user.last_name || ''}`.trim() || item.user.username || "N/A" : "N/A"}
+                                    </td>
+                                    <td className="px-3 list-awareness-training-datas">
+                                        {item.executor ? `${item.executor.first_name || ''} ${item.executor.last_name || ''}`.trim() || item.executor.username || "N/A" : "N/A"}
+                                    </td>
                                     <td className="px-3 list-awareness-training-datas">{item.no_car?.car_number || 'N/A'}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.date)}</td>
                                     <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">

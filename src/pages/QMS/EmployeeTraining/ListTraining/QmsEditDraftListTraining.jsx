@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react"; // Add Search to the imports
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -19,6 +19,8 @@ const QmsEditDraftListTraining = () => {
   ] = useState(false);
 
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
+  const [filteredAttendees, setFilteredAttendees] = useState([]);
 
   const [users, setUsers] = useState([]);
 
@@ -78,6 +80,16 @@ const QmsEditDraftListTraining = () => {
     }
     return null;
   };
+
+  useEffect(() => {
+    if (users.length > 0) {
+      const filtered = users.filter(user =>
+        `${user.first_name} ${user.last_name}`.toLowerCase().includes(attendeeSearchTerm.toLowerCase())
+      );
+      setFilteredAttendees(filtered);
+    }
+  }, [attendeeSearchTerm, users]);
+
 
   // Get all users for dropdown selections
   useEffect(() => {
@@ -327,7 +339,7 @@ const QmsEditDraftListTraining = () => {
       console.log("Submitting data:", Object.fromEntries(submitData.entries()));
 
       const response = await axios.put(
-        `${BASE_URL}/qms/training/${id}/edit/`,
+        `${BASE_URL}/qms/training/create/${id}/`,
         submitData,
         {
           headers: {
@@ -493,21 +505,63 @@ const QmsEditDraftListTraining = () => {
         </div>
 
         {/* Training Attendees - Multiple Select */}
-        <div className="flex flex-col gap-3">
+        {/* Training Attendees */}
+        <div className="flex flex-col gap-3 relative">
           <label className="add-training-label">Training Attendees</label>
-          <select
-            name="training_attendees"
-            value={formData.training_attendees}
-            onChange={handleChange}
-            className="add-training-inputs !h-[151px]"
-            multiple
-          >
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.first_name} {user.last_name}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+              <input
+                type="text"
+                placeholder="Search attendees..."
+                value={attendeeSearchTerm}
+                onChange={(e) => setAttendeeSearchTerm(e.target.value)}
+                className="add-training-inputs !pr-10"
+              />
+              <Search
+                className="absolute right-3"
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+          </div>
+
+          <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+            {filteredAttendees.length > 0 ? (
+              filteredAttendees.map(user => (
+                <div key={user.id} className="flex items-center py-2 last:border-0">
+                  <input
+                    type="checkbox"
+                    id={`attendee-${user.id}`}
+                    checked={formData.training_attendees.includes(user.id)}
+                    onChange={() => {
+                      const updatedAttendees = [...formData.training_attendees];
+                      const index = updatedAttendees.indexOf(user.id);
+
+                      if (index > -1) {
+                        updatedAttendees.splice(index, 1);
+                      } else {
+                        updatedAttendees.push(user.id);
+                      }
+
+                      setFormData({
+                        ...formData,
+                        training_attendees: updatedAttendees
+                      });
+                    }}
+                    className="mr-2 form-checkboxes"
+                  />
+                  <label
+                    htmlFor={`attendee-${user.id}`}
+                    className="text-sm text-[#AAAAAA] cursor-pointer"
+                  >
+                    {user.first_name} {user.last_name}
+                  </label>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+            )}
+          </div>
         </div>
 
         {/* Status */}

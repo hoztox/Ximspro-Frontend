@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "./viewqmsinterestedparties.css";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -48,7 +46,11 @@ const ViewQmsDraftInterestedParties = () => {
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Needs</label>
-                            <div className="text-white view-interested-parties-data">{formData.needs}</div>
+                            <ul className="text-white view-interested-parties-data list-disc pl-5">
+                                {formData.needs.map((item) => (
+                                    <li key={item.id}>{item.needs}</li>
+                                ))}
+                            </ul>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Special Requirements</label>
@@ -75,7 +77,11 @@ const ViewQmsDraftInterestedParties = () => {
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Expectations</label>
-                            <div className="text-white view-interested-parties-data">{formData.expectations}</div>
+                            <ul className="text-white view-interested-parties-data list-disc pl-5">
+                                {formData.needs.map((item) => (
+                                    <li key={item.id}>{item.expectation}</li>
+                                ))}
+                            </ul>
                         </div>
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Applicable Legal/Regulatory Requirements</label>

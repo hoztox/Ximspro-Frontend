@@ -164,9 +164,9 @@ const AddQmsRecordFormat = () => {
             newErrors.checked_by = "Checked/Reviewed By is required";
         }
 
-        if (!formData.approved_by) {
-            newErrors.approved_by = "Approved By is required";
-        }
+        // if (!formData.approved_by) {
+        //     newErrors.approved_by = "Approved By is required";
+        // }
 
         // Validate review frequency if provided
         if (formData.review_frequency_year && isNaN(parseInt(formData.review_frequency_year))) {
@@ -559,7 +559,7 @@ const AddQmsRecordFormat = () => {
                             <div className="flex-grow">
                                 <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
-                                        Approved By <span className="text-red-500">*</span>
+                                        Approved By
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
                                         <div className="ml-5 flex items-center h-[24px]">
@@ -608,7 +608,7 @@ const AddQmsRecordFormat = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
-                                <ErrorMessage message={errors.approved_by} />
+                                {/* <ErrorMessage message={errors.approved_by} /> */}
                             </div>
 
                         </div>

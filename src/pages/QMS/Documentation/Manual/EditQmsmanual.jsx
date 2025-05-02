@@ -57,7 +57,7 @@ const EditQmsmanual = () => {
         written_by: '',
         no: '',
         checked_by: '',
-        approved_by: ''
+        // approved_by: ''
     });
     const closeAttachmentPreview = () => {
         setPreviewAttachment(null);
@@ -261,37 +261,37 @@ const EditQmsmanual = () => {
     const validateForm = () => {
         let isValid = true;
         const newErrors = { ...fieldErrors };
-
+    
         // Validate title
         if (!formData.title.trim()) {
             newErrors.title = 'Section Name/Title is required';
             isValid = false;
         }
-
+    
         // Validate written_by
         if (!formData.written_by) {
             newErrors.written_by = 'Written/Prepare By is required';
             isValid = false;
         }
-
+    
         // Validate section number
         if (!formData.no.trim()) {
             newErrors.no = 'Section Number is required';
             isValid = false;
         }
-
+    
         // Validate checked_by
         if (!formData.checked_by) {
             newErrors.checked_by = 'Checked/Reviewed By is required';
             isValid = false;
         }
-
-        // Validate approved_by
-        if (!formData.approved_by) {
-            newErrors.approved_by = 'Approved By is required';
-            isValid = false;
-        }
-
+    
+        // Removed the approved_by validation
+        // if (!formData.approved_by) {
+        //     newErrors.approved_by = 'Approved By is required';
+        //     isValid = false;
+        // }
+    
         setFieldErrors(newErrors);
         return isValid;
     };
@@ -347,18 +347,19 @@ const EditQmsmanual = () => {
         }
         try {
             setLoading(true);
-
+    
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
                 setLoading(false);
                 return;
             }
-
+    
             const submitData = new FormData();
-            console.log('qqqqqqqqqqqq', submitData);
+            console.log('uuuuuuuqqqqqq:', formData);
+            
             submitData.append('company', companyId);
-
+    
             // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
             const apiFormData = {
                 ...formData,
@@ -367,7 +368,16 @@ const EditQmsmanual = () => {
                 send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
                 send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
             };
-
+    
+            // Handle approved_by field properly
+            if (formData.approved_by === null || formData.approved_by === '') {
+                // If approved_by is null or empty, don't include it in the submitData
+                delete apiFormData.approved_by;
+            } else if (typeof formData.approved_by === 'string') {
+                // If it's a string, convert to number (assuming IDs are numeric)
+                apiFormData.approved_by = parseInt(formData.approved_by, '');
+            }
+    
             // Add all form data
             Object.keys(apiFormData).forEach(key => {
                 // Skip the checkbox fields with boolean values
@@ -378,114 +388,40 @@ const EditQmsmanual = () => {
                     submitData.append(key, apiFormData[key]);
                 }
             });
-
+    
             // Add file if new file is selected
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
-
+    
             const response = await axios.put(`${BASE_URL}/qms/manuals/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
-
+    
             setLoading(false);
-            console.log('wwwwwwwww', response);
-
+            console.log('Update response:', response);
+    
             setShowEditManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditManualSuccessModal(false)
                 navigate('/company/qms/manual');
             }, 2000);
-
+    
         } catch (err) {
             setLoading(false);
-            setError('Failed to update manual');
+            // Make the error message more informative
+            if (err.response && err.response.data) {
+                console.error('API error details:', err.response.data);
+                const errorMessage = JSON.stringify(err.response.data);
+                setError(`Failed to update manual: ${errorMessage}`);
+            } else {
+                setError('Failed to update manual');
+            }
             console.error('Error updating manual:', err);
         }
     };
-
-    // const getRelevantUserId = () => {
-    //     const userRole = localStorage.getItem("role");
-
-    //     if (userRole === "user") {
-    //         const userId = localStorage.getItem("user_id");
-    //         if (userId) return userId;
-    //     }
-
-    //     const companyId = localStorage.getItem("company_id");
-    //     if (companyId) return companyId;
-
-    //     return null;
-    // };
-
-    // const handleDraftClick = async () => {
-    //     try {
-    //         setLoading(true);
-
-    //         const companyId = getUserCompanyId();
-    //         if (!companyId) {
-    //             setError('Company ID not found. Please log in again.');
-    //             setLoading(false);
-    //             return;
-    //         }
-
-    //         const userId = getRelevantUserId();
-    //         if (!userId) {
-    //             setError('User ID not found. Please log in again.');
-    //             setLoading(false);
-    //             return;
-    //         }
-
-    //         const submitData = new FormData();
-
-
-
-    //         submitData.append('company', companyId);
-    //         submitData.append('user', userId);
-    //         submitData.append('is_draft', true);
-
-    //         // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
-    //         const apiFormData = {
-    //             ...formData,
-    //             send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
-    //             send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
-    //             send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
-    //             send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
-    //         };
-
-    //         Object.keys(apiFormData).forEach(key => {
-    //             if (apiFormData[key] !== null && apiFormData[key] !== '' &&
-    //                 key !== 'send_notification_to_checked_by' &&
-    //                 key !== 'send_email_to_checked_by' &&
-    //                 key !== 'send_notification_to_approved_by' &&
-    //                 key !== 'send_email_to_approved_by') {
-    //                 submitData.append(key, apiFormData[key]);
-    //             }
-    //         });
-
-    //         if (fileObject) {
-    //             submitData.append('upload_attachment', fileObject);
-    //         }
-
-    //         const response = await axios.post(`${BASE_URL}/qms/manuals/draft-create/`, submitData, {
-    //             headers: {
-    //                 'Content-Type': 'multipart/form-data'
-    //             }
-    //         });
-
-    //         setLoading(false);
-    //         alert('Manual Draft Saved successfully!');
-    //         navigate('/company/qms/manual');
-
-    //     } catch (err) {
-    //         setLoading(false);
-    //         setError('Failed to save manual');
-    //         console.error('Error saving manual:', err);
-    //     }
-    // };
-
     const getMonthName = (monthNum) => {
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -673,7 +609,7 @@ const EditQmsmanual = () => {
                             <div className="flex-grow">
                                 <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
-                                        Approved By <span className="text-red-500">*</span>
+                                        Approved By
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
                                         <div className="ml-5 flex items-center h-[24px]">
@@ -722,7 +658,7 @@ const EditQmsmanual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
-                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
+                                {/* {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>} */}
 
                             </div>
                         </div>

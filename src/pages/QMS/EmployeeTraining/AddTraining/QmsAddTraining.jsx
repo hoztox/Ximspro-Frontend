@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./qmsaddtraining.css";
@@ -21,6 +21,8 @@ const QmsAddTraining = () => {
   const [users, setUsers] = useState([]);
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [draftLoading, setDraftLoading] = useState(false);
+  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
+  const [filteredAttendees, setFilteredAttendees] = useState([]);
 
   const [formData, setFormData] = useState({
     trainingTitle: "",
@@ -76,6 +78,17 @@ const QmsAddTraining = () => {
 
     fetchUsers();
   }, []);
+
+
+  useEffect(() => {
+    if (users.length > 0) {
+      const filtered = users.filter(user =>
+        `${user.first_name} ${user.last_name}`.toLowerCase().includes(attendeeSearchTerm.toLowerCase())
+      );
+      setFilteredAttendees(filtered);
+    }
+  }, [attendeeSearchTerm, users]);
+
 
   const getUserCompanyId = () => {
     // First check if company_id is stored directly
@@ -155,19 +168,6 @@ const QmsAddTraining = () => {
     });
   };
 
-  const handleAttendeesChange = (e) => {
-    const options = e.target.options;
-    const selectedValues = [];
-
-    for (let i = 0; i < options.length; i++) {
-      if (options[i].selected) {
-        selectedValues.push(options[i].value);
-      }
-    }
-
-    setSelectedAttendees(selectedValues);
-  };
-
   const handleSubmit = async (e, isDraft = false) => {
     e.preventDefault();
     setLoading(true);
@@ -189,6 +189,8 @@ const QmsAddTraining = () => {
       const evaluationDate = `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}`;
 
       const submissionData = new FormData();
+      console.log('draft training:', formData);
+      
       submissionData.append("company", companyId);
       submissionData.append("user", userId);
       submissionData.append("training_title", formData.trainingTitle);
@@ -261,122 +263,101 @@ const QmsAddTraining = () => {
     }
     return options;
   };
+   
   const handleSaveAsDraft = async () => {
     try {
       setDraftLoading(true);
-
+      setError(null);
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-
       if (!companyId || !userId) {
-        setError("Company ID or User ID not found. Please log in again.");
-        setDraftLoading(false);
-        return;
+        throw new Error("Company ID or User ID not found");
       }
-
-      // Format dates and times properly
-      const datePlanned =
-        formData.datePlanned.year &&
-        formData.datePlanned.month &&
-        formData.datePlanned.day
+      // 1. Prepare the payload to be sent as JSON
+      const payload = {
+        company: companyId,
+        user: userId,
+        training_title: formData.trainingTitle,
+        expected_results: formData.expectedResults,
+        actual_results: formData.actualResults,
+        type_of_training: formData.typeOfTraining || 'Internal',
+        status: formData.status || 'Requested',
+        requested_by: formData.requestedBy,
+        venue: formData.venue,
+        training_evaluation: formData.trainingEvaluation,
+        evaluation_by: formData.evaluationBy,
+        send_notification: formData.send_notification === 'true', // boolean field
+        is_draft: true, // draft status
+        date_planned: formData.datePlanned.day && formData.datePlanned.month && formData.datePlanned.year
           ? `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}`
-          : "";
-
-      const dateConducted =
-        formData.dateConducted.year &&
-        formData.dateConducted.month &&
-        formData.dateConducted.day
+          : undefined,
+        date_conducted: formData.dateConducted.day && formData.dateConducted.month && formData.dateConducted.year
           ? `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`
-          : "";
-
-      const startTime =
-        formData.startTime.hour && formData.startTime.min
+          : undefined,
+        start_time: formData.startTime.hour && formData.startTime.min
           ? `${formData.startTime.hour}:${formData.startTime.min}:00`
-          : "";
-
-      const endTime =
-        formData.endTime.hour && formData.endTime.min
+          : undefined,
+        end_time: formData.endTime.hour && formData.endTime.min
           ? `${formData.endTime.hour}:${formData.endTime.min}:00`
-          : "";
-
-      const evaluationDate =
-        formData.evaluationDate.year &&
-        formData.evaluationDate.month &&
-        formData.evaluationDate.day
+          : undefined,
+        evaluation_date: formData.evaluationDate.day && formData.evaluationDate.month && formData.evaluationDate.year
           ? `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}`
-          : "";
-
-      const submitData = new FormData();
-
-      submitData.append("company", companyId);
-      submitData.append("user", userId);
-      submitData.append("is_draft", true);
-
-      // Add basic fields
-      if (formData.trainingTitle)
-        submitData.append("training_title", formData.trainingTitle);
-      if (formData.typeOfTraining)
-        submitData.append("type_of_training", formData.typeOfTraining);
-      if (formData.expectedResults)
-        submitData.append("expected_results", formData.expectedResults);
-      if (formData.actualResults)
-        submitData.append("actual_results", formData.actualResults);
-      if (formData.status) submitData.append("status", formData.status);
-      if (formData.requestedBy)
-        submitData.append("requested_by", formData.requestedBy);
-      if (formData.venue) submitData.append("venue", formData.venue);
-      if (formData.trainingEvaluation)
-        submitData.append("training_evaluation", formData.trainingEvaluation);
-      if (formData.evaluationBy)
-        submitData.append("evaluation_by", formData.evaluationBy);
-      submitData.append("send_notification", formData.send_notification);
-
-      if (datePlanned) submitData.append("date_planned", datePlanned);
-      if (dateConducted) submitData.append("date_conducted", dateConducted);
-      if (startTime) submitData.append("start_time", startTime);
-      if (endTime) submitData.append("end_time", endTime);
-      if (evaluationDate) submitData.append("evaluation_date", evaluationDate);
-
-      selectedAttendees.forEach((attendeeId) => {
-        submitData.append("training_attendees", attendeeId);
-      });
-
-      // Add attachment if any
+          : undefined,
+        training_attendees: selectedAttendees, // array of integers like [7, 14]
+      };
+      // 2. Optional: If there's an attachment, add it as well (might need additional handling on the backend)
       if (formData.attachment) {
-        submitData.append("attachment", formData.attachment);
+        payload.attachment = formData.attachment;
       }
-
-      console.log(
-        "Sending draft data:",
-        Object.fromEntries(submitData.entries())
-      );
-
+      // 3. Debug: Log the payload being sent
+      console.log('Submitting draft with data:', payload);
+      // 4. Make the POST request
       const response = await axios.post(
         `${BASE_URL}/qms/training/draft-create/`,
-        submitData,
+        payload, // Send as JSON
         {
           headers: {
-            "Content-Type": "multipart/form-data",
+            'Content-Type': 'application/json', // Important: Set content type to JSON
           },
+          timeout: 10000, // Timeout in ms
         }
       );
-
-      setDraftLoading(false);
-
-      setShowDraftTrainingSuccessModal(true);
+      // 5. Handle success response
       setTimeout(() => {
-        setShowDraftTrainingSuccessModal(false);
-        navigate("/company/qms/draft-training");
+        navigate('/company/qms/draft-training');
       }, 1500);
     } catch (err) {
+      // 6. Enhanced error handling
+      let errorDetails = 'Failed to save draft';
+      if (err.response) {
+        console.error('Full error response:', err.response);
+        if (err.response.data) {
+          if (typeof err.response.data === 'string') {
+            errorDetails = err.response.data;
+          } else if (err.response.data.detail) {
+            errorDetails = err.response.data.detail;
+          } else if (err.response.data.non_field_errors) {
+            errorDetails = err.response.data.non_field_errors.join(', ');
+          } else {
+            const fieldErrors = [];
+            for (const [field, messages] of Object.entries(err.response.data)) {
+              if (Array.isArray(messages)) {
+                fieldErrors.push(`${field}: ${messages.join(', ')}`);
+              } else {
+                fieldErrors.push(`${field}: ${messages}`);
+              }
+            }
+            errorDetails = fieldErrors.join(' | ');
+          }
+        }
+      } else if (err.request) {
+        errorDetails = 'No response received from server';
+      } else {
+        errorDetails = err.message || 'Unknown error occurred';
+      }
+      setError(errorDetails);
+    } finally {
       setDraftLoading(false);
-      const errorMessage = err.response?.data?.detail || "Failed to save Draft";
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
-      setError(errorMessage);
-      console.error("Error saving Draft:", err.response?.data || err);
     }
   };
   return (
@@ -485,23 +466,60 @@ const QmsAddTraining = () => {
         </div>
 
         {/* Training Attendees */}
-        <div className="flex flex-col gap-3">
+        {/* Training Attendees */}
+        <div className="flex flex-col gap-3 relative">
           <label className="add-training-label">Training Attendees</label>
-          <select
-            multiple
-            value={selectedAttendees}
-            onChange={handleAttendeesChange}
-            className="add-training-inputs !h-[151px] overflow-y-auto"
-          >
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.first_name} {user.last_name}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-[#AAAAAA]">
-            Hold Ctrl/Cmd to select multiple attendees
-          </p>
+          <div className="relative">
+            <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+              <input
+                type="text"
+                placeholder="Search attendees..."
+                value={attendeeSearchTerm}
+                onChange={(e) => setAttendeeSearchTerm(e.target.value)}
+                className="add-training-inputs !pr-10"
+              />
+              <Search
+                className="absolute right-3"
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+          </div>
+
+          <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+            {filteredAttendees.length > 0 ? (
+              filteredAttendees.map(user => (
+                <div key={user.id} className="flex items-center py-2 last:border-0">
+                  <input
+                    type="checkbox"
+                    id={`attendee-${user.id}`}
+                    checked={selectedAttendees.includes(user.id)}
+                    onChange={() => {
+                      const updatedAttendees = [...selectedAttendees];
+                      const index = updatedAttendees.indexOf(user.id);
+
+                      if (index > -1) {
+                        updatedAttendees.splice(index, 1);
+                      } else {
+                        updatedAttendees.push(user.id);
+                      }
+
+                      setSelectedAttendees(updatedAttendees);
+                    }}
+                    className="mr-2 form-checkboxes"
+                  />
+                  <label
+                    htmlFor={`attendee-${user.id}`}
+                    className="text-sm text-[#AAAAAA] cursor-pointer"
+                  >
+                    {user.first_name} {user.last_name}
+                  </label>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+            )}
+          </div>
         </div>
 
         {/* Status */}

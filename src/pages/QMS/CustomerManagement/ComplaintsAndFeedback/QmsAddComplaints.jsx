@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
@@ -18,6 +18,8 @@ const QmsAddComplaints = () => {
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [categorySearchTerm, setCategorySearchTerm] = useState('');
+  const [filteredCategories, setFilteredCategories] = useState([]);
 
   const [formData, setFormData] = useState({
     customer: '',
@@ -25,7 +27,7 @@ const QmsAddComplaints = () => {
     executor: '',
     corrections: '',
     solved_after_action: '',
-    category: '',
+    category: [],
     immediate_action: '',
     date: null,
     corrective_action_need: '',
@@ -41,6 +43,15 @@ const QmsAddComplaints = () => {
   });
 
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+
+  useEffect(() => {
+    if (categories.length > 0) {
+      const filtered = categories.filter(category =>
+        category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+      );
+      setFilteredCategories(filtered);
+    }
+  }, [categorySearchTerm, categories]);
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -61,6 +72,22 @@ const QmsAddComplaints = () => {
 
   const companyId = getUserCompanyId();
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
+  const userId = getRelevantUserId();
+
   useEffect(() => {
     if (companyId) {
       fetchCategories();
@@ -73,6 +100,7 @@ const QmsAddComplaints = () => {
     try {
       const response = await axios.get(`${BASE_URL}/qms/category/company/${companyId}/`);
       setCategories(response.data);
+      setFilteredCategories(response.data); // Initialize filtered categories
       console.log('categories:', response);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -199,12 +227,34 @@ const QmsAddComplaints = () => {
     });
   };
 
-  const handleCategoryChange = (e) => {
-    const { value } = e.target;
-    setFormData({
-      ...formData,
-      category: [parseInt(value)]
+  const handleCategoryToggle = (categoryId) => {
+    const categoryIdInt = parseInt(categoryId);
+
+    setFormData(prevData => {
+      if (prevData.category.includes(categoryIdInt)) {
+        return {
+          ...prevData,
+          category: prevData.category.filter(id => id !== categoryIdInt)
+        };
+      } else {
+        return {
+          ...prevData,
+          category: [...prevData.category, categoryIdInt]
+        };
+      }
     });
+  };
+
+  const handleRemoveCategory = (categoryId) => {
+    setFormData(prevData => ({
+      ...prevData,
+      category: prevData.category.filter(id => id !== categoryId)
+    }));
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.title : '';
   };
 
   const handleOpenCarModal = () => {
@@ -226,46 +276,73 @@ const QmsAddComplaints = () => {
 
   const handleSaveDraft = async () => {
     try {
-      setDraftLoading(true);
-
       const formDataToSend = new FormData();
-      formDataToSend.append('customer', formData.customer);
-      formDataToSend.append('details', formData.details || '');
-      formDataToSend.append('executor', formData.executor || '');
-      formDataToSend.append('corrections', formData.corrections || '');
-      formDataToSend.append('solved_after_action', formData.solved_after_action || 'Yes');
-      formDataToSend.append('immediate_action', formData.immediate_action || '');
-      if (formData.date) {
-        formDataToSend.append('date', formData.date);
-      }
-      formDataToSend.append('corrective_action_need', formData.corrective_action_need || 'Yes');
-      if (formData.no_car) {
-        formDataToSend.append('no_car', formData.no_car);
-      }
-      formDataToSend.append('is_draft', true); // Mark as draft
-      formDataToSend.append('company', companyId);
-      formData.category.forEach(catId => {
-        formDataToSend.append('category', catId);
-      });
+      console.log('qqqqqqqqqqqqqqqqqqqqqqqq:', formData);
+      setDraftLoading(true);
+  
+      // We need to send the categories as JSON instead of FormData for ManyToMany fields
+      // Create a JSON object with all the data
+      const jsonData = {
+        customer: formData.customer,
+        details: formData.details || '',
+        executor: formData.executor || '',
+        corrections: formData.corrections || '',
+        solved_after_action: formData.solved_after_action || 'Yes',
+        immediate_action: formData.immediate_action || '',
+        date: formData.date || null,
+        corrective_action_need: formData.corrective_action_need || 'Yes',
+        no_car: formData.no_car || null,
+        is_draft: true,
+        company: companyId,
+        user: userId,
+        category: formData.category // Send category as an array instead of individual elements
+      };
+  
+      console.log('Sending data:', jsonData);
+  
+      // If there's a file to upload, we need to use FormData
       if (formData.upload_attachment) {
+        
+        // Append the JSON data as a string
+        formDataToSend.append('data', JSON.stringify(jsonData));
+        
+        // Append the file
         formDataToSend.append('upload_attachment', formData.upload_attachment);
-      }
-
-      // Use the draft-specific endpoint
-      const response = await axios.post(
-        `${BASE_URL}/qms/complaints/draft-create/`,
-        formDataToSend,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
+        
+        const response = await axios.post(
+          `${BASE_URL}/qms/complaints/draft-create/`,
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
           }
-        }
-      );
-
-      console.log('Draft saved successfully:', response.data);
-      navigate('/company/qms/list-complaints');
+        );
+        
+        console.log('Draft saved successfully:', response.data);
+        navigate('/company/qms/draft-complaints');
+      } else {
+        // If no file, just send the JSON directly
+        const response = await axios.post(
+          `${BASE_URL}/qms/complaints/draft-create/`,
+          jsonData,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+        
+        console.log('Draft saved successfully:', response.data);
+        navigate('/company/qms/draft-complaints');
+      }
     } catch (err) {
       console.error('Error saving draft:', err);
+      if (err.response) {
+        console.error('Response data:', err.response.data);
+        console.error('Response status:', err.response.status);
+        console.error('Response headers:', err.response.headers);
+      }
       setError('Failed to save draft. Please check your inputs and try again.');
     } finally {
       setDraftLoading(false);
@@ -278,6 +355,8 @@ const QmsAddComplaints = () => {
       setLoading(true);
 
       const formDataToSend = new FormData();
+      console.log('uuuuuuuuuuuuu:', formData);
+
       formDataToSend.append('customer', formData.customer);
       formDataToSend.append('details', formData.details || '');
       formDataToSend.append('executor', formData.executor || '');
@@ -291,8 +370,9 @@ const QmsAddComplaints = () => {
       if (formData.no_car) {
         formDataToSend.append('no_car', formData.no_car);
       }
-      formDataToSend.append('is_draft', false); // Not a draft
+      formDataToSend.append('is_draft', false);
       formDataToSend.append('company', companyId);
+      formDataToSend.append('user', userId);
       formData.category.forEach(catId => {
         formDataToSend.append('category', catId);
       });
@@ -300,7 +380,6 @@ const QmsAddComplaints = () => {
         formDataToSend.append('upload_attachment', formData.upload_attachment);
       }
 
-      // Use the regular complaints endpoint
       const response = await axios.post(
         `${BASE_URL}/qms/complaints/create/`,
         formDataToSend,
@@ -396,41 +475,55 @@ const QmsAddComplaints = () => {
           </div>
         </div>
 
+        {/* Updated Categories Field */}
         <div className="flex flex-col gap-3 relative">
-          <div className='flex justify-between'>
+          <div className="flex items-center justify-between">
             <label className="add-training-label">
-              Category <span className="text-red-500">*</span>
+              Categories <span className="text-red-500">*</span>
             </label>
           </div>
           <div className="relative">
-            <select
-              name="category"
-              value={formData.category[0] || ''}
-              onChange={handleCategoryChange}
-              onFocus={() => setFocusedDropdown("category")}
-              onBlur={() => setFocusedDropdown(null)}
-              className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
-              disabled={loading}
-            >
-              <option value="" disabled>Select Category</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.title}
-                </option>
-              ))}
-              {categories.length === 0 && !loading && (
-                <option value="" disabled>No categories available</option>
-              )}
-            </select>
-            <ChevronDown
-              className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                ${focusedDropdown === "category" ? "rotate-180" : ""}`}
-              size={20}
-              color="#AAAAAA"
-            />
+            <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={categorySearchTerm}
+                onChange={(e) => setCategorySearchTerm(e.target.value)}
+                className="add-training-inputs !pr-10"
+              />
+              <Search
+                className="absolute right-3"
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
           </div>
-          {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+
+          <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+            {filteredCategories.length > 0 ? (
+              filteredCategories.map(category => (
+                <div key={category.id} className="flex items-center py-2 last:border-0">
+                  <input
+                    type="checkbox"
+                    id={`category-${category.id}`}
+                    checked={formData.category.includes(category.id)}
+                    onChange={() => handleCategoryToggle(category.id)}
+                    className="mr-2 form-checkboxes"
+                  />
+                  <label
+                    htmlFor={`category-${category.id}`}
+                    className="text-sm text-[#AAAAAA] cursor-pointer"
+                  >
+                    {category.title}
+                  </label>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-[#AAAAAA] p-2">
+                {categories.length === 0 ? 'No categories available' : 'No matching categories found'}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
@@ -604,7 +697,6 @@ const QmsAddComplaints = () => {
           </div>
         </div>
 
-        {/* Conditionally render Corrections and CAR Number fields */}
         {formData.corrective_action_need === 'Yes' && (
           <>
             <div className="flex flex-col gap-3">
@@ -683,7 +775,6 @@ const QmsAddComplaints = () => {
           )}
         </div>
 
-        {/* Form Actions */}
         <div className="md:col-span-2 flex gap-4 justify-between">
           <div>
             <button

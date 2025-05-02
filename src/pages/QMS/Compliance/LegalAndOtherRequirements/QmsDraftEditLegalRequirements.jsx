@@ -124,7 +124,7 @@ const QmsDraftEditLegalRequirements = () => {
         });
 
         try {
-            const response = await axios.put(`${BASE_URL}/qms/legal/${id}/edit/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/legal/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

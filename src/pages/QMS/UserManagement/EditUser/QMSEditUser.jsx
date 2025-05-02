@@ -6,6 +6,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import choosefile from "../../../../assets/images/Company User Management/choosefile.svg"
 import QmsEditUserSuccessModal from '../Modals/QmsEditUserSuccessModal';
 import QmsEditUserErrorModal from '../Modals/QmsEditUserErrorModal';
+import CompanyChangePasswordModal from '../CompanyChangePasswordModal';
 
 const QMSEditUser = () => {
     const navigate = useNavigate();
@@ -14,6 +15,7 @@ const QMSEditUser = () => {
     const [error, setError] = useState(null);
     const [companyPermissions, setCompanyPermissions] = useState([]);
     const [selectedPermissions, setSelectedPermissions] = useState([]);
+    const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
     const [userId, setUserId] = useState(id);
 
     const [showEditUserSuccessModal, setShowEditUserSuccessModal] = useState(false);
@@ -1071,22 +1073,41 @@ const QMSEditUser = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-[22px] mt-5 mx-[122px] pb-[22px]">
-                        <button
-                            type="button"
-                            className="cancel-btns duration-200"
-                            onClick={handleCancel}
-                            disabled={isLoading}
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            className="save-btns duration-200"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Updating...' : 'Update'}
-                        </button>
+                    <div className="flex justify-between gap-[22px] mt-5 mx-[122px] pb-[22px]">
+                        <div>
+                            <button
+                                className='request-correction-btn duration-200'
+                                type="button"
+                                onClick={() => setShowChangePasswordModal(true)}
+                            >
+                                Change Password
+                            </button>
+                        </div>
+
+                        <CompanyChangePasswordModal
+                            isOpen={showChangePasswordModal}
+                            onClose={() => setShowChangePasswordModal(false)}
+                            userId={userId} // Pass the userId to the modal
+                        />
+
+
+                        <div className='flex gap-[22px]'>
+                            <button
+                                type="button"
+                                className="cancel-btns duration-200"
+                                onClick={handleCancel}
+                                disabled={isLoading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="save-btns duration-200"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Updating...' : 'Update'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             )}

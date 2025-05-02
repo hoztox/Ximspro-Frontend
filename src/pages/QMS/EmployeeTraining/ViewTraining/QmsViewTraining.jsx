@@ -120,13 +120,20 @@ const QmsViewTraining = () => {
 
                         <div>
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Training Attendees</p>
-                            <p className="text-white view-training-data">
-                                {training.training_attendees && training.training_attendees.length > 0 ?
-                                    training.training_attendees.map(attendee =>
-                                        `${attendee.first_name} ${attendee.last_name}`
-                                    ).join(', ')
-                                    : 'None specified'}
-                            </p>
+                            <div className="text-white view-training-data">
+                                {training.training_attendees && training.training_attendees.length > 0 ? (
+                                    <ul className="list-disc pl-5 space-y-1">
+                                        {training.training_attendees.map((attendee, index) => (
+                                            <li key={index}>
+                                                {attendee.first_name} {attendee.last_name}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p>None specified</p>
+                                )}
+                            </div>
+
                         </div>
 
                         <div>

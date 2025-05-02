@@ -32,7 +32,7 @@ const EditDraftQmsManual = () => {
         written_by: '',
         no: '',
         checked_by: '',
-        approved_by: ''
+        // approved_by: ''
     });
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -261,10 +261,10 @@ const EditDraftQmsManual = () => {
         }
 
         // Validate approved_by
-        if (!formData.approved_by) {
-            newErrors.approved_by = 'Approved By is required';
-            isValid = false;
-        }
+        // if (!formData.approved_by) {
+        //     newErrors.approved_by = 'Approved By is required';
+        //     isValid = false;
+        // }
 
         setFieldErrors(newErrors);
         return isValid;
@@ -381,6 +381,15 @@ const EditDraftQmsManual = () => {
                 send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
                 send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
             };
+
+
+            if (formData.approved_by === null || formData.approved_by === '') {
+                // If approved_by is null or empty, don't include it in the submitData
+                delete apiFormData.approved_by;
+            } else if (typeof formData.approved_by === 'string') {
+                // If it's a string, convert to number (assuming IDs are numeric)
+                apiFormData.approved_by = parseInt(formData.approved_by, '');
+            }
 
             // Add all form data except the original checkbox fields
             Object.keys(apiFormData).forEach(key => {
@@ -566,7 +575,7 @@ const EditDraftQmsManual = () => {
                             <div className="flex-grow">
                                 <div className='flex items-center justify-between h-[24px]'>
                                     <label className="add-qms-manual-label">
-                                        Approved By <span className="text-red-500">*</span>
+                                        Approved By
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
                                         <div className="ml-5 flex items-center h-[24px]">
@@ -615,7 +624,7 @@ const EditDraftQmsManual = () => {
                                         className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                     />
                                 </div>
-                                {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>}
+                                {/* {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>} */}
                             </div>
                         </div>
 

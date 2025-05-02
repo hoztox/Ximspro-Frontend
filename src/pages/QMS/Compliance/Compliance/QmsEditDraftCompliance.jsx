@@ -140,7 +140,7 @@ const QmsEditDraftCompliance = () => {
     });
 
     try {
-      const response = await axios.put(`${BASE_URL}/qms/compliances/${id}/edit/`, submitData, {
+      const response = await axios.put(`${BASE_URL}/qms/compliances-draft/edit/${id}/`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

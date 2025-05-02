@@ -557,11 +557,11 @@ const ThemedApp = () => {
           {/* QMS Correction Corrective Actions & Preventive Actions*/}
           <Route path="qms/list-correction-actions" element={<QmsListCorrectionActions />} />
           <Route path="qms/add-correction-actions" element={<QmsAddCorrectionActions />} />
-          <Route path="qms/edit-correction-actions" element={<QmsEditCorrectionActions />} />
-          <Route path="qms/view-correction-actions" element={<QmsViewCorrectionActions />} />
+          <Route path="qms/edit-correction-actions/:id" element={<QmsEditCorrectionActions />} />
+          <Route path="qms/view-correction-actions/:id" element={<QmsViewCorrectionActions />} />
           <Route path="qms/draft-correction-actions" element={<QmsDraftCorrectionActions />} />
-          <Route path="qms/edit-draft-correction-actions" element={<QmsEditDraftCorrectionActions />} />
-          <Route path="qms/view-draft-correction-actions" element={<QmsViewDraftCorrectionActions />} />
+          <Route path="qms/edit-draft-correction-actions/:id" element={<QmsEditDraftCorrectionActions />} />
+          <Route path="qms/view-draft-correction-actions/:id" element={<QmsViewDraftCorrectionActions />} />
 
           <Route path="qms/list-preventive-actions" element={<QmsListPreventiveActions />} />
           <Route path="qms/add-preventive-actions" element={<QmsAddPreventiveActions />} />

@@ -115,13 +115,13 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
         console.log("Submitting answer change with data:", {
             questionId,
             answer: rating,
-            user_id: selectedSupplier
+            supplier_id: selectedSupplier
         });
 
         try {
             await axios.patch(`${BASE_URL}/qms/supplier/evaluation/question/answer/${questionId}/`, {
                 answer: rating,
-                user_id: selectedSupplier
+                supplier_id: selectedSupplier
             });
             setShowAddRatingSuccessModal(true);
             setTimeout(() => {
@@ -224,9 +224,7 @@ const EvaluationModal = ({ isOpen, onClose, supplier, supplierList, evaluationId
                                             <option value="Select Supplier">Select Supplier</option>
                                             {combinedOptions.map(item => (
                                                 <option key={item.id} value={item.id}>
-                                                    {item.first_name && item.last_name
-                                                        ? `${item.first_name} ${item.last_name}`
-                                                        : item.first_name || item.last_name || item.username || item.email}
+                                                    {item.company_name}
                                                 </option>
                                             ))}
 

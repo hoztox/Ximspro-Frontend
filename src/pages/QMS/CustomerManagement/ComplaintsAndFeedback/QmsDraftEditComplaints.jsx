@@ -1,42 +1,179 @@
-import React, { useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, X, Search } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import CategoryModal from '../CategoryModal';
 import AddCarNumberModal from '../AddCarNumberModal';
+import { BASE_URL } from '../../../../Utils/Config';
 
 const QmsDraftEditComplaints = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isCarModalOpen, setIsCarModalOpen] = useState(false);
+
+    // State for API data
+    const [customers, setCustomers] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [carNumbers, setCarNumbers] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [categorySearchTerm, setCategorySearchTerm] = useState('');
+    const [filteredCategories, setFilteredCategories] = useState([]);
+
+    const getUserCompanyId = () => {
+        const role = localStorage.getItem("role");
+        if (role === "company") {
+            return localStorage.getItem("company_id");
+        } else if (role === "user") {
+            try {
+                const userCompanyId = localStorage.getItem("user_company_id");
+                return userCompanyId ? JSON.parse(userCompanyId) : null;
+            } catch (e) {
+                console.error("Error parsing user company ID:", e);
+                return null;
+            }
+        }
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+    const userId = localStorage.getItem("user_id");
+
     const [formData, setFormData] = useState({
-        category: 'Internal',
+        customer: '',
         details: '',
         immediate_action: '',
-        name: '',
-        solved: '',
-        date: {
-            day: '',
-            month: '',
-            year: ''
-        },
-        correctiveAction: '',
+        executor: '',
+        solved_after_action: 'Yes',
+        category: [],
+        date: '',
+        corrective_action_need: 'Yes',
         corrections: '',
-        carnumber: '',
-        cars: [],
+        no_car: '',
+        upload_attachment: null,
+        is_draft: true,
         send_notification: false
+    });
+
+    const [dateInputs, setDateInputs] = useState({
+        day: '',
+        month: '',
+        year: ''
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
-    const handleListDraftComplaints = () => {
-        navigate('/company/qms/draft-complaints')
-    }
+    useEffect(() => {
+        if (companyId) {
+            fetchCustomers();
+            fetchUsers();
+            fetchCarNumbers();
+            fetchCategories();
+
+            if (id) {
+                fetchComplaintData(id);
+            }
+        }
+    }, [companyId, id]);
+
+    useEffect(() => {
+        if (categories.length > 0) {
+            const filtered = categories.filter(category =>
+                category.title.toLowerCase().includes(categorySearchTerm.toLowerCase())
+            );
+            setFilteredCategories(filtered);
+        }
+    }, [categorySearchTerm, categories]);
+
+    const fetchComplaintData = async (id) => {
+        try {
+            setLoading(true);
+            const response = await axios.get(`${BASE_URL}/qms/complaints/${id}/`);
+            const data = response.data;
+
+            let day = '';
+            let month = '';
+            let year = '';
+
+            if (data.date) {
+                const dateObj = new Date(data.date);
+                day = String(dateObj.getDate()).padStart(2, '0');
+                month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                year = String(dateObj.getFullYear());
+            }
+
+            setDateInputs({ day, month, year });
+
+            const categoryIds = Array.isArray(data.category)
+                ? data.category.map(cat => typeof cat === 'object' ? cat.id : cat)
+                : [];
+
+            setFormData({
+                customer: data.customer?.id || '',
+                details: data.details || '',
+                immediate_action: data.immediate_action || '',
+                executor: data.executor?.id || '',
+                solved_after_action: data.solved_after_action || 'Yes',
+                category: categoryIds,
+                date: data.date || '',
+                corrective_action_need: data.corrective_action_need || 'Yes',
+                corrections: data.corrections || '',
+                no_car: data.no_car?.id || '',
+                upload_attachment: null,
+                is_draft: true
+            });
+
+        } catch (err) {
+            console.error("Error fetching complaint data:", err);
+            setError("Failed to load complaint data. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchCustomers = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/customer/company/${companyId}/`);
+            setCustomers(response.data);
+        } catch (err) {
+            console.error("Error fetching customers:", err);
+        }
+    };
+
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+            setUsers(Array.isArray(response.data) ? response.data : []);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        }
+    };
+
+    const fetchCarNumbers = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
+            setCarNumbers(response.data);
+        } catch (err) {
+            console.error("Error fetching CAR numbers:", err);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/category/company/${companyId}/`);
+            setCategories(response.data);
+            setFilteredCategories(response.data);
+        } catch (err) {
+            console.error("Error fetching categories:", err);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        // Handle checkboxes
         if (type === 'checkbox') {
             setFormData({
                 ...formData,
@@ -45,22 +182,48 @@ const QmsDraftEditComplaints = () => {
             return;
         }
 
-        // Handle nested objects
-        if (name.includes('.')) {
-            const [parent, child] = name.split('.');
-            setFormData({
-                ...formData,
-                [parent]: {
-                    ...formData[parent],
-                    [child]: value
-                }
-            });
-        } else {
-            setFormData({
-                ...formData,
-                [name]: value
-            });
+        if (name.startsWith('date.')) {
+            const datePart = name.split('.')[1];
+            const updatedDateInputs = { ...dateInputs, [datePart]: value };
+            setDateInputs(updatedDateInputs);
+
+            if (updatedDateInputs.day && updatedDateInputs.month && updatedDateInputs.year) {
+                const formattedDate = `${updatedDateInputs.year}-${updatedDateInputs.month}-${updatedDateInputs.day}`;
+                setFormData({
+                    ...formData,
+                    date: formattedDate
+                });
+            }
+            return;
         }
+
+        setFormData({
+            ...formData,
+            [name]: value
+        });
+    };
+
+    const handleCategoryToggle = (categoryId) => {
+        setFormData(prevData => {
+            if (prevData.category.includes(categoryId)) {
+                return {
+                    ...prevData,
+                    category: prevData.category.filter(id => id !== categoryId)
+                };
+            } else {
+                return {
+                    ...prevData,
+                    category: [...prevData.category, categoryId]
+                };
+            }
+        });
+    };
+
+    const handleRemoveCategory = (categoryId) => {
+        setFormData(prevData => ({
+            ...prevData,
+            category: prevData.category.filter(id => id !== categoryId)
+        }));
     };
 
     const handleOpenCarModal = () => {
@@ -71,14 +234,15 @@ const QmsDraftEditComplaints = () => {
         setIsCarModalOpen(false);
     };
 
-    const handleAddCar = (cars) => {
-        setFormData({
-            ...formData,
-            cars: cars
-        });
-
+    const handleAddCar = (car) => {
+        fetchCarNumbers();
+        if (car?.id) {
+            setFormData({
+                ...formData,
+                no_car: car.id
+            });
+        }
     };
-
 
     const handleOpenModal = () => {
         setIsModalOpen(true);
@@ -89,31 +253,99 @@ const QmsDraftEditComplaints = () => {
     };
 
     const handleAddCategory = (category) => {
-        setFormData({
-            ...formData,
-            category: category
-        });
+        fetchCategories();
+        const newCategoryId = category.id;
+        if (!formData.category.includes(newCategoryId)) {
+            setFormData({
+                ...formData,
+                category: [...formData.category, newCategoryId]
+            });
+        }
     };
 
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0]
+            upload_attachment: e.target.files[0]
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission
-        console.log('Form data submitted:', formData);
-        // Here you would typically send the data to your backend
+
+        try {
+            setLoading(true);
+
+            // Create a regular object first (not FormData)
+            const payload = {
+                ...formData,
+                user: userId,
+                company: companyId,
+                // Ensure category is always an array
+                category: Array.isArray(formData.category) ? formData.category : []
+            };
+
+            // Convert to FormData only if we have a file to upload
+            let submitData;
+            let config = {};
+
+            if (formData.upload_attachment) {
+                submitData = new FormData();
+                // Append all fields except category
+                Object.keys(payload).forEach(key => {
+                    if (key !== 'category' && payload[key] !== null && payload[key] !== undefined) {
+                        if (key === 'upload_attachment') {
+                            submitData.append(key, payload[key]);
+                        } else {
+                            submitData.append(key, String(payload[key]));
+                        }
+                    }
+                });
+                // Append categories separately
+                payload.category.forEach(catId => {
+                    submitData.append('category', catId);
+                });
+                config.headers = { 'Content-Type': 'multipart/form-data' };
+            } else {
+                // No file upload - send as JSON
+                submitData = payload;
+                config.headers = { 'Content-Type': 'application/json' };
+            }
+
+            console.log('Submitting payload:', submitData);
+
+            let response;
+            if (id) {
+                response = await axios.put(
+                    `${BASE_URL}/qms/complaints/${id}/`,
+                    submitData,
+                    config
+                );
+            } else {
+                response = await axios.post(
+                    `${BASE_URL}/qms/complaints/`,
+                    submitData,
+                    config
+                );
+            }
+
+            navigate('/company/qms/draft-complaints');
+        } catch (err) {
+            console.error("Error submitting form:", err);
+            if (err.response) {
+                console.error("Response data:", err.response.data);
+                console.error("Response status:", err.response.status);
+            }
+            setError("Failed to save draft complaint. Please check your inputs and try again.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/draft-complaints')
+        navigate('/company/qms/draft-complaints');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -127,10 +359,17 @@ const QmsDraftEditComplaints = () => {
         return options;
     };
 
+    if (loading && !customers.length) {
+        return <div className="flex justify-center items-center p-10">Loading...</div>;
+    }
+
+    if (error) {
+        return <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>;
+    }
+
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-
                 <CategoryModal
                     isOpen={isModalOpen}
                     onClose={handleCloseModal}
@@ -143,70 +382,99 @@ const QmsDraftEditComplaints = () => {
                     onAddCause={handleAddCar}
                 />
 
-
-                <h1 className="add-training-head">Edit Draft Complaints and Feedbacks</h1>
+                <h1 className="add-training-head">
+                    {id ? "Edit" : "Add"} Draft Complaints
+                </h1>
                 <button
                     type="button"
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={() => handleListDraftComplaints()}
+                    onClick={() => navigate('/company/qms/draft-complaints')}
                 >
-                    List Draft Complaints and Feedbacks
+                    List Draft Complaints
                 </button>
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
-
+                {/* Customer Selection */}
                 <div className="flex flex-col gap-5">
                     <div className='flex flex-col gap-3 relative'>
                         <label className="add-training-label">
-                            Name <span className="text-red-500">*</span>
+                            Customer <span className="text-red-500">*</span>
                         </label>
                         <select
-                            name="name"
-                            value={formData.name}
+                            name="customer"
+                            value={formData.customer}
                             onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("name")}
+                            onFocus={() => setFocusedDropdown("customer")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             required
                         >
-                            <option value="" disabled>Select</option>
-                            <option value="User1">User 1</option>
-                            <option value="User2">User 2</option>
+                            <option value="" disabled>Select Customer</option>
+                            {customers.map(customer => (
+                                <option key={customer.id} value={customer.id}>
+                                    {customer.name}
+                                </option>
+                            ))}
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "name" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
                     </div>
                 </div>
 
-
+                {/* Category Selection */}
                 <div className="flex flex-col gap-3 relative">
-                    <div className='flex justify-between'>
-                        <label className="add-training-label">Category <span className="text-red-500">*</span></label>
-
+                    <div className="flex items-center justify-between">
+                        <label className="add-training-label">
+                            Categories <span className="text-red-500">*</span>
+                        </label>
                     </div>
+
                     <div className="relative">
-                        <select
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("category")}
-                            onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        >
-                            <option value="Internal">Internal</option>
-                            <option value="External">External</option>
-                        </select>
-                        <ChevronDown
-                            className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                             ${focusedDropdown === "category" ? "rotate-180" : ""}`}
-                            size={20}
-                            color="#AAAAAA"
-                        />
+                        <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+                            <input
+                                type="text"
+                                placeholder="Search categories..."
+                                value={categorySearchTerm}
+                                onChange={(e) => setCategorySearchTerm(e.target.value)}
+                                className="add-training-inputs !pr-10"
+                            />
+                            <Search
+                                className="absolute right-3"
+                                size={20}
+                                color="#AAAAAA"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+                        {filteredCategories.length > 0 ? (
+                            filteredCategories.map(category => (
+                                <div key={category.id} className="flex items-center py-2 last:border-0">
+                                    <input
+                                        type="checkbox"
+                                        id={`category-${category.id}`}
+                                        checked={formData.category.includes(category.id)}
+                                        onChange={() => handleCategoryToggle(category.id)}
+                                        className="mr-2 form-checkboxes"
+                                    />
+                                    <label
+                                        htmlFor={`category-${category.id}`}
+                                        className="text-sm text-[#AAAAAA] cursor-pointer"
+                                    >
+                                        {category.title}
+                                    </label>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-[#AAAAAA] p-2">
+                                {categories.length === 0 ? 'No categories available' : 'No matching categories found'}
+                            </div>
+                        )}
                     </div>
                     <button
                         type="button"
@@ -217,6 +485,7 @@ const QmsDraftEditComplaints = () => {
                     </button>
                 </div>
 
+                {/* Details */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
                         Details
@@ -230,6 +499,7 @@ const QmsDraftEditComplaints = () => {
                     />
                 </div>
 
+                {/* Immediate Action */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Immediate Action</label>
                     <textarea
@@ -237,10 +507,10 @@ const QmsDraftEditComplaints = () => {
                         value={formData.immediate_action}
                         onChange={handleChange}
                         className="add-training-inputs !h-[98px]"
-                    >
-                    </textarea>
+                    />
                 </div>
 
+                {/* Executor */}
                 <div className='flex flex-col gap-3 relative'>
                     <label className="add-training-label">
                         Executor
@@ -255,8 +525,11 @@ const QmsDraftEditComplaints = () => {
                         required
                     >
                         <option value="" disabled>Select User</option>
-                        <option value="User1">User 1</option>
-                        <option value="User2">User 2</option>
+                        {users.map(user => (
+                            <option key={user.id} value={user.id}>
+                                {user.first_name} {user.last_name}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
@@ -265,19 +538,21 @@ const QmsDraftEditComplaints = () => {
                         color="#AAAAAA"
                     />
                 </div>
+
+                {/* Date */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-
                         {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
-                                value={formData.date.day}
+                                value={dateInputs.day}
                                 onChange={handleChange}
                                 onFocus={() => setFocusedDropdown("date.day")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
@@ -294,11 +569,12 @@ const QmsDraftEditComplaints = () => {
                         <div className="relative">
                             <select
                                 name="date.month"
-                                value={formData.date.month}
+                                value={dateInputs.month}
                                 onChange={handleChange}
                                 onFocus={() => setFocusedDropdown("date.month")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
@@ -315,11 +591,12 @@ const QmsDraftEditComplaints = () => {
                         <div className="relative">
                             <select
                                 name="date.year"
-                                value={formData.date.year}
+                                value={dateInputs.year}
                                 onChange={handleChange}
                                 onFocus={() => setFocusedDropdown("date.year")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
@@ -334,47 +611,48 @@ const QmsDraftEditComplaints = () => {
                     </div>
                 </div>
 
+                {/* Solved After Action */}
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Solved After Action?</label>
                     <select
-                        name="solved"
-                        value={formData.solved}
+                        name="solved_after_action"
+                        value={formData.solved_after_action}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("solved")}
+                        onFocus={() => setFocusedDropdown("solved_after_action")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                        required
                     >
-                        <option value="" disabled>Select</option>
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
-
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "solved" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "solved_after_action" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
 
+                {/* Corrective Action Needed */}
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Corrective Action Needed ?</label>
+                    <label className="add-training-label">Corrective Action Needed?</label>
                     <div className="relative">
                         <select
-                            name="correctiveAction"
-                            value={formData.correctiveAction}
+                            name="corrective_action_need"
+                            value={formData.corrective_action_need}
                             onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("correctiveAction")}
+                            onFocus={() => setFocusedDropdown("corrective_action_need")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                            required
                         >
-                            <option value="" disabled>Select Action</option>
                             <option value="Yes">Yes</option>
                             <option value="No">No</option>
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                             ${focusedDropdown === "correctiveAction" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "corrective_action_need" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -382,7 +660,7 @@ const QmsDraftEditComplaints = () => {
                 </div>
 
                 {/* Conditionally render Corrections and CAR Number fields */}
-                {formData.correctiveAction === 'Yes' && (
+                {formData.corrective_action_need === 'Yes' && (
                     <>
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">
@@ -400,18 +678,23 @@ const QmsDraftEditComplaints = () => {
                         <div className="flex flex-col gap-3 relative">
                             <label className="add-training-label">CAR Number</label>
                             <select
-                                name="carnumber"
-                                value={formData.carnumber}
+                                name="no_car"
+                                value={formData.no_car}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("carnumber")}
+                                onFocus={() => setFocusedDropdown("no_car")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
-                                <option value="" disabled>Select</option>
+                                <option value="" disabled>Select CAR Number</option>
+                                {carNumbers.map(car => (
+                                    <option key={car.id} value={car.id}>
+                                        {car.action_no}
+                                    </option>
+                                ))}
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[45%] transform transition-transform duration-300 
-                             ${focusedDropdown === "carnumber" ? "rotate-180" : ""}`}
+                             ${focusedDropdown === "no_car" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -426,6 +709,7 @@ const QmsDraftEditComplaints = () => {
                     </>
                 )}
 
+                {/* File Upload */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Upload Attachments</label>
                     <div className="flex">
@@ -443,11 +727,14 @@ const QmsDraftEditComplaints = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.attachment && (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">{formData.attachment.name}</p>
-                    )}
-                    {!formData.attachment && (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
+                    {formData.upload_attachment ? (
+                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                            {formData.upload_attachment.name}
+                        </p>
+                    ) : (
+                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                            No file chosen
+                        </p>
                     )}
                 </div>
 
@@ -464,8 +751,9 @@ const QmsDraftEditComplaints = () => {
                         <button
                             type="submit"
                             className="save-btn duration-200"
+                            disabled={loading}
                         >
-                            Save
+                            {loading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>
@@ -474,5 +762,4 @@ const QmsDraftEditComplaints = () => {
     );
 };
 
-
-export default QmsDraftEditComplaints
+export default QmsDraftEditComplaints;

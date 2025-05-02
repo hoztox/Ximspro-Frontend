@@ -275,7 +275,7 @@ const QmsEditDraftMeeting = () => {
     
     const updateMeeting = async (data) => {
         try {
-            await axios.put(`${BASE_URL}/qms/meeting/${id}/edit/`, data);
+            await axios.put(`${BASE_URL}/qms/meeting-draft/edit/${id}/`, data);
             navigate('/company/qms/list-meeting');
         } catch (error) {
             console.error('Error updating meeting:', error);

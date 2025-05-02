@@ -253,7 +253,7 @@ const QmsViewSustainability = () => {
             }
 
             const requestData = {
-                manual_id: id,
+                sustainability_id: id, 
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
             };
@@ -392,7 +392,7 @@ const QmsViewSustainability = () => {
             }
 
             const requestData = {
-                record_id: id,
+                sustainability_id: id,
                 current_user_id: currentUser.user_id
             };
 
@@ -568,7 +568,7 @@ const QmsViewSustainability = () => {
                         </div>
                         <div>
                             <label className="viewmanuallabels">Relate Document / Guideline</label>
-                            <p className="viewmanuasdata">{manualDetails.relate_document || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.related_record_format || 'N/A'}</p>
                         </div>
                     </div>
 
