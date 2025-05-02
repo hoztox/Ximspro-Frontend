@@ -413,8 +413,9 @@ const QmsListSustainability = () => {
             // Set publishing loading state to true when starting
             setIsPublishing(true);
 
-            const userId = localStorage.getItem('user_id');
-            const companyId = localStorage.getItem('company_id');
+            const userId = getRelevantUserId();
+            
+            const companyId = getUserCompanyId();
             const publisherId = userId || companyId;
             if (!publisherId) {
               alert("User information not found. Please log in again.");
