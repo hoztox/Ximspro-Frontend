@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Plus, X } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import "./addqmsinterestedparties.css";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -228,7 +228,7 @@ const AddQmsInterestedParties = () => {
       </div>
     );
   }
-  const handleSaveAsDraft = async () => { 
+  const handleSaveAsDraft = async () => {
     try {
       setLoading(true);
 
@@ -397,7 +397,7 @@ const AddQmsInterestedParties = () => {
                       onChange={(e) => handleNeedsExpectationsChange(index, 'needs', e.target.value)}
                       className="w-full add-qms-intertested-inputs"
                     />
-                    {index > 0 && (
+                    {/* {index > 0 && (
                       <button
                         type="button"
                         onClick={() => removeNeedsExpectations(index)}
@@ -405,30 +405,41 @@ const AddQmsInterestedParties = () => {
                       >
                         ×
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
                 <div>
                   <label className="block mb-3 add-qms-manual-label">
                     Expectations
                   </label>
-                  <input
-                    type="text"
-                    name={`expectations_${index}`}
-                    placeholder="Enter Expectations"
-                    value={item.expectations}
-                    onChange={(e) => handleNeedsExpectationsChange(index, 'expectations', e.target.value)}
-                    className="w-full add-qms-intertested-inputs"
-                  />
+                  <div className='flex'>
+                    <input
+                      type="text"
+                      name={`expectations_${index}`}
+                      placeholder="Enter Expectations"
+                      value={item.expectations}
+                      onChange={(e) => handleNeedsExpectationsChange(index, 'expectations', e.target.value)}
+                      className="w-full add-qms-intertested-inputs"
+                    />
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeNeedsExpectations(index)}
+                        className="ml-2 text-red-500 border border-red-500 p-2 rounded-md hover:text-white hover:bg-red-500 duration-200"
+                      >
+                        <X size={17}/>
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {index === formData.needs_expectations.length - 1 && (
                   <div className="md:col-span-2 flex justify-end">
                     <button
                       type="button"
                       onClick={addNeedsExpectations}
-                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                      className="request-correction-btn flex items-center gap-[5px] duration-200 " 
                     >
-                      + Add More
+                      Add More <Plus size={18}/>
                     </button>
                   </div>
                 )}

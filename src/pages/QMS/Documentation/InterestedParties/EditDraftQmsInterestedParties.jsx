@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronDown, Eye } from "lucide-react";
+import { ChevronDown, Eye, X, Plus } from "lucide-react";
 import axios from "axios";
 import fileIcon from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -203,7 +203,7 @@ const EditDraftQmsInterestedParties = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-  
+
     try {
       let response;
       if (selectedFile) {
@@ -216,14 +216,14 @@ const EditDraftQmsInterestedParties = () => {
         formDataWithFile.append('send_notification', formData.send_notification);
         formDataWithFile.append('company', formData.company);
         formDataWithFile.append('file', selectedFile);
-  
+
         // Add needs array as JSON string
         formDataWithFile.append('needs', JSON.stringify(
           formData.needs.filter(need =>
             need.needs.trim() !== "" || need.expectation.trim() !== ""
           )
         ));
-  
+
         response = await axios.put(
           `${BASE_URL}/qms/interst/create/${id}/`,
           formDataWithFile,
@@ -251,7 +251,7 @@ const EditDraftQmsInterestedParties = () => {
           }
         );
       }
-  
+
       setShowEditDraftInterestedSuccessModal(true);
       setTimeout(() => {
         navigate("/company/qms/interested-parties");
@@ -269,7 +269,7 @@ const EditDraftQmsInterestedParties = () => {
     } finally {
       setSubmitting(false);
     }
-  }; 
+  };
 
   const handleCancel = () => {
     navigate("/company/qms/interested-parties");
@@ -356,7 +356,7 @@ const EditDraftQmsInterestedParties = () => {
                       className="w-full add-qms-intertested-inputs"
                       required
                     />
-                    {index > 0 && (
+                    {/* {index > 0 && (
                       <button
                         type="button"
                         onClick={() => removeNeed(index)}
@@ -364,30 +364,41 @@ const EditDraftQmsInterestedParties = () => {
                       >
                         ×
                       </button>
-                    )}
+                    )} */}
                   </div>
                 </div>
                 <div>
                   <label className="block mb-3 add-qms-manual-label">
                     Expectation
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Enter Expectation"
-                    value={item.expectation}
-                    onChange={(e) => handleNeedChange(index, 'expectation', e.target.value)}
-                    className="w-full add-qms-intertested-inputs"
-                    required
-                  />
+                  <div className="flex">
+                    <input
+                      type="text"
+                      placeholder="Enter Expectation"
+                      value={item.expectation}
+                      onChange={(e) => handleNeedChange(index, 'expectation', e.target.value)}
+                      className="w-full add-qms-intertested-inputs"
+                      required
+                    />
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => removeNeed(index)}
+                        className="ml-2 text-red-500 border border-red-500 p-2 rounded-md hover:text-white hover:bg-red-500 duration-200"
+                      >
+                        <X size={17} />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {index === formData.needs.length - 1 && (
                   <div className="md:col-span-2 flex justify-end">
                     <button
                       type="button"
                       onClick={addNeed}
-                      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                     className="request-correction-btn flex items-center gap-[5px] duration-200 "
                     >
-                      + Add More
+                      Add More <Plus size={18} />
                     </button>
                   </div>
                 )}
