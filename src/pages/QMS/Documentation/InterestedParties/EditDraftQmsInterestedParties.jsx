@@ -112,14 +112,14 @@ const EditDraftQmsInterestedParties = () => {
 
   useEffect(() => {
     if (!id) return;
-
+  
     const fetchData = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
         const data = response.data;
         console.log('APIaaaaa Response:', data);
-
+  
         // Process needs data from the response
         let needsData = [];
         if (data.needs && Array.isArray(data.needs)) {
@@ -128,12 +128,12 @@ const EditDraftQmsInterestedParties = () => {
             expectation: need.expectation || ""
           }));
         }
-
+  
         // If no needs exist, set default empty one
         if (needsData.length === 0) {
           needsData = [{ needs: "", expectation: "" }];
         }
-
+  
         setFormData({
           name: data.name || "",
           category: data.category || "Internal",
@@ -145,19 +145,24 @@ const EditDraftQmsInterestedParties = () => {
           company: data.company || companyId,
           send_notification: data.send_notification || false,
         });
-
+  
         if (data.file) {
-          setFileUrl(`${BASE_URL}${data.file}`);
+          // Check if the file path already contains a URL
+          if (data.file.startsWith('http')) {
+            setFileUrl(data.file);
+          } else {
+            setFileUrl(`${BASE_URL}${data.file}`);
+          }
           setFileName(data.file.split('/').pop());
         }
-
+  
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchData();
   }, [id]);
 
@@ -193,13 +198,13 @@ const EditDraftQmsInterestedParties = () => {
 
   const handleViewFile = () => {
     if (fileUrl && !selectedFile) {
+      // Open the fileUrl directly without any additional processing
       window.open(fileUrl, '_blank');
     } else if (selectedFile) {
       const tempUrl = URL.createObjectURL(selectedFile);
       window.open(tempUrl, '_blank');
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);

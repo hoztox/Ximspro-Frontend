@@ -112,11 +112,12 @@ const CompanyChangePasswordModal = ({ isOpen, onClose }) => {
         ? `${BASE_URL}/accounts/companies/change-password/${authData.id}/`
         : `${BASE_URL}/company/user/change-password/${authData.id}/`;
 
-      const response = await axios.put(
+      const response = await axios.post(
         endpoint,
         {
           current_password: formData.currentPassword,
-          new_password: formData.newPassword
+          new_password: formData.newPassword,
+          confirm_password: formData.confirmPassword
         }
       );
 
