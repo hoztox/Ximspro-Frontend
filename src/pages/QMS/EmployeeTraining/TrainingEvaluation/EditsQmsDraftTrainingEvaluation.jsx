@@ -5,6 +5,7 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import EditDraftEmployeePerformanceSuccessModal from "../Modals/EditDraftEmployeePerformanceSuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
+import EditDraftTrainingEvaluationSuccessModal from "../Modals/EditDraftTrainingEvaluationSuccessModal";
 
 const EditsQmsDraftTrainingEvaluation = () => {
   const { id } = useParams();
@@ -27,10 +28,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
     year: "",
   });
 
-  const [
-    showEditDraftEmployeePerformanceSuccessModal,
-    setShowEditDraftEmployeePerformanceSuccessModal,
-  ] = useState(false);
+  const [showEditDraftTrainingEvaluationSuccessModal,setShowEditDraftTrainingEvaluationSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [focusedField, setFocusedField] = useState("");
@@ -148,9 +146,9 @@ const EditsQmsDraftTrainingEvaluation = () => {
       );
       setSuccess("Performance evaluation updated successfully");
 
-      setShowEditDraftEmployeePerformanceSuccessModal(true);
+      setShowEditDraftTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
-        setShowEditDraftEmployeePerformanceSuccessModal(false);
+        setShowEditDraftTrainingEvaluationSuccessModal(false);
         navigate("/company/qms/drafts-training-evaluation");
       }, 1500);
     } catch (err) {
@@ -233,12 +231,12 @@ const EditsQmsDraftTrainingEvaluation = () => {
           </button>
         </div>
 
-        <EditDraftEmployeePerformanceSuccessModal
-          showEditDraftEmployeePerformanceSuccessModal={
-            showEditDraftEmployeePerformanceSuccessModal
+        <EditDraftTrainingEvaluationSuccessModal
+          showEditDraftTrainingEvaluationSuccessModal={
+            showEditDraftTrainingEvaluationSuccessModal
           }
           onClose={() => {
-            setShowEditDraftEmployeePerformanceSuccessModal(false);
+            setShowEditDraftTrainingEvaluationSuccessModal(false);
           }}
         />
 

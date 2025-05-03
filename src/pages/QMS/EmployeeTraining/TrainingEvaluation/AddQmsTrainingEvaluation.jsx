@@ -3,9 +3,9 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import AddEmployeePerformanceSuccessModal from "../Modals/AddEmployeePerformanceSuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
-import DraftEmployeePerformanceSuccessModal from "../Modals/DraftEmployeePerformanceSuccessModal";
+import AddTrainingEvaluationSuccessModal from "../Modals/AddTrainingEvaluationSuccessModal";
+import DraftTrainingEvaluationSuccessModal from "../Modals/DraftTrainingEvaluationSuccessModal";
 
 const AddQmsTrainingEvaluation = () => {
   const [formData, setFormData] = useState({
@@ -18,8 +18,8 @@ const AddQmsTrainingEvaluation = () => {
     },
   });
 
-  const [showAddEmployeePerformanceSuccessModal, setShowAddEmployeePerformanceSuccessModal] = useState(false);
-  const [showDraftEmployeePerformanceSuccessModal, setShowDraftEmployeePerformanceSuccessModal] = useState(false);
+  const [showAddTrainingEvaluationSuccessModal, setShowAddTrainingEvaluationSuccessModal] = useState(false);
+  const [showDraftTrainingEvaluationSuccessModal, setShowDraftTrainingEvaluationSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [focusedField, setFocusedField] = useState("");
@@ -184,9 +184,9 @@ const AddQmsTrainingEvaluation = () => {
       console.log('training evaluation:', submissionData);
       
 
-      setShowAddEmployeePerformanceSuccessModal(true);
+      setShowAddTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
-        setShowAddEmployeePerformanceSuccessModal(false);
+        setShowAddTrainingEvaluationSuccessModal(false);
         navigate("/company/qms/training-evaluation");
       }, 1500);
     } catch (error) {
@@ -227,9 +227,9 @@ const AddQmsTrainingEvaluation = () => {
       console.log('draft training evaluation:', submissionData);
       
 
-      setShowDraftEmployeePerformanceSuccessModal(true);
+      setShowDraftTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
-        setShowDraftEmployeePerformanceSuccessModal(false);
+        setShowDraftTrainingEvaluationSuccessModal(false);
         navigate("/company/qms/drafts-training-evaluation");
       }, 1500);
     } catch (err) {
@@ -305,12 +305,12 @@ const AddQmsTrainingEvaluation = () => {
             Add Training Evaluation
           </h1>
 
-          <AddEmployeePerformanceSuccessModal
-            showAddEmployeePerformanceSuccessModal={
-              showAddEmployeePerformanceSuccessModal
+          <AddTrainingEvaluationSuccessModal
+            showAddTrainingEvaluationSuccessModal={
+              showAddTrainingEvaluationSuccessModal
             }
             onClose={() => {
-              setShowAddEmployeePerformanceSuccessModal(false);
+              setShowAddTrainingEvaluationSuccessModal(false);
             }}
           />
 
@@ -321,12 +321,12 @@ const AddQmsTrainingEvaluation = () => {
             }}
           />
 
-          <DraftEmployeePerformanceSuccessModal
-            showDraftEmployeePerformanceSuccessModal={
-              showDraftEmployeePerformanceSuccessModal
+          <DraftTrainingEvaluationSuccessModal
+            showDraftTrainingEvaluationSuccessModal={
+              showDraftTrainingEvaluationSuccessModal
             }
             onClose={() => {
-              setShowDraftEmployeePerformanceSuccessModal(false);
+              setShowDraftTrainingEvaluationSuccessModal(false);
             }}
           />
 

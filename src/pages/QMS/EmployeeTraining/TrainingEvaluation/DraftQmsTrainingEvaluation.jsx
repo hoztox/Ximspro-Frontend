@@ -8,6 +8,8 @@ import { BASE_URL } from "../../../../Utils/Config";
 import DeleteEmployeePerformanceConfirmModal from "../Modals/DeleteEmployeePerformanceConfirmModal";
 import DeleteEmployeePerformanceSuccessModal from "../Modals/DeleteEmployeePerformanceSuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
+import DeleteTrainingEvaluationConfirmModal from "../Modals/DeleteTrainingEvaluationConfirmModal";
+import DeleteTrainingEvaluationSuccessModal from "../Modals/DeleteTrainingEvaluationSuccessModal";
 
 const DraftQmsTrainingEvaluation = () => {      
   const { id } = useParams();
@@ -15,11 +17,8 @@ const DraftQmsTrainingEvaluation = () => {
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [performanceToDelete, setPerformanceToDelete] = useState(null);
-  const [
-    showDeleteEmployeePerformanceSuccessModal,
-    setShowDeleteEmployeePerformanceSuccessModal,
-  ] = useState(false);
+  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] = useState(null);
+  const [showDeleteTrainingEvaluationSuccessModal, setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -90,34 +89,34 @@ const DraftQmsTrainingEvaluation = () => {
 
   // Open delete confirmation modal
   const openDeleteModal = (item) => {
-    setPerformanceToDelete(item);
+    setTrainingEvaluationToDelete(item);
     setShowDeleteModal(true);
   };
 
   // Close all modals
   const closeAllModals = () => {
     setShowDeleteModal(false);
-    setShowDeleteEmployeePerformanceSuccessModal(false);
+    setShowDeleteTrainingEvaluationSuccessModal(false);
     setShowErrorModal(false);
   };
 
   // Delete employee
   const handleDelete = async () => {
-    if (!performanceToDelete) return;
+    if (!trainingEvaluationToDelete) return;
 
     try {
       await axios.delete(
-        `${BASE_URL}/qms/training-evaluation/${performanceToDelete.id}/update/`
+        `${BASE_URL}/qms/training-evaluation/${trainingEvaluationToDelete.id}/update/`
       );
 
       // Remove the deleted item from state
       setPerformanceData(
-        performanceData.filter((item) => item.id !== performanceToDelete.id)
+        performanceData.filter((item) => item.id !== trainingEvaluationToDelete.id)
       );
       setShowDeleteModal(false);
-      setShowDeleteEmployeePerformanceSuccessModal(true);
+      setShowDeleteTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
-        setShowDeleteEmployeePerformanceSuccessModal(false);
+        setShowDeleteTrainingEvaluationSuccessModal(false);
       }, 2000);
     } catch (err) {
       // Close delete modal and show error modal
@@ -312,18 +311,18 @@ const DraftQmsTrainingEvaluation = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      <DeleteEmployeePerformanceConfirmModal
+      <DeleteTrainingEvaluationConfirmModal
         showDeleteModal={showDeleteModal}
         onConfirm={handleDelete}
         onCancel={closeAllModals}
       />
 
       {/* Success Modal */}
-      <DeleteEmployeePerformanceSuccessModal
-        showDeleteEmployeePerformanceSuccessModal={
-          showDeleteEmployeePerformanceSuccessModal
+      <DeleteTrainingEvaluationSuccessModal
+        showDeleteTrainingEvaluationSuccessModal={
+          showDeleteTrainingEvaluationSuccessModal
         }
-        onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
+        onClose={() => setShowDeleteTrainingEvaluationSuccessModal(false)}
       />
 
       {/* Error Modal */}

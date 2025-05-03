@@ -3,8 +3,8 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
-import EditEmployeePerformanceSuccessModal from '../Modals/EditEmployeePerformanceSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
+import EditTrainingEvaluationSuccessModal from '../Modals/EditTrainingEvaluationSuccessModal';
 
 
 const EditQmsTrainingEvaluation = () => {
@@ -21,7 +21,7 @@ const EditQmsTrainingEvaluation = () => {
         is_draft: true
     });
 
-    const [showEditEmployeePerformanceSuccessModal, setShowEditEmployeePerformanceSuccessModal] = useState(false);
+    const [showEditTrainingEvaluationSuccessModal, setShowEditTrainingEvaluationSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
 
     // Separate state for date values to handle the UI components
@@ -149,9 +149,9 @@ const EditQmsTrainingEvaluation = () => {
             await axios.put(`${BASE_URL}/qms/training-evaluation/${id}/update/`, submissionData);
             setSuccess("Performance evaluation updated successfully");
 
-            setShowEditEmployeePerformanceSuccessModal(true);
+            setShowEditTrainingEvaluationSuccessModal(true);
             setTimeout(() => {
-                setShowEditEmployeePerformanceSuccessModal(false);
+                setShowEditTrainingEvaluationSuccessModal(false);
                 navigate("/company/qms/training-evaluation");
             }, 1500);
         } catch (err) {
@@ -215,10 +215,10 @@ const EditQmsTrainingEvaluation = () => {
                 <div className="flex justify-between items-center pb-5 border-b border-[#383840] px-[104px]">
                     <h1 className="add-employee-performance-head">Edit Training Evaluation</h1>
 
-                    <EditEmployeePerformanceSuccessModal
-                        showEditEmployeePerformanceSuccessModal={showEditEmployeePerformanceSuccessModal}
+                    <EditTrainingEvaluationSuccessModal
+                        showEditTrainingEvaluationSuccessModal={showEditTrainingEvaluationSuccessModal}
                         onClose={() => {
-                            setShowEditEmployeePerformanceSuccessModal(false);
+                            setShowEditTrainingEvaluationSuccessModal(false);
                         }}
                     />
 
@@ -339,9 +339,6 @@ const EditQmsTrainingEvaluation = () => {
                                 </div>
                             </div>
                         </div>
-
-
-
                     </div>
 
                     <div className="flex justify-end space-x-5 mt-5">

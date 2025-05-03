@@ -15,6 +15,8 @@ import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
 import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
 import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
+import DeleteTrainingEvaluationSuccessModal from "../Modals/DeleteTrainingEvaluationSuccessModal";
+import DeleteTrainingEvaluationConfirmModal from "../Modals/DeleteTrainingEvaluationConfirmModal";
 
 const EvaluationModal = ({
   isOpen,
@@ -718,11 +720,8 @@ const QmsTrainingEvaluation = () => {
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [performanceToDelete, setPerformanceToDelete] = useState(null);
-  const [
-    showDeleteEmployeePerformanceSuccessModal,
-    setShowDeleteEmployeePerformanceSuccessModal,
-  ] = useState(false);
+  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] = useState(null);
+  const [showDeleteTrainingEvaluationSuccessModal,setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -808,30 +807,30 @@ const QmsTrainingEvaluation = () => {
 
   // Open delete confirmation modal
   const openDeleteModal = (performance) => {
-    setPerformanceToDelete(performance);
+    setTrainingEvaluationToDelete(performance);
     setShowDeleteModal(true);
   };
 
-  const cancelDeleteEmployeePerformance = () => {
+  const cancelDeleteTrainingEvaluation = () => {
     setShowDeleteModal(false);
-    setPerformanceToDelete(null);
+    setTrainingEvaluationToDelete(null);
   };
 
   // Delete performance after confirmation
   const confirmDelete = async () => {
     try {
       await axios.delete(
-        `${BASE_URL}/qms/training-evaluation/${performanceToDelete.id}/update/`
+        `${BASE_URL}/qms/training-evaluation/${trainingEvaluationToDelete.id}/update/`
       );
       setPerformances(
         performances.filter(
-          (performance) => performance.id !== performanceToDelete.id
+          (performance) => performance.id !== trainingEvaluationToDelete.id
         )
       );
       setShowDeleteModal(false);
-      setShowDeleteEmployeePerformanceSuccessModal(true);
+      setShowDeleteTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
-        setShowDeleteEmployeePerformanceSuccessModal(false);
+        setShowDeleteTrainingEvaluationSuccessModal(false);
       }, 2000);
     } catch (err) {
       console.error("Error deleting performance evaluation:", err);
@@ -1130,18 +1129,18 @@ const QmsTrainingEvaluation = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      <DeleteEmployeePerformanceConfirmModal
+      <DeleteTrainingEvaluationConfirmModal
         showDeleteModal={showDeleteModal}
         onConfirm={confirmDelete}
-        onCancel={cancelDeleteEmployeePerformance}
+        onCancel={cancelDeleteTrainingEvaluation}
       />
 
       {/* Success Modal */}
-      <DeleteEmployeePerformanceSuccessModal
-        showDeleteEmployeePerformanceSuccessModal={
-          showDeleteEmployeePerformanceSuccessModal
+      <DeleteTrainingEvaluationSuccessModal
+        showDeleteTrainingEvaluationSuccessModal={
+          showDeleteTrainingEvaluationSuccessModal
         }
-        onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
+        onClose={() => setShowDeleteTrainingEvaluationSuccessModal(false)}
       />
 
       {/* Error Modal */}
