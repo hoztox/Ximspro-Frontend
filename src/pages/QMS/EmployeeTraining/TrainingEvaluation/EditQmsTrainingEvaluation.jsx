@@ -41,7 +41,7 @@ const EditQmsTrainingEvaluation = () => {
         const fetchPerformanceData = async () => {
             try {
                 setLoading(true);
-                const response = await axios.get(`${BASE_URL}/qms/performance-get/${id}/`);
+                const response = await axios.get(`${BASE_URL}/qms/training-evaluation-get/${id}/`);
                 const data = response.data;
 
                 // Set the main form data
@@ -146,13 +146,13 @@ const EditQmsTrainingEvaluation = () => {
         setError(null);
 
         try {
-            await axios.put(`${BASE_URL}/qms/performance/${id}/update/`, submissionData);
+            await axios.put(`${BASE_URL}/qms/training-evaluation/${id}/update/`, submissionData);
             setSuccess("Performance evaluation updated successfully");
 
             setShowEditEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
                 setShowEditEmployeePerformanceSuccessModal(false);
-                navigate("/company/qms/employee-performance");
+                navigate("/company/qms/training-evaluation");
             }, 1500);
         } catch (err) {
             console.error("Error updating performance evaluation:", err);

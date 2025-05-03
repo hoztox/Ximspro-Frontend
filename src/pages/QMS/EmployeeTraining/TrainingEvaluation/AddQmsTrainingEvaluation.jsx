@@ -18,14 +18,8 @@ const AddQmsTrainingEvaluation = () => {
     },
   });
 
-  const [
-    showAddEmployeePerformanceSuccessModal,
-    setShowAddEmployeePerformanceSuccessModal,
-  ] = useState(false);
-  const [
-    showDraftEmployeePerformanceSuccessModal,
-    setShowDraftEmployeePerformanceSuccessModal,
-  ] = useState(false);
+  const [showAddEmployeePerformanceSuccessModal, setShowAddEmployeePerformanceSuccessModal] = useState(false);
+  const [showDraftEmployeePerformanceSuccessModal, setShowDraftEmployeePerformanceSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [focusedField, setFocusedField] = useState("");
@@ -182,22 +176,24 @@ const AddQmsTrainingEvaluation = () => {
         return;
       }
 
-      await axios.post(`${BASE_URL}/qms/performance/create/`, submissionData, {
+      await axios.post(`${BASE_URL}/qms/training-evaluation/create/`, submissionData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
+      console.log('training evaluation:', submissionData);
+      
 
       setShowAddEmployeePerformanceSuccessModal(true);
       setTimeout(() => {
         setShowAddEmployeePerformanceSuccessModal(false);
-        navigate("/company/qms/employee-performance");
+        navigate("/company/qms/training-evaluation");
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
       setError(
         error.response?.data?.message ||
-          "Failed to save employee performance evaluation. Please try again."
+        "Failed to save employee performance evaluation. Please try again."
       );
       setShowErrorModal(true);
       setTimeout(() => {
@@ -220,7 +216,7 @@ const AddQmsTrainingEvaluation = () => {
       }
 
       await axios.post(
-        `${BASE_URL}/qms/performance/draft-create/`,
+        `${BASE_URL}/qms/training-evaluation/draft-create/`,
         submissionData,
         {
           headers: {
@@ -228,11 +224,13 @@ const AddQmsTrainingEvaluation = () => {
           },
         }
       );
+      console.log('draft training evaluation:', submissionData);
+      
 
       setShowDraftEmployeePerformanceSuccessModal(true);
       setTimeout(() => {
         setShowDraftEmployeePerformanceSuccessModal(false);
-        navigate("/company/qms/draft-employee-performance");
+        navigate("/company/qms/drafts-training-evaluation");
       }, 1500);
     } catch (err) {
       setDraftLoading(false);
@@ -351,9 +349,8 @@ const AddQmsTrainingEvaluation = () => {
                 name="evaluation_title"
                 value={formData.evaluation_title}
                 onChange={handleChange}
-                className={`w-full employee-performace-inputs ${
-                  errors.evaluation_title ? "border-red-500" : ""
-                }`}
+                className={`w-full employee-performace-inputs ${errors.evaluation_title ? "border-red-500" : ""
+                  }`}
                 required
               />
               {errors.evaluation_title && (
@@ -388,18 +385,16 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("day")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${
-                      errors.valid_till ? "border-red-500" : ""
-                    }`}
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                      }`}
                   >
                     <option value="">dd</option>
                     {dayOptions}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <ChevronDown
-                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${
-                        focusedField === "day" ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "day" ? "rotate-180" : ""
+                        }`}
                     />
                   </div>
                 </div>
@@ -412,18 +407,16 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("month")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${
-                      errors.valid_till ? "border-red-500" : ""
-                    }`}
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                      }`}
                   >
                     <option value="">mm</option>
                     {monthOptions}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <ChevronDown
-                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${
-                        focusedField === "month" ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "month" ? "rotate-180" : ""
+                        }`}
                     />
                   </div>
                 </div>
@@ -436,18 +429,16 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("year")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${
-                      errors.valid_till ? "border-red-500" : ""
-                    }`}
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                      }`}
                   >
                     <option value="">yyyy</option>
                     {yearOptions}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                     <ChevronDown
-                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${
-                        focusedField === "year" ? "rotate-180" : ""
-                      }`}
+                      className={`w-5 h-5 transition-transform duration-300 text-[#AAAAAA] ${focusedField === "year" ? "rotate-180" : ""
+                        }`}
                     />
                   </div>
                 </div>

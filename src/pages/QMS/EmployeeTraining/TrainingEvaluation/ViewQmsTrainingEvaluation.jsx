@@ -18,7 +18,7 @@ const ViewQmsTrainingEvaluation = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${BASE_URL}/qms/performance-get/${id}/`
+          `${BASE_URL}/qms/training-evaluation-get/${id}/`
         );
         setPerformanceData(response.data);
         setError(null);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { Search, ChevronDown, X } from "lucide-react";
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
@@ -32,10 +32,15 @@ const EvaluationModal = ({
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
   const [performances, setPerformances] = useState([]);
+  const navigate = useNavigate();
 
-  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] =
-    useState(false);
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // New state to track changes before submitting
+  const [updatedAnswers, setUpdatedAnswers] = useState({});
+  // Track which question is currently showing the rating selector
+  const [activeRatingQuestion, setActiveRatingQuestion] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -43,10 +48,11 @@ const EvaluationModal = ({
         const companyId = getUserCompanyId();
 
         const response = await axios.get(
-          `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
+          `${BASE_URL}/qms/training-evaluation/${companyId}/evaluation/${performanceId}/`
         );
-
         setUsers(response.data);
+        console.log('uuuuuuuuuuuuuuuuuu',response.data);
+        
       } catch (error) {
         console.error("Error fetching unsubmitted users:", error);
       }
@@ -69,7 +75,7 @@ const EvaluationModal = ({
         }
 
         const response = await axios.get(
-          `${BASE_URL}/qms/performance/${companyId}/`
+          `${BASE_URL}/qms/training-evaluation/${companyId}/`
         );
         setPerformances(response.data);
         setError(null);
@@ -82,9 +88,9 @@ const EvaluationModal = ({
     };
 
     // Fetch employees for dropdown
-
     fetchPerformanceData();
   }, []);
+
   // Fetch questions when modal opens
   useEffect(() => {
     if (isOpen && performanceId) {
@@ -96,10 +102,10 @@ const EvaluationModal = ({
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/qms/performance/${performanceId}/questions/`
+        `${BASE_URL}/qms/training-evaluation/${performanceId}/questions/`
       );
       setQuestions(response.data);
-      console.log("Fetched questionsssss:", response.data);
+      console.log("Fetched questions:", response.data);
     } catch (err) {
       console.error("Error fetching questions:", err);
       setError("Failed to load questions");
@@ -108,44 +114,95 @@ const EvaluationModal = ({
     }
   };
 
-  const handleAnswerChange = async (questionId, rating) => {
+  // Toggle the rating selector for a specific question
+  const toggleRatingSelector = (questionId) => {
+    if (selectedEmployee === "Select Employee") {
+      setError("Please select an employee first");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      return;
+    }
+
+    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
+  };
+
+  // Handle when a rating is selected
+  const handleAnswerChange = (questionId, rating) => {
     if (selectedEmployee === "Select Employee") {
       setError("Please select an employee first");
       return;
     }
 
+    // Update local state for UI
     const updatedQuestions = questions.map((q) =>
       q.id === questionId ? { ...q, answer: rating } : q
     );
     setQuestions(updatedQuestions);
 
-    console.log("Submitting answer change with data:", {
-      questionId,
-      answer: rating,
-      user_id: selectedEmployee,
+    // Store the changes to be submitted later
+    setUpdatedAnswers({
+      ...updatedAnswers,
+      [questionId]: rating
     });
 
-    try {
-      await axios.patch(
-        `${BASE_URL}/qms/performance/question/answer/${questionId}/`,
-        {
-          answer: rating,
-          user_id: selectedEmployee,
-        }
-      );
+    // Close rating selector after selection
+    setActiveRatingQuestion(null);
+  };
 
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        navigate("/company/qms/employee-performance");
-      }, 1500);
-    } catch (err) {
-      console.error("Error updating answer:", err);
+  // Submit all answers when Save button is clicked
+  const handleSubmitAllAnswers = async () => {
+    if (selectedEmployee === "Select Employee") {
+      setError("Please select an employee first");
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to save answer");
+      return;
+    }
+
+    if (Object.keys(updatedAnswers).length === 0) {
+      // No answers to submit
+      onClose();
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Submit all updated answers
+      const promises = Object.entries(updatedAnswers).map(([questionId, rating]) => {
+        console.log("Submitting answer with data:", {
+          questionId,
+          answer: rating,
+          user_id: selectedEmployee,
+        });
+
+        return axios.patch(
+          `${BASE_URL}/qms/training-evaluation/question/answer/${questionId}/`,
+          {
+            answer: rating,
+            user_id: selectedEmployee,
+          }
+        );
+      });
+
+      await Promise.all(promises);
+
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        navigate("/company/qms/training-evaluation");
+      }, 1500);
+    } catch (err) {
+      console.error("Error updating answers:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to save answers");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -159,11 +216,6 @@ const EvaluationModal = ({
     },
     []
   );
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const toggleDropdown = (questionId) => {
-    setOpenDropdown(openDropdown === questionId ? null : questionId);
-  };
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -215,6 +267,7 @@ const EvaluationModal = ({
                 />
 
                 <ErrorModal
+                  errorMessege={error}
                   showErrorModal={showErrorModal}
                   onClose={() => {
                     setShowErrorModal(false);
@@ -239,9 +292,9 @@ const EvaluationModal = ({
                           {item.first_name && item.last_name
                             ? `${item.first_name} ${item.last_name}`
                             : item.first_name ||
-                              item.last_name ||
-                              item.username ||
-                              item.email}
+                            item.last_name ||
+                            item.username ||
+                            item.email}
                         </option>
                       ))}
                     </select>
@@ -249,9 +302,8 @@ const EvaluationModal = ({
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${
-                          isDropdownOpen ? "rotate-180" : ""
-                        }`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180" : ""
+                          }`}
                       />
                     </div>
                   </div>
@@ -278,67 +330,54 @@ const EvaluationModal = ({
                       <tbody>
                         {questions.length > 0 ? (
                           questions.map((question, index) => (
-                            <tr
-                              key={question.id}
-                              className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]"
-                            >
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {index + 1}
-                              </td>
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {question.question_text}
-                              </td>
-                              <td className="px-4 whitespace-nowrap text-right">
-                                <div className="relative">
-                                  <button
-                                    onClick={() => toggleDropdown(question.id)}
-                                    className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
-                                  >
-                                    <span>{question.answer || "N/A"}</span>
-                                    <ChevronDown
-                                      size={16}
-                                      className={`transition-transform duration-300 ${
-                                        openDropdown === question.id
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  </button>
-
-                                  {openDropdown === question.id && (
-                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100]">
-                                      {[
-                                        "N/A",
-                                        1,
-                                        2,
-                                        3,
-                                        4,
-                                        5,
-                                        6,
-                                        7,
-                                        8,
-                                        9,
-                                        10,
-                                      ].map((rating) => (
-                                        <div
+                            <React.Fragment key={question.id}>
+                              <tr
+                                className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]"
+                              >
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {index + 1}
+                                </td>
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {question.question_text}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-right">
+                                  {question.answer ? (
+                                    <div className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-center w-[78px] h-[30px] ml-auto rating-data">
+                                      {question.answer}
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => toggleRatingSelector(question.id)}
+                                      className="!text-[#1E84AF] employee-evaluate-data"
+                                    >
+                                      {activeRatingQuestion === question.id ? (
+                                        <X size={18} className="ml-auto text-[#AAAAAA]" />
+                                      ) : (
+                                        "Click to Answer"
+                                      )}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                              {activeRatingQuestion === question.id && (
+                                <tr className="bg-[#1C1C24] border-b border-[#383840]">
+                                  <td colSpan="3" className="px-4 py-3">
+                                    <div className="flex justify-between items-center gap-2 bg-[#24242D] px-[20px] h-[58px] rounded-[6px]">
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+                                        <button
                                           key={rating}
-                                          className="px-4 py-2 text-sm hover:bg-[#0e0e13] cursor-pointer text-center"
-                                          onClick={() => {
-                                            handleAnswerChange(
-                                              question.id,
-                                              rating
-                                            );
-                                            toggleDropdown(null);
-                                          }}
+                                          onClick={() => handleAnswerChange(question.id, rating)}
+                                          className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${rating === 10 ? "border border-[#1E84AF] !text-[#1E84AF]" : "border border-[#5B5B5B] !text-[#5B5B5B]"
+                                            } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
                                         >
                                           {rating}
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))
                         ) : (
                           <tr>
@@ -356,16 +395,18 @@ const EvaluationModal = ({
                 )}
 
                 <div className="p-4 flex justify-end space-x-4">
-                  <button className="cancel-btn duration-200" onClick={onClose}>
+                  <button
+                    className="cancel-btn duration-200"
+                    onClick={onClose}
+                  >
                     Cancel
                   </button>
                   <button
                     className="save-btn duration-200"
-                    onClick={() => {
-                      onClose();
-                    }}
+                    onClick={handleSubmitAllAnswers}
+                    disabled={loading}
                   >
-                    Done
+                    {loading ? "Submitting..." : "Save"}
                   </button>
                 </div>
               </div>
@@ -389,6 +430,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   // Delete related states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -402,8 +444,10 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
         setLoading(true);
         try {
           const response = await axios.get(
-            `${BASE_URL}/qms/performance/${performanceId}/questions/`
+            `${BASE_URL}/qms/training-evaluation/${performanceId}/questions/`
           );
+          console.log('aaaaaaaaaaa', response.data);
+
           setQuestions(response.data);
         } catch (err) {
           console.error("Error fetching questions:", err);
@@ -437,9 +481,9 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     setLoading(true);
     try {
       const response = await axios.post(
-        `${BASE_URL}/qms/performance/question-add/`,
+        `${BASE_URL}/qms/training-evaluation/question-add/`,
         {
-          performance: performanceId,
+          emp_training_eval: performanceId,
           question_text: formData.question,
         }
       );
@@ -449,7 +493,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setShowAddQuestionSuccessModal(true);
       setTimeout(() => {
         setShowAddQuestionSuccessModal(false);
-        navigate("/company/qms/employee-performance");
+        navigate("/company/qms/training-evaluation");
       }, 1500);
       setError("");
     } catch (err) {
@@ -485,7 +529,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     setLoading(true);
     try {
       await axios.delete(
-        `${BASE_URL}/qms/performance/question/${questionToDelete.id}/delete/`
+        `${BASE_URL}/qms/training-evaluation/question/${questionToDelete.id}/delete/`
       );
 
       // Remove the deleted question from state
@@ -711,7 +755,7 @@ const QmsTrainingEvaluation = () => {
         }
 
         const response = await axios.get(
-          `${BASE_URL}/qms/performance/${companyId}/`
+          `${BASE_URL}/qms/training-evaluation/${companyId}/`
         );
         setPerformances(response.data);
         setError(null);
@@ -759,7 +803,7 @@ const QmsTrainingEvaluation = () => {
   };
 
   const handleResultGraph = () => {
-    navigate("/company/qms/employees-performance-graph");
+    navigate("/company/qms/training-evaluation-graph");
   };
 
   // Open delete confirmation modal
@@ -777,7 +821,7 @@ const QmsTrainingEvaluation = () => {
   const confirmDelete = async () => {
     try {
       await axios.delete(
-        `${BASE_URL}/qms/performance/${performanceToDelete.id}/update/`
+        `${BASE_URL}/qms/training-evaluation/${performanceToDelete.id}/update/`
       );
       setPerformances(
         performances.filter(
@@ -802,15 +846,15 @@ const QmsTrainingEvaluation = () => {
 
   // Send email
   const handleSendEmail = async (performanceId) => {
-    try {
-      await axios.post(
-        `${BASE_URL}/qms/performance/send-email/${performanceId}/`
-      );
-      alert("Email sent successfully");
-    } catch (err) {
-      console.error("Error sending email:", err);
-      alert("Failed to send email");
-    }
+    // try {
+    //   await axios.post(
+    //     `${BASE_URL}/qms/performance/send-email/${performanceId}/`
+    //   );
+    //   alert("Email sent successfully");
+    // } catch (err) {
+    //   console.error("Error sending email:", err);
+    //   alert("Failed to send email");
+    // }
   };
 
   // Open evaluation modal
@@ -1022,9 +1066,8 @@ const QmsTrainingEvaluation = () => {
           </div>
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
@@ -1037,18 +1080,17 @@ const QmsTrainingEvaluation = () => {
                 currentPage <= 2
                   ? i + 1
                   : currentPage >= totalPages - 1
-                  ? totalPages - 3 + i
-                  : currentPage - 2 + i;
+                    ? totalPages - 3 + i
+                    : currentPage - 2 + i;
 
               if (pageToShow <= totalPages) {
                 return (
                   <button
                     key={pageToShow}
-                    className={`${
-                      currentPage === pageToShow
-                        ? "pagin-active"
-                        : "pagin-inactive"
-                    }`}
+                    className={`${currentPage === pageToShow
+                      ? "pagin-active"
+                      : "pagin-inactive"
+                      }`}
                     onClick={() => setCurrentPage(pageToShow)}
                   >
                     {pageToShow}
@@ -1059,9 +1101,8 @@ const QmsTrainingEvaluation = () => {
             })}
 
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }

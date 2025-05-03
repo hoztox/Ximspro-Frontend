@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, X } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
@@ -27,9 +27,13 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
   const [error, setError] = useState('');
   const [users, setUsers] = useState([]);
   const [performances, setPerformances] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // Track which question is currently showing the rating selector
+  const [activeRatingQuestion, setActiveRatingQuestion] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -74,12 +78,9 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
       }
     };
 
-    // Fetch employees for dropdown
-
-
     fetchPerformanceData();
-
   }, []);
+
   // Fetch questions when modal opens
   useEffect(() => {
     if (isOpen && performanceId) {
@@ -87,15 +88,12 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
     }
   }, [isOpen, performanceId]);
 
-
-
-
   const fetchQuestions = async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${BASE_URL}/qms/performance/${performanceId}/questions/`);
       setQuestions(response.data);
-      console.log('Fetched questionsssss:', response.data);
+      console.log('Fetched questions:', response.data);
     } catch (err) {
       console.error('Error fetching questions:', err);
       setError('Failed to load questions');
@@ -104,8 +102,22 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
     }
   };
 
+  // Toggle the rating selector for a specific question
+  const toggleRatingSelector = (questionId) => {
+    if (selectedEmployee === 'Select Employee') {
+      setError('Please select an employee first');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      return;
+    }
 
-  const handleAnswerChange = async (questionId, rating) => {
+    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
+  };
+
+  // Handle when a rating is selected
+  const handleAnswerChange = (questionId, rating) => {
     if (selectedEmployee === 'Select Employee') {
       setError('Please select an employee first');
       return;
@@ -116,35 +128,52 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
     );
     setQuestions(updatedQuestions);
 
+    // Close rating selector after selection
+    setActiveRatingQuestion(null);
+  };
 
-    console.log("Submitting answer change with data:", {
-      questionId,
-      answer: rating,
-      user_id: selectedEmployee
-    });
+  // Submit all answers when Done button is clicked
+  const handleSubmitAllAnswers = async () => {
+    if (selectedEmployee === 'Select Employee') {
+      setError('Please select an employee first');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      await axios.patch(`${BASE_URL}/qms/performance/question/answer/${questionId}/`, {
-        answer: rating,
-        user_id: selectedEmployee
-      });
+      // Filter questions that have answers
+      const questionsWithAnswers = questions.filter(q => q.answer);
+
+      // Submit each answer sequentially
+      for (const question of questionsWithAnswers) {
+        await axios.patch(`${BASE_URL}/qms/performance/question/answer/${question.id}/`, {
+          answer: question.answer,
+          user_id: selectedEmployee
+        });
+      }
 
       setShowAddRatingSuccessModal(true);
       setTimeout(() => {
         setShowAddRatingSuccessModal(false);
         navigate('/company/qms/employee-performance');
+        onClose();
       }, 1500);
     } catch (err) {
-      console.error('Error updating answer:', err);
+      console.error('Error submitting answers:', err);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError('Failed to save answer');
+      setError('Failed to save answers');
+    } finally {
+      setSubmitting(false);
     }
   };
-
-
 
   const combinedOptions = [...(employeeList || []), ...(users || [])].reduce((unique, item) => {
     const exists = unique.find(x => x.id === item.id);
@@ -153,13 +182,6 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
     }
     return unique;
   }, []);
-
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const toggleDropdown = (questionId) => {
-    setOpenDropdown(openDropdown === questionId ? null : questionId);
-  };
-
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -211,6 +233,7 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                 />
 
                 <ErrorModal
+                  errorMessege={error}
                   showErrorModal={showErrorModal}
                   onClose={() => {
                     setShowErrorModal(false);
@@ -235,7 +258,6 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                             : item.first_name || item.last_name || item.username || item.email}
                         </option>
                       ))}
-
                     </select>
 
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
@@ -268,45 +290,54 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                       <tbody>
                         {questions.length > 0 ? (
                           questions.map((question, index) => (
-                            <tr key={question.id} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {index + 1}
-                              </td>
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {question.question_text}
-                              </td>
-                              <td className="px-4 whitespace-nowrap text-right">
-                                <div className="relative">
-                                  <button
-                                    onClick={() => toggleDropdown(question.id)}
-                                    className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
-                                  >
-                                    <span>{question.answer || 'N/A'}</span>
-                                    <ChevronDown
-                                      size={16}
-                                      className={`transition-transform duration-300 ${openDropdown === question.id ? 'rotate-180' : ''}`}
-                                    />
-                                  </button>
-
-                                  {openDropdown === question.id && (
-                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100]">
-                                      {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                                        <div
+                            <React.Fragment key={question.id}>
+                              <tr
+                                className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]"
+                              >
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {index + 1}
+                                </td>
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {question.question_text}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-right">
+                                  {question.answer ? (
+                                    <div className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-center w-[78px] h-[30px] ml-auto rating-data">
+                                      {question.answer}
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => toggleRatingSelector(question.id)}
+                                      className="!text-[#1E84AF] employee-evaluate-data"
+                                    >
+                                      {activeRatingQuestion === question.id ? (
+                                        <X size={18} className="ml-auto text-[#AAAAAA]" />
+                                      ) : (
+                                        "Click to Answer"
+                                      )}
+                                    </button>
+                                  )}
+                                </td>
+                              </tr>
+                              {activeRatingQuestion === question.id && (
+                                <tr className="bg-[#1C1C24] border-b border-[#383840]">
+                                  <td colSpan="3" className="px-4 py-3">
+                                    <div className="flex justify-between items-center gap-2 bg-[#24242D] px-[20px] h-[58px] rounded-[6px]">
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
+                                        <button
                                           key={rating}
-                                          className="px-4 py-2 text-sm hover:bg-[#0e0e13] cursor-pointer text-center"
-                                          onClick={() => {
-                                            handleAnswerChange(question.id, rating);
-                                            toggleDropdown(null);
-                                          }}
+                                          onClick={() => handleAnswerChange(question.id, rating)}
+                                          className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${rating === 10 ? "border border-[#1E84AF] !text-[#1E84AF]" : "border border-[#5B5B5B] !text-[#5B5B5B]"
+                                            } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
                                         >
                                           {rating}
-                                        </div>
+                                        </button>
                                       ))}
                                     </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))
                         ) : (
                           <tr>
@@ -319,19 +350,18 @@ const EvaluationModal = ({ isOpen, onClose, employee, employeeList, performanceI
                 )}
 
                 <div className="p-4 flex justify-end space-x-4">
-                  <button className="cancel-btn duration-200"
+                  <button
+                    className="cancel-btn duration-200"
                     onClick={onClose}
                   >
                     Cancel
                   </button>
-                  <button className="save-btn duration-200"
-                    onClick={() => {
-
-                      onClose();
-
-                    }}
+                  <button
+                    className="save-btn duration-200"
+                    onClick={handleSubmitAllAnswers}
+                    disabled={submitting}
                   >
-                    Done
+                    {submitting ? 'Submitting...' : 'Done'}
                   </button>
                 </div>
               </div>

@@ -277,6 +277,7 @@ import ViewQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEval
 import DraftQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/DraftQmsTrainingEvaluation";
 import EditsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/EditsQmsDraftTrainingEvaluation";
 import ViewsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/ViewsQmsDraftTrainingEvaluation";
+import QmsTrainingEvaluationGraph from "./pages/QMS/EmployeeTraining/TrainingEvaluation/QmsTrainingEvaluationGraph";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -371,11 +372,12 @@ const ThemedApp = () => {
 
           <Route path="qms/training-evaluation" element={<QmsTrainingEvaluation />} />
           <Route path="qms/add-training-evaluation" element={<AddQmsTrainingEvaluation />} />
-          <Route path="qms/edits-training-evaluation" element={<EditQmsTrainingEvaluation />} />
-          <Route path="qms/views-training-evaluation" element={<ViewQmsTrainingEvaluation />} />
+          <Route path="qms/edits-training-evaluation/:id" element={<EditQmsTrainingEvaluation />} />
+          <Route path="qms/views-training-evaluation/:id" element={<ViewQmsTrainingEvaluation />} />
           <Route path="qms/drafts-training-evaluation" element={<DraftQmsTrainingEvaluation />} />
-          <Route path="qms/edits-drafts-training-evaluation" element={<EditsQmsDraftTrainingEvaluation />} />
-          <Route path="qms/views-drafts-training-evaluation" element={<ViewsQmsDraftTrainingEvaluation />} />
+          <Route path="qms/edits-drafts-training-evaluation/:id" element={<EditsQmsDraftTrainingEvaluation />} />
+          <Route path="qms/views-drafts-training-evaluation/:id" element={<ViewsQmsDraftTrainingEvaluation />} />
+          <Route path="qms/training-evaluation-graph" element={<QmsTrainingEvaluationGraph />} />
 
           <Route path="qms/employee-performance" element={<QmsEmployeePerformance />} />
           <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance />} />

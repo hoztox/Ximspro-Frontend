@@ -40,7 +40,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${BASE_URL}/qms/performance-get/${id}/`
+          `${BASE_URL}/qms/training-evaluation-get/${id}/`
         );
         const data = response.data;
 
@@ -139,7 +139,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
 
     try {
       const response = await axios.put(
-        `${BASE_URL}/qms/performance/${id}/update/`,
+        `${BASE_URL}/qms/training-evaluation/${id}/update/`,
         formData
       );
       console.log(
@@ -151,7 +151,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
       setShowEditDraftEmployeePerformanceSuccessModal(true);
       setTimeout(() => {
         setShowEditDraftEmployeePerformanceSuccessModal(false);
-        navigate("/company/qms/draft-employee-performance");
+        navigate("/company/qms/drafts-training-evaluation");
       }, 1500);
     } catch (err) {
       console.error("Error updating performance evaluation:", err);

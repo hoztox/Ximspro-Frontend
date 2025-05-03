@@ -47,7 +47,7 @@ const DraftQmsTrainingEvaluation = () => {
         const id = getRelevantUserId();
         setLoading(true);
         const response = await axios.get(
-          `${BASE_URL}/qms/performance-draft/${id}/`
+          `${BASE_URL}/qms/training-evaluation-draft/${id}/`
         );
 
         setPerformanceData(response.data);
@@ -107,7 +107,7 @@ const DraftQmsTrainingEvaluation = () => {
 
     try {
       await axios.delete(
-        `${BASE_URL}/qms/performance/${performanceToDelete.id}/update/`
+        `${BASE_URL}/qms/training-evaluation/${performanceToDelete.id}/update/`
       );
 
       // Remove the deleted item from state
