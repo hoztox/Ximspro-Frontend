@@ -205,10 +205,10 @@ const QmsScope = () => {
         </div>
         
         <button
-          className="bg-transparent border border-[#858585] text-[#858585] rounded-[4px] p-[10px] flex items-center justify-center gap-[10px] transition-all duration-200 w-[140px] h-[42px] add-policy-btn hover:bg-[#858585] hover:text-white group"
+          className="bg-transparent border border-[#858585] text-[#858585] rounded-[4px] p-[10px] flex items-center justify-center gap-[10px] transition-all duration-200 w-[200px] h-[42px] add-policy-btn hover:bg-[#858585] hover:text-white group"
           onClick={handleAddQMSPolicy}
         >
-          <span>Add Scope</span>
+          <span>Add Scope Statement</span>
           <Plus size={22} className='text-[#858585] group-hover:text-white transition-colors duration-200' />
         </button>
       </div>
@@ -236,12 +236,12 @@ const QmsScope = () => {
                   <div className="flex justify-start gap-10 items-center mb-4">
                 
                     <div className="flex gap-4 flex-col">
-                    <p className='actions-text'>Quality Scope Statements</p>
+                    <p className='actions-text'>Quality Scope Statement</p>
                       <button
                         className='flex justify-center items-center gap-2 hover:text-blue-400 transition-colors'
                         onClick={() => handleViewPolicy(policy)}
                       >
-                        <p className='view-policy-btn-text'>View Policy</p>
+                        <p className='view-policy-btn-text'>View Scope Statement</p>
                         <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
                       </button>
                     </div>
@@ -295,7 +295,7 @@ const QmsScope = () => {
               className="bg-[#1C1C24] rounded-lg w-full max-w-[700px] max-h-[80vh] overflow-auto shadow-lg"
             >
               <div className="flex justify-between items-center mx-5 mt-5 mb-[27px] border-b border-[#383840] pb-[21px]">
-                <h2 className="qms-policy-modal-head">QMS Scope Statements</h2>
+                <h2 className="qms-policy-modal-head">QMS Scope Statement</h2>
                 <button
                   onClick={handleCloseModal}
                   className="text-white bg-[#24242D] w-[36px] h-[36px] flex justify-center items-center rounded-md"
@@ -305,7 +305,7 @@ const QmsScope = () => {
               </div>
 
               <div className="px-5 pb-5">
-                <h2 className="policy-content-head mb-3">Scope Statements Content</h2>
+                <h2 className="policy-content-head mb-3">Scope Statement Content</h2>
                 <div className="bg-[#24242D] p-5 rounded-md">
                   {selectedPolicy.text && selectedPolicy.text.startsWith('<') ? (
                     <div className="policy-content" dangerouslySetInnerHTML={createMarkup(selectedPolicy.text)} />

@@ -819,7 +819,7 @@ const AddScope = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
-      <h1 className="add-policy-head">Add Scope Statements</h1>
+      <h1 className="add-policy-head">Add Scope Statement</h1>
 
       <AddQmsPolicySuccessModal
         showAddPolicySuccessModal={showAddPolicySuccessModal}
@@ -1046,7 +1046,7 @@ const AddScope = () => {
 
       {/* File Upload Section */}
       <div className="flex items-center justify-between mt-8 mb-[23px]">
-        <label className="attach-policy-text">Attach Quality Scope Statements:</label>
+        <label className="attach-policy-text">Attach Quality Scope Statement:</label>
         <div className="flex items-center ">
           <label className="flex justify-center gap-[10px] items-center w-[326px] h-[44px] px-[10px] text-[#AAAAAA] rounded-md border border-[#383840] cursor-pointer transition">
             Choose File
@@ -1085,11 +1085,11 @@ const AddScope = () => {
           Cancel
         </button>
         <button
-          className="save-btn duration-200"
+          className="save-btn duration-200 !w-[195px]"
           onClick={handleSave}
           disabled={isSaving}
         >
-          {isSaving ? 'Saving...' : 'Save Policy'}
+          {isSaving ? 'Saving...' : 'Add Scope Statement'}
         </button>
       </div>
     </div>
