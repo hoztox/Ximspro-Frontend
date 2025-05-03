@@ -1,41 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from 'axios';
 
 const QmsDraftCorrectionActions = () => {
-    const initialData = [
-        { id: 1, title: 'Anonymous', source: 'Anonymous', car: '123', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Solved' },
-        { id: 2, title: 'Anonymous', source: 'Anonymous', car: '123', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Not Solved' },
-        { id: 3, title: 'Anonymous', source: 'Anonymous', car: '123', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Solved' },
-        { id: 4, title: 'New Issue', source: 'Internal', car: '456', date_raised: '04-12-2024', completed_by: '04-12-2024', executor: 'xyz', status: 'Pending' },
-    ];
+    // Get relevant user ID
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
 
+    const id = getRelevantUserId();
 
     // State
-    const [corrections, setCorrections] = useState(initialData);
+    const [corrections, setCorrections] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const [formData, setFormData] = useState({
-        title: '',
-        source: '',
-        date_raised: '',
-        completed_by: '',
-        car: '',
-        executor: '',
-        status: 'Solved'  // Default status set to 'Requested'
-    });
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Fetch draft corrections from API
+    useEffect(() => {
+        const fetchDraftCorrections = async () => {
+            if (!id) {
+                setError("User/Company ID not found");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const response = await axios.get(`${BASE_URL}/qms/car_no/company/${id}/`);
+                console.log('Draft corrections:', response.data);
+                setCorrections(response.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Error fetching draft corrections:", err);
+                setError("Failed to load draft corrections");
+                setLoading(false);
+            }
+        };
+
+        fetchDraftCorrections();
+    }, [id]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        setSearchTerm(value); // Update_raised searchTerm as well
         setCurrentPage(1);
     };
-
 
     // Pagination
     const itemsPerPage = 10;
@@ -48,38 +70,46 @@ const QmsDraftCorrectionActions = () => {
     const currentItems = corrections.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-
     const filteredCorrections = currentItems.filter(correction =>
-        correction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        correction.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        correction.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        correction.executor.toLowerCase().includes(searchQuery.toLowerCase())
+        (correction.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (correction.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (correction.action_no?.toString() || '').includes(searchQuery.toLowerCase()) ||
+        (correction.executor?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
-
-
+    // Navigation handlers
     const handleClose = () => {
-        navigate('/company/qms/list-correction-actions')
-    }
+        navigate('/company/qms/list-correction-actions');
+    };
 
-    const handleQmsViewDraftCorrectionAction = () => {
-        navigate('/company/qms/view-draft-correction-actions')
-    }
+    const handleQmsViewDraftCorrectionAction = (id) => {
+        navigate(`/company/qms/view-draft-correction-actions/${id}`);
+    };
 
-    const handleQmsEditDraftCorrectionAction = () => {
-        navigate('/company/qms/edit-draft-correction-actions')
-    }
+    const handleQmsEditDraftCorrectionAction = (id) => {
+        navigate(`/company/qms/edit-draft-correction-actions/${id}`);
+    };
 
-
-    // Delete  correction
-    const handleDeleteSupplierProblem = (id) => {
-        setCorrections(corrections.filter(correction => correction.id !== id));
+    // Delete draft correction
+    const handleDeleteDraftCorrection = async (id) => {
+        if (window.confirm("Are you sure you want to delete this draft correction?")) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
+                setCorrections(corrections.filter(correction => correction.id !== id));
+            } catch (err) {
+                console.error("Error deleting draft correction:", err);
+                alert("Failed to delete draft correction");
+            }
+        }
     };
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+    if (loading) return <div className="text-white text-center p-5">Loading...</div>;
+    if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -123,70 +153,81 @@ const QmsDraftCorrectionActions = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredCorrections.map((correction, index) => (
-                            <tr key={correction.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{correction.id}</td>
-                                <td className="px-2 add-manual-datas">{correction.title}</td>
-                                <td className="px-2 add-manual-datas">{correction.source}</td>
-                                <td className="px-2 add-manual-datas">{correction.car}</td>
-                                <td className="px-2 add-manual-datas">{correction.executor}</td>
-                                <td className="px-2 add-manual-datas">{correction.date_raised}</td>
-                                <td className="px-2 add-manual-datas">
-                                    <button onClick={handleQmsEditDraftCorrectionAction} className='text-[#1E84AF]'>
-                                        Click to Continue
-                                    </button>
-                                </td>
-
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewDraftCorrectionAction}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleDeleteSupplierProblem}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                        {filteredCorrections.length > 0 ? (
+                            filteredCorrections.map((correction) => (
+                                <tr key={correction.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{correction.action_no || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.title || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.source || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.action_no || '-'}</td>
+                                    <td className="px-2 add-manual-datas">
+                                        {correction.executor?.first_name} {correction.executor?.last_name}
+                                    </td>
+                                    <td className="px-2 add-manual-datas">{correction.date_raised || '-'}</td>
+                                    <td className="px-2 add-manual-datas">
+                                        <button
+                                            onClick={() => handleQmsEditDraftCorrectionAction(correction.id)}
+                                            className='text-[#1E84AF]'
+                                        >
+                                            Click to Continue
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsViewDraftCorrectionAction(correction.id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteDraftCorrection(correction.id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="9" className="text-center py-4 not-found">No draft corrections found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-between items-center mt-6 text-sm">
-                <div className='text-white total-text'>Total-{totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            {totalItems > 0 && (
+                <div className="flex justify-between items-center mt-6 text-sm">
+                    <div className='text-white total-text'>Total-{totalItems}</div>
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            onClick={prevPage}
+                            disabled={currentPage === 1}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                    >
-                        Next
-                    </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                            <button
+                                key={number}
+                                onClick={() => paginate(number)}
+                                className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                            >
+                                {number}
+                            </button>
+                        ))}
+
+                        <button
+                            onClick={nextPage}
+                            disabled={currentPage === totalPages}
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
 
-export default QmsDraftCorrectionActions
+export default QmsDraftCorrectionActions;

@@ -77,30 +77,34 @@ const QmsEditCorrectionActions = () => {
             setIsLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/car-numbers/${id}/`);
             const data = response.data;
-
+            console.log('CAR Data:', data); // Debug log
+    
             // Process dates to split into day, month, year
             const processDate = (dateString) => {
                 if (!dateString) return { day: '', month: '', year: '' };
                 const [year, month, day] = dateString.split('-');
                 return { day, month, year };
             };
-
-            setFormData({
+    
+            // Prepare form data
+            const formData = {
                 source: data.source || '',
                 title: data.title || '',
-                next_action_no: data.next_action_no || '',
-                root_cause: data.root_cause || '',
-                executor: data.executor || '',
+                next_action_no: data.action_no || '',
+                root_cause: data.root_cause?.id || '',
+                executor: data.executor?.id || '',
                 description: data.description || '',
                 action_or_corrections: data.action_or_corrections || '',
-                supplier: data.supplier || '',
+                // Initialize supplier as empty string - we'll check suppliers later
+                supplier: '',
                 date_raised: processDate(data.date_raised),
                 date_completed: processDate(data.date_completed),
                 status: data.status || 'Pending',
                 send_notification: data.send_notification || false,
                 is_draft: data.is_draft || false
-            });
-
+            };
+    
+            setFormData(formData);
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching correction action:', error);
@@ -142,13 +146,27 @@ const QmsEditCorrectionActions = () => {
     const fetchSuppliers = async () => {
         try {
             if (!companyId) return;
-
+    
             const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
             // Filter only active suppliers with Approved status
             const activeSuppliers = response.data.filter(supplier =>
                 supplier.active === 'active'
             );
             setSuppliers(activeSuppliers);
+    
+            // After setting suppliers, check if we need to set the supplier in formData
+            const carResponse = await axios.get(`${BASE_URL}/qms/car-numbers/${id}/`);
+            const carData = carResponse.data;
+            
+            if (carData.source === 'Supplier') {
+                // Find if there's a supplier relation in the CAR data
+                // Note: This assumes the supplier relation exists in the API response
+                // If it doesn't, you might need to modify your backend to include it
+                setFormData(prev => ({
+                    ...prev,
+                    supplier: carData.supplier?.id || ''
+                }));
+            }
         } catch (err) {
             console.error('Error fetching suppliers:', err);
             setError('Failed to fetch suppliers data');
@@ -208,45 +226,47 @@ const QmsEditCorrectionActions = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         try {
             setIsLoading(true);
-
+    
             // Format the dates
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
-
+    
             // Prepare submission data
             const submissionData = {
                 company: companyId,
                 title: formData.title,
                 source: formData.source,
-                root_cause: formData.root_cause,
+                // Send just the ID for root_cause
+                root_cause: formData.root_cause || null,  // This should be just the ID
                 description: formData.description,
                 date_raised: dateRaised,
                 date_completed: dateCompleted,
                 status: formData.status,
-                executor: formData.executor,
+                // Send just the ID for executor
+                executor: formData.executor || null,  // This should be just the ID
                 next_action_no: formData.next_action_no,
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
                 is_draft: formData.is_draft
             };
-
+    
             // Add supplier only if source is 'Supplier'
             if (formData.source === 'Supplier') {
                 submissionData.supplier = formData.supplier;
             }
-
+    
             // Update via API
             const response = await axios.put(`${BASE_URL}/qms/car-numbers/${id}/`, submissionData);
-
+    
             console.log('Updated CAR:', response.data);
             setIsLoading(false);
-
+    
             // Navigate to the list page after successful submission
             navigate('/company/qms/list-correction-actions');
-
+    
         } catch (error) {
             console.error('Error updating form:', error);
             setIsLoading(false);

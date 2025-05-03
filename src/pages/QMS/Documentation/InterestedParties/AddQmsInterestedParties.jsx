@@ -36,6 +36,27 @@ const AddQmsInterestedParties = () => {
     send_notification: false,
   });
 
+
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  const companyId = getUserCompanyId();
+
   const [dropdownRotation, setDropdownRotation] = useState({
     category: false,
     legal_requirements: false,
@@ -68,24 +89,8 @@ const AddQmsInterestedParties = () => {
 
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileName, setFileName] = useState('No file chosen');
-  const getUserCompanyId = () => {
-    const storedCompanyId = localStorage.getItem("company_id");
-    if (storedCompanyId) return storedCompanyId;
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
-        }
-      }
-    }
-    return null;
-  };
-  const companyId = getUserCompanyId();
+
+
   useEffect(() => {
     if (companyId) {
       setFormData(prev => ({
@@ -146,22 +151,30 @@ const AddQmsInterestedParties = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setSubmitting(true);
     setError(null);
+
+    // Get fresh company ID in case it changed
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
+      setSubmitting(false);
+      return;
+    }
+
     const userId = getRelevantUserId();
 
     try {
-      // Format data according to the expected structure
-      console.log('iiiiiippppppp:', formData);
+      // Format the needs array
       const needsArray = formData.needs_expectations.map(item => ({
         needs: item.needs,
         expectation: item.expectations
       }));
 
+      // Create the data object with company ID at root level
       const submitData = {
         name: formData.name,
-        company: formData.company,
+        company: companyId, // Ensure this is set
         category: formData.category,
         special_requirements: formData.special_requirements,
         legal_requirements: formData.legal_requirements,
@@ -174,46 +187,43 @@ const AddQmsInterestedParties = () => {
 
       console.log("Data being sent:", submitData);
 
-      // Use FormData only if there's a file to upload
+
       if (formData.file instanceof File) {
         const formDataWithFile = new FormData();
-
-        // Add the JSON data as a string
         formDataWithFile.append('data', JSON.stringify(submitData));
-
-        // Add the file
         formDataWithFile.append('file', formData.file);
+        formDataWithFile.append('company', formData.company);
+        formDataWithFile.append('name', formData.name); // Explicitly add name
 
-        const response = await axios.post(`${BASE_URL}/qms/interested-parties/`, formDataWithFile, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-        console.log('iiipppresponse', response);
-
-
-        setShowAddManualSuccessModal(true);
-        setTimeout(() => {
-          setShowAddManualSuccessModal(false);
-          navigate('/company/qms/interested-parties');
-        }, 1500);
+        const response = await axios.post(
+          `${BASE_URL}/qms/interested-parties/`,
+          formDataWithFile,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        console.log('Response:', response);
       } else {
-        // If no file, send JSON directly
-        const response = await axios.post(`${BASE_URL}/qms/interested-parties/`, submitData);
-
-        setShowAddManualSuccessModal(true);
-        setTimeout(() => {
-          setShowAddManualSuccessModal(false);
-          navigate('/company/qms/interested-parties');
-        }, 1500);
+        const response = await axios.post(
+          `${BASE_URL}/qms/interested-parties/`,
+          submitData
+        );
+        console.log('Response:', response);
       }
+
+      setShowAddManualSuccessModal(true);
+      setTimeout(() => {
+        setShowAddManualSuccessModal(false);
+        navigate('/company/qms/interested-parties');
+      }, 1500);
     } catch (err) {
-      setError("Failed to save. Please check your inputs and try again.");
+      setError(err.response?.data?.error || "Failed to save. Please check your inputs and try again.");
       setShowAddQmsInterestedErrorModal(true);
       setTimeout(() => {
         setShowAddQmsInterestedErrorModal(false);
       }, 3000);
-      console.error("Error submitting form:", err);
       console.error("Error details:", err.response?.data);
       setSubmitting(false);
     }
@@ -269,6 +279,7 @@ const AddQmsInterestedParties = () => {
 
         // Add the JSON data as a string 
         formDataToSend.append('data', JSON.stringify(draftData));
+        formDataToSend.append('name', formData.name);
 
         // Add the file separately
         formDataToSend.append('file', formData.file);
@@ -296,7 +307,7 @@ const AddQmsInterestedParties = () => {
       setShowDraftInterestedSuccessModal(true);
       setTimeout(() => {
         setShowDraftInterestedSuccessModal(false);
-        navigate('/company/qms/draft-interested-parties');
+        navigate('/company/qms/interested-parties');
       }, 1500);
 
     } catch (err) {
@@ -427,7 +438,7 @@ const AddQmsInterestedParties = () => {
                         onClick={() => removeNeedsExpectations(index)}
                         className="ml-2 text-red-500 border border-red-500 p-2 rounded-md hover:text-white hover:bg-red-500 duration-200"
                       >
-                        <X size={17}/>
+                        <X size={17} />
                       </button>
                     )}
                   </div>
@@ -437,9 +448,9 @@ const AddQmsInterestedParties = () => {
                     <button
                       type="button"
                       onClick={addNeedsExpectations}
-                      className="request-correction-btn flex items-center gap-[5px] duration-200 " 
+                      className="request-correction-btn flex items-center gap-[5px] duration-200 "
                     >
-                      Add More <Plus size={18}/>
+                      Add More <Plus size={18} />
                     </button>
                   </div>
                 )}
