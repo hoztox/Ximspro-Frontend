@@ -241,22 +241,22 @@ const AddQmsInterestedParties = () => {
   const handleSaveAsDraft = async () => {
     try {
       setLoading(true);
-
+  
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-
+  
       if (!companyId || !userId) {
         setError('Company ID or User ID not found. Please log in again.');
         setLoading(false);
         return;
       }
-
+  
       // Format the needs_expectations array to match backend expectations
       const needsArray = formData.needs_expectations.map(item => ({
         needs: item.needs,
         expectation: item.expectations // Note: backend expects "expectation" not "expectations"
       }));
-
+  
       // Create the data object the way the backend expects it
       const draftData = {
         name: formData.name,
@@ -268,22 +268,27 @@ const AddQmsInterestedParties = () => {
         send_notification: formData.send_notification,
         is_draft: true,
         user: userId,
-        needs: needsArray // This is the important part - send the array of needs objects
+        needs: needsArray
       };
-
+  
       let response;
-
+  
       // If there's a file, use FormData
       if (formData.file instanceof File) {
         const formDataToSend = new FormData();
-
-        // Add the JSON data as a string 
+        
+        // Important: The backend expects the JSON data as a 'data' field
         formDataToSend.append('data', JSON.stringify(draftData));
+        
+        // Add key fields individually for better backend compatibility
+        formDataToSend.append('company', companyId);
         formDataToSend.append('name', formData.name);
-
-        // Add the file separately
+        formDataToSend.append('is_draft', 'true');
+        formDataToSend.append('user', userId);
+        
+        // Add the file with a specific field name
         formDataToSend.append('file', formData.file);
-
+  
         response = await axios.post(
           `${BASE_URL}/qms/interst/draft-create/`,
           formDataToSend,
@@ -300,16 +305,16 @@ const AddQmsInterestedParties = () => {
           draftData
         );
       }
-
+  
       console.log('Draft saved:', response);
-
+  
       setLoading(false);
       setShowDraftInterestedSuccessModal(true);
       setTimeout(() => {
         setShowDraftInterestedSuccessModal(false);
         navigate('/company/qms/interested-parties');
       }, 1500);
-
+  
     } catch (err) {
       setLoading(false);
       setShowDraftInterestedErrorModal(true);
