@@ -47,6 +47,15 @@ const EmployeeTrainingSubmenu = (props) => {
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
             path: "/company/qms/training-evaluation",
+            relatedPaths: [
+                "/company/qms/add-training-evaluation",
+                "/company/qms/edits-training-evaluation",
+                "/company/qms/views-training-evaluation",
+                "/company/qms/drafts-training-evaluation",
+                "/company/qms/edits-drafts-training-evaluation",
+                "/company/qms/views-drafts-training-evaluation",
+                // "/company/qms/employees-performance-graph",
+            ]
         },
         {
             id: "employee-performance-evaluation",

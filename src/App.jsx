@@ -271,6 +271,12 @@ import QmsDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiv
 import QmsEditDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsEditDraftPreventiveActions";
 import QmsViewDraftPreventiveActions from "./pages/QMS/CorrectionActionsAndPreventiveActions/PreventiveActions/QmsViewDraftPreventiveActions";
 import QmsListObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsListObjectives";
+import AddQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/AddQmsTrainingEvaluation";
+import EditQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/EditQmsTrainingEvaluation";
+import ViewQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/ViewQmsTrainingEvaluation";
+import DraftQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/DraftQmsTrainingEvaluation";
+import EditsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/EditsQmsDraftTrainingEvaluation";
+import ViewsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/ViewsQmsDraftTrainingEvaluation";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -364,6 +370,12 @@ const ThemedApp = () => {
           <Route path="qms/listuser-training" element={<QmsListUserTraining />} />
 
           <Route path="qms/training-evaluation" element={<QmsTrainingEvaluation />} />
+          <Route path="qms/add-training-evaluation" element={<AddQmsTrainingEvaluation />} />
+          <Route path="qms/edits-training-evaluation" element={<EditQmsTrainingEvaluation />} />
+          <Route path="qms/views-training-evaluation" element={<ViewQmsTrainingEvaluation />} />
+          <Route path="qms/drafts-training-evaluation" element={<DraftQmsTrainingEvaluation />} />
+          <Route path="qms/edits-drafts-training-evaluation" element={<EditsQmsDraftTrainingEvaluation />} />
+          <Route path="qms/views-drafts-training-evaluation" element={<ViewsQmsDraftTrainingEvaluation />} />
 
           <Route path="qms/employee-performance" element={<QmsEmployeePerformance />} />
           <Route path="qms/add-employee-performance" element={<AddQmsEmployeePerformance />} />

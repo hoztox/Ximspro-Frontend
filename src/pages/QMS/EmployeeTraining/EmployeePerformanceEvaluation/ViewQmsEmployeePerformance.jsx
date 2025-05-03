@@ -121,14 +121,14 @@ const ViewQmsEmployeePerformance = () => {
                         </div>
                     </div>
 
-                    {performanceData.is_draft && (
+                    {/* {performanceData.is_draft && (
                         <div>
                             <label className="block view-employee-label mb-[6px]">Status</label>
                             <div className="view-employee-data bg-yellow-800 inline-block px-2 py-1 rounded">
                                 Draft
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     <div className="flex justify-end items-end space-x-10 md:col-start-2">
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
