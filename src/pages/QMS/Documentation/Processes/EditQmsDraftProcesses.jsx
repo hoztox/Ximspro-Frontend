@@ -394,9 +394,9 @@ const EditQmsDraftProcesses = () => {
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               </div>
 
-              <div className="add-qms-intertested-inputs overflow-y-auto !h-32 p-3">
+              <div className="border border-[#383840] rounded-md p-2 max-h-[145px] overflow-y-auto">
                 {showCustomField ? (
-                  <div className="mt-2">
+                  <div className="my-2">
                     <textarea
                       name="custom_legal_requirements"
                       placeholder="Please specify"
