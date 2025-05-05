@@ -6,7 +6,7 @@ import record from "../../../../assets/images/Company-Sidebar/record-format.svg"
 import parties from "../../../../assets/images/Company-Sidebar/interested parties.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const EnergyManagementSubmenu = () => {
+const EnergyManagementSubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -15,7 +15,11 @@ const EnergyManagementSubmenu = () => {
             id: "energy-review",
             label: "Energy Review",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/list-energy-review",
+            relatedPaths: [
+                // "/company/qms/addpolicy",
+                // "/company/qms/editpolicy/",
+            ]
         },
         {
             id: "energy-baselines",
@@ -50,7 +54,10 @@ const EnergyManagementSubmenu = () => {
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     const handleCategoryClick = (category) => {
