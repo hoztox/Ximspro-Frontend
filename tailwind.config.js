@@ -9,6 +9,9 @@ export default {
       backgroundImage: {
         'custom-pattern': "url('/src/assets/images/bgimg.svg')",
       },
+      screens: {
+        '3xl-custom': '1800px',
+      },
     },
   },
   plugins: [],

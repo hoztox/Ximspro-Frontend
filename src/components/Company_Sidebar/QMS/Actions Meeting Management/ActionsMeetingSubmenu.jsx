@@ -40,6 +40,11 @@ const ActionsMeetingSubmenu = (props) => {
                 "/company/qms/list-outbox",
                 "/company/qms/list-draft",
                 "/company/qms/compose",
+                "/company/qms/inbox-replay",
+                "/company/qms/inbox-forward",
+                "/company/qms/outbox-replay",
+                "/company/qms/outbox-forward",
+                "/company/qms/edit-draft",
             ]
         },
         {

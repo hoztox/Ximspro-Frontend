@@ -278,6 +278,10 @@ import DraftQmsTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEva
 import EditsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/EditsQmsDraftTrainingEvaluation";
 import ViewsQmsDraftTrainingEvaluation from "./pages/QMS/EmployeeTraining/TrainingEvaluation/ViewsQmsDraftTrainingEvaluation";
 import QmsTrainingEvaluationGraph from "./pages/QMS/EmployeeTraining/TrainingEvaluation/QmsTrainingEvaluationGraph";
+import QmsInboxReplay from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsInboxReplay";
+import QmsInboxForward from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsInboxForward";
+import QmsOutboxReplay from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsOutboxReplay";
+import QmsEditDraftSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsEditDraftSystemMessaging";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -422,6 +426,11 @@ const ThemedApp = () => {
           <Route path="qms/list-outbox" element={<QmsListOutboxSystemMessaging />} />
           <Route path="qms/list-draft" element={<QmsListDraftSystemMessaging />} />
           <Route path="qms/compose" element={<QmsComposeSystemMessaging />} />
+          <Route path="qms/inbox-replay" element={<QmsInboxReplay />} />
+          <Route path="qms/inbox-forward" element={<QmsInboxForward />} />
+          <Route path="qms/outbox-replay" element={<QmsOutboxReplay />} />
+          <Route path="qms/outbox-forward" element={<QmsOutboxReplay />} />
+          <Route path="qms/edit-draft" element={<QmsEditDraftSystemMessaging />} />
 
           <Route path="qms/list-internal-problem" element={<QmsListInternalProblems/>} />
           <Route path="qms/add-internal-problem" element={<QmsAddInternalProblems/>} />
