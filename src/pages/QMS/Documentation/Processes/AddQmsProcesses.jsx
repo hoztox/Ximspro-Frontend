@@ -280,7 +280,8 @@ const AddQmsProcesses = () => {
       }
   
       const submitData = new FormData();
-  
+      console.log('formdata......', formData);
+      
       submitData.append("company", companyId);
       submitData.append("user", userId);
       submitData.append("is_draft", true);
@@ -299,11 +300,12 @@ const AddQmsProcesses = () => {
           );
         }
       } else {
-        // For many-to-many relationships in draft
-        formData.legal_requirements.forEach((procedureTitle, index) => {
+        // The key issue: The backend expects a different format for legal_requirements
+        // We need to append each procedure ID with the same key name
+        formData.legal_requirements.forEach((procedureTitle) => {
           const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
           if (procedure && procedure.id) {
-            submitData.append(`legal_requirements[${index}]`, procedure.id);
+            submitData.append('legal_requirements', procedure.id);
           }
         });
       }
@@ -331,6 +333,8 @@ const AddQmsProcesses = () => {
         setShowDraftProcessesSuccessModal(false);
         navigate("/company/qms/draft-processes");
       }, 1500);
+      console.log('draaaaaft', response);
+      
     } catch (err) {
       setLoading(false);
       setShowDraftProcessesErrorModal(true);

@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import edits from "../../../assets/images/Company Documentation/edit.svg";
+import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from "react-router-dom";
-import { BASE_URL } from "../../../../Utils/Config";
+import { BASE_URL } from "../../../Utils/Config";
 
-const QmsViewCorrectionActions = () => {
+
+const QmsViewNonConformityReport = () => {
     const [formData, setFormData] = useState({
         source: "",
         title: "",
-        action_no: "",
+        ncr_no: "",
         root_cause: "",
         executor: "",
         description: "",
-        action_or_corrections: "",
+        resolution_details: "",
         date_raised: "",
         date_completed: "",
         status: "",
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const navigate = useNavigate();
     const { id } = useParams();
 
     useEffect(() => {
-        const fetchCarNumber = async () => {
+        const fetchNcrNumber = async () => {
             try {
                 setLoading(true);
                 const response = await fetch(`${BASE_URL}/qms/car-numbers/${id}/`);
@@ -38,12 +39,12 @@ const QmsViewCorrectionActions = () => {
             } catch (err) {
                 setError("Failed to load data");
                 setLoading(false);
-                console.error("Error fetching car number data:", err);
+                console.error("Error fetching ncr number data:", err);
             }
         };
 
         if (id) {
-            fetchCarNumber();
+            fetchNcrNumber();
         }
     }, [id]);
 
@@ -81,7 +82,7 @@ const QmsViewCorrectionActions = () => {
     if (error) return (
         <div className="bg-[#1C1C24] text-white p-8 rounded-lg">
             <p className="text-red-500">{error}</p>
-            <button 
+            <button
                 className="mt-4 bg-blue-600 px-4 py-2 rounded-md"
                 onClick={() => navigate("/company/qms/list-correction-actions")}
             >
@@ -100,7 +101,7 @@ const QmsViewCorrectionActions = () => {
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                <h2 className="view-employee-head">Correction/Corrective Action Information</h2>
+                <h2 className="view-employee-head">Non Conformity Reports Information</h2>
                 <button
                     onClick={handleClose}
                     className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -130,11 +131,11 @@ const QmsViewCorrectionActions = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Action No
+                            NCR No
                         </label>
-                        <div className="view-employee-data">{formData.action_no || "N/A"}</div>
+                        <div className="view-employee-data">{formData.ncr_no || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Root Cause
@@ -143,7 +144,7 @@ const QmsViewCorrectionActions = () => {
                             {formData.root_cause?.title}
                         </div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Executor
@@ -152,35 +153,35 @@ const QmsViewCorrectionActions = () => {
                             {formData.executor?.first_name} {formData.executor?.last_name}
                         </div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Description
+                            Non Conformity Description
                         </label>
                         <div className="view-employee-data">{formData.description || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Action or Corrections
+                            Resolution Details
                         </label>
-                        <div className="view-employee-data">{formData.action_or_corrections || "N/A"}</div>
+                        <div className="view-employee-data">{formData.resolution_details || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Date Raised
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_raised)}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Complete By
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_completed)}</div>
                     </div>
-                    
+
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -188,28 +189,26 @@ const QmsViewCorrectionActions = () => {
                             </label>
                             <div className="view-employee-data">{formData.status || "N/A"}</div>
                         </div>
-                    <div className="flex space-x-10 justify-end">
-                        <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
-                            Edit
-                            <button onClick={() => handleEdit(id)}>
-                               <img src={edits} alt="Edit Icon" />
-                            </button>
-                        </div>
+                        <div className="flex space-x-10 justify-end">
+                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
+                                Edit
+                                <button onClick={() => handleEdit(id)}>
+                                    <img src={edits} alt="Edit Icon" />
+                                </button>
+                            </div>
 
-                        <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
-                            Delete
-                            <button onClick={() => handleDelete(id)}>
-                               <img src={deletes} alt="Delete Icon" />
-                            </button>
+                            <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
+                                Delete
+                                <button onClick={() => handleDelete(id)}>
+                                    <img src={deletes} alt="Delete Icon" />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    </div>
-                    
-                    
+
                 </div>
             </div>
         </div>
     );
 };
-
-export default QmsViewCorrectionActions;
+export default QmsViewNonConformityReport

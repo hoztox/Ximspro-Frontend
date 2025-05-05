@@ -97,19 +97,21 @@ const EditQmsDraftProcesses = () => {
   useEffect(() => {
     if (!id) return;
     console.log("Fetching data for id:", id);
-
+  
     axios
       .get(`${BASE_URL}/qms/processes-get/${id}/`)
       .then((res) => {
         const data = res.data;
-        // Handle legal_requirements as an array
-        const legalReqs = Array.isArray(data.legal_requirements) 
-          ? data.legal_requirements 
-          : data.legal_requirements ? [data.legal_requirements] : [];
-          
+        
+        // Convert the legal_requirements IDs to titles using legal_requirement_details
+        let procedureTitles = [];
+        if (data.legal_requirement_details && Array.isArray(data.legal_requirement_details)) {
+          procedureTitles = data.legal_requirement_details.map(item => item.title);
+        }
+  
         setFormData({
           ...data,
-          legal_requirements: legalReqs,
+          legal_requirements: procedureTitles, // Use the titles instead of IDs
           custom_legal_requirements: data.custom_legal_requirements || "",
           file: null,
         });
@@ -211,76 +213,86 @@ const EditQmsDraftProcesses = () => {
     }
   };
   
- const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = new FormData();
     
-    // Add basic fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'file' && key !== 'legal_requirements' && value !== null && value !== undefined) {
-        payload.append(key, value);
-      }
-    });
-  
-    // Handle file separately
-    if (formData.file instanceof File) {
-      payload.append('file', formData.file);
-    }
-  
-    // Handle legal requirements based on N/A selection
-    if (showCustomField) {
-      // If N/A is selected, don't append any legal requirements
-      // But include the custom text if provided
-      if (formData.custom_legal_requirements) {
-        payload.append("custom_legal_requirements", formData.custom_legal_requirements);
-      }
-    } else {
-      // For many-to-many relationships, find the procedure IDs that match the titles
-      // Create an array of IDs to send to the backend
-      const procedureIds = formData.legal_requirements
-        .map(procedureTitle => {
-          const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
-          return procedure ? procedure.id : null;
-        })
-        .filter(id => id !== null);
-      
-      // Append each procedure ID individually
-      procedureIds.forEach(id => {
-        payload.append("legal_requirements", id);
-      });
-    }
-  
     try {
-      const response = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, payload, {
+      // Create an object for the JSON data
+      const data = {
+        name: formData.name,
+        no: formData.no,
+        type: formData.type,
+        is_draft: formData.is_draft,
+        send_notification: formData.send_notification,
+        company: companyId
+      };
+      
+      // Handle file upload first if needed
+      if (formData.file instanceof File) {
+        const fileFormData = new FormData();
+        fileFormData.append('file', formData.file);
+        
+        const fileResponse = await axios.post(`${BASE_URL}/qms/upload-file/`, fileFormData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        
+        if (fileResponse.data && fileResponse.data.file_url) {
+          data.file = fileResponse.data.file_url;
+        }
+      }
+      
+      // Handle legal requirements based on whether custom field is shown
+      if (showCustomField) {
+        // If N/A is selected, send the custom text if any
+        data.custom_legal_requirements = formData.custom_legal_requirements || "";
+        // Send an empty array for legal_requirements
+        data.legal_requirements = [];
+      } else {
+        // Convert procedure titles to IDs
+        const procedureIds = formData.legal_requirements
+          .map(procedureTitle => {
+            const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
+            return procedure ? procedure.id : null;
+          })
+          .filter(id => id !== null);
+        
+        // Add array of IDs to request data
+        data.legal_requirements = procedureIds;
+        data.custom_legal_requirements = "";
+      }
+      
+      // Send the update request as JSON instead of FormData
+      const response = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       });
       
       console.log("Success response:", response.data);
       setShowEditDraftProcessesSuccessModal(true);
       setTimeout(() => {
-        setShowEditDraftProcessesSuccessModal(true);
+        setShowEditDraftProcessesSuccessModal(false);
         navigate("/company/qms/processes");
       }, 2000);
   
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
-      setShowEditQmsProcessesErrorModal(true);
+      setShowEditDraftProcessesErrorModal(true);
       setTimeout(() => {
-        setShowEditQmsProcessesErrorModal(false);
+        setShowEditDraftProcessesErrorModal(false);
       }, 3000);
     }
   };
 
   const handleCancel = () => {
-    navigate("/company/qms/processes");
+    navigate("/company/qms/draft-processes");
   };
 
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions
     .filter(option => 
-      !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.title) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
     

@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
-import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
-import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
+import plusIcon from "../../../assets/images/Company Documentation/plus icon.svg";
+import viewIcon from "../../../assets/images/Companies/view.svg";
+import editIcon from "../../../assets/images/Company Documentation/edit.svg";
+import deleteIcon from "../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListPreventiveActions = () => {
+const QmsListNonconformityReport = () => {
     const initialData = [
-        { id: 1, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Completed' },
-        { id: 2, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Deleted' },
-        { id: 3, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Completed' },
-        { id: 4, title: 'New Issue', source: 'Internal', date_raised: '04-12-2024', completed_by: '04-12-2024', executor: 'xyz', status: 'Pending' },
+        { id: 1, title: 'Anonymous', source: 'Anonymous', ncr: '1', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Completed' },
+        { id: 2, title: 'Anonymous', source: 'Anonymous', ncr: '2', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Pending' },
+        { id: 3, title: 'Anonymous', source: 'Anonymous', ncr: '3', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Deleted' },
+
     ];
 
 
     // State
-    const [preventives, setPreventives] = useState(initialData);
+    const [nonConformity, setNonConformity] = useState(initialData);
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -24,10 +24,11 @@ const QmsListPreventiveActions = () => {
     const [formData, setFormData] = useState({
         title: '',
         source: '',
+        ncr: '',
         date_raised: '',
         completed_by: '',
         executor: '',
-        status: 'Completed'  // Default status set to 'Requested'
+        status: 'Completed'
     });
 
     const handleSearchChange = (e) => {
@@ -40,44 +41,43 @@ const QmsListPreventiveActions = () => {
 
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = preventives.length;
+    const totalItems = nonConformity.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = preventives.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = nonConformity.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
 
-    const filteredPreventives = currentItems.filter(preventive =>
-        preventive.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        preventive.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        preventive.executor.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredNonConformity = currentItems.filter(nonConformities =>
+        nonConformities.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        nonConformities.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        nonConformities.executor.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
 
 
-    const handleAddPreventiveActions = () => {
-        navigate('/company/qms/add-preventive-actions')
+    const handleAddNonConformity = () => {
+        navigate('/company/qms/add-nonconformity')
     }
 
-    const handleDraftPreventiveActions = () => {
-        navigate('/company/qms/draft-preventive-actions')
+    const handleDraftNonConformity = () => {
+        navigate('/company/qms/draft-nonconformity')
     }
 
-    const handleQmsViewPreventiveAction = () => {
-        navigate('/company/qms/view-preventive-actions')
+    const handleQmsViewNonconformity = () => {
+        navigate('/company/qms/view-nonconformity')
     }
 
-    const handleQmsEditPreventiveAction = () => {
-        navigate('/company/qms/edit-preventive-actions')
+    const handleQmsEditNonConformity = () => {
+        navigate('/company/qms/edit-nonconformity')
     }
 
 
-    // Delete  preventive
-    const handleDeletePreventiveAction = (id) => {
-        setPreventives(preventives.filter(preventive => preventive.id !== id));
+    const handleDeleteNonConformity = (id) => {
+        setNonConformity(nonConformity.filter(nonConformities => nonConformities.id !== id));
     };
 
     // Change page
@@ -89,7 +89,7 @@ const QmsListPreventiveActions = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">List Preventive Action</h1>
+                <h1 className="list-manual-head">List Non Conformity Reports</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -105,16 +105,16 @@ const QmsListPreventiveActions = () => {
                     </div>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftPreventiveActions}
+                        onClick={handleDraftNonConformity}
                     >
                         <span>Drafts</span>
 
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddPreventiveActions}
+                        onClick={handleAddNonConformity}
                     >
-                        <span> Add Preventive Action</span>
+                        <span>Add Non Conformity Reports</span>
                         <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
                     </button>
                 </div>
@@ -127,7 +127,8 @@ const QmsListPreventiveActions = () => {
                         <tr className="h-[48px]">
                             <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                             <th className="px-2 text-left add-manual-theads">Title</th>
-                            <th className="px-2 text-left add-manual-theads">Action</th>
+                            <th className="px-2 text-left add-manual-theads">Source</th>
+                            <th className="px-2 text-left add-manual-theads">NCR</th>
                             <th className="px-2 text-left add-manual-theads">Executor</th>
                             <th className="px-2 text-left add-manual-theads">Date Raised</th>
                             <th className="px-2 text-left add-manual-theads">Completed By</th>
@@ -138,39 +139,40 @@ const QmsListPreventiveActions = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredPreventives.map((preventive, index) => (
-                            <tr key={preventive.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{preventive.id}</td>
-                                <td className="px-2 add-manual-datas">{preventive.title}</td>
-                                <td className="px-2 add-manual-datas">{preventive.source}</td>
-                                <td className="px-2 add-manual-datas">{preventive.executor}</td>
-                                <td className="px-2 add-manual-datas">{preventive.date_raised}</td>
-                                <td className="px-2 add-manual-datas">{preventive.completed_by}</td>
+                        {filteredNonConformity.map((nonConformities, index) => (
+                            <tr key={nonConformities.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                <td className="pl-5 pr-2 add-manual-datas">{nonConformities.id}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.title}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.source}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.ncr}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.executor}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.date_raised}</td>
+                                <td className="px-2 add-manual-datas">{nonConformities.completed_by}</td>
                                 <td className="px-2 add-manual-datas !text-center">
                                     <span
-                                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${preventive.status === 'Completed'
+                                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${nonConformities.status === 'Completed'
                                             ? 'bg-[#36DDAE11] text-[#36DDAE]'
-                                            : preventive.status === 'Pending'
-                                                ? 'bg-[#1E84AF11] text-[#1E84AF]' // yellow-ish color
+                                            : nonConformities.status === 'Pending'
+                                                ? 'bg-[#1E84AF11] text-[#1E84AF]'
                                                 : 'bg-[#dd363611] text-[#dd3636]'
                                             }`}
                                     >
-                                        {preventive.status}
+                                        {nonConformities.status}
                                     </span>
 
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewPreventiveAction}>
+                                    <button onClick={handleQmsViewNonconformity}>
                                         <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditPreventiveAction}>
+                                    <button onClick={handleQmsEditNonConformity}>
                                         <img src={editIcon} alt="Edit Icon" />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleDeletePreventiveAction}>
+                                    <button onClick={handleDeleteNonConformity}>
                                         <img src={deleteIcon} alt="Delete Icon" />
                                     </button>
                                 </td>
@@ -215,4 +217,4 @@ const QmsListPreventiveActions = () => {
         </div>
     );
 };
-export default QmsListPreventiveActions
+export default QmsListNonconformityReport

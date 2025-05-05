@@ -140,7 +140,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
 
                 {/* Causes List Section */}
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
-                    <h2 className="agenda-list-head pb-5">Causes List</h2>
+                    <h2 className="agenda-list-head pb-5">Root Causes List</h2>
                     {loading ? (
                         <div className="text-center py-4">Loading...</div>
                     ) : (
@@ -159,7 +159,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                                     <tbody>
                                         {causes.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center py-4">No causes found</td>
+                                                <td colSpan="4" className="text-center py-4 not-found">No Root causes found</td>
                                             </tr>
                                         ) : (
                                             causes.map((item, index) => (
@@ -185,7 +185,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
 
                 {/* Add Cause Section */}
                 <div className="bg-[#1C1C24] rounded-[4px]">
-                    <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Cause</h3>
+                    <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Root Cause</h3>
 
                     <div className="mb-4 px-5">
                         <label className="block mb-3 agenda-list-label">

@@ -210,47 +210,59 @@ const handleNAChange = (e) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const payload = new FormData();
     
-    // Add basic fields
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== 'file' && key !== 'legal_requirements' && value !== null && value !== undefined) {
-        payload.append(key, value);
-      }
-    });
-  
-    // Handle file separately
-    if (formData.file instanceof File) {
-      payload.append('file', formData.file);
-    }
-  
-    // Handle legal requirements based on N/A selection
-    if (showCustomField) {
-      // If N/A is selected, don't append any legal requirements
-      // But include the custom text if provided
-      if (formData.custom_legal_requirements) {
-        payload.append("custom_legal_requirements", formData.custom_legal_requirements);
-      }
-    } else {
-      // For many-to-many relationships, find the procedure IDs that match the titles
-      // Create an array of IDs to send to the backend
-      const procedureIds = formData.legal_requirements
-        .map(procedureTitle => {
-          const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
-          return procedure ? procedure.id : null;
-        })
-        .filter(id => id !== null);
-      
-      // Append each procedure ID individually
-      procedureIds.forEach(id => {
-        payload.append("legal_requirements", id);
-      });
-    }
-  
     try {
-      const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, payload, {
+      // Create the request data structure
+      const data = {
+        name: formData.name,
+        no: formData.no,
+        type: formData.type,
+        is_draft: formData.is_draft,
+        send_notification: formData.send_notification,
+        company: companyId
+      };
+      
+      // Handle file upload first if needed
+      if (formData.file instanceof File) {
+        const fileFormData = new FormData();
+        fileFormData.append('file', formData.file);
+        
+        const fileResponse = await axios.post(`${BASE_URL}/qms/upload-file/`, fileFormData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        
+        if (fileResponse.data && fileResponse.data.file_url) {
+          data.file = fileResponse.data.file_url;
+        }
+      }
+      
+      // Handle legal requirements based on whether custom field is shown
+      if (showCustomField) {
+        // If N/A is selected, send the custom text if any
+        data.custom_legal_requirements = formData.custom_legal_requirements || "";
+        // Send an empty array for legal_requirements
+        data.legal_requirements = [];
+      } else {
+        // Convert procedure titles to IDs
+        const procedureIds = formData.legal_requirements
+          .map(procedureTitle => {
+            const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
+            return procedure ? procedure.id : null;
+          })
+          .filter(id => id !== null);
+        
+        // Add to request data
+        data.legal_requirements = procedureIds;
+        // Make sure custom field is empty
+        data.custom_legal_requirements = "";
+      }
+      
+      // Send the update request
+      const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, data, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       });
       
@@ -396,7 +408,7 @@ const handleNAChange = (e) => {
                         </div>
                       ))
                     ) : (
-                      <p className="text-gray-400 mt-2">No procedures found</p>
+                      <p className="text-gray-400 mt-2 not-found">No procedures found</p>
                     )}
                   </>
                 )}

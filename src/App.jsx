@@ -282,6 +282,13 @@ import QmsInboxReplay from "./pages/QMS/ActionsMeetingManagement/SystemMessaging
 import QmsInboxForward from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsInboxForward";
 import QmsOutboxReplay from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsOutboxReplay";
 import QmsEditDraftSystemMessaging from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsEditDraftSystemMessaging";
+import QmsListNonconformityReport from "./pages/QMS/NonConformityReportManagement/QmsListNonconformityReport";
+import QmsAddNonConformityReport from "./pages/QMS/NonConformityReportManagement/QmsAddNonConformityReport";
+import QmsEditNonConformityReport from "./pages/QMS/NonConformityReportManagement/QmsEditNonConformityReport";
+import QmsViewNonConformityReport from "./pages/QMS/NonConformityReportManagement/QmsViewNonConformityReport";
+import QmsDraftNonConformityReport from "./pages/QMS/NonConformityReportManagement/QmsDraftNonConformityReport";
+import QmsViewDraftNonConformity from "./pages/QMS/NonConformityReportManagement/QmsViewDraftNonConformity";
+import QmsEditDraftNonConformity from "./pages/QMS/NonConformityReportManagement/QmsEditDraftNonConformity";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -622,6 +629,16 @@ const ThemedApp = () => {
 
 
 
+
+
+          {/* QMS Non Conformity Report Management */}
+          <Route path="qms/list-nonconformity" element={<QmsListNonconformityReport />} />
+          <Route path="qms/add-nonconformity" element={<QmsAddNonConformityReport />} />
+          <Route path="qms/edit-nonconformity" element={<QmsEditNonConformityReport />} />
+          <Route path="qms/view-nonconformity" element={<QmsViewNonConformityReport />} />
+          <Route path="qms/draft-nonconformity" element={<QmsDraftNonConformityReport />} />
+          <Route path="qms/edit-draft-nonconformity" element={<QmsEditDraftNonConformity />} />
+          <Route path="qms/view-draft-nonconformity" element={<QmsViewDraftNonConformity />} />
 
 
 

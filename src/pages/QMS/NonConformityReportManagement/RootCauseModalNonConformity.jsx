@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from 'axios';
-
-
-const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
+const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
     const [animateClass, setAnimateClass] = useState('');
     const [causes, setCauses] = useState([]);
     const [newCauseTitle, setNewCauseTitle] = useState("");
@@ -159,7 +157,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                                     <tbody>
                                         {causes.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center py-4 not-found">No Root causes found</td>
+                                                <td colSpan="4" className="text-center py-4">No causes found</td>
                                             </tr>
                                         ) : (
                                             causes.map((item, index) => (
@@ -222,4 +220,4 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
 };
 
 
-export default RootCauseModal
+export default RootCauseModalNonConformity

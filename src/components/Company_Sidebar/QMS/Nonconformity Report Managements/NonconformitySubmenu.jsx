@@ -2,7 +2,7 @@ import React from 'react'
 import policy from "../../../../assets/images/Company-Sidebar/policy.svg";
 import { useNavigate, useLocation } from "react-router-dom";
 
-const NonconformitySubmenu = () => {
+const NonconformitySubmenu = (props) => {
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -15,12 +15,23 @@ const NonconformitySubmenu = () => {
                 </>
             ),
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/policy",
+            path: "/company/qms/list-nonconformity",
+            relatedPaths: [
+                "/company/qms/add-nonconformity",
+                "/company/qms/edit-nonconformity",
+                "/company/qms/view-nonconformity",
+                "/company/qms/draft-nonconformity",
+                "/company/qms/edit-draft-nonconformity",
+                "/company/qms/view-draft-nonconformity"
+            ],
         },
     ]
 
     const isActive = (category) => {
-        return location.pathname === category.path;
+        const currentPath = location.pathname;
+        return currentPath === category.path ||
+            (category.relatedPaths &&
+                category.relatedPaths.some(path => currentPath.startsWith(path)));
     };
 
     const handleCategoryClick = (category) => {
