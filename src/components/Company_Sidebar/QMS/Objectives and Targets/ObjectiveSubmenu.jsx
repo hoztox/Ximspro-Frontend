@@ -13,6 +13,14 @@ const ObjectiveSubmenu = (props) => {
             label: "Objectives and KPIs",
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
             path: "/company/qms/list-objectives",
+            relatedPaths: [
+                "/company/qms/add-objectives",
+                "/company/qms/edit-objectives",
+                "/company/qms/view-objectives",
+                "/company/qms/draft-objectives",
+                "/company/qms/edit-draft-objectives",
+                "/company/qms/view-draft-objectives"
+            ]
         },
         {
             id: "targets-and-programs",

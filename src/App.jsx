@@ -289,6 +289,12 @@ import QmsViewNonConformityReport from "./pages/QMS/NonConformityReportManagemen
 import QmsDraftNonConformityReport from "./pages/QMS/NonConformityReportManagement/QmsDraftNonConformityReport";
 import QmsViewDraftNonConformity from "./pages/QMS/NonConformityReportManagement/QmsViewDraftNonConformity";
 import QmsEditDraftNonConformity from "./pages/QMS/NonConformityReportManagement/QmsEditDraftNonConformity";
+import QmsAddObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsAddObjectives";
+import QmsEditObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsEditObjectives";
+import QmsViewObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsViewObjectives";
+import QmsDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsDraftObjectives";
+import QmsEditDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsEditDraftObjectives";
+import QmsViewDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsViewDraftObjectives";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -608,6 +614,12 @@ const ThemedApp = () => {
 
           {/* QMS Objectives & Targets*/}
           <Route path="qms/list-objectives" element={<QmsListObjectives />} />
+          <Route path="qms/add-objectives" element={<QmsAddObjectives />} />
+          <Route path="qms/edit-objectives" element={<QmsEditObjectives />} />
+          <Route path="qms/view-objectives" element={<QmsViewObjectives />} />
+          <Route path="qms/draft-objectives" element={<QmsDraftObjectives />} />
+          <Route path="qms/edit-draft-objectives" element={<QmsEditDraftObjectives />} />
+          <Route path="qms/view-draft-objectives" element={<QmsViewDraftObjectives />} />
 
 
 
