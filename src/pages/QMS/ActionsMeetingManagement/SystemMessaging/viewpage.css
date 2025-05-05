@@ -1,0 +1,16 @@
+.message-head {
+    font-family: 'Switzer Regular';
+    font-size: 26px;
+}
+
+.view-page-label {
+    font-family: 'Switzer Light'; 
+    font-size: 16px;
+    color: #AAAAAA;
+}
+
+.view-page-data {
+    font-family: 'Switzer Regular';
+    font-size: 18px;
+    color: white;
+}

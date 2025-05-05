@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X, Eye } from 'lucide-react';
 import view from "../../../../assets/images/ActionMeetings/view.svg"
 import deletes from "../../../../assets/images/ActionMeetings/delete.svg"
 import { useNavigate } from 'react-router-dom';
@@ -11,26 +11,26 @@ const QmsListDraftSystemMessaging = () => {
     const [selectedMessage, setSelectedMessage] = useState(null); // Track which message is being viewed
     const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
     const navigate = useNavigate();
-    
+
     // Demo data with added content
     const [trainingItems, setTrainingItems] = useState([
-        { 
-            id: 1, 
-            title: 'Quarterly Report Draft', 
-            date: '03-04-2025', 
+        {
+            id: 1,
+            title: 'Anonymous',
+            date: '03-04-2025',
             time: '09:00:24am',
-            content: 'This is your draft message for the quarterly report. You can continue editing or view the current content.',
-            recipients: 'Management Team',
-            attachments: 'report_draft_v1.docx'
+            to: 'user123',
+            message: 'abcd',
+            subject: 'xyz'
         },
-        { 
-            id: 2, 
-            title: 'Project Update', 
-            date: '03-04-2025', 
+        {
+            id: 2,
+            title: 'Anonymous',
+            date: '03-04-2025',
             time: '09:00:24am',
-            content: 'Draft message for the project status update. Contains preliminary findings and next steps.',
-            recipients: 'Project Team',
-            attachments: 'project_update_april.pdf'
+            to: 'user123',
+            message: 'abcd',
+            subject: 'xyz'
         },
     ]);
 
@@ -93,55 +93,45 @@ const QmsListDraftSystemMessaging = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="bg-[#2A2A36] rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-[449px]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {selectedMessage && (
                                 <>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h2 className="text-xl font-semibold">Draft: {selectedMessage.title}</h2>
-                                        <button 
+                                    <div className="flex justify-between items-center pb-5 border-b border-[#383840]">
+                                        <h2 className="message-head">Message</h2>
+                                        <button
                                             onClick={closeModal}
-                                            className="text-gray-400 hover:text-white text-2xl"
+                                            className="text-white bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
                                         >
-                                            &times;
+                                            <X size={20} />
                                         </button>
-                                    </div>
-                                    
-                                    <div className="flex gap-4 mb-4 text-sm text-gray-300">
-                                        <div>Last Saved: {selectedMessage.date}</div>
-                                        <div>Time: {selectedMessage.time}</div>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <div className="text-gray-400 mb-1">Recipients:</div>
-                                        <div>{selectedMessage.recipients}</div>
+                                    <div className='space-y-[40px] pt-5'>
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>To</label>
+                                            <p className='view-page-data'>{selectedMessage.to}</p>
+                                        </div>
+
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>Subject</label>
+                                            <p className='view-page-data'>{selectedMessage.subject}</p>
+                                        </div>
+
+                                        <div className='flex flex-col items-start'>
+                                            <label className='view-page-label pb-[6px]'>Document</label>
+                                            <button className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'>
+                                                Click to view file <Eye size={17} />
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>Message</label>
+                                            <p className='view-page-data'>{selectedMessage.message}</p>
+                                        </div>
                                     </div>
 
-                                    <div className="mb-4">
-                                        <div className="text-gray-400 mb-1">Attachments:</div>
-                                        <div>{selectedMessage.attachments}</div>
-                                    </div>
-                                    
-                                    <div className="border-t border-[#383840] pt-4 mb-4">
-                                        <div className="text-gray-400 mb-2">Message Content:</div>
-                                        <p className="whitespace-pre-line bg-[#1E1E28] p-3 rounded">{selectedMessage.content}</p>
-                                    </div>
-                                    
-                                    <div className="mt-6 flex justify-end gap-3">
-                                        <button 
-                                            onClick={() => handleEditDraft(selectedMessage)}
-                                            className="px-4 py-2 bg-[#1E84AF] rounded hover:bg-[#2A9BC7] transition"
-                                        >
-                                            Continue Editing
-                                        </button>
-                                        <button 
-                                            onClick={closeModal}
-                                            className="px-4 py-2 bg-[#383840] rounded hover:bg-[#4A4A5A] transition"
-                                        >
-                                            Close
-                                        </button>
-                                    </div>
                                 </>
                             )}
                         </motion.div>

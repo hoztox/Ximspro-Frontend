@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Eye, Search, X } from 'lucide-react';
 import replay from "../../../../assets/images/ActionMeetings/replay.svg";
 import view from "../../../../assets/images/ActionMeetings/view.svg";
 import forward from "../../../../assets/images/ActionMeetings/forward.svg";
 import deletes from "../../../../assets/images/ActionMeetings/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import "./viewpage.css"
 import { motion, AnimatePresence } from 'framer-motion'; // For animations
 
 const QmsListInboxSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [selectedMessage, setSelectedMessage] = useState(null); // Track which message is being viewed
-    const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+    const [selectedMessage, setSelectedMessage] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const navigate = useNavigate();
-    
-    // Demo data
+
+
     const [trainingItems, setTrainingItems] = useState([
-        { 
-            id: 1, 
-            title: 'Anonymous', 
-            date: '03-04-2025', 
+        {
+            id: 1,
+            title: 'Anonymous',
+            date: '03-04-2025',
             time: '09:00:24am',
-            content: 'This is the content of the first message. It contains important information about the system update.'
+            to: 'user123',
+            message: 'abcd',
+            subject: 'xyz'
+
         },
-        { 
-            id: 2, 
-            title: 'Anonymous', 
-            date: '03-04-2025', 
+        {
+            id: 2,
+            title: 'Anonymous',
+            date: '03-04-2025',
             time: '09:00:24am',
-            content: 'Second message content here. Please review the attached documents for the quarterly report.'
+            to: 'user123',
+            message: 'abcd',
+            subject: 'xyz'
         },
     ]);
 
@@ -106,38 +112,45 @@ const QmsListInboxSystemMessaging = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="bg-[#2A2A36] rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-[449px]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {selectedMessage && (
                                 <>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <h2 className="text-xl font-semibold">{selectedMessage.title}</h2>
-                                        <button 
+                                    <div className="flex justify-between items-center pb-5 border-b border-[#383840]">
+                                        <h2 className="message-head">Message</h2>
+                                        <button
                                             onClick={closeModal}
-                                            className="text-gray-400 hover:text-white text-2xl"
+                                            className="text-white bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
                                         >
-                                            &times;
+                                            <X size={20} />
                                         </button>
                                     </div>
-                                    
-                                    <div className="flex gap-4 mb-4 text-sm text-gray-300">
-                                        <div>Date: {selectedMessage.date}</div>
-                                        <div>Time: {selectedMessage.time}</div>
+
+                                    <div className='space-y-[40px] pt-5'>
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>To</label> 
+                                            <p className='view-page-data'>{selectedMessage.to}</p>
+                                        </div>
+
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>Subject</label> 
+                                            <p className='view-page-data'>{selectedMessage.subject}</p>
+                                        </div>
+
+                                        <div className='flex flex-col items-start'>
+                                            <label className='view-page-label pb-[6px]'>Document</label> 
+                                            <button className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'>
+                                                Click to view file <Eye size={17}/>
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label className='view-page-label pb-[6px]'>Message</label> 
+                                            <p className='view-page-data'>{selectedMessage.message}</p>
+                                        </div>
                                     </div>
-                                    
-                                    <div className="border-t border-[#383840] pt-4">
-                                        <p className="whitespace-pre-line">{selectedMessage.content}</p>
-                                    </div>
-                                    
-                                    <div className="mt-6 flex justify-end gap-3">
-                                        <button 
-                                            onClick={closeModal}
-                                            className="px-4 py-2 bg-[#383840] rounded hover:bg-[#4A4A5A] transition"
-                                        >
-                                            Close
-                                        </button>
-                                    </div>
+
                                 </>
                             )}
                         </motion.div>
@@ -193,7 +206,7 @@ const QmsListInboxSystemMessaging = () => {
                         <tr className='h-[48px]'>
                             <th className="px-3 text-left list-awareness-training-thead w-[10%]">No</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[20%]">Title</th>
-                            <th className="px-3 text-left list-awareness-training-thead w-[20%]">Date</th> 
+                            <th className="px-3 text-left list-awareness-training-thead w-[20%]">Date</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[20%]">Time</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Replay</th>
@@ -211,22 +224,22 @@ const QmsListInboxSystemMessaging = () => {
                                 <td className="list-awareness-training-datas text-center">
                                     <button onClick={() => handleView(item)}>
                                         <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                    </button>     
+                                    </button>
                                 </td>
                                 <td className="list-awareness-training-datas text-center">
                                     <button onClick={handleInboxReplay}>
                                         <img src={replay} alt="replay Icon" className='w-[16px] h-[16px]' />
-                                    </button>     
+                                    </button>
                                 </td>
                                 <td className="list-awareness-training-datas text-center">
                                     <button onClick={handleInboxForward}>
                                         <img src={forward} alt="forward Icon" className='w-[16px] h-[16px]' />
-                                    </button>     
+                                    </button>
                                 </td>
-                                <td className="list-awareness-training-datas text-center"> 
+                                <td className="list-awareness-training-datas text-center">
                                     <button>
                                         <img src={deletes} alt="delete Icon" className='w-[16px] h-[16px]' />
-                                    </button>     
+                                    </button>
                                 </td>
                             </tr>
                         ))}
