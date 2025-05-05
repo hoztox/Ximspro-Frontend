@@ -295,6 +295,13 @@ import QmsViewObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsVi
 import QmsDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsDraftObjectives";
 import QmsEditDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsEditDraftObjectives";
 import QmsViewDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsViewDraftObjectives";
+import QmsListTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsListTargets";
+import QmsAddTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsAddTargets";
+import QmsEditTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditTargets";
+import QmsViewTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewTargets";
+import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTargets";
+import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
+import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -620,6 +627,14 @@ const ThemedApp = () => {
           <Route path="qms/draft-objectives" element={<QmsDraftObjectives />} />
           <Route path="qms/edit-draft-objectives" element={<QmsEditDraftObjectives />} />
           <Route path="qms/view-draft-objectives" element={<QmsViewDraftObjectives />} />
+
+          <Route path="qms/list-targets" element={<QmsListTargets />} />
+          <Route path="qms/add-targets" element={<QmsAddTargets />} />
+          <Route path="qms/edit-targets" element={<QmsEditTargets />} />
+          <Route path="qms/view-targets" element={<QmsViewTargets />} />
+          <Route path="qms/draft-targets" element={<QmsDraftTargets />} />
+          <Route path="qms/edit-draft-targets" element={<QmsEditDraftTargets />} />
+          <Route path="qms/view-draft-targets" element={<QmsViewDraftTargets />} />
 
 
 

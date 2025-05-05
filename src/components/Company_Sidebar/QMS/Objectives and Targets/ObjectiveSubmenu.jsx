@@ -26,7 +26,15 @@ const ObjectiveSubmenu = (props) => {
             id: "targets-and-programs",
             label: "Targets and Programs",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/list-targets",
+            relatedPaths: [
+                "/company/qms/add-targets",
+                "/company/qms/edit-targets",
+                "/company/qms/view-targets",
+                "/company/qms/draft-targets",
+                "/company/qms/edit-draft-targets",
+                "/company/qms/view-draft-targets"
+            ]
         },
     ]
 
