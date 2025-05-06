@@ -157,19 +157,10 @@ const QmsManual = () => {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-
-     
       const filteredManuals = filterManualsByVisibility(response.data);
- 
-      const sortedManuals = filteredManuals.sort((a, b) => {
-   
-        const dateA = new Date(a.written_at || a.date || 0);
-        const dateB = new Date(b.written_at || b.date || 0);
-        return dateB - dateA; // Descending order (newest first)
-      });
-
-      setManuals(sortedManuals);
-      console.log("Filtered and Sorted Manuals Data:", sortedManuals);
+      
+      setManuals(filteredManuals);
+      console.log("Filtered Manuals Data:", filteredManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
@@ -179,55 +170,39 @@ const QmsManual = () => {
   };
 
   useEffect(() => {
-    // Fetch all required data in a single useEffect
     const fetchAllData = async () => {
-  try {
-    // First, fetch manuals
-    const companyId = getUserCompanyId();
-    const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-
-    // Apply visibility filtering using the centralized function
-    const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-
-    // Sort manuals by creation date (newest first)
-    const sortedManuals = filteredManuals.sort((a, b) => {
-      // Use written_at if available, otherwise fall back to date field
-      const dateA = new Date(a.written_at || a.date || 0);
-      const dateB = new Date(b.written_at || b.date || 0);
-      return dateB - dateA; // Descending order (newest first)
-    });
-
-    // Set sorted manuals
-    setManuals(sortedManuals);
-
-    // Then fetch corrections for visible manuals
-    const correctionsPromises = sortedManuals.map(async (manual) => {
       try {
-        const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
-        return { manualId: manual.id, corrections: correctionResponse.data };
-      } catch (correctionError) {
-        console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
-        return { manualId: manual.id, corrections: [] };
-      }
-    });
-
-        // Process all corrections
+        const companyId = getUserCompanyId();
+        const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
+  
+        // Remove sorting here too - keep original order
+        const filteredManuals = filterManualsByVisibility(manualsResponse.data);
+        
+        setManuals(filteredManuals);
+  
+        // Rest of your code remains the same...
+        const correctionsPromises = filteredManuals.map(async (manual) => {
+          try {
+            const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
+            return { manualId: manual.id, corrections: correctionResponse.data };
+          } catch (correctionError) {
+            console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+            return { manualId: manual.id, corrections: [] };
+          }
+        });
+  
         const correctionResults = await Promise.all(correctionsPromises);
-
-        // Transform corrections into the dictionary format
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-
+  
         setCorrections(correctionsByManual);
-
-        // Fetch draft count
+  
         const id = getRelevantUserId();
         const draftResponse = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
         setDraftCount(draftResponse.data.count);
-
-        // Set current user and clear loading state
+  
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
@@ -236,7 +211,7 @@ const QmsManual = () => {
         setLoading(false);
       }
     };
-
+  
     fetchAllData();
   }, []);
 

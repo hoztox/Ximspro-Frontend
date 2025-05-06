@@ -28,7 +28,7 @@ const EditQmsDraftProcesses = () => {
   const [formData, setFormData] = useState({
     name: "",
     no: "",
-    type: "Stratgic", // Default value aligned with the model choices
+    type: "Strategic", // Default value aligned with the model choices
     legal_requirements: [],
     custom_legal_requirements: "",
     file: null,
@@ -360,7 +360,7 @@ const EditQmsDraftProcesses = () => {
                   onBlur={() => toggleDropdown("type")}
                   className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                 >
-                  <option value="Stratgic">Strategic</option>
+                  <option value="Strategic">Strategic</option>
                   <option value="Core">Core</option>
                   <option value="Support">Support</option>
                   <option value="Monitoring/Measurment">

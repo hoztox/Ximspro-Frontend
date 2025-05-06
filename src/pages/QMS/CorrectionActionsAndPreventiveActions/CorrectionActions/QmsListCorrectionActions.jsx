@@ -226,7 +226,7 @@ const QmsListCorrectionActions = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="11" className="text-center py-4">No correction actions found</td>
+                                <td colSpan="11" className="text-center py-4 not-found">No correction actions found</td>
                             </tr>
                         )}
                     </tbody>

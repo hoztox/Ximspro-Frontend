@@ -257,6 +257,18 @@ const ViewQmsprocedure = () => {
         }
     };
 
+    const handleDeleteProcedure = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/procedure-detail/${id}/`);
+            navigate('/company/qms/procedure');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error || 
+                error.response?.data?.message || 
+                'Failed to delete manual';
+        }
+    }
+
     // Format date from ISO to DD-MM-YYYY
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';

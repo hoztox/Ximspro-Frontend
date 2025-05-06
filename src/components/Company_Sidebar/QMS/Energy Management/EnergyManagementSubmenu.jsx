@@ -17,8 +17,8 @@ const EnergyManagementSubmenu = (props) => {
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
             path: "/company/qms/list-energy-review",
             relatedPaths: [
-                // "/company/qms/addpolicy",
-                // "/company/qms/editpolicy/",
+                "/company/qms/add-energy-review",
+                "/company/qms/edit-energy-review",
             ]
         },
         {

@@ -303,6 +303,8 @@ import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTa
 import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
 import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
 import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview";
+import QmsAddEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsAddEnergyReview";
+import QmsEditEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsEditEnergyReview";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -600,6 +602,8 @@ const ThemedApp = () => {
 
           {/* QMS Energy Management*/}
           <Route path="qms/list-energy-review" element={<QmsListEnergyReview />} />
+          <Route path="qms/add-energy-review" element={<QmsAddEnergyReview />} />
+          <Route path="qms/edit-energy-review" element={<QmsEditEnergyReview />} />
 
 
 

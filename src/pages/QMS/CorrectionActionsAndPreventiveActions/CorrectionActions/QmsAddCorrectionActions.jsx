@@ -25,8 +25,20 @@ const QmsAddCorrectionActions = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
     // Now you can safely use the function
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
     const navigate = useNavigate();
@@ -219,11 +231,12 @@ const QmsAddCorrectionActions = () => {
 
     const handleDraftSave = async (e) => {
         e.preventDefault();
-        
+
         try {
             setIsLoading(true);
             setError('');
             const companyId = getUserCompanyId();
+            const userId = getRelevantUserId(); // Get the user ID
 
             // Format the dates
             const dateRaised = formatDate(formData.date_raised);
@@ -243,7 +256,8 @@ const QmsAddCorrectionActions = () => {
                 next_action_no: formData.next_action_no,
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
-                is_draft: true
+                is_draft: true,
+                user: userId  // Add the user ID to the submission data
             };
 
             // Add supplier only if source is 'Supplier'
@@ -255,12 +269,12 @@ const QmsAddCorrectionActions = () => {
             const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
 
             console.log('Saved CAR Draft:', response.data);
-            
+
             setIsLoading(false);
-            
+
             // Show success message or navigate
             navigate('/company/qms/draft-correction-actions');
-            
+
         } catch (error) {
             console.error('Error saving draft:', error);
             setIsLoading(false);

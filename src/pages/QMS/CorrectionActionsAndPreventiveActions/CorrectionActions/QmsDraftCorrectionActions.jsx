@@ -39,7 +39,8 @@ const QmsDraftCorrectionActions = () => {
             }
 
             try {
-                const response = await axios.get(`${BASE_URL}/qms/car_no/company/${id}/`);
+                const id = getRelevantUserId();
+                const response = await axios.get(`${BASE_URL}/qms/car_no/draft/${id}/`);
                 console.log('Draft corrections:', response.data);
                 setCorrections(response.data);
                 setLoading(false);

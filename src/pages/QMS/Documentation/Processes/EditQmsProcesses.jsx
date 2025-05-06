@@ -22,7 +22,7 @@ const EditQmsProcesses = () => {
   const [formData, setFormData] = useState({
     name: "",
     no: "",
-    type: "Stratgic", // Default value aligned with the model choices
+    type: "Strategic",
     legal_requirements: [],
     custom_legal_requirements: "",
     file: null,
@@ -93,7 +93,8 @@ const EditQmsProcesses = () => {
       .then((res) => {
         const data = res.data;
 
-        // Check if legal_requirements is "N/A" from old format
+       console.log('before resposne', data);
+       
         const isNA = data.legal_requirements === "N/A";
 
         // Convert the legal_requirements IDs to titles if we have legal_requirement_details
@@ -164,27 +165,26 @@ const EditQmsProcesses = () => {
   };
 
   // Toggle N/A option for custom field
-// Toggle N/A option for custom field
-const handleNAChange = (e) => {
-  const checked = e.target.checked;
-  setShowCustomField(checked);
+  const handleNAChange = (e) => {
+    const checked = e.target.checked;
+    setShowCustomField(checked);
 
-  if (checked) {
-    // If N/A is checked, clear all procedure selections
-    setFormData(prev => ({
-      ...prev,
-      legal_requirements: [],
-      // Keep any existing custom text or initialize it
-      custom_legal_requirements: prev.custom_legal_requirements || ""
-    }));
-  } else {
-    // If N/A is unchecked, clear the custom field
-    setFormData(prev => ({
-      ...prev,
-      custom_legal_requirements: ""
-    }));
-  }
-};
+    if (checked) {
+      // If N/A is checked, clear all procedure selections
+      setFormData(prev => ({
+        ...prev,
+        legal_requirements: [],
+        // Keep any existing custom text or initialize it
+        custom_legal_requirements: prev.custom_legal_requirements || ""
+      }));
+    } else {
+      // If N/A is unchecked, clear the custom field
+      setFormData(prev => ({
+        ...prev,
+        custom_legal_requirements: ""
+      }));
+    }
+  };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -212,38 +212,23 @@ const handleNAChange = (e) => {
     e.preventDefault();
     
     try {
-      // Create the request data structure
-      const data = {
-        name: formData.name,
-        no: formData.no,
-        type: formData.type,
-        is_draft: formData.is_draft,
-        send_notification: formData.send_notification,
-        company: companyId
-      };
+      // Create a FormData object to handle both file and text data
+      const submitFormData = new FormData();
+      console.log('formdata',formData);
       
-      // Handle file upload first if needed
-      if (formData.file instanceof File) {
-        const fileFormData = new FormData();
-        fileFormData.append('file', formData.file);
-        
-        const fileResponse = await axios.post(`${BASE_URL}/qms/upload-file/`, fileFormData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-        
-        if (fileResponse.data && fileResponse.data.file_url) {
-          data.file = fileResponse.data.file_url;
-        }
-      }
+      // Add text fields
+      submitFormData.append('name', formData.name);
+      submitFormData.append('no', formData.no || '');
+      submitFormData.append('type', formData.type);
+      submitFormData.append('is_draft', formData.is_draft);
+      submitFormData.append('send_notification', formData.send_notification);
+      submitFormData.append('company', companyId);
       
       // Handle legal requirements based on whether custom field is shown
       if (showCustomField) {
         // If N/A is selected, send the custom text if any
-        data.custom_legal_requirements = formData.custom_legal_requirements || "";
-        // Send an empty array for legal_requirements
-        data.legal_requirements = [];
+        submitFormData.append('custom_legal_requirements', formData.custom_legal_requirements || '');
+        // Send an empty array for legal_requirements - backend will handle this as empty
       } else {
         // Convert procedure titles to IDs
         const procedureIds = formData.legal_requirements
@@ -253,16 +238,23 @@ const handleNAChange = (e) => {
           })
           .filter(id => id !== null);
         
-        // Add to request data
-        data.legal_requirements = procedureIds;
-        // Make sure custom field is empty
-        data.custom_legal_requirements = "";
+        // Add each legal requirement ID
+        procedureIds.forEach(procedureId => {
+          submitFormData.append('legal_requirements', procedureId);
+        });
       }
       
-      // Send the update request
-      const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, data, {
+      // Handle file upload if there's a new file
+      if (formData.file instanceof File) {
+        submitFormData.append('file', formData.file);
+      } else if (fileUrl) {
+        submitFormData.append('existing_file', fileUrl);
+      }
+      
+      // Send the update request with FormData
+      const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, submitFormData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data", // Important for file uploads
         },
       });
       
@@ -272,6 +264,8 @@ const handleNAChange = (e) => {
         setShowEditProcessesSuccessModal(false);
         navigate("/company/qms/processes");
       }, 2000);
+      console.log('after resposne',response,);
+      
   
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
@@ -289,7 +283,6 @@ const handleNAChange = (e) => {
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions
     .filter(option =>
-      !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -347,7 +340,7 @@ const handleNAChange = (e) => {
                   onBlur={() => toggleDropdown("type")}
                   className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                 >
-                  <option value="Stratgic">Stratgic</option>
+                  <option value="Strategic">Strategic</option>
                   <option value="Core">Core</option>
                   <option value="Support">Support</option>
                   <option value="Monitoring/Measurment">Monitoring/Measurment</option>

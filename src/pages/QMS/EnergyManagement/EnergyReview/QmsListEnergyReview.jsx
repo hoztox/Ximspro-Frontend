@@ -51,7 +51,7 @@ const QmsListEnergyReview = () => {
     );
 
     const handleAddEnergyReview = () => {
-        // navigate('/company/qms/add-energyReviews')
+        navigate('/company/qms/add-energy-review')
     }
 
     const handleDraftEnergyReview = () => {
@@ -63,7 +63,7 @@ const QmsListEnergyReview = () => {
     }
 
     const handleQmsEditEnergyReview = () => {
-        // navigate('/company/qms/edit-energyReviews')
+        navigate('/company/qms/edit-energy-review')
     }
 
     // Delete energyReview

@@ -116,6 +116,8 @@ const QmsEditDraftListTraining = () => {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/training-get/${id}/`);
         const data = response.data;
+        console.log('before response',data );
+        
 
         // Parse dates
         let plannedDateObj = { day: "", month: "", year: "" };
@@ -249,6 +251,8 @@ const QmsEditDraftListTraining = () => {
 
     // Create FormData object for file upload
     const submitData = new FormData();
+    console.log('formData', formData);
+    
 
     // Format dates correctly (YYYY-MM-DD)
     const formattedDatePlanned =
@@ -717,7 +721,7 @@ const QmsEditDraftListTraining = () => {
         {/* Date Conducted */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
-            Date Conducted <span className="text-red-500">*</span>
+            Date Conducted
           </label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
@@ -729,7 +733,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   dd
@@ -757,7 +761,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   mm
@@ -785,7 +789,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   yyyy
@@ -808,7 +812,7 @@ const QmsEditDraftListTraining = () => {
 
         {/* Start Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">Start</label>
+          <label className="add-training-label">Start <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -819,6 +823,8 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
+                 
               >
                 <option value="" disabled>
                   Hour
@@ -852,6 +858,8 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
+                 
               >
                 <option value="" disabled>
                   Min
@@ -880,7 +888,7 @@ const QmsEditDraftListTraining = () => {
 
         {/* End Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">End</label>
+          <label className="add-training-label">End <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -891,6 +899,8 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
+                 
               >
                 <option value="" disabled>
                   Hour
@@ -924,6 +934,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
               >
                 <option value="" disabled>
                   Min
@@ -1011,7 +1022,7 @@ const QmsEditDraftListTraining = () => {
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               <label className="add-training-label">
-                Evaluation Date <span className="text-red-500">*</span>
+                Evaluation Date
               </label>
               <div className="grid grid-cols-3 gap-5">
                 {/* Day */}
@@ -1023,7 +1034,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.day")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
+                     
                   >
                     <option value="" disabled>
                       dd
@@ -1051,7 +1062,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.month")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
+                     
                   >
                     <option value="" disabled>
                       mm
@@ -1079,7 +1090,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.year")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
+                     
                   >
                     <option value="" disabled>
                       yyyy

@@ -30,8 +30,16 @@ const QmsEditTraining = () => {
     training_attendees: [],
     status: "",
     requested_by: "",
-    date_planned: "",
-    date_conducted: "",
+    date_planned: {
+      day: "",
+      month: "",
+      year: ""
+    },
+    date_conducted: {  // Ensure this is an object, not null
+      day: "",
+      month: "",
+      year: ""
+    },
     start_time: {
       hour: "",
       min: "",
@@ -43,7 +51,11 @@ const QmsEditTraining = () => {
     venue: "",
     attachment: null,
     training_evaluation: "",
-    evaluation_date: "",
+    evaluation_date: {  // Ensure this is an object, not null
+      day: "",
+      month: "",
+      year: ""
+    },
     evaluation_by: "",
     send_notification: false,
     is_draft: false,
@@ -104,22 +116,39 @@ const QmsEditTraining = () => {
         const response = await axios.get(`${BASE_URL}/qms/training-get/${id}/`);
         const data = response.data;
 
-        // Format dates
-        const date_planned = data.date_planned
-          ? new Date(data.date_planned)
-          : null;
-        const date_conducted = data.date_conducted
-          ? new Date(data.date_conducted)
-          : null;
-        const evaluation_date = data.evaluation_date
-          ? new Date(data.evaluation_date)
-          : null;
+        // Helper function to safely parse date fields
+        const parseDateFields = (dateString) => {
+          if (!dateString) {
+            return {
+              day: "",
+              month: "",
+              year: ""
+            };
+          }
+          const date = new Date(dateString);
+          return {
+            day: date.getDate().toString().padStart(2, '0'),
+            month: (date.getMonth() + 1).toString().padStart(2, '0'),
+            year: date.getFullYear().toString()
+          };
+        };
 
-        // Format times
-        const startTime = data.start_time
-          ? data.start_time.split(":")
-          : ["", ""];
-        const endTime = data.end_time ? data.end_time.split(":") : ["", ""];
+        // Format times with null checks
+        const parseTimeField = (timeString) => {
+          if (!timeString) {
+            return { hour: "", min: "" };
+          }
+          const [hour, min] = timeString.split(":");
+          return { hour, min };
+        };
+
+        // Safely parse date fields
+        const datePlanned = parseDateFields(data.date_planned);
+        const dateConducted = parseDateFields(data.date_conducted);
+        const evaluationDate = parseDateFields(data.evaluation_date);
+
+        const startTime = parseTimeField(data.start_time);
+        const endTime = parseTimeField(data.end_time);
 
         setFormData({
           ...data,
@@ -128,14 +157,11 @@ const QmsEditTraining = () => {
           training_attendees: data.training_attendees
             ? data.training_attendees.map((attendee) => attendee.id)
             : [],
-          start_time: {
-            hour: startTime[0],
-            min: startTime[1],
-          },
-          end_time: {
-            hour: endTime[0],
-            min: endTime[1],
-          },
+          date_planned: datePlanned,
+          date_conducted: dateConducted,
+          evaluation_date: evaluationDate,
+          start_time: startTime,
+          end_time: endTime
         });
 
         if (data.attachment) {
@@ -208,14 +234,25 @@ const QmsEditTraining = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    // Helper function to format date fields
+    const formatDate = (dateObj) => {
+      if (!dateObj || !dateObj.year || !dateObj.month || !dateObj.day) return null;
+      return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+    };
+  
     // Create FormData object for file upload
     const submitData = new FormData();
-
+  
     // Format time fields
     const formattedStartTime = `${formData.start_time.hour}:${formData.start_time.min}:00`;
     const formattedEndTime = `${formData.end_time.hour}:${formData.end_time.min}:00`;
-
+  
+    // Format date fields
+    const formattedDatePlanned = formatDate(formData.date_planned);
+    const formattedDateConducted = formatDate(formData.date_conducted);
+    const formattedEvaluationDate = formatDate(formData.evaluation_date);
+  
     // Add regular fields
     submitData.append("training_title", formData.training_title);
     submitData.append("type_of_training", formData.type_of_training);
@@ -223,27 +260,32 @@ const QmsEditTraining = () => {
     submitData.append("actual_results", formData.actual_results);
     submitData.append("status", formData.status);
     submitData.append("requested_by", formData.requested_by);
-    submitData.append("date_planned", formData.date_planned);
-    submitData.append("date_conducted", formData.date_conducted);
+    
+    // Only append dates if they are valid
+    if (formattedDatePlanned) submitData.append("date_planned", formattedDatePlanned);
+    if (formattedDateConducted) submitData.append("date_conducted", formattedDateConducted);
+    
     submitData.append("start_time", formattedStartTime);
     submitData.append("end_time", formattedEndTime);
     submitData.append("venue", formData.venue);
     submitData.append("training_evaluation", formData.training_evaluation);
-    submitData.append("evaluation_date", formData.evaluation_date);
+    
+    if (formattedEvaluationDate) submitData.append("evaluation_date", formattedEvaluationDate);
+    
     submitData.append("evaluation_by", formData.evaluation_by);
     submitData.append("send_notification", formData.send_notification);
     submitData.append("is_draft", formData.is_draft);
-
+  
     // Handle attendees (many-to-many field)
     formData.training_attendees.forEach((attendee) => {
       submitData.append("training_attendees", attendee);
     });
-
+  
     // Handle file attachment
     if (formData.attachment && typeof formData.attachment === "object") {
       submitData.append("attachment", formData.attachment);
     }
-
+  
     try {
       const response = await axios.put(
         `${BASE_URL}/qms/training/${id}/edit/`,
@@ -254,7 +296,7 @@ const QmsEditTraining = () => {
           },
         }
       );
-
+  
       console.log("Training updated successfully:", response.data);
       setShowEditTrainingSuccessModal(true);
       setTimeout(() => {
@@ -614,7 +656,7 @@ const QmsEditTraining = () => {
         {/* Date Conducted */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
-            Date Conducted <span className="text-red-500">*</span>
+            Date Conducted
           </label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
@@ -626,7 +668,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   dd
@@ -635,7 +676,7 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_conducted.day"
+                  ${focusedDropdown === "date_conducted.day"
                     ? "rotate-180"
                     : ""
                   }`}
@@ -653,7 +694,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   mm
@@ -662,7 +702,7 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_conducted.month"
+                  ${focusedDropdown === "date_conducted.month"
                     ? "rotate-180"
                     : ""
                   }`}
@@ -680,7 +720,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   yyyy
@@ -689,7 +728,7 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_conducted.year"
+                  ${focusedDropdown === "date_conducted.year"
                     ? "rotate-180"
                     : ""
                   }`}
@@ -702,7 +741,7 @@ const QmsEditTraining = () => {
 
         {/* Start Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">Start</label>
+          <label className="add-training-label">Start <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -713,6 +752,7 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
               >
                 <option value="" disabled>
                   Hour
@@ -746,6 +786,7 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
               >
                 <option value="" disabled>
                   Min
@@ -774,7 +815,7 @@ const QmsEditTraining = () => {
 
         {/* End Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">End</label>
+          <label className="add-training-label">End <span className="text-red-500">*</span></label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -785,6 +826,7 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
               >
                 <option value="" disabled>
                   Hour
@@ -818,6 +860,7 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                required
               >
                 <option value="" disabled>
                   Min
@@ -901,120 +944,81 @@ const QmsEditTraining = () => {
         </div>
 
         {/* Evaluation Date */}
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-5">
-            <div className="flex flex-col gap-3">
-              <label className="add-training-label">
-                Evaluation Date <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-3 gap-5">
-                {/* Day */}
-                <div className="relative">
-                  <select
-                    name="evaluation_date.day"
-                    value={formData.evaluation_date.day}
-                    onChange={handleChange}
-                    onFocus={() => setFocusedDropdown("evaluation_date.day")}
-                    onBlur={() => setFocusedDropdown(null)}
-                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
-                  >
-                    <option value="" disabled>
-                      dd
-                    </option>
-                    {generateOptions(1, 31)}
-                  </select>
-                  <ChevronDown
-                    className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "evaluation_date.day"
-                        ? "rotate-180"
-                        : ""
-                      }`}
-                    size={20}
-                    color="#AAAAAA"
-                  />
-                </div>
-
-                {/* Month */}
-                <div className="relative">
-                  <select
-                    name="evaluation_date.month"
-                    value={formData.evaluation_date.month}
-                    onChange={handleChange}
-                    onFocus={() => setFocusedDropdown("evaluation_date.month")}
-                    onBlur={() => setFocusedDropdown(null)}
-                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
-                  >
-                    <option value="" disabled>
-                      mm
-                    </option>
-                    {generateOptions(1, 12)}
-                  </select>
-                  <ChevronDown
-                    className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "evaluation_date.month"
-                        ? "rotate-180"
-                        : ""
-                      }`}
-                    size={20}
-                    color="#AAAAAA"
-                  />
-                </div>
-
-                {/* Year */}
-                <div className="relative">
-                  <select
-                    name="evaluation_date.year"
-                    value={formData.evaluation_date.year}
-                    onChange={handleChange}
-                    onFocus={() => setFocusedDropdown("evaluation_date.year")}
-                    onBlur={() => setFocusedDropdown(null)}
-                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                    required
-                  >
-                    <option value="" disabled>
-                      yyyy
-                    </option>
-                    {generateOptions(2023, 2030)}
-                  </select>
-                  <ChevronDown
-                    className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "evaluation_date.year"
-                        ? "rotate-180"
-                        : ""
-                      }`}
-                    size={20}
-                    color="#AAAAAA"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Evaluation By</label>
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">
+            Evaluation Date
+          </label>
+          <div className="grid grid-cols-3 gap-5">
+            {/* Day */}
             <div className="relative">
               <select
-                name="evaluation_by"
-                value={formData.evaluation_by}
+                name="evaluation_date.day"
+                value={formData.evaluation_date.day}
                 onChange={handleChange}
-                onFocus={() => setFocusedDropdown("evaluation_by")}
+                onFocus={() => setFocusedDropdown("evaluation_date.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
               >
                 <option value="" disabled>
-                  Select
+                  dd
                 </option>
-                {users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name}
-                  </option>
-                ))}
+                {generateOptions(1, 31)}
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "evaluation_by"
+                  ${focusedDropdown === "evaluation_date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+
+            {/* Month */}
+            <div className="relative">
+              <select
+                name="evaluation_date.month"
+                value={formData.evaluation_date.month}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("evaluation_date.month")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>
+                  mm
+                </option>
+                {generateOptions(1, 12)}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-1/3 transform transition-transform duration-300
+                  ${focusedDropdown === "evaluation_date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+
+            {/* Year */}
+            <div className="relative">
+              <select
+                name="evaluation_date.year"
+                value={formData.evaluation_date.year}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("evaluation_date.year")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>
+                  yyyy
+                </option>
+                {generateOptions(2023, 2030)}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-1/3 transform transition-transform duration-300
+                  ${focusedDropdown === "evaluation_date.year"
                     ? "rotate-180"
                     : ""
                   }`}

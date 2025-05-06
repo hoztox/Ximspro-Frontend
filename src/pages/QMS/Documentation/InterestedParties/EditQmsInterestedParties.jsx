@@ -15,6 +15,7 @@ const EditQmsInterestedParties = () => {
   const [showEditQmsInterestedErrorModal, setShowEditQmsInterestedErrorModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +38,7 @@ const EditQmsInterestedParties = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileUrl, setFileUrl] = useState(null);
+  const [originalFileData, setOriginalFileData] = useState(null); // Track the original file data
 
   // Helper functions for needs
   const addNeed = () => {
@@ -115,6 +117,9 @@ const EditQmsInterestedParties = () => {
     try {
       const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
       const data = response.data;
+      
+      // Store original file information
+      setOriginalFileData(data.file || null);
 
       setFormData({
         name: data.name || "",
@@ -123,7 +128,7 @@ const EditQmsInterestedParties = () => {
         special_requirements: data.special_requirements || "",
         legal_requirements: data.legal_requirements || "",
         custom_legal_requirements: data.custom_legal_requirements || "",
-        file: null,
+        file: null, // We'll handle the file separately
         company: data.company || companyId,
         send_notification: data.send_notification || false,
       });
@@ -138,6 +143,7 @@ const EditQmsInterestedParties = () => {
       }
     } catch (err) {
       console.error("Error fetching data:", err);
+      setError("Failed to load interested party data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -189,20 +195,22 @@ const EditQmsInterestedParties = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
 
     try {
       let response;
       if (selectedFile) {
+        // If a new file is selected, use FormData to send everything
         const formDataWithFile = new FormData();
         formDataWithFile.append('name', formData.name);
         formDataWithFile.append('category', formData.category);
-        formDataWithFile.append('special_requirements', formData.special_requirements);
-        formDataWithFile.append('legal_requirements', formData.legal_requirements);
-        formDataWithFile.append('custom_legal_requirements', formData.custom_legal_requirements);
+        formDataWithFile.append('special_requirements', formData.special_requirements || '');
+        formDataWithFile.append('legal_requirements', formData.legal_requirements || '');
+        formDataWithFile.append('custom_legal_requirements', formData.custom_legal_requirements || '');
         formDataWithFile.append('send_notification', formData.send_notification);
         formDataWithFile.append('company', formData.company);
         formDataWithFile.append('file', selectedFile);
-
+        
         // Add needs array as JSON string
         formDataWithFile.append('needs', JSON.stringify(formData.needs));
 
@@ -216,13 +224,23 @@ const EditQmsInterestedParties = () => {
           }
         );
       } else {
-        // Send as regular JSON when no file is selected
+        // If no new file is selected, send JSON but DON'T explicitly set file to null
+        // This way the backend keeps the existing file
+        const dataToSend = {
+          name: formData.name,
+          category: formData.category,
+          needs: formData.needs,
+          special_requirements: formData.special_requirements || '',
+          legal_requirements: formData.legal_requirements || '',
+          custom_legal_requirements: formData.custom_legal_requirements || '',
+          send_notification: formData.send_notification,
+          company: formData.company,
+          // Don't include file field at all to keep existing file
+        };
+
         response = await axios.put(
           `${BASE_URL}/qms/interested-parties/${id}/edit/`,
-          {
-            ...formData,
-            file: null, // Explicitly set to null when no file is selected
-          },
+          dataToSend,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -241,6 +259,7 @@ const EditQmsInterestedParties = () => {
         response: err.response?.data,
         stack: err.stack
       });
+      setError(err.response?.data?.detail || "Failed to update interested party. Please try again.");
       setShowEditQmsInterestedErrorModal(true);
       setTimeout(() => {
         setShowEditQmsInterestedErrorModal(false);
@@ -277,6 +296,12 @@ const EditQmsInterestedParties = () => {
         showEditQmsInterestedErrorModal={showEditQmsInterestedErrorModal}
         onClose={() => { setShowEditQmsInterestedErrorModal(false) }}
       />
+
+      {error && (
+        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
@@ -335,15 +360,6 @@ const EditQmsInterestedParties = () => {
                       className="w-full add-qms-intertested-inputs"
                       required
                     />
-                    {/* {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeNeed(index)}
-                        className="ml-2 text-red-500"
-                      >
-                        ×
-                      </button>
-                    )} */}
                   </div>
                 </div>
                 <div>

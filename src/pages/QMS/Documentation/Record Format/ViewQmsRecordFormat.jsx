@@ -333,10 +333,16 @@ const ViewQmsRecordFormat = () => {
         return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
     
-    const handleDeleteProcedure = (recordId) => {
-        // Implement your delete functionality here
-        console.log("Delete record with ID:", recordId);
-        // You can add confirmation dialog and actual deletion logic
+    const handleDeleteRecordFormat = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/record-detail/${id}/`);
+            navigate('/company/qms/record-format');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error || 
+                error.response?.data?.message || 
+                'Failed to delete manual';
+        }
     };
 
     // Render loading or error states
@@ -627,7 +633,7 @@ const ViewQmsRecordFormat = () => {
                                         <label className="viewmanuallabels">Delete</label>
                                         <button
                                             onClick={() => {
-                                                handleDeleteProcedure(id);
+                                                handleDeleteRecordFormat(id);
                                             }}
                                         >
                                             <img src={deletes} alt="Delete Icon" />

@@ -187,6 +187,18 @@ const ViewQmsManual = () => {
         navigate('/company/qms/manual')
     }
 
+    const handleDelete = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
+            navigate('/company/qms/manual');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error || 
+                error.response?.data?.message || 
+                'Failed to delete manual';
+        }
+    };
+
     const handleCorrectionSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -555,7 +567,9 @@ const ViewQmsManual = () => {
                                     </div>
                                     <div className='flex flex-col justify-center items-center'>
                                         <label className="viewmanuallabels">Delete</label>
-                                        <button>
+                                        <button
+                                        onClick={()=> handleDelete(id)}
+                                        >
                                             <img src={deletes} alt="Delete Icon" />
                                         </button>
                                     </div>
