@@ -333,6 +333,12 @@ import QmsDraftEnergyImprovements from "./pages/QMS/EnergyManagement/EnergyImpro
 import QmsEditDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsEditDraftEnergyImprovement";
 import QmsViewDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsViewDraftEnergyImprovement";
 import QmsListEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsListEnergyAction";
+import QmsAddEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsAddEnergyAction";
+import QmsEditEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsEditEnergyAction";
+import QmsViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsViewEnergyAction";
+import QmsDraftEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEnergyAction";
+import QmsDraftEditEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEditEnergyAction";
+import QmsDraftViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftViewEnergyAction";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -672,6 +678,12 @@ const ThemedApp = () => {
           <Route path="qms/view-draft-energy-improvement-opportunities" element={<QmsViewDraftEnergyImprovement />} />
 
           <Route path="qms/list-energy-action-plan" element={<QmsListEnergyAction />} />
+          <Route path="qms/add-energy-action-plan" element={<QmsAddEnergyAction />} />
+          <Route path="qms/edit-energy-action-plan" element={<QmsEditEnergyAction />} />
+          <Route path="qms/view-energy-action-plan" element={<QmsViewEnergyAction />} />
+          <Route path="qms/draft-energy-action-plan" element={<QmsDraftEnergyAction />} />
+          <Route path="qms/edit-draft-energy-action-plan" element={<QmsDraftEditEnergyAction />} />
+          <Route path="qms/view-draft-energy-action-plan" element={<QmsDraftViewEnergyAction />} />
 
 
 
