@@ -56,12 +56,20 @@ const EnergyManagementSubmenu = (props) => {
             ]
         },
         {
-            id: "energy-involvement-opportunities",
-            label: "Energy Involvement Opportunities",
+            id: "energy-improvement-opportunities",
+            label: "Energy Improvement Opportunities",
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/record-format",
+            path: "/company/qms/list-energy-improvement-opportunities",
+            relatedPaths: [
+                "/company/qms/add-energy-improvement-opportunities",
+                "/company/qms/edit-energy-improvement-opportunities",
+                "/company/qms/view-energy-improvement-opportunities",
+                "/company/qms/draft-energy-improvement-opportunities",
+                "/company/qms/edit-draft-energy-improvement-opportunities",
+                "/company/qms/view-draft-energy-improvement-opportunities",
+            ]
         },
         {
             id: "energy-action-plans",

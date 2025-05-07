@@ -32,8 +32,8 @@ const AMSEnergySubmenu = () => {
                 // path: "/company/qms/record-format",
             },
             {
-                id: "energy-involvement-opportunities",
-                label: "Energy Involvement Opportunities",
+                id: "energy-improvement-opportunities",
+                label: "Energy Improvement Opportunities",
                 icon: (
                     <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
                 ),

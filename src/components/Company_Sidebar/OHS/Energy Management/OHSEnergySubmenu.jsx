@@ -32,8 +32,8 @@ const OHSEnergySubmenu = () => {
             // path: "/company/qms/procedure",
         },
         {
-            id: "energy-involvement-opportunities",
-            label: "Energy Involvement Opportunities",
+            id: "energy-improvement-opportunities",
+            label: "Energy Improvement Opportunities",
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
