@@ -124,17 +124,17 @@ const QmsManual = () => {
     return null;
   };
 
- 
+
   const isUserInvolvedWithManual = (manual) => {
     const currentUserId = Number(localStorage.getItem('user_id'));
-  
+
     return (
       (manual.written_by && manual.written_by.id === currentUserId) ||
       (manual.checked_by && manual.checked_by.id === currentUserId) ||
       (manual.approved_by && manual.approved_by.id === currentUserId)
     );
   };
- 
+
   const filterManualsByVisibility = (manualsData) => {
     const role = localStorage.getItem('role');
 
@@ -143,24 +143,33 @@ const QmsManual = () => {
       if (manual.status === 'Published') {
         return true;
       }
- 
+
       if (role === 'company') {
         return true;
       }
- 
+
       return isUserInvolvedWithManual(manual);
     });
   };
- 
+
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
       const filteredManuals = filterManualsByVisibility(response.data);
-      
-      setManuals(filteredManuals);
-      console.log("Filtered Manuals Data:", filteredManuals);
+
+      // Sort manuals by id in ascending order (oldest first), with fallback to written_at
+      const sortedManuals = filteredManuals.sort((a, b) => {
+        if (a.id && b.id) {
+          return a.id - b.id;
+        }
+        // Fallback to sorting by written_at if id is unavailable
+        return new Date(a.written_at) - new Date(b.written_at);
+      });
+
+      setManuals(sortedManuals);
+      console.log("Sorted Manuals Data:", sortedManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
@@ -174,14 +183,20 @@ const QmsManual = () => {
       try {
         const companyId = getUserCompanyId();
         const manualsResponse = await axios.get(`${BASE_URL}/qms/manuals/${companyId}/`);
-  
-        // Remove sorting here too - keep original order
+
+        // Sort manuals by id in ascending order (oldest first), with fallback to written_at
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-        
-        setManuals(filteredManuals);
-  
-        // Rest of your code remains the same...
-        const correctionsPromises = filteredManuals.map(async (manual) => {
+        const sortedManuals = filteredManuals.sort((a, b) => {
+          if (a.id && b.id) {
+            return a.id - b.id;
+          }
+          // Fallback to sorting by written_at if id is unavailable
+          return new Date(a.written_at) - new Date(b.written_at);
+        });
+
+        setManuals(sortedManuals);
+
+        const correctionsPromises = sortedManuals.map(async (manual) => {
           try {
             const correctionResponse = await axios.get(`${BASE_URL}/qms/manuals/${manual.id}/corrections/`);
             return { manualId: manual.id, corrections: correctionResponse.data };
@@ -190,19 +205,19 @@ const QmsManual = () => {
             return { manualId: manual.id, corrections: [] };
           }
         });
-  
+
         const correctionResults = await Promise.all(correctionsPromises);
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-  
+
         setCorrections(correctionsByManual);
-  
+
         const id = getRelevantUserId();
         const draftResponse = await axios.get(`${BASE_URL}/qms/manuals/drafts-count/${id}/`);
         setDraftCount(draftResponse.data.count);
-  
+
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
@@ -211,7 +226,7 @@ const QmsManual = () => {
         setLoading(false);
       }
     };
-  
+
     fetchAllData();
   }, []);
 
