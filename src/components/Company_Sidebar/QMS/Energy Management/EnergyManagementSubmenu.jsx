@@ -77,7 +77,15 @@ const EnergyManagementSubmenu = (props) => {
             icon: (
                 <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/interested-parties",
+            path: "/company/qms/list-energy-action-plan",
+            relatedPaths: [
+                // "/company/qms/add-energy-improvement-opportunities",
+                // "/company/qms/edit-energy-improvement-opportunities",
+                // "/company/qms/view-energy-improvement-opportunities",
+                // "/company/qms/draft-energy-improvement-opportunities",
+                // "/company/qms/edit-draft-energy-improvement-opportunities",
+                // "/company/qms/view-draft-energy-improvement-opportunities",
+            ]
         },
     ]
 

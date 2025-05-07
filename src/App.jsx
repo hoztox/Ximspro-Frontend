@@ -330,6 +330,7 @@ import QmsViewEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprove
 import QmsDraftEnergyImprovements from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsDraftEnergyImprovements";
 import QmsEditDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsEditDraftEnergyImprovement";
 import QmsViewDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsViewDraftEnergyImprovement";
+import QmsListEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsListEnergyAction";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -657,6 +658,8 @@ const ThemedApp = () => {
           <Route path="qms/draft-energy-improvement-opportunities" element={<QmsDraftEnergyImprovements />} />
           <Route path="qms/edit-draft-energy-improvement-opportunities" element={<QmsEditDraftEnergyImprovement />} />
           <Route path="qms/view-draft-energy-improvement-opportunities" element={<QmsViewDraftEnergyImprovement />} />
+
+          <Route path="qms/list-energy-action-plan" element={<QmsListEnergyAction />} />
 
 
 
