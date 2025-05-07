@@ -184,7 +184,7 @@ const QmsListInboxSystemMessaging = () => {
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                         onClick={handleOutbox}
                     >
-                        <span>Outbox</span>
+                        <span>Sent Items</span>
                     </button>
                     <button
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"

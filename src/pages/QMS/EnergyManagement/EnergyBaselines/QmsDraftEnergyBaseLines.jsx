@@ -1,30 +1,28 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListEnergyReview = () => {
+const QmsDraftEnergyBaseLines = () => {
     const initialData = [
-        { id: 1, title: 'Improve product quality', date: '03-12-2024', energy_review_no: 'ER-1' },
-        { id: 2, title: 'Reduce production waste', date: '03-12-2024', energy_review_no: 'ER-2' },
-        { id: 3, title: 'Implement new testing protocol', date: '03-12-2024', energy_review_no: 'ER-3' },
-        { id: 4, title: 'New safety standards', date: '04-12-2024', energy_review_no: 'ER-4' },
+        { id: 1, title: 'Improve product quality', date: '03-12-2024', relate_energy_review: 'Test', responsible: 'Test' },
+        { id: 2, title: 'Reduce production waste', date: '03-12-2024', relate_energy_review: 'Test', responsible: 'Test' },
     ];
 
     // State
-    const [energyReviews, setEnergyReviews] = useState(initialData);
+    const [energyBaseLines, setEnergyBaseLines] = useState(initialData);
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
         title: '',
+        relate_energy_review: '',
+        responsible: '',
         date: '',
-        energy_review_no: '',
-        
+
     });
 
     const handleSearchChange = (e) => {
@@ -32,43 +30,39 @@ const QmsListEnergyReview = () => {
         setSearchQuery(value);
         setSearchTerm(value);
         setCurrentPage(1);
-    };    
+    };
 
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = energyReviews.length;
+    const totalItems = energyBaseLines.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = energyReviews.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = energyBaseLines.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-    const filteredEnergyReviews = currentItems.filter(energyReview =>
-        energyReview.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        energyReview.energy_review_no .toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredEnergyBaseLines = currentItems.filter(energyBaseLine =>
+        energyBaseLine.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        energyBaseLine.relate_energy_review.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleAddEnergyReview = () => {
-        navigate('/company/qms/add-energy-review')
+    const handleClose = () => {
+        navigate('/company/qms/list-energy-baselines')
     }
 
-    const handleDraftEnergyReview = () => {
-        navigate('/company/qms/draft-energy-review')
+    const handleQmsViewEnergyBaseLines = () => {
+        navigate('/company/qms/view-draft-energy-baselines')
     }
 
-    const handleQmsViewEnergyReview = () => {
-        navigate('/company/qms/view-energy-review')
+    const handleQmsEditEnergyBaseLines = () => {
+        navigate('/company/qms/edit-draft-energy-baselines')
     }
 
-    const handleQmsEditEnergyReview = () => {
-        navigate('/company/qms/edit-energy-review')
-    }
-
-    // Delete energyReview
-    const handleDeleteEnergyReview = (id) => {
-        setEnergyReviews(energyReviews.filter(energyReview => energyReview.id !== id));
+    // Delete energyBaseLine
+    const handleDeleteEnergyBaseLines = (id) => {
+        setEnergyBaseLines(energyBaseLines.filter(energyBaseLine => energyBaseLine.id !== id));
     };
 
     // Change page
@@ -80,7 +74,7 @@ const QmsListEnergyReview = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">List Energy Review</h1>
+                <h1 className="list-manual-head">Draft Base Line</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -94,18 +88,8 @@ const QmsListEnergyReview = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftEnergyReview}
-                    >
-                        <span>Drafts</span>
-                    </button>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddEnergyReview}
-                    >
-                        <span>Add Energy Review</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
                     </button>
                 </div>
             </div>
@@ -117,32 +101,32 @@ const QmsListEnergyReview = () => {
                         <tr className="h-[48px]">
                             <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                             <th className="px-2 text-left add-manual-theads">Title</th>
-                            <th className="px-2 text-left add-manual-theads">Energy Review No</th>
-                            <th className="px-2 text-left add-manual-theads">Date</th>
+                            <th className="px-2 text-left add-manual-theads">Related Energy Review</th>
+                            <th className="px-2 text-left add-manual-theads">Responsible</th>
+                            <th className="px-2 text-left add-manual-theads">Action</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
-                            <th className="px-2 text-center add-manual-theads">Edit</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredEnergyReviews.map((energyReview, index) => (
-                            <tr key={energyReview.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{energyReview.id}</td>
-                                <td className="px-2 add-manual-datas">{energyReview.title}</td>
-                                <td className="px-2 add-manual-datas">{energyReview.energy_review_no }</td>
-                                <td className="px-2 add-manual-datas">{energyReview.date}</td>
+                        {filteredEnergyBaseLines.map((energyBaseLine, index) => (
+                            <tr key={energyBaseLine.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                <td className="pl-5 pr-2 add-manual-datas">{energyBaseLine.id}</td>
+                                <td className="px-2 add-manual-datas">{energyBaseLine.title}</td>
+                                <td className="px-2 add-manual-datas">{energyBaseLine.relate_energy_review}</td>
+                                <td className="px-2 add-manual-datas">{energyBaseLine.responsible}</td>
+                                <td className="px-2 add-manual-datas">
+                                    <button onClick={handleQmsEditEnergyBaseLines} className='text-[#1E84AF]'>
+                                        Click to Continue
+                                    </button>
+                                </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewEnergyReview}>
+                                    <button onClick={handleQmsViewEnergyBaseLines}>
                                         <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditEnergyReview}>
-                                        <img src={editIcon} alt="Edit Icon" />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={() => handleDeleteEnergyReview(energyReview.id)}>
+                                    <button onClick={() => handleDeleteEnergyBaseLines(energyBaseLine.id)}>
                                         <img src={deleteIcon} alt="Delete Icon" />
                                     </button>
                                 </td>
@@ -187,4 +171,4 @@ const QmsListEnergyReview = () => {
         </div>
     );
 };
-export default QmsListEnergyReview
+export default QmsDraftEnergyBaseLines

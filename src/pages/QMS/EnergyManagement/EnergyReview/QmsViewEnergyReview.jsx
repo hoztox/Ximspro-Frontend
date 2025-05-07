@@ -4,27 +4,27 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 
-const QmsViewTargets = () => {
+const QmsViewEnergyReview = () => {
     const [formData, setFormData] = useState({
-        target: "Anonymous",
-        associated_objective: "Test",
-        programs: "Test",
-        results: "Test",
-        target_date: "02-02-2025",
-        responsible: "Pending",
-        status: "02-02-2025",
-        reminder_notification: "02-02-2025",
+        title: "Anonymous",
+        review_number: "Test",
+        review_type: "Test",
+        date: "02-02-2025",
+        relate_business_process: "Test",
+        energy_remarks: "Test",
+        relate_document: "Test",
+        revision: "Test",
 
 
     });
     const navigate = useNavigate();
 
     const handleClose = () => {
-        navigate("/company/qms/list-targets");
+        navigate("/company/qms/list-energy-review");
     };
 
     const handleEdit = () => {
-        navigate("/company/qms/edit-targets");
+        navigate("/company/qms/edit-energy-review");
     };
 
     const handleDelete = () => {
@@ -36,7 +36,7 @@ const QmsViewTargets = () => {
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                <h2 className="view-employee-head">Targets and Programs Information</h2>
+                <h2 className="view-employee-head">Energy Review Information</h2>
                 <button
                     onClick={handleClose}
                     className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -52,70 +52,71 @@ const QmsViewTargets = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px]">
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Target
+                            Energy Review Name/Title
                         </label>
-                        <div className="view-employee-data">{formData.target}</div>
+                        <div className="view-employee-data">{formData.title}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Associated Objective
+                            Energy Review Number
                         </label>
-                        <div className="view-employee-data">{formData.associated_objective}</div>
+                        <div className="view-employee-data">{formData.review_number}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Program(s) 
+                            Review Type
                         </label>
-                        <div className="view-employee-data">{formData.programs}</div>
+                        <div className="view-employee-data">{formData.review_type}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Results
+                            Date
                         </label>
-                        <div className="view-employee-data">{formData.results}</div>
+                        <div className="view-employee-data">{formData.date}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Target Date
-                        </label>
-                        <div className="view-employee-data">{formData.target_date}</div>
-                    </div>
-
-                    <div className="flex justify-between">
-                        <div>
-                            <label className="block view-employee-label mb-[6px]">
-                            Responsible  
-                            </label>
-                            <div className="view-employee-data">{formData.responsible}</div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                        Status 
-                        </label>
-                        <div className="view-employee-data">{formData.status}</div>
-                    </div>
-
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                        Reminder Notification  
-                        </label>
-                        <div className="view-employee-data">{formData.reminder_notification}</div>
-                    </div>
-
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                         Attached Document
+                            Attach Document
                         </label>
                         <button className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center">
                             Click to view file <Eye size={17}/>
                         </button>
                     </div>
+
+                    <div>
+                        <label className="block view-employee-label mb-[6px]">
+                            Relate Business Process
+                        </label>
+                        <div className="view-employee-data">{formData.relate_business_process}</div>
+                    </div>
+
+                    <div className="flex justify-between">
+                        <div>
+                            <label className="block view-employee-label mb-[6px]">
+                                Energy Remarks
+                            </label>
+                            <div className="view-employee-data">{formData.energy_remarks}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block view-employee-label mb-[6px]">
+                            Relate Document/ Process
+                        </label>
+                        <div className="view-employee-data">{formData.relate_document}</div>
+                    </div>
+
+                    <div>
+                        <label className="block view-employee-label mb-[6px]">
+                            Revision
+                        </label>
+                        <div className="view-employee-data">{formData.revision}</div>
+                    </div>
+
 
 
                     <div className="flex space-x-10 justify-end">
@@ -146,4 +147,4 @@ const QmsViewTargets = () => {
         </div>
     );
 };
-export default QmsViewTargets
+export default QmsViewEnergyReview

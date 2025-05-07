@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 
-const QmsListEnergyReview = () => {
+
+const QmsDraftEnergyReview = () => {
     const initialData = [
-        { id: 1, title: 'Improve product quality', date: '03-12-2024', energy_review_no: 'ER-1' },
-        { id: 2, title: 'Reduce production waste', date: '03-12-2024', energy_review_no: 'ER-2' },
-        { id: 3, title: 'Implement new testing protocol', date: '03-12-2024', energy_review_no: 'ER-3' },
-        { id: 4, title: 'New safety standards', date: '04-12-2024', energy_review_no: 'ER-4' },
+        { id: 1, title: 'Improve product quality', energy_review_no: 'ER-1' },
+        { id: 2, title: 'Reduce production waste', energy_review_no: 'ER-2' },
+        { id: 3, title: 'Implement new testing protocol', energy_review_no: 'ER-3' },
+        { id: 4, title: 'New safety standards', energy_review_no: 'ER-4' },
     ];
 
     // State
@@ -22,9 +23,8 @@ const QmsListEnergyReview = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
         title: '',
-        date: '',
         energy_review_no: '',
-        
+
     });
 
     const handleSearchChange = (e) => {
@@ -32,7 +32,7 @@ const QmsListEnergyReview = () => {
         setSearchQuery(value);
         setSearchTerm(value);
         setCurrentPage(1);
-    };    
+    };
 
     // Pagination
     const itemsPerPage = 10;
@@ -47,23 +47,19 @@ const QmsListEnergyReview = () => {
     // Search functionality
     const filteredEnergyReviews = currentItems.filter(energyReview =>
         energyReview.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        energyReview.energy_review_no .toLowerCase().includes(searchQuery.toLowerCase())
+        energyReview.energy_review_no.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const handleAddEnergyReview = () => {
-        navigate('/company/qms/add-energy-review')
+    const handleClose = () => {
+        navigate('/company/qms/list-energy-review')
     }
 
-    const handleDraftEnergyReview = () => {
-        navigate('/company/qms/draft-energy-review')
+    const handleQmsViewDraftEnergyReview = () => {
+        navigate('/company/qms/view-draft-energy-review')
     }
 
-    const handleQmsViewEnergyReview = () => {
-        navigate('/company/qms/view-energy-review')
-    }
-
-    const handleQmsEditEnergyReview = () => {
-        navigate('/company/qms/edit-energy-review')
+    const handleQmsDraftEditEnergyReview = () => {
+        navigate('/company/qms/edit-draft-energy-review')
     }
 
     // Delete energyReview
@@ -80,7 +76,7 @@ const QmsListEnergyReview = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">List Energy Review</h1>
+                <h1 className="list-manual-head">Draft Energy Review</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -94,18 +90,8 @@ const QmsListEnergyReview = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftEnergyReview}
-                    >
-                        <span>Drafts</span>
-                    </button>
-                    <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddEnergyReview}
-                    >
-                        <span>Add Energy Review</span>
-                        <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+                    <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+                        <X className="text-white" />
                     </button>
                 </div>
             </div>
@@ -118,9 +104,8 @@ const QmsListEnergyReview = () => {
                             <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                             <th className="px-2 text-left add-manual-theads">Title</th>
                             <th className="px-2 text-left add-manual-theads">Energy Review No</th>
-                            <th className="px-2 text-left add-manual-theads">Date</th>
+                            <th className="px-2 text-left add-manual-theads">Action</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
-                            <th className="px-2 text-center add-manual-theads">Edit</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
                         </tr>
                     </thead>
@@ -129,16 +114,15 @@ const QmsListEnergyReview = () => {
                             <tr key={energyReview.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                 <td className="pl-5 pr-2 add-manual-datas">{energyReview.id}</td>
                                 <td className="px-2 add-manual-datas">{energyReview.title}</td>
-                                <td className="px-2 add-manual-datas">{energyReview.energy_review_no }</td>
-                                <td className="px-2 add-manual-datas">{energyReview.date}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewEnergyReview}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                <td className="px-2 add-manual-datas">{energyReview.energy_review_no}</td>
+                                <td className="px-2 add-manual-datas">
+                                    <button onClick={handleQmsDraftEditEnergyReview} className='text-[#1E84AF]'>
+                                        Click to Continue
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditEnergyReview}>
-                                        <img src={editIcon} alt="Edit Icon" />
+                                    <button onClick={handleQmsViewDraftEnergyReview}>
+                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                     </button>
                                 </td>
                                 <td className="px-2 add-manual-datas !text-center">
@@ -187,4 +171,4 @@ const QmsListEnergyReview = () => {
         </div>
     );
 };
-export default QmsListEnergyReview
+export default QmsDraftEnergyReview

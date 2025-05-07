@@ -1,32 +1,27 @@
 import React, { useState } from "react";
-import { Eye, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-const QmsViewDraftTargets = () => {
+
+const QmsViewDraftEnergyBaseLines = () => {
     const [formData, setFormData] = useState({
-        target: "Anonymous",
-        associated_objective: "Test",
-        programs: "Test",
-        results: "Test",
-        target_date: "02-02-2025",
-        responsible: "Pending",
-        status: "02-02-2025",
-        reminder_notification: "02-02-2025",
-
-
+        title: "Anonymous",
+        established_baseline: "Test",
+        remarks: "Test",
+        date: "02-02-2025",
+        responsible: "Test",
+        related_energy_review: "Test",
+        associated_enpi: "Test",
     });
     const navigate = useNavigate();
 
     const handleClose = () => {
-        navigate("/company/qms/draft-targets");
+        navigate("/company/qms/draft-energy-baselines");
     };
-
- 
-
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                <h2 className="view-employee-head">Targets and Programs Information</h2>
+                <h2 className="view-employee-head">Base Line Information</h2>
                 <button
                     onClick={handleClose}
                     className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -42,73 +37,57 @@ const QmsViewDraftTargets = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px]">
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Target
+                            Base line Title
                         </label>
-                        <div className="view-employee-data">{formData.target}</div>
+                        <div className="view-employee-data">{formData.title}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Associated Objective
+                            Established Baseline
                         </label>
-                        <div className="view-employee-data">{formData.associated_objective}</div>
+                        <div className="view-employee-data">{formData.established_baseline}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Program(s)
+                            Baseline Performance Measure/Remarks
                         </label>
-                        <div className="view-employee-data">{formData.programs}</div>
+                        <div className="view-employee-data">{formData.remarks}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Results
+                            Date
                         </label>
-                        <div className="view-employee-data">{formData.results}</div>
+                        <div className="view-employee-data">{formData.date}</div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Target Date
+                            Responsible
                         </label>
-                        <div className="view-employee-data">{formData.target_date}</div>
+                        <div className="view-employee-data">{formData.responsible}</div>
                     </div>
 
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
-                                Responsible
+                                Related Energy Review
                             </label>
-                            <div className="view-employee-data">{formData.responsible}</div>
+                            <div className="view-employee-data">{formData.related_energy_review}</div>
                         </div>
                     </div>
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Status
+                            Associated EnPI(s)
                         </label>
-                        <div className="view-employee-data">{formData.status}</div>
-                    </div>
-
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                            Reminder Notification
-                        </label>
-                        <div className="view-employee-data">{formData.reminder_notification}</div>
-                    </div>
-
-                    <div>
-                        <label className="block view-employee-label mb-[6px]">
-                             Attached Document
-                        </label>
-                        <button className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center">
-                            Click to view file <Eye size={17}/>
-                        </button>
+                        <div className="view-employee-data">{formData.associated_enpi}</div>
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-export default QmsViewDraftTargets
+export default QmsViewDraftEnergyBaseLines
