@@ -13,7 +13,7 @@ import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
 import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
 
 const QmsViewEvaluationCompliance = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
     const { id } = useParams();
     const [manualDetails, setManualDetails] = useState('aa');
     const [loading, setLoading] = useState(true);
@@ -119,7 +119,7 @@ const QmsViewEvaluationCompliance = () => {
         }
     };
 
- 
+
 
     const getViewedCorrections = () => {
         const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
@@ -151,14 +151,14 @@ const QmsViewEvaluationCompliance = () => {
             // Extract all user IDs from corrections to fetch their details
             const userIds = new Set();
             allCorrections.forEach(correction => {
-                if (correction.from_user && typeof correction.from_user === 'number') 
+                if (correction.from_user && typeof correction.from_user === 'number')
                     userIds.add(correction.from_user);
-                if (correction.to_user && typeof correction.to_user === 'number') 
+                if (correction.to_user && typeof correction.to_user === 'number')
                     userIds.add(correction.to_user);
             });
-            
+
             // Fetch details for all users
-           
+
             // Sort all corrections by created_at date (newest first)
             const sortedCorrections = [...allCorrections].sort(
                 (a, b) => new Date(b.created_at) - new Date(a.created_at)
@@ -199,32 +199,32 @@ const QmsViewEvaluationCompliance = () => {
     // Get user name from ID or object
     const getUserName = (user) => {
         if (!user) return "N/A";
-        
+
         // If user is an object with first_name and last_name
         if (typeof user === 'object' && user.first_name && user.last_name) {
             return `${user.first_name} ${user.last_name}`;
         }
-        
+
         // If user is an ID and we have fetched data for it
         if (typeof user === 'number' && usersData[user]) {
             return `${usersData[user].first_name} ${usersData[user].last_name}`;
         }
-        
+
         // If user is just an email string
         if (typeof user === 'string' && user.includes('@')) {
             return user;
         }
-        
+
         // Fallback - use email if available in the correction
         if (user === highlightedCorrection?.to_user && highlightedCorrection?.to_user_email) {
             return highlightedCorrection.to_user_email;
         }
-        
+
         // Ultimate fallback
         return `User ${user}`;
     };
 
- 
+
     const handleCorrectionRequest = () => {
         setCorrectionRequest(prev => ({
             ...prev,
@@ -332,7 +332,7 @@ const QmsViewEvaluationCompliance = () => {
 
         return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
-    
+
     const handleDeleteProcedure = (recordId) => {
         // Implement your delete functionality here
         console.log("Delete evaluation with ID:", recordId);
@@ -353,35 +353,35 @@ const QmsViewEvaluationCompliance = () => {
         if (isCurrentUserWrittenBy) {
             return true;
         }
-    
+
         if (manualDetails.status === "Pending for Review/Checking") {
             return currentUserId === manualDetails.checked_by?.id;
         }
-        
+
         if (manualDetails.status === "Correction Requested") {
             // Check if there are any pending corrections sent BY the current user
-            const hasSentCorrections = corrections.some(correction => 
-                correction.from_user?.id === currentUserId && 
+            const hasSentCorrections = corrections.some(correction =>
+                correction.from_user?.id === currentUserId &&
                 !correction.is_addressed
             );
-            
+
             // If current user has sent corrections that aren't addressed yet,
             // they shouldn't be able to review/submit
             if (hasSentCorrections) {
                 return false;
             }
-            
+
             // Otherwise check if they are allowed to review based on the manual's current state
             return corrections.some(correction => correction.to_user?.id === currentUserId);
         }
-    
+
         if (manualDetails.status === "Reviewed,Pending for Approval") {
             return currentUserId === manualDetails.approved_by?.id;
         }
-    
+
         return false;
     })();
-  
+
     const handleReviewAndSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -439,7 +439,7 @@ const QmsViewEvaluationCompliance = () => {
     // // Render highlighted correction
     const renderHighlightedCorrection = () => {
         if (!highlightedCorrection) return null;
-    
+
         return (
             <div className="mt-5 bg-[#1F2937] p-4 rounded-md border-l-4 border-[#3B82F6]">
                 <div className="flex justify-between items-center mb-2">
@@ -447,7 +447,7 @@ const QmsViewEvaluationCompliance = () => {
                         <AlertCircle size={18} className="text-[#3B82F6]" />
                         <h2 className="text-white font-medium">Latest Correction Request</h2>
                     </div>
-                    
+
                 </div>
                 <div className="bg-[#24242D] p-5 rounded-md mt-3">
                     <div className="flex justify-between items-center mb-2">
@@ -467,7 +467,7 @@ const QmsViewEvaluationCompliance = () => {
     // // Render correction history
     const renderCorrectionHistory = () => {
         if (historyCorrections.length === 0) return null;
-    
+
         return (
             <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
                 <div className="sticky -top-0 bg-[#1C1C24] flex items-center text-white mb-5 gap-[6px] pb-2">
@@ -481,7 +481,7 @@ const QmsViewEvaluationCompliance = () => {
                     >
                         <div className="flex justify-between items-center mb-2">
                             <div className="from-to-time text-[#AAAAAA]">
-                            From: {getUserName(correction.from_user)}
+                                From: {getUserName(correction.from_user)}
                             </div>
                             <div className="from-to-time text-[#AAAAAA]">
                                 {formatCorrectionDate(correction.created_at)}
@@ -602,18 +602,18 @@ const QmsViewEvaluationCompliance = () => {
                             <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p>
                         </div>
                         <div>
-                                <label className="viewmanuallabels">Review Frequency</label>
-                                <p className="viewmanuasdata">
-                                    {manualDetails.review_frequency_year
-                                        ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0} months`
-                                        : 'N/A'}
-                                </p>
-                            </div>
-                        <div className='flex justify-between items-center'>
-                        <div>
-                            <label className="viewmanuallabels">Evaluation Remarks</label>
-                            <p className="viewmanuasdata">{manualDetails.remarks || 'N/A'}</p>
+                            <label className="viewmanuallabels">Review Frequency</label>
+                            <p className="viewmanuasdata">
+                                {manualDetails.review_frequency_year
+                                    ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0} months`
+                                    : 'N/A'}
+                            </p>
                         </div>
+                        <div className='flex justify-between items-center'>
+                            <div>
+                                <label className="viewmanuallabels">Evaluation Remarks</label>
+                                <p className="viewmanuasdata">{manualDetails.remarks || 'N/A'}</p>
+                            </div>
                             {isCurrentUserWrittenBy && (
                                 <div className='flex gap-10'>
                                     <div className='flex flex-col justify-  center items-center'>
@@ -641,39 +641,55 @@ const QmsViewEvaluationCompliance = () => {
                             )}
                         </div>
 
-                        
+
                     </div>
                 </div>
 
-              
+
                 {renderHighlightedCorrection()}
 
-                 
+
                 {renderCorrectionHistory()}
 
-                 {canReview && (
+                {canReview && (
                     <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
+                                {/* Always show Request For Correction button */}
                                 <button
                                     onClick={() => {
                                         handleMoveToHistory();
-                                        handleCorrectionRequest();        
+                                        handleCorrectionRequest();
                                     }}
                                     className="request-correction-btn duration-200"
                                 >
                                     Request For Correction
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        handleReviewAndSubmit();
-                                        handleMoveToHistory();
-                                    }}
-                                    className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
-                                    disabled={!canReview}
-                                >
-                                    Review and Submit
-                                </button>
+
+                                {/* Show either Approve or Review and Submit based on status */}
+                                {manualDetails.status === "Reviewed,Pending for Approval" ? (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Approve
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Review and Submit
+                                    </button>
+                                )}
                             </>
                         )}
 

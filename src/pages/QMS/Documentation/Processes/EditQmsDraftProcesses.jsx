@@ -232,7 +232,7 @@ const EditQmsDraftProcesses = () => {
         const fileFormData = new FormData();
         fileFormData.append('file', formData.file);
         
-        const fileResponse = await axios.post(`${BASE_URL}/qms/upload-file/`, fileFormData, {
+        const fileResponse =await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
           headers: {
             "Content-Type": "multipart/form-data",
           },

@@ -29,7 +29,7 @@ const AddQmsProcesses = () => {
   
   const [formData, setFormData] = useState({
     name: "",
-    type: "Stratgic",
+    type: "Strategic",
     no: "",
     legal_requirements: [],
     custom_legal_requirements: "",
@@ -439,7 +439,7 @@ const AddQmsProcesses = () => {
                   className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                   required
                 >
-                  <option value="Stratgic">Strategic</option>
+                  <option value="Strategic">Strategic</option>
                   <option value="Core">Core</option>
                   <option value="Support">Support</option>
                   <option value="Monitoring/Measurment">

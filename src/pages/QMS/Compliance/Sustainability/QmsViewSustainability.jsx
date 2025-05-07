@@ -152,9 +152,9 @@ const QmsViewSustainability = () => {
             // Extract all user IDs from corrections to fetch their details
             const userIds = new Set();
             allCorrections.forEach(correction => {
-                if (correction.from_user && typeof correction.from_user === 'number') 
+                if (correction.from_user && typeof correction.from_user === 'number')
                     userIds.add(correction.from_user);
-                if (correction.to_user && typeof correction.to_user === 'number') 
+                if (correction.to_user && typeof correction.to_user === 'number')
                     userIds.add(correction.to_user);
             });
 
@@ -253,7 +253,7 @@ const QmsViewSustainability = () => {
             }
 
             const requestData = {
-                sustainability_id: id, 
+                sustainability_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
             };
@@ -361,8 +361,8 @@ const QmsViewSustainability = () => {
 
         if (manualDetails.status === "Correction Requested") {
             // Check if there are any pending corrections sent BY the current user
-            const hasSentCorrections = corrections.some(correction => 
-                correction.from_user?.id === currentUserId && 
+            const hasSentCorrections = corrections.some(correction =>
+                correction.from_user?.id === currentUserId &&
                 !correction.is_addressed
             );
 
@@ -482,7 +482,7 @@ const QmsViewSustainability = () => {
                     >
                         <div className="flex justify-between items-center mb-2">
                             <div className="from-to-time text-[#AAAAAA]">
-                            From: {getUserName(correction.from_user)}
+                                From: {getUserName(correction.from_user)}
                             </div>
                             <div className="from-to-time text-[#AAAAAA]">
                                 {formatCorrectionDate(correction.created_at)}
@@ -499,26 +499,26 @@ const QmsViewSustainability = () => {
         <div className="bg-[#1C1C24] p-5 rounded-lg">
             <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
                 <h1 className='viewmanualhead'>Sustainability Information</h1>
-                
-                 <ManualCorrectionSuccessModal
-                     showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
-                     onClose={() => { setShowSentCorrectionSuccessModal(false) }}
-                 />
- 
-                 <ManualCorrectionErrorModal
-                     showSentCorrectionErrorModal={showSentCorrectionErrorModal}
-                     onClose={() => { setShowSentCorrectionErrorModal(false) }}
-                 />
- 
-                 <ReviewSubmitSuccessModal
-                     showSubmitManualSuccessModal={showSubmitManualSuccessModal}
-                     onClose={() => { setShowSubmitManualSuccessModal(false) }}
-                 />
- 
-                 <ReviewSubmitErrorModal
-                     showSubmitManualErrorModal={showSubmitManualErrorModal}
-                     onClose={() => { setShowSubmitManualErrorModal(false) }}
-                 />
+
+                <ManualCorrectionSuccessModal
+                    showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
+                    onClose={() => { setShowSentCorrectionSuccessModal(false) }}
+                />
+
+                <ManualCorrectionErrorModal
+                    showSentCorrectionErrorModal={showSentCorrectionErrorModal}
+                    onClose={() => { setShowSentCorrectionErrorModal(false) }}
+                />
+
+                <ReviewSubmitSuccessModal
+                    showSubmitManualSuccessModal={showSubmitManualSuccessModal}
+                    onClose={() => { setShowSubmitManualSuccessModal(false) }}
+                />
+
+                <ReviewSubmitErrorModal
+                    showSubmitManualErrorModal={showSubmitManualErrorModal}
+                    onClose={() => { setShowSubmitManualErrorModal(false) }}
+                />
 
                 <button
                     className="text-white bg-[#24242D] p-1 rounded-md"
@@ -616,30 +616,30 @@ const QmsViewSustainability = () => {
                                 <p className="viewmanuasdata">{manualDetails.remarks || 'N/A'}</p>
                             </div>
                             {isCurrentUserWrittenBy && (
-                            <div className='flex gap-10'>
-                                <div className='flex flex-col justify-  center items-center'>
-                                    <label className="viewmanuallabels">Edit</label>
-                                    <button
-                                    onClick={() => {
-                                        handleMoveToHistory();
-                                        navigate(`/company/qms/edit-sustainability/${id}`);
-                                    }}
-                                    >
-                                        <img src={edits} alt="Edit Icon" />
-                                    </button>
+                                <div className='flex gap-10'>
+                                    <div className='flex flex-col justify-  center items-center'>
+                                        <label className="viewmanuallabels">Edit</label>
+                                        <button
+                                            onClick={() => {
+                                                handleMoveToHistory();
+                                                navigate(`/company/qms/edit-sustainability/${id}`);
+                                            }}
+                                        >
+                                            <img src={edits} alt="Edit Icon" />
+                                        </button>
+                                    </div>
+                                    <div className='flex flex-col justify-center items-center'>
+                                        <label className="viewmanuallabels">Delete</label>
+                                        <button
+                                            onClick={() => {
+                                                handleDeleteProcedure(id);
+                                            }}
+                                        >
+                                            <img src={deletes} alt="Delete Icon" />
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className='flex flex-col justify-center items-center'>
-                                    <label className="viewmanuallabels">Delete</label>
-                                    <button
-                                    onClick={() => {
-                                        handleDeleteProcedure(id);
-                                    }}
-                                    >
-                                        <img src={deletes} alt="Delete Icon" />
-                                    </button>
-                                </div>
-                            </div>
-                             )}
+                            )}
                         </div>
 
 
@@ -650,74 +650,90 @@ const QmsViewSustainability = () => {
                 {renderHighlightedCorrection()}
 
 
-                  {renderCorrectionHistory()} 
+                {renderCorrectionHistory()}
 
-              {canReview && (
-                     <div className="flex flex-wrap justify-between mt-5">
-                         {!correctionRequest.isOpen && (
-                             <>
-                                 <button
-                                     onClick={() => {
-                                         handleMoveToHistory();
-                                         handleCorrectionRequest();        
-                                     }}
-                                     className="request-correction-btn duration-200"
-                                 >
-                                     Request For Correction
-                                 </button>
-                                 <button
-                                     onClick={() => {
-                                         handleReviewAndSubmit();
-                                         handleMoveToHistory();
-                                     }}
-                                     className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
-                                     disabled={!canReview}
-                                 >
-                                     Review and Submit
-                                 </button>
-                             </>
-                         )}
- 
-                         <AnimatePresence>
-                             {correctionRequest.isOpen && (
-                                 <motion.div
-                                     initial="hidden"
-                                     animate="visible"
-                                     exit="hidden"
-                                     variants={correctionVariants}
-                                     className="mt-4 overflow-hidden w-full"
-                                 >
-                                     <div className='flex justify-end mb-5'>
-                                         <button
-                                             onClick={handleCloseCorrectionRequest}
-                                             className="text-white bg-[#24242D] p-1 rounded-md"
-                                         >
-                                             <X size={22} />
-                                         </button>
-                                     </div>
- 
-                                     <textarea
-                                         value={correctionRequest.text}
-                                         onChange={(e) => setCorrectionRequest(prev => ({
-                                             ...prev,
-                                             text: e.target.value
-                                         }))}
-                                         placeholder="Enter Correction"
-                                         className="w-full h-32 bg-[#24242D] text-white px-5 py-[14px] rounded-md resize-none focus:outline-none correction-inputs"
-                                     />
-                                     <div className="mt-5 flex justify-end">
-                                         <button
-                                             onClick={handleCorrectionSubmit}
-                                             className="save-btn duration-200 text-white"
-                                         >
-                                             Save
-                                         </button>
-                                     </div>
-                                 </motion.div>
-                             )}
-                         </AnimatePresence>
-                     </div>
-                 )}
+                {canReview && (
+                    <div className="flex flex-wrap justify-between mt-5">
+                        {!correctionRequest.isOpen && (
+                            <>
+                                {/* Always show Request For Correction button */}
+                                <button
+                                    onClick={() => {
+                                        handleMoveToHistory();
+                                        handleCorrectionRequest();
+                                    }}
+                                    className="request-correction-btn duration-200"
+                                >
+                                    Request For Correction
+                                </button>
+
+                                {/* Show either Approve or Review and Submit based on status */}
+                                {manualDetails.status === "Reviewed,Pending for Approval" ? (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Approve
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Review and Submit
+                                    </button>
+                                )}
+                            </>
+                        )}
+
+                        <AnimatePresence>
+                            {correctionRequest.isOpen && (
+                                <motion.div
+                                    initial="hidden"
+                                    animate="visible"
+                                    exit="hidden"
+                                    variants={correctionVariants}
+                                    className="mt-4 overflow-hidden w-full"
+                                >
+                                    <div className='flex justify-end mb-5'>
+                                        <button
+                                            onClick={handleCloseCorrectionRequest}
+                                            className="text-white bg-[#24242D] p-1 rounded-md"
+                                        >
+                                            <X size={22} />
+                                        </button>
+                                    </div>
+
+                                    <textarea
+                                        value={correctionRequest.text}
+                                        onChange={(e) => setCorrectionRequest(prev => ({
+                                            ...prev,
+                                            text: e.target.value
+                                        }))}
+                                        placeholder="Enter Correction"
+                                        className="w-full h-32 bg-[#24242D] text-white px-5 py-[14px] rounded-md resize-none focus:outline-none correction-inputs"
+                                    />
+                                    <div className="mt-5 flex justify-end">
+                                        <button
+                                            onClick={handleCorrectionSubmit}
+                                            className="save-btn duration-200 text-white"
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                )}
             </div>
         </div>
     );

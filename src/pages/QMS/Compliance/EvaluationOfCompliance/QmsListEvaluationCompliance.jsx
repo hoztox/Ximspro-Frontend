@@ -140,7 +140,7 @@ const QmsListEvaluationCompliance = () => {
 
         return manualsData.filter(manual => {
             // If manual is published, show to everyone
-            if (manual.status === 'Publish') {
+            if (manual.status === 'Published') {
                 return true;
             }
 
@@ -584,7 +584,7 @@ const QmsListEvaluationCompliance = () => {
                                     );
                                 })
                             ) : (
-                                <tr><td colSpan="11" className="text-center py-4 not-found">No Record Formats found.</td></tr>
+                                <tr><td colSpan="11" className="text-center py-4 not-found">No Evaluation Compliance found.</td></tr>
                             )}
                             <tr>
                                 <td colSpan="11" className="pt-[15px] border-t border-[#383840]">

@@ -141,7 +141,7 @@ const QmsRecordFormat = () => {
 
     return manualsData.filter(manual => {
       // If manual is published, show to everyone
-      if (manual.status === 'Publish') {
+      if (manual.status === 'Published') {
         return true;
       }
 
