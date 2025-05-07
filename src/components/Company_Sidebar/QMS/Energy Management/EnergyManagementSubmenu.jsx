@@ -45,7 +45,15 @@ const EnergyManagementSubmenu = (props) => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/procedure",
+            path: "/company/qms/list-significant-energy",
+            relatedPaths: [
+                "/company/qms/add-significant-energy",
+                "/company/qms/edit-significant-energy",
+                "/company/qms/view-significant-energy",
+                "/company/qms/draft-significant-energy",
+                "/company/qms/edit-draft-significant-energy",
+                "/company/qms/view-draft-significant-energy",
+            ]
         },
         {
             id: "energy-involvement-opportunities",

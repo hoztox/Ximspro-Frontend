@@ -316,6 +316,13 @@ import QmsViewEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines
 import QmsDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsDraftEnergyBaseLines";
 import QmsEditDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsEditDraftEnergyBaseLines";
 import QmsViewDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsViewDraftEnergyBaseLines";
+import QmsListSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsListSignificantEnergy";
+import QmsAddSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsAddSignificantEnergy";
+import QmsEditSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsEditSignificantEnergy";
+import QmsViewSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsViewSignificantEnergy";
+import QmsDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsDraftSignificantEnergy";
+import QmsEditDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsEditDraftSignificantEnergy";
+import QmsViewDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsViewDraftSignificantEnergy";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -627,6 +634,14 @@ const ThemedApp = () => {
           <Route path="qms/draft-energy-baselines" element={<QmsDraftEnergyBaseLines />} />
           <Route path="qms/edit-draft-energy-baselines" element={<QmsEditDraftEnergyBaseLines />} />
           <Route path="qms/view-draft-energy-baselines" element={<QmsViewDraftEnergyBaseLines />} />
+
+          <Route path="qms/list-significant-energy" element={<QmsListSignificantEnergy />} />
+          <Route path="qms/add-significant-energy" element={<QmsAddSignificantEnergy />} />
+          <Route path="qms/edit-significant-energy" element={<QmsEditSignificantEnergy />} />
+          <Route path="qms/view-significant-energy" element={<QmsViewSignificantEnergy />} />
+          <Route path="qms/draft-significant-energy" element={<QmsDraftSignificantEnergy />} />
+          <Route path="qms/edit-draft-significant-energy" element={<QmsEditDraftSignificantEnergy />} />
+          <Route path="qms/view-draft-significant-energy" element={<QmsViewDraftSignificantEnergy />} />
 
 
 
