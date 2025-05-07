@@ -303,6 +303,8 @@ import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTa
 import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
 import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
 import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview";
+import QmsListEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsListEnvironmentalAspect";
+import QmsAddEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsAddEnvironmentalAspect";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -589,6 +591,16 @@ const ThemedApp = () => {
           <Route path="qms/draft-sustainability" element={<QmsDraftSustainability />} />
           <Route path="qms/edit-draft-sustainability/:id" element={<QmsEditDraftSustainability />} />
           <Route path="qms/view-draft-sustainability/:id" element={<QmsViewDraftSustainability />} />
+
+
+
+
+
+
+
+          {/* QMS Risk & Opportunities Management*/}
+          <Route path="qms/list-environmantal-aspect" element={<QmsListEnvironmentalAspect />} />
+          <Route path="qms/add-environmantal-aspect" element={<QmsAddEnvironmentalAspect />} />
 
 
 
