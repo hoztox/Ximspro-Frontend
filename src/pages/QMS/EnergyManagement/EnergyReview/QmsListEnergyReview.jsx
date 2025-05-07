@@ -51,19 +51,19 @@ const QmsListEnergyReview = () => {
     );
 
     const handleAddEnergyReview = () => {
-        // navigate('/company/qms/add-energyReviews')
+        navigate('/company/qms/add-energy-review')
     }
 
     const handleDraftEnergyReview = () => {
-        // navigate('/company/qms/draft-energyReviews')
+        navigate('/company/qms/draft-energy-review')
     }
 
     const handleQmsViewEnergyReview = () => {
-        // navigate('/company/qms/view-energyReviews ')
+        navigate('/company/qms/view-energy-review')
     }
 
     const handleQmsEditEnergyReview = () => {
-        // navigate('/company/qms/edit-energyReviews')
+        navigate('/company/qms/edit-energy-review')
     }
 
     // Delete energyReview

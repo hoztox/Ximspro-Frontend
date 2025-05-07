@@ -257,6 +257,18 @@ const ViewQmsprocedure = () => {
         }
     };
 
+    const handleDeleteProcedure = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/procedure-detail/${id}/`);
+            navigate('/company/qms/procedure');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error ||
+                error.response?.data?.message ||
+                'Failed to delete manual';
+        }
+    }
+
     // Format date from ISO to DD-MM-YYYY
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -304,32 +316,32 @@ const ViewQmsprocedure = () => {
         if (isCurrentUserWrittenBy) {
             return true;
         }
-    
+
         if (manualDetails.status === "Pending for Review/Checking") {
             return currentUserId === manualDetails.checked_by?.id;
         }
-        
+
         if (manualDetails.status === "Correction Requested") {
             // Check if there are any pending corrections sent BY the current user
-            const hasSentCorrections = corrections.some(correction => 
-                correction.from_user?.id === currentUserId && 
+            const hasSentCorrections = corrections.some(correction =>
+                correction.from_user?.id === currentUserId &&
                 !correction.is_addressed
             );
-            
+
             // If current user has sent corrections that aren't addressed yet,
             // they shouldn't be able to review/submit
             if (hasSentCorrections) {
                 return false;
             }
-            
+
             // Otherwise check if they are allowed to review based on the manual's current state
             return corrections.some(correction => correction.to_user?.id === currentUserId);
         }
-    
+
         if (manualDetails.status === "Reviewed,Pending for Approval") {
             return currentUserId === manualDetails.approved_by?.id;
         }
-    
+
         return false;
     })();
 
@@ -582,9 +594,9 @@ const ViewQmsprocedure = () => {
                                     <div className='flex flex-col justify-center items-center'>
                                         <label className="viewmanuallabels">Delete</label>
                                         <button
-                                        onClick={()=> {
-                                            handleDeleteProcedure(id);
-                                        }}
+                                            onClick={() => {
+                                                handleDeleteProcedure(id);
+                                            }}
                                         >
                                             <img src={deletes} alt="Delete Icon" />
                                         </button>
@@ -609,22 +621,38 @@ const ViewQmsprocedure = () => {
                     <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
+                                {/* Always show Request For Correction button */}
                                 <button
                                     onClick={handleCorrectionRequest}
                                     className="request-correction-btn duration-200"
                                 >
                                     Request For Correction
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        handleReviewAndSubmit();
-                                        handleMoveToHistory();
-                                    }}
-                                    className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
-                                    disabled={!canReview}
-                                >
-                                    Review and Submit
-                                </button>
+
+                                {/* Show either Approve or Review and Submit based on status */}
+                                {manualDetails.status === "Reviewed,Pending for Approval" ? (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Approve
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit();
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Review and Submit
+                                    </button>
+                                )}
                             </>
                         )}
 

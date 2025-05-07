@@ -142,7 +142,7 @@ const QmsProcedure = () => {
 
     return manualsData.filter(manual => {
       // If manual is published, show to everyone
-      if (manual.status === 'Publish') {
+      if (manual.status === 'Published') {
         return true;
       }
 
@@ -156,26 +156,26 @@ const QmsProcedure = () => {
     });
   };
 
-  // Fetch manuals using the centralized filter function
-  // Modify the fetchManuals function to sort by creation date in descending order
   const fetchManuals = async () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/procedure/${companyId}/`);
-
+      
       // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
-
-      // Sort manuals by creation date (newest first)
-      // Assuming there's a 'created_at' or similar field - adjust field name if needed
+      
+      // Sort manuals by id in ascending order (oldest first), with fallback to written_at
       const sortedManuals = filteredManuals.sort((a, b) => {
-        // Use created_at if available, otherwise fall back to date field
-        const dateA = new Date(a.created_at || a.date || 0);
-        const dateB = new Date(b.created_at || b.date || 0);
-        return dateB - dateA; // Descending order (newest first)
+        if (a.id && b.id) {
+          return a.id - b.id;
+        }
+        // Fallback to sorting by written_at or date if id is unavailable
+        const dateA = new Date(a.written_at || a.date || 0);
+        const dateB = new Date(b.written_at || b.date || 0);
+        return dateA - dateB;
       });
-
+      
       setManuals(sortedManuals);
       console.log("Filtered and Sorted Manuals Data:", sortedManuals);
       setLoading(false);
@@ -186,53 +186,54 @@ const QmsProcedure = () => {
     }
   };
 
+
   useEffect(() => {
-    // Fetch all required data in a single useEffect
     const fetchAllData = async () => {
       try {
-        // First, fetch manuals
         const companyId = getUserCompanyId();
         const manualsResponse = await axios.get(`${BASE_URL}/qms/procedure/${companyId}/`);
-
-        // Apply visibility filtering using the centralized function
+        
+        // Apply visibility filtering
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-
-
-        // Set filtered manuals
-        setManuals(filteredManuals);
-
-        console.log('aaaaaaaaaaaaa', filteredManuals);
-
-
-        // Then fetch corrections for visible manuals
-        const correctionsPromises = filteredManuals.map(async (manual) => {
+        
+        // Sort manuals by id in ascending order (oldest first), with fallback to written_at
+        const sortedManuals = filteredManuals.sort((a, b) => {
+          if (a.id && b.id) {
+            return a.id - b.id;
+          }
+          // Fallback to sorting by written_at or date if id is unavailable
+          const dateA = new Date(a.written_at || a.date || 0);
+          const dateB = new Date(b.written_at || b.date || 0);
+          return dateA - dateB;
+        });
+        
+        setManuals(sortedManuals);
+        
+        // Fetch corrections for visible manuals
+        const correctionsPromises = sortedManuals.map(async (manual) => {
           try {
             const correctionResponse = await axios.get(`${BASE_URL}/qms/procedure/${manual.id}/corrections/`);
-            console.log('sssssssssssssssssss', correctionResponse.data);
             return { manualId: manual.id, corrections: correctionResponse.data };
-
           } catch (correctionError) {
             console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
             return { manualId: manual.id, corrections: [] };
           }
         });
-
+        
         // Process all corrections
         const correctionResults = await Promise.all(correctionsPromises);
-
-        // Transform corrections into the dictionary format
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-
+        
         setCorrections(correctionsByManual);
-
+        
         // Fetch draft count
         const id = getRelevantUserId();
         const draftResponse = await axios.get(`${BASE_URL}/qms/procedure/drafts-count/${id}/`);
         setDraftCount(draftResponse.data.count);
-
+        
         // Set current user and clear loading state
         setCurrentUser(getCurrentUser());
         setLoading(false);
@@ -242,7 +243,7 @@ const QmsProcedure = () => {
         setLoading(false);
       }
     };
-
+    
     fetchAllData();
   }, []);
 

@@ -6,19 +6,15 @@ import fileIcon from "../../../../assets/images/Company Documentation/file-icon.
 import { BASE_URL } from "../../../../Utils/Config";
 import EditQmsProcessesSuccessModal from "./Modals/EditQmsProcessesSuccessModal";
 import EditQmsProcessesErrorModal from "./Modals/EditQmsProcessesErrorModal";
-
 const EditQmsProcesses = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [showEditProcessesSuccessModal, setShowEditProcessesSuccessModal] = useState(false);
   const [showEditQmsProcessesErrorModal, setShowEditQmsProcessesErrorModal] = useState(false);
-
   // Define legal requirement options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
   // Add search state
   const [searchTerm, setSearchTerm] = useState("");
-
   const [formData, setFormData] = useState({
     name: "",
     no: "",
@@ -29,20 +25,16 @@ const EditQmsProcesses = () => {
     is_draft: false,
     send_notification: false,
   });
-
   const [dropdownRotation, setDropdownRotation] = useState({
     type: false,
   });
-
   const [fileName, setFileName] = useState("No file chosen");
   const [selectedFile, setSelectedFile] = useState(null);
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileUrl, setFileUrl] = useState(null);
-
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
-
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
       const userData = localStorage.getItem("user_company_id");
@@ -57,7 +49,6 @@ const EditQmsProcesses = () => {
     }
     return null;
   };
-
   const companyId = getUserCompanyId();
   // Define the fetchComplianceData function
   const fetchComplianceData = () => {
@@ -65,7 +56,6 @@ const EditQmsProcesses = () => {
       console.error("Company ID not found");
       return;
     }
-
     axios.get(`${BASE_URL}/qms/procedure-publish/${companyId}/`)
       .then(response => {
         setLegalRequirementOptions(response.data || []);
@@ -74,7 +64,6 @@ const EditQmsProcesses = () => {
         console.error("Error fetching legal requirements:", error);
       });
   };
-
   useEffect(() => {
     if (companyId) {
       setFormData(prev => ({
@@ -84,24 +73,19 @@ const EditQmsProcesses = () => {
       fetchComplianceData();
     }
   }, [companyId]);
-
   useEffect(() => {
     if (!id) return;
     console.log("Fetching data for id:", id);
-
     axios.get(`${BASE_URL}/qms/processes-get/${id}/`)
       .then((res) => {
         const data = res.data;
-
         // Check if legal_requirements is "N/A" from old format
         const isNA = data.legal_requirements === "N/A";
-
         // Convert the legal_requirements IDs to titles if we have legal_requirement_details
         let procedureTitles = [];
         if (data.legal_requirement_details && Array.isArray(data.legal_requirement_details)) {
           procedureTitles = data.legal_requirement_details.map(item => item.title);
         }
-
         setFormData({
           ...data,
           // Use the procedure titles instead of IDs for the checkboxes
@@ -109,11 +93,9 @@ const EditQmsProcesses = () => {
           custom_legal_requirements: data.custom_legal_requirements || "",
           file: null,
         });
-
         if (isNA || data.custom_legal_requirements) {
           setShowCustomField(true);
         }
-
         if (data.file) {
           setFileName(data.file.split("/").pop());
           setFileUrl(data.file);
@@ -127,7 +109,6 @@ const EditQmsProcesses = () => {
       [field]: !prev[field],
     }));
   };
-
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -135,17 +116,14 @@ const EditQmsProcesses = () => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
   // Handle search term change
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
-
   // Handle checkbox change for procedures
   const handleProcedureCheckboxChange = (procedureTitle) => {
     setFormData(prevData => {
       const updatedProcedures = [...prevData.legal_requirements];
-
       // If already selected, remove it
       if (updatedProcedures.includes(procedureTitle)) {
         return {
@@ -162,13 +140,11 @@ const EditQmsProcesses = () => {
       }
     });
   };
-
   // Toggle N/A option for custom field
 // Toggle N/A option for custom field
 const handleNAChange = (e) => {
   const checked = e.target.checked;
   setShowCustomField(checked);
-
   if (checked) {
     // If N/A is checked, clear all procedure selections
     setFormData(prev => ({
@@ -185,7 +161,6 @@ const handleNAChange = (e) => {
     }));
   }
 };
-
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -197,7 +172,6 @@ const handleNAChange = (e) => {
       }));
     }
   };
-
   const handleViewFile = () => {
     if (fileUrl && !selectedFile) {
       window.open(fileUrl, '_blank');
@@ -207,7 +181,6 @@ const handleNAChange = (e) => {
       window.open(tempUrl, '_blank');
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -227,7 +200,7 @@ const handleNAChange = (e) => {
         const fileFormData = new FormData();
         fileFormData.append('file', formData.file);
         
-        const fileResponse = await axios.post(`${BASE_URL}/qms/upload-file/`, fileFormData, {
+        const fileResponse = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, data, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
@@ -238,11 +211,10 @@ const handleNAChange = (e) => {
         }
       }
       
-      // Handle legal requirements based on whether custom field is shown
       if (showCustomField) {
-        // If N/A is selected, send the custom text if any
+     
         data.custom_legal_requirements = formData.custom_legal_requirements || "";
-        // Send an empty array for legal_requirements
+      
         data.legal_requirements = [];
       } else {
         // Convert procedure titles to IDs
@@ -281,34 +253,28 @@ const handleNAChange = (e) => {
       }, 3000);
     }
   };
-
   const handleCancel = () => {
     navigate("/company/qms/processes");
   };
-
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions
     .filter(option =>
       !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
         Edit Processes
       </h1>
-
       <EditQmsProcessesSuccessModal
         showEditProcessesSuccessModal={showEditProcessesSuccessModal}
         onClose={() => { setShowEditProcessesSuccessModal(false) }}
       />
-
       <EditQmsProcessesErrorModal
         showEditQmsProcessesErrorModal={showEditQmsProcessesErrorModal}
         onClose={() => { setShowEditQmsProcessesErrorModal(false) }}
       />
-
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -375,7 +341,6 @@ const handleNAChange = (e) => {
                   className="w-full add-qms-intertested-inputs pl-8"
                 />
               </div>
-
               <div className="border border-[#383840] rounded-md p-2 max-h-[145px] overflow-y-auto">
                 {showCustomField ? (
                   <div className="my-2"> 
@@ -495,5 +460,4 @@ const handleNAChange = (e) => {
     </div>
   );
 };
-
-export default EditQmsProcesses;
+export default EditQmsProcesses; 

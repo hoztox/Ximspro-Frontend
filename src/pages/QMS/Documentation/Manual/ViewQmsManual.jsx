@@ -187,6 +187,18 @@ const ViewQmsManual = () => {
         navigate('/company/qms/manual')
     }
 
+    const handleDelete = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/manual-detail/${id}/`);
+            navigate('/company/qms/manual');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error ||
+                error.response?.data?.message ||
+                'Failed to delete manual';
+        }
+    };
+
     const handleCorrectionSubmit = async () => {
         try {
             const currentUser = getCurrentUser();
@@ -555,7 +567,9 @@ const ViewQmsManual = () => {
                                     </div>
                                     <div className='flex flex-col justify-center items-center'>
                                         <label className="viewmanuallabels">Delete</label>
-                                        <button>
+                                        <button
+                                            onClick={() => handleDelete(id)}
+                                        >
                                             <img src={deletes} alt="Delete Icon" />
                                         </button>
                                     </div>
@@ -575,27 +589,41 @@ const ViewQmsManual = () => {
                     <div className="flex flex-wrap justify-between mt-5">
                         {!correctionRequest.isOpen && (
                             <>
+                                {/* Always show Request For Correction button */}
                                 <button
                                     onClick={() => {
                                         handleCorrectionRequest();
                                         handleMoveToHistory();
-
                                     }}
                                     className="request-correction-btn duration-200"
-
                                 >
                                     Request For Correction
                                 </button>
-                                <button
-                                    onClick={() => {
-                                        handleReviewAndSubmit()
-                                        handleMoveToHistory();
-                                    }}
-                                    className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
-                                    disabled={!canReview}
-                                >
-                                    Review and Submit
-                                </button>
+
+                                {/* Show either Approve or Review and Submit based on status */}
+                                {manualDetails.status === "Reviewed,Pending for Approval" ? (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit()
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Approve
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => {
+                                            handleReviewAndSubmit()
+                                            handleMoveToHistory();
+                                        }}
+                                        className="review-submit-btn bg-[#1E84AF] p-5 rounded-md duration-200"
+                                        disabled={!canReview}
+                                    >
+                                        Review and Submit
+                                    </button>
+                                )}
                             </>
                         )}
 

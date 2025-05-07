@@ -207,11 +207,12 @@ const EditDraftQmsInterestedParties = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-
+    setSubmitting(true);    
+  
     try {
       let response;
       if (selectedFile) {
+        // When a new file is selected
         const formDataWithFile = new FormData();
         formDataWithFile.append('name', formData.name);
         formDataWithFile.append('category', formData.category);
@@ -221,14 +222,14 @@ const EditDraftQmsInterestedParties = () => {
         formDataWithFile.append('send_notification', formData.send_notification);
         formDataWithFile.append('company', formData.company);
         formDataWithFile.append('file', selectedFile);
-
+  
         // Add needs array as JSON string
         formDataWithFile.append('needs', JSON.stringify(
           formData.needs.filter(need =>
             need.needs.trim() !== "" || need.expectation.trim() !== ""
           )
         ));
-
+  
         response = await axios.put(
           `${BASE_URL}/qms/interst/create/${id}/`,
           formDataWithFile,
@@ -239,16 +240,24 @@ const EditDraftQmsInterestedParties = () => {
           }
         );
       } else {
-        // Send as regular JSON when no file is selected
+        // When no new file is selected, don't include the file field at all
+        const dataToSend = {
+          name: formData.name,
+          category: formData.category,
+          needs: formData.needs.filter(need =>
+            need.needs.trim() !== "" || need.expectation.trim() !== ""
+          ),
+          special_requirements: formData.special_requirements,
+          legal_requirements: formData.legal_requirements,
+          custom_legal_requirements: formData.custom_legal_requirements,
+          send_notification: formData.send_notification,
+          company: formData.company,
+          // Don't include file field to keep existing file
+        };
+  
         response = await axios.put(
           `${BASE_URL}/qms/interst/create/${id}/`,
-          {
-            ...formData,
-            needs: formData.needs.filter(need =>
-              need.needs.trim() !== "" || need.expectation.trim() !== ""
-            ),
-            file: null,
-          },
+          dataToSend,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -256,7 +265,7 @@ const EditDraftQmsInterestedParties = () => {
           }
         );
       }
-
+      
       setShowEditDraftInterestedSuccessModal(true);
       setTimeout(() => {
         navigate("/company/qms/interested-parties");

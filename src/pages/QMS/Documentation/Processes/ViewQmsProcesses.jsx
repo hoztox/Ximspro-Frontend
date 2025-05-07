@@ -12,8 +12,20 @@ const ViewQmsProcesses = () => {
     const handleClose = () => {
         navigate('/company/qms/processes');
     };
-    const handleDelete = () => {
-        setFormData(null);
+
+    const handleEditProcess = (id) => {
+        navigate(`/company/qms/edit-processes/${id}`);
+    }
+    const handleDelete = async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/processes-get/${id}/`);
+            navigate('/company/qms/processes');
+        } catch (error) {
+            console.error("Error deleting manual:", error);
+            const errorMessage = error.response?.data?.error || 
+                error.response?.data?.message || 
+                'Failed to delete manual';
+        }
     };
 
     useEffect(() => {
@@ -84,11 +96,15 @@ const ViewQmsProcesses = () => {
                             </div>
                         </div>
                         <div className="flex justify-end space-x-10">
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]">
+                            <button 
+                            onClick={()=> handleEditProcess(id)}
+                            className="flex flex-col items-center view-interested-parties-label gap-[8px]">
                                 <span>Edit</span>
                                 <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
                             </button>
-                            <button className="flex flex-col items-center view-interested-parties-label gap-[8px]" onClick={handleDelete}>
+                            <button 
+                            className="flex flex-col items-center view-interested-parties-label gap-[8px]" 
+                            onClick={()=> handleDelete(id)}>
                                 <span>Delete</span>
                                 <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
                             </button>

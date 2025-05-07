@@ -61,7 +61,19 @@ const QmsProcesses = () => {
       const response = await axios.get(`${BASE_URL}/qms/processes/${companyId}/`);
       console.log("Fetched processes data:", response.data);
       const data = Array.isArray(response.data) ? response.data : [response.data];
-      setFormData(data);
+      
+      // Sort data by id in ascending order (oldest first), with fallback to written_at or created_at
+      const sortedData = data.sort((a, b) => {
+        if (a.id && b.id) {
+          return a.id - b.id;
+        }
+        // Fallback to sorting by written_at or created_at if id is unavailable
+        const dateA = new Date(a.written_at || a.created_at || 0);
+        const dateB = new Date(b.written_at || b.created_at || 0);
+        return dateA - dateB;
+      });
+      
+      setFormData(sortedData);
       setError(null);
     } catch (err) {
       console.error("Error fetching processes:", err);

@@ -168,7 +168,7 @@ const QmsListSustainability = () => {
             console.log("Manual status:", manual.status);
             
             // If manual is published, show to everyone
-            if (manual.status === 'Publish') {
+            if (manual.status === 'Published') {
                 console.log("Manual is published, showing to everyone");
                 return true;
             }
@@ -641,7 +641,7 @@ const QmsListSustainability = () => {
                                     );
                                 })
                             ) : (
-                                <tr><td colSpan="11" className="text-center py-4 not-found">No Record Formats found.</td></tr>
+                                <tr><td colSpan="11" className="text-center py-4 not-found">No Sustainability Found.</td></tr> 
                             )}
                             <tr>
                                 <td colSpan="11" className="pt-[15px] border-t border-[#383840]">

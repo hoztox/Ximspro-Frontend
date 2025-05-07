@@ -302,9 +302,37 @@ import QmsViewTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewTarg
 import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTargets";
 import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
 import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
-import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview";
+import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview"
 import QmsListEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsListEnvironmentalAspect";
 import QmsAddEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsAddEnvironmentalAspect";
+import QmsAddEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsAddEnergyReview";
+import QmsEditEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsEditEnergyReview";
+import QmsViewEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsViewEnergyReview";
+import QmsDraftEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsDraftEnergyReview";
+import QmsDraftEditEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsDraftEditEnergyReview";
+import QmsDraftViewEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsDraftViewEnergyReview";
+import QmsListEnergyBaselines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsListEnergyBaselines";
+import QmsAddEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsAddEnergyBaseLines";
+import QmsEditEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsEditEnergyBaseLines";
+import QmsViewEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsViewEnergyBaseLines";
+import QmsDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsDraftEnergyBaseLines";
+import QmsEditDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsEditDraftEnergyBaseLines";
+import QmsViewDraftEnergyBaseLines from "./pages/QMS/EnergyManagement/EnergyBaselines/QmsViewDraftEnergyBaseLines";
+import QmsListSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsListSignificantEnergy";
+import QmsAddSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsAddSignificantEnergy";
+import QmsEditSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsEditSignificantEnergy";
+import QmsViewSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsViewSignificantEnergy";
+import QmsDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsDraftSignificantEnergy";
+import QmsEditDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsEditDraftSignificantEnergy";
+import QmsViewDraftSignificantEnergy from "./pages/QMS/EnergyManagement/SignificantEnergyUse/QmsViewDraftSignificantEnergy";
+import QmsListEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsListEnergyImprovement";
+import QmsAddEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsAddEnergyImprovement";
+import QmsEditEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsEditEnergyImprovement";
+import QmsViewEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsViewEnergyImprovement";
+import QmsDraftEnergyImprovements from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsDraftEnergyImprovements";
+import QmsEditDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsEditDraftEnergyImprovement";
+import QmsViewDraftEnergyImprovement from "./pages/QMS/EnergyManagement/EnergyImprovementOpportunities/QmsViewDraftEnergyImprovement";
+import QmsListEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsListEnergyAction";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -455,9 +483,9 @@ const ThemedApp = () => {
           <Route path="qms/outbox-forward" element={<QmsOutboxReplay />} />
           <Route path="qms/edit-draft" element={<QmsEditDraftSystemMessaging />} />
 
-          <Route path="qms/list-internal-problem" element={<QmsListInternalProblems/>} />
-          <Route path="qms/add-internal-problem" element={<QmsAddInternalProblems/>} />
-     
+          <Route path="qms/list-internal-problem" element={<QmsListInternalProblems />} />
+          <Route path="qms/add-internal-problem" element={<QmsAddInternalProblems />} />
+
           <Route path="qms/edit-internal-problem/:id" element={<QmsEditInternalProblems />} />
           <Route path="qms/view-internal-problem/:id" element={<QmsViewInternalProblems />} />
           <Route path="qms/draft-internal-problem" element={<QmsDraftInternalProblems />} />
@@ -612,6 +640,38 @@ const ThemedApp = () => {
 
           {/* QMS Energy Management*/}
           <Route path="qms/list-energy-review" element={<QmsListEnergyReview />} />
+          <Route path="qms/add-energy-review" element={<QmsAddEnergyReview />} />
+          <Route path="qms/edit-energy-review" element={<QmsEditEnergyReview />} />
+          <Route path="qms/view-energy-review" element={<QmsViewEnergyReview />} />
+          <Route path="qms/draft-energy-review" element={<QmsDraftEnergyReview />} />
+          <Route path="qms/edit-draft-energy-review" element={<QmsDraftEditEnergyReview />} />
+          <Route path="qms/view-draft-energy-review" element={<QmsDraftViewEnergyReview />} />
+
+          <Route path="qms/list-energy-baselines" element={<QmsListEnergyBaselines />} />
+          <Route path="qms/add-energy-baselines" element={<QmsAddEnergyBaseLines />} />
+          <Route path="qms/edit-energy-baselines" element={<QmsEditEnergyBaseLines />} />
+          <Route path="qms/view-energy-baselines" element={<QmsViewEnergyBaseLines />} />
+          <Route path="qms/draft-energy-baselines" element={<QmsDraftEnergyBaseLines />} />
+          <Route path="qms/edit-draft-energy-baselines" element={<QmsEditDraftEnergyBaseLines />} />
+          <Route path="qms/view-draft-energy-baselines" element={<QmsViewDraftEnergyBaseLines />} />
+
+          <Route path="qms/list-significant-energy" element={<QmsListSignificantEnergy />} />
+          <Route path="qms/add-significant-energy" element={<QmsAddSignificantEnergy />} />
+          <Route path="qms/edit-significant-energy" element={<QmsEditSignificantEnergy />} />
+          <Route path="qms/view-significant-energy" element={<QmsViewSignificantEnergy />} />
+          <Route path="qms/draft-significant-energy" element={<QmsDraftSignificantEnergy />} />
+          <Route path="qms/edit-draft-significant-energy" element={<QmsEditDraftSignificantEnergy />} />
+          <Route path="qms/view-draft-significant-energy" element={<QmsViewDraftSignificantEnergy />} />
+
+          <Route path="qms/list-energy-improvement-opportunities" element={<QmsListEnergyImprovement />} />
+          <Route path="qms/add-energy-improvement-opportunities" element={<QmsAddEnergyImprovement />} />
+          <Route path="qms/edit-energy-improvement-opportunities" element={<QmsEditEnergyImprovement />} />
+          <Route path="qms/view-energy-improvement-opportunities" element={<QmsViewEnergyImprovement />} />
+          <Route path="qms/draft-energy-improvement-opportunities" element={<QmsDraftEnergyImprovements />} />
+          <Route path="qms/edit-draft-energy-improvement-opportunities" element={<QmsEditDraftEnergyImprovement />} />
+          <Route path="qms/view-draft-energy-improvement-opportunities" element={<QmsViewDraftEnergyImprovement />} />
+
+          <Route path="qms/list-energy-action-plan" element={<QmsListEnergyAction />} />
 
 
 

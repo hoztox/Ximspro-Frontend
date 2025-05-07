@@ -110,10 +110,10 @@ const QmsViewTargets = () => {
 
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                        Upload Attachment
+                         Attached Document
                         </label>
-                        <button className="flex gap-2 click-view-file-btn text-[#1E84AF]">
-                            Click to view file <Eye/>
+                        <button className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center">
+                            Click to view file <Eye size={17}/>
                         </button>
                     </div>
 

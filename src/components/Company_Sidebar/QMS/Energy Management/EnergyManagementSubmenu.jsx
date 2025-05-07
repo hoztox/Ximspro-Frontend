@@ -17,15 +17,27 @@ const EnergyManagementSubmenu = (props) => {
             icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
             path: "/company/qms/list-energy-review",
             relatedPaths: [
-                // "/company/qms/addpolicy",
-                // "/company/qms/editpolicy/",
+                "/company/qms/add-energy-review",
+                "/company/qms/edit-energy-review",
+                "/company/qms/view-energy-review",
+                "/company/qms/draft-energy-review",
+                "/company/qms/edit-draft-energy-review",
+                "/company/qms/view-draft-energy-review",
             ]
         },
         {
             id: "energy-baselines",
             label: "Energy Baselines",
             icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-            // path: "/company/qms/manual",
+            path: "/company/qms/list-energy-baselines",
+            relatedPaths: [
+                "/company/qms/add-energy-baselines",
+                "/company/qms/edit-energy-baselines",
+                "/company/qms/view-energy-baselines",
+                "/company/qms/draft-energy-baselines",
+                "/company/qms/edit-draft-energy-baselines",
+                "/company/qms/view-draft-energy-baselines",
+            ]
         },
         {
             id: "significants-energy-use-and-consumptions",
@@ -33,15 +45,31 @@ const EnergyManagementSubmenu = (props) => {
             icon: (
                 <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/procedure",
+            path: "/company/qms/list-significant-energy",
+            relatedPaths: [
+                "/company/qms/add-significant-energy",
+                "/company/qms/edit-significant-energy",
+                "/company/qms/view-significant-energy",
+                "/company/qms/draft-significant-energy",
+                "/company/qms/edit-draft-significant-energy",
+                "/company/qms/view-draft-significant-energy",
+            ]
         },
         {
-            id: "energy-involvement-opportunities",
-            label: "Energy Involvement Opportunities",
+            id: "energy-improvement-opportunities",
+            label: "Energy Improvement Opportunities",
             icon: (
                 <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/record-format",
+            path: "/company/qms/list-energy-improvement-opportunities",
+            relatedPaths: [
+                "/company/qms/add-energy-improvement-opportunities",
+                "/company/qms/edit-energy-improvement-opportunities",
+                "/company/qms/view-energy-improvement-opportunities",
+                "/company/qms/draft-energy-improvement-opportunities",
+                "/company/qms/edit-draft-energy-improvement-opportunities",
+                "/company/qms/view-draft-energy-improvement-opportunities",
+            ]
         },
         {
             id: "energy-action-plans",
@@ -49,7 +77,15 @@ const EnergyManagementSubmenu = (props) => {
             icon: (
                 <img src={parties} alt="Interested Parties" className="w-[15px] h-[15px]" />
             ),
-            // path: "/company/qms/interested-parties",
+            path: "/company/qms/list-energy-action-plan",
+            relatedPaths: [
+                // "/company/qms/add-energy-improvement-opportunities",
+                // "/company/qms/edit-energy-improvement-opportunities",
+                // "/company/qms/view-energy-improvement-opportunities",
+                // "/company/qms/draft-energy-improvement-opportunities",
+                // "/company/qms/edit-draft-energy-improvement-opportunities",
+                // "/company/qms/view-draft-energy-improvement-opportunities",
+            ]
         },
     ]
 

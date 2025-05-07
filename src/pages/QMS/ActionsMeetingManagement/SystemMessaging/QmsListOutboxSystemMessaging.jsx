@@ -145,7 +145,7 @@ const QmsListOutboxSystemMessaging = () => {
             </AnimatePresence>
 
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-awareness-training-head">Outbox</h1>
+                <h1 className="list-awareness-training-head">Sent Items</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
