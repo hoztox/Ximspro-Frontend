@@ -339,6 +339,11 @@ import QmsViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/
 import QmsDraftEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEnergyAction";
 import QmsDraftEditEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEditEnergyAction";
 import QmsDraftViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftViewEnergyAction";
+import QmsEditEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsEditEnvironmentalAspect";
+import QmsViewEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsViewEnvironmentalAspect";
+import QmsDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsDraftEnvironmentalAspect";
+import QmsEditDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsEditDraftEnvironmentalAspect";
+import QmsViewDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsViewDraftEnvironmentalAspect";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -635,6 +640,11 @@ const ThemedApp = () => {
           {/* QMS Risk & Opportunities Management*/}
           <Route path="qms/list-environmantal-aspect" element={<QmsListEnvironmentalAspect />} />
           <Route path="qms/add-environmantal-aspect" element={<QmsAddEnvironmentalAspect />} />
+          <Route path="qms/edit-environmantal-aspect" element={<QmsEditEnvironmentalAspect />} />
+          <Route path="qms/view-environmantal-aspect" element={<QmsViewEnvironmentalAspect />} />
+          <Route path="qms/draft-environmantal-aspect" element={<QmsDraftEnvironmentalAspect />} />
+          <Route path="qms/edit-draft-environmantal-aspect" element={<QmsEditDraftEnvironmentalAspect />} />
+          <Route path="qms/view-draft-environmantal-aspect" element={<QmsViewDraftEnvironmentalAspect />} />
 
 
 

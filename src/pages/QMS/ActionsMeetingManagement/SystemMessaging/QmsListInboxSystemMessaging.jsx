@@ -1,50 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Eye, Search, X } from 'lucide-react';
 import replay from "../../../../assets/images/ActionMeetings/replay.svg";
 import view from "../../../../assets/images/ActionMeetings/view.svg";
 import forward from "../../../../assets/images/ActionMeetings/forward.svg";
 import deletes from "../../../../assets/images/ActionMeetings/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
 import "./viewpage.css"
-import { motion, AnimatePresence } from 'framer-motion'; // For animations
+import { motion, AnimatePresence } from 'framer-motion';
 
 const QmsListInboxSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
+    // Get the relevant user ID for API calls
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
 
-    const [trainingItems, setTrainingItems] = useState([
-        {
-            id: 1,
-            title: 'Anonymous',
-            date: '03-04-2025',
-            time: '09:00:24am',
-            to: 'user123',
-            message: 'abcd',
-            subject: 'xyz'
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
 
-        },
-        {
-            id: 2,
-            title: 'Anonymous',
-            date: '03-04-2025',
-            time: '09:00:24am',
-            to: 'user123',
-            message: 'abcd',
-            subject: 'xyz'
-        },
-    ]);
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    useEffect(() => {
+        const fetchMessages = async () => {
+            try {
+                const userId = getRelevantUserId();
+
+                if (!userId) {
+                    throw new Error("User ID not found");
+                }
+
+                // Use the correct API endpoint format
+                const response = await axios.get(`${BASE_URL}/qms/messages/inbox/${userId}/`);
+                setMessages(response.data);
+                setLoading(false);
+                console.log('fetched messagesssssss', response.data);
+
+            } catch (err) {
+                console.error("Error fetching messages:", err);
+                setError(err.message || "Failed to fetch messages");
+                setLoading(false);
+            }
+        };
+
+        fetchMessages();
+    }, []);
+
+    // Format date from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "08-05-2025")
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
+    // Format time from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "03:46:46am")
+    const formatTime = (dateString) => {
+        const date = new Date(dateString);
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'pm' : 'am';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+        return `${hours}:${minutes}:${seconds}${ampm}`;
+    };
 
     const itemsPerPage = 10;
-    const totalItems = trainingItems.length;
+    const totalItems = messages.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Filter items based on search query
-    const filteredItems = trainingItems.filter(item =>
-        item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredItems = messages.filter(item =>
+        item.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.from_user && item.from_user.name && item.from_user.name.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     // Get current page items
@@ -72,26 +116,47 @@ const QmsListInboxSystemMessaging = () => {
         navigate('/company/qms/compose')
     }
 
-    const handleInboxReplay = () => {
-        navigate('/company/qms/inbox-replay')
+    const handleInboxReplay = (message) => {
+        navigate('/company/qms/inbox-replay', { state: { message } })
     }
 
-    const handleInboxForward = () => {
-        navigate('/company/qms/inbox-forward')
+    const handleInboxForward = (message) => {
+        navigate('/company/qms/inbox-forward', { state: { message } })
     }
 
-    // Handle view button click
     const handleView = (item) => {
         setSelectedMessage(item);
         setIsModalOpen(true);
     }
 
-    // Close modal
     const closeModal = () => {
         setIsModalOpen(false);
-        // Small delay to allow animation to complete before clearing selected message
         setTimeout(() => setSelectedMessage(null), 300);
     }
+
+    const handleDelete = async (id) => {
+        try {
+            const userId = getRelevantUserId();
+            if (!userId) {
+                throw new Error("User ID not found");
+            }
+
+            // Use the existing endpoint but pass the user_id to make it user-specific
+            await axios.put(`${BASE_URL}/qms/messages/${id}/trash/`, {
+                is_trash: true,
+                user_id: userId  // Add user_id to make trash status user-specific
+            });
+
+            // Update local state to remove the message from the UI
+            setMessages(messages.filter(msg => msg.id !== id));
+        } catch (err) {
+            console.error("Error deleting message:", err);
+            setError(err.message || "Failed to delete message");
+        }
+    }
+
+    if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
+    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg relative">
@@ -112,7 +177,7 @@ const QmsListInboxSystemMessaging = () => {
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-[449px]"
+                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {selectedMessage && (
@@ -129,28 +194,45 @@ const QmsListInboxSystemMessaging = () => {
 
                                     <div className='space-y-[40px] pt-5'>
                                         <div>
-                                            <label className='view-page-label pb-[6px]'>To</label> 
-                                            <p className='view-page-data'>{selectedMessage.to}</p>
+                                            <label className='view-page-label pb-[6px]'>To</label>
+                                            <ul className='view-page-data list-disc list-inside space-y-1'>
+                                                {selectedMessage.to_user?.length > 0 ? (
+                                                    selectedMessage.to_user.map(user => (
+                                                        <li key={user.id}>
+                                                            {user.first_name} {user.last_name}
+                                                        </li>
+                                                    ))
+                                                ) : (
+                                                    <li>Anonymous</li>
+                                                )}
+                                            </ul>
                                         </div>
 
+
                                         <div>
-                                            <label className='view-page-label pb-[6px]'>Subject</label> 
+                                            <label className='view-page-label pb-[6px]'>Subject</label>
                                             <p className='view-page-data'>{selectedMessage.subject}</p>
                                         </div>
 
-                                        <div className='flex flex-col items-start'>
-                                            <label className='view-page-label pb-[6px]'>Document</label> 
-                                            <button className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'>
-                                                Click to view file <Eye size={17}/>
-                                            </button>
-                                        </div>
+                                        {selectedMessage.file && (
+                                            <div className='flex flex-col items-start'>
+                                                <label className='view-page-label pb-[6px]'>Document</label>
+                                                <a
+                                                    href={selectedMessage.file}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'
+                                                >
+                                                    Click to view file <Eye size={17} />
+                                                </a>
+                                            </div>
+                                        )}
 
                                         <div>
-                                            <label className='view-page-label pb-[6px]'>Message</label> 
+                                            <label className='view-page-label pb-[6px]'>Message</label>
                                             <p className='view-page-data'>{selectedMessage.message}</p>
                                         </div>
                                     </div>
-
                                 </>
                             )}
                         </motion.div>
@@ -158,7 +240,6 @@ const QmsListInboxSystemMessaging = () => {
                 )}
             </AnimatePresence>
 
-            {/* Rest of your existing component */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="list-awareness-training-head">Inbox</h1>
                 <div className="flex gap-4">
@@ -215,34 +296,40 @@ const QmsListInboxSystemMessaging = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentItems.map((item, index) => (
-                            <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
-                                <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.title}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.date}</td>
-                                <td className="px-3 list-awareness-training-datas">{item.time}</td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <button onClick={() => handleView(item)}>
-                                        <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                                    </button>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <button onClick={handleInboxReplay}>
-                                        <img src={replay} alt="replay Icon" className='w-[16px] h-[16px]' />
-                                    </button>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <button onClick={handleInboxForward}>
-                                        <img src={forward} alt="forward Icon" className='w-[16px] h-[16px]' />
-                                    </button>
-                                </td>
-                                <td className="list-awareness-training-datas text-center">
-                                    <button>
-                                        <img src={deletes} alt="delete Icon" className='w-[16px] h-[16px]' />
-                                    </button>
-                                </td>
+                        {currentItems.length > 0 ? (
+                            currentItems.map((item, index) => (
+                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                    <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
+                                    <td className="px-3 list-awareness-training-datas">{formatTime(item.created_at)}</td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <button onClick={() => handleView(item)}>
+                                            <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                                        </button>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <button onClick={() => handleInboxReplay(item)}>
+                                            <img src={replay} alt="replay Icon" className='w-[16px] h-[16px]' />
+                                        </button>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <button onClick={() => handleInboxForward(item)}>
+                                            <img src={forward} alt="forward Icon" className='w-[16px] h-[16px]' />
+                                        </button>
+                                    </td>
+                                    <td className="list-awareness-training-datas text-center">
+                                        <button onClick={() => handleDelete(item.id)}>
+                                            <img src={deletes} alt="delete Icon" className='w-[16px] h-[16px]' />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="8" className="text-center py-4 not-found">No Inbox Messages Found</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -282,4 +369,4 @@ const QmsListInboxSystemMessaging = () => {
     );
 }
 
-export default QmsListInboxSystemMessaging;
+export default QmsListInboxSystemMessaging; 

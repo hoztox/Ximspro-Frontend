@@ -20,10 +20,11 @@ const RiskOpportunitiesSubmenu = (props) => {
       path: "/company/qms/list-environmantal-aspect",
       relatedPaths: [
         "/company/qms/add-environmantal-aspect",
-        // "/company/qms/draftmanual",
-        // "/company/qms/viewmanual",
-        // "/company/qms/editmanual",
-        // "/company/qms/editdraftmanual",
+        "/company/qms/edit-environmantal-aspect",
+        "/company/qms/view-environmantal-aspect",
+        "/company/qms/draft-environmantal-aspect",
+        "/company/qms/edit-draft-environmantal-aspect",
+        "/company/qms/view-draft-environmantal-aspect",
       ],
     },
     {
@@ -127,9 +128,8 @@ const RiskOpportunitiesSubmenu = (props) => {
               {category.icon}
             </div>
             <span
-              className={`text-center ${
-                active ? "text-white" : "text-[#5B5B5B]"
-              } documentation-submenu-label duration-200`}
+              className={`text-center ${active ? "text-white" : "text-[#5B5B5B]"
+                } documentation-submenu-label duration-200`}
             >
               {category.label}
             </span>

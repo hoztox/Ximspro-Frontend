@@ -8,17 +8,17 @@ import axios from "axios";
 const QmsComposeSystemMessaging = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    to_users: [],
+    to_user: [],
     subject: "",
     file: null,
     message: "",
   });
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-  // Removed showDropdown state since we want the list to always be visible
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -95,9 +95,9 @@ const QmsComposeSystemMessaging = () => {
     const userName = user ? `${user.first_name} ${user.last_name}` : "";
 
     setFormData((prev) => {
-      if (prev.to_users.includes(userId)) {
+      if (prev.to_user.includes(userId)) {
         // Remove user
-        const updatedUsers = prev.to_users.filter((id) => id !== userId);
+        const updatedUsers = prev.to_user.filter((id) => id !== userId);
 
         // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
@@ -106,7 +106,7 @@ const QmsComposeSystemMessaging = () => {
 
         return {
           ...prev,
-          to_users: updatedUsers,
+          to_user: updatedUsers,
         };
       } else {
         // Add user
@@ -117,7 +117,7 @@ const QmsComposeSystemMessaging = () => {
 
         return {
           ...prev,
-          to_users: [...prev.to_users, userId],
+          to_user: [...prev.to_user, userId],
         };
       }
     });
@@ -129,7 +129,7 @@ const QmsComposeSystemMessaging = () => {
   const removeSelectedUser = (userId) => {
     setFormData((prev) => ({
       ...prev,
-      to_users: prev.to_users.filter((id) => id !== userId),
+      to_user: prev.to_user.filter((id) => id !== userId),
     }));
 
     const newSelectedNames = { ...selectedUserNames };
@@ -142,7 +142,7 @@ const QmsComposeSystemMessaging = () => {
     setLoading(true);
     setError(null);
 
-    if (formData.to_users.length === 0) {
+    if (formData.to_user.length === 0) {
       setError("Please select at least one recipient");
       setLoading(false);
       return;
@@ -157,15 +157,18 @@ const QmsComposeSystemMessaging = () => {
       }
 
       const formDataToSend = new FormData();
+      console.log('formDataaaaaa', formData);
+      
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
 
-      formData.to_users.forEach((userId) => {
-        formDataToSend.append("to_users", userId);
+      formData.to_user.forEach((userId) => {
+        formDataToSend.append("to_user", userId);
       });
 
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
+
       if (formData.file) {
         formDataToSend.append("file", formData.file);
       }
@@ -179,6 +182,8 @@ const QmsComposeSystemMessaging = () => {
           },
         }
       );
+      console.log('responseeeeeeee:', response.data);
+      
 
       navigate("/company/qms/list-inbox");
     } catch (error) {
@@ -186,6 +191,59 @@ const QmsComposeSystemMessaging = () => {
       setError(error.response?.data?.message || "Failed to send message");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveAsDraft = async (e) => {
+    e.preventDefault();
+    setDraftLoading(true);
+    setError(null);
+
+    try {
+      const companyId = getUserCompanyId();
+      const fromUserId = getRelevantUserId();
+
+      if (!companyId || !fromUserId) {
+        throw new Error("Missing required user information");
+      }
+
+      const formDataToSend = new FormData();
+      console.log('draft formdata', formData);
+      
+      formDataToSend.append("company", companyId);
+      formDataToSend.append("from_user", fromUserId);
+
+      // For drafts, we can save even without recipients
+      formData.to_user.forEach((userId) => {
+        formDataToSend.append("to_user", userId);
+      });
+
+      formDataToSend.append("subject", formData.subject);
+      formDataToSend.append("message", formData.message);
+
+      if (formData.file) {
+        formDataToSend.append("file", formData.file);
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/qms/message/draft-create/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log('draft response......', response.data);
+      
+      // Show success message or navigate to drafts folder
+      navigate("/company/qms/list-draft");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      setError(error.response?.data?.message || "Failed to save draft");
+    } finally {
+      setDraftLoading(false);
     }
   };
 
@@ -199,7 +257,6 @@ const QmsComposeSystemMessaging = () => {
       .includes(searchTerm.toLowerCase())
   );
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
@@ -227,7 +284,7 @@ const QmsComposeSystemMessaging = () => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
+        {/* To Field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -237,7 +294,7 @@ const QmsComposeSystemMessaging = () => {
               className="add-training-inputs flex flex-wrap items-center p-2 min-h-10 cursor-text overflow-y-scroll"
               onClick={handleContainerClick}
             >
-              {formData.to_users.map((userId) => (
+              {formData.to_user.map((userId) => (
                 <div
                   key={userId}
                   className="flex items-center bg-[#1C1C24] text-white text-sm rounded px-2 py-1 mr-1 mb-1"
@@ -256,7 +313,7 @@ const QmsComposeSystemMessaging = () => {
               <input
                 type="text"
                 placeholder={
-                  formData.to_users.length > 0 ? "" : "Search users..."
+                  formData.to_user.length > 0 ? "" : "Search users..."
                 }
                 value={searchTerm}
                 onChange={(e) => {
@@ -281,7 +338,7 @@ const QmsComposeSystemMessaging = () => {
                   <input
                     type="checkbox"
                     id={`user-${user.id}`}
-                    checked={formData.to_users.includes(user.id)}
+                    checked={formData.to_user.includes(user.id)}
                     onChange={() => toggleUserSelection(user.id)}
                     className="mr-2 form-checkboxes"
                   />
@@ -332,9 +389,9 @@ const QmsComposeSystemMessaging = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-                <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
-                    Click to view file <Eye size={17}/>
-                </button>
+              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+                Click to view file <Eye size={17} />
+              </button>
             </div>
             {formData.file && (
               <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
@@ -366,10 +423,11 @@ const QmsComposeSystemMessaging = () => {
           <div>
             <button
               type="button"
+              onClick={handleSaveAsDraft}
               className="request-correction-btn duration-200 w-full !p-[8px]"
-              disabled={loading}
+              disabled={draftLoading}
             >
-              Save as Draft
+              {draftLoading ? "Saving..." : "Save as Draft"}
             </button>
           </div>
           <div className="flex gap-5 w-[65%] justify-end">
@@ -377,14 +435,14 @@ const QmsComposeSystemMessaging = () => {
               type="button"
               onClick={handleCancel}
               className="cancel-btn duration-200"
-              disabled={loading}
+              disabled={loading || draftLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="save-btn duration-200"
-              disabled={loading}
+              disabled={loading || draftLoading}
             >
               {loading ? "Sending..." : "Send"}
             </button>

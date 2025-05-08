@@ -84,15 +84,15 @@ const QmsListEnvironmentalAspect = () => {
   };
 
   const handleDraftEnvironmentalAspect = () => {
-    // navigate("/company/qms/draft-environmentalAspect-actions");
+    navigate("/company/qms/draft-environmantal-aspect");
   };
 
   const handleQmsViewEnvironmentalAspect = () => {
-    // navigate("/company/qms/view-environmentalAspect-actions");
+    navigate("/company/qms/view-environmantal-aspect");
   };
 
   const handleQmsEditEnvironmentalAspect = () => {
-    // navigate("/company/qms/edit-environmentalAspect-actions");
+    navigate("/company/qms/edit-environmantal-aspect");
   };
 
   // Delete  environmentalAspect
@@ -221,9 +221,8 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
           >
             Previous
           </button>
@@ -232,9 +231,8 @@ const QmsListEnvironmentalAspect = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {number}
             </button>
@@ -243,9 +241,8 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
           >
             Next
           </button>
