@@ -303,8 +303,8 @@ import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTa
 import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
 import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
 import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview"
-import QmsListEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsListEnvironmentalAspect";
-import QmsAddEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsAddEnvironmentalAspect";
+import QmsListEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsListEnvironmentalAspect";
+import QmsAddEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsAddEnvironmentalAspect";
 import QmsAddEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsAddEnergyReview";
 import QmsEditEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsEditEnergyReview";
 import QmsViewEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsViewEnergyReview";
@@ -339,11 +339,11 @@ import QmsViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/
 import QmsDraftEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEnergyAction";
 import QmsDraftEditEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftEditEnergyAction";
 import QmsDraftViewEnergyAction from "./pages/QMS/EnergyManagement/EnergyActionPlans/QmsDraftViewEnergyAction";
-import QmsEditEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsEditEnvironmentalAspect";
-import QmsViewEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsViewEnvironmentalAspect";
-import QmsDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsDraftEnvironmentalAspect";
-import QmsEditDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsEditDraftEnvironmentalAspect";
-import QmsViewDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/Environmantal Aspect/QmsViewDraftEnvironmentalAspect";
+import QmsEditEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsEditEnvironmentalAspect";
+import QmsViewEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsViewEnvironmentalAspect";
+import QmsDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsDraftEnvironmentalAspect";
+import QmsEditDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsEditDraftEnvironmentalAspect";
+import QmsViewDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsViewDraftEnvironmentalAspect";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
