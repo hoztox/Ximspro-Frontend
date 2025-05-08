@@ -1,104 +1,151 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsManualDraftConfirmModal from './Modals/DeleteQmsManualDraftConfirmModal';
+import DeleteQmsManualDraftSucessModal from './Modals/DeleteQmsManualDraftSucessModal';
+import DeleteQmsManualDraftErrorModal from './Modals/DeleteQmsManualDraftErrorModal';
 
 const QmsDraftEnvironmentalAspect = () => {
-    const initialData = [
-        {
-            id: 1,
-            title: "Anonymous",
-            source: "Anonymous",
-            aspect_no: "123",
-            applicable_legal_requirement: "Test",
-            date_raised: "03-12-2024",
-            level_of_impact: "Test",
-        },
-        {
-            id: 2,
-            title: "Anonymous",
-            source: "Anonymous",
-            aspect_no: "123",
-            applicable_legal_requirement: "Test",
-            date_raised: "03-12-2024",
-            level_of_impact: "Test",
-        },
-        {
-            id: 3,
-            title: "Anonymous",
-            source: "Anonymous",
-            aspect_no: "123",
-            applicable_legal_requirement: "Test",
-            date_raised: "03-12-2024",
-            level_of_impact: "Test",
-        },
-    ];
-
-    // State
-    const [environmentalAspects, setEnvironmentalAspects] = useState(initialData);
+    const [environmentalAspects, setEnvironmentalAspects] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState("");
-    const [formData, setFormData] = useState({
-        title: "",
-        source: "",
-        aspect_no: "",
-        applicable_legal_requirement: "",
-        date_raised: "",
-        level_of_impact: "",
-    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [aspectToDelete, setAspectToDelete] = useState(null);
+    const [showDeleteDraftManualSuccessModal, setShowDeleteDraftManualSuccessModal] = useState(false);
+    const [showDeleteDraftManualErrorModal, setShowDeleteDraftManualErrorModal] = useState(false);
 
-    const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchQuery(value);
-        setSearchTerm(value); // Update_raised searchTerm as well
-        setCurrentPage(1);
-    };
-
-    // Pagination
     const itemsPerPage = 10;
     const totalItems = environmentalAspects.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-    // Get current items
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
+    const fetchEnvironmentalAspects = async () => {
+        try {
+            setLoading(true);
+            const id = getRelevantUserId();
+            const response = await axios.get(`${BASE_URL}/qms/environmental-aspect-draft/${id}/`);
+            setEnvironmentalAspects(response.data);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching environmental aspects:", err);
+            // setError("Failed to load environmental aspects. Please try again.");
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchEnvironmentalAspects();
+    }, []);
+
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-');
+    };
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        setCurrentPage(1);
+    };
+
+    const handleDeleteClick = (id) => {
+        setAspectToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = () => {
+        if (aspectToDelete) {
+            axios
+                .delete(`${BASE_URL}/qms/environmental-aspect-detail/${aspectToDelete}/`)
+                .then((response) => {
+                    setEnvironmentalAspects(environmentalAspects.filter((aspect) => aspect.id !== aspectToDelete));
+                    setShowDeleteDraftManualSuccessModal(true);
+                    setTimeout(() => {
+                        setShowDeleteDraftManualSuccessModal(false);
+                    }, 1500);
+                    console.log("Environmental aspect deleted successfully:", response.data);
+                })
+                .catch((error) => {
+                    setShowDeleteDraftManualErrorModal(true);
+                    setTimeout(() => {
+                        setShowDeleteDraftManualErrorModal(false);
+                    }, 1500);
+                    console.error("Error deleting environmental aspect:", error);
+                });
+        }
+        setShowDeleteModal(false);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+    };
+
+    const filteredEnvironmentalAspects = environmentalAspects.filter(
+        (environmentalAspect) =>
+            (environmentalAspect.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (environmentalAspect.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (environmentalAspect.aspect_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+            (environmentalAspect.applicable_legal_requirement?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    );
+
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = environmentalAspects.slice(indexOfFirstItem, indexOfLastItem);
-
-    // Search functionality
-
-    const filteredEnvironmentalAspects = currentItems.filter(
-        (environmentalAspect) =>
-            environmentalAspect.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            environmentalAspect.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            environmentalAspect.aspect_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            environmentalAspect.applicable_legal_requirement.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const paginatedAspects = filteredEnvironmentalAspects.slice(indexOfFirstItem, indexOfLastItem);
 
     const handleClose = () => {
         navigate("/company/qms/list-environmantal-aspect");
-    }
-
-    const handleQmsViewDraftEnvironmentalAspect = () => {
-        navigate("/company/qms/view-draft-environmantal-aspect");
     };
 
-    const handleQmsEditDraftEnvironmentalAspect = () => {
-        navigate("/company/qms/edit-draft-environmantal-aspect");
+    const handleQmsViewDraftEnvironmentalAspect = (id) => {
+        navigate(`/company/qms/view-draft-environmantal-aspect/${id}`);
     };
 
-    // Delete  environmentalAspect
-    const handleDeleteDraftEnvironmentalAspect = (id) => {
-        setEnvironmentalAspects(environmentalAspects.filter((environmentalAspect) => environmentalAspect.id !== id));
+    const handleQmsEditDraftEnvironmentalAspect = (id) => {
+        navigate(`/company/qms/edit-draft-environmantal-aspect/${id}`);
     };
 
-    // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
-    const nextPage = () =>
-        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
     return (
@@ -119,102 +166,122 @@ const QmsDraftEnvironmentalAspect = () => {
                             <Search size={18} />
                         </div>
                     </div>
-
                     <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
                         <X className="text-white" />
                     </button>
                 </div>
             </div>
 
+            {/* Modals */}
+            <DeleteQmsManualDraftConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCancelDelete}
+            />
+            <DeleteQmsManualDraftSucessModal
+                showDeleteDraftManualSuccessModal={showDeleteDraftManualSuccessModal}
+                onClose={() => setShowDeleteDraftManualSuccessModal(false)}
+            />
+            <DeleteQmsManualDraftErrorModal
+                showDeleteDraftManualErrorModal={showDeleteDraftManualErrorModal}
+                onClose={() => setShowDeleteDraftManualErrorModal(false)}
+            />
+
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead className="bg-[#24242D]">
-                        <tr className="h-[48px]">
-                            <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                            <th className="px-2 text-left add-manual-theads">Title</th>
-                            <th className="px-2 text-left add-manual-theads">Source</th>
-                            <th className="px-2 text-left add-manual-theads">Aspect No</th>
-                            <th className="px-2 text-left add-manual-theads">
-                                Applicable Legal Requirement
-                            </th>
-                            <th className="px-2 text-left add-manual-theads">Action</th>
-                            <th className="px-2 text-center add-manual-theads">View</th>
-                            <th className="pr-2 text-center add-manual-theads">Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredEnvironmentalAspects.map((environmentalAspect, index) => (
-                            <tr
-                                key={environmentalAspect.id}
-                                className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
-                            >
-                                <td className="pl-5 pr-2 add-manual-datas">{environmentalAspect.id}</td>
-                                <td className="px-2 add-manual-datas">{environmentalAspect.title}</td>
-                                <td className="px-2 add-manual-datas">{environmentalAspect.source}</td>
-                                <td className="px-2 add-manual-datas">
-                                    {environmentalAspect.aspect_no}
-                                </td>
-                                <td className="px-2 add-manual-datas">
-                                    {environmentalAspect.applicable_legal_requirement}
-                                </td>
-                                <td className="px-2 add-manual-datas">
-                                    <button onClick={handleQmsEditDraftEnvironmentalAspect} className="text-[#1E84AF]">
-                                        Click to Continue
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewDraftEnvironmentalAspect}>
-                                        <img
-                                            src={viewIcon}
-                                            alt="View Icon"
-                                            style={{
-                                                filter:
-                                                    "brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)",
-                                            }}
-                                        />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleDeleteDraftEnvironmentalAspect}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                {loading ? (
+                    <div className="text-center py-4 text-white">Loading environmental aspects...</div>
+                ) : error ? (
+                    <div className="text-center py-4 text-red-500">{error}</div>
+                ) : (
+                    <table className="w-full border-collapse">
+                        <thead className="bg-[#24242D]">
+                            <tr className="h-[48px]">
+                                <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
+                                <th className="px-2 text-left add-manual-theads">Title</th>
+                                <th className="px-2 text-left add-manual-theads">Source</th>
+                                <th className="px-2 text-left add-manual-theads">Aspect No</th>
+                                <th className="px-2 text-left add-manual-theads">Applicable Legal Requirement</th>
+                                <th className="px-2 text-left add-manual-theads">Action</th>
+                                <th className="px-2 text-center add-manual-theads">View</th>
+                                <th className="pr-2 text-center add-manual-theads">Delete</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {paginatedAspects.length > 0 ? (
+                                paginatedAspects.map((environmentalAspect, index) => (
+                                    <tr
+                                        key={environmentalAspect.id}
+                                        className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
+                                    >
+                                        <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                                        <td className="px-2 add-manual-datas">{environmentalAspect.title || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{environmentalAspect.source || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{environmentalAspect.aspect_no || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{environmentalAspect.applicable_legal_requirement || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">
+                                            <button
+                                                onClick={() => handleQmsEditDraftEnvironmentalAspect(environmentalAspect.id)}
+                                                className="text-[#1E84AF]"
+                                            >
+                                                Click to Continue
+                                            </button>
+                                        </td>
+                                        <td className="px-2 add-manual-datas !text-center">
+                                            <button onClick={() => handleQmsViewDraftEnvironmentalAspect(environmentalAspect.id)}>
+                                                <img
+                                                    src={viewIcon}
+                                                    alt="View Icon"
+                                                    style={{
+                                                        filter:
+                                                            "brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)",
+                                                    }}
+                                                />
+                                            </button>
+                                        </td>
+                                        <td className="px-2 add-manual-datas !text-center">
+                                            <button onClick={() => handleDeleteClick(environmentalAspect.id)}>
+                                                <img src={deleteIcon} alt="Delete Icon" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="8" className="text-center py-4 not-found">
+                                        No Environmental Aspects found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                )}
             </div>
 
             {/* Pagination */}
             <div className="flex justify-between items-center mt-6 text-sm">
-                <div className="text-white total-text">Total-{totalItems}</div>
+                <div className="text-white total-text">Total-{filteredEnvironmentalAspects.length}</div>
                 <div className="flex items-center gap-5">
                     <button
                         onClick={prevPage}
                         disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-                            }`}
+                        className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""}`}
                     >
                         Previous
                     </button>
-
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
                         <button
                             key={number}
                             onClick={() => paginate(number)}
-                            className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
-                                }`}
+                            className={`${currentPage === number ? "pagin-active" : "pagin-inactive"}`}
                         >
                             {number}
                         </button>
                     ))}
-
                     <button
                         onClick={nextPage}
                         disabled={currentPage === totalPages}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
-                            }`}
+                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""}`}
                     >
                         Next
                     </button>
@@ -223,4 +290,5 @@ const QmsDraftEnvironmentalAspect = () => {
         </div>
     );
 };
-export default QmsDraftEnvironmentalAspect
+
+export default QmsDraftEnvironmentalAspect;

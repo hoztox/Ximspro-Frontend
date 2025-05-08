@@ -31,7 +31,15 @@ const RiskOpportunitiesSubmenu = (props) => {
       id: "environmetal-impact-assesments",
       label: "Environmetal Impact Assesments",
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
-      // path: "/company/qms/manual",
+      path: "/company/qms/list-environmantal-impact",
+      relatedPaths: [
+        "/company/qms/add-environmantal-impact",
+        "/company/qms/edit-environmantal-impact",
+        "/company/qms/view-environmantal-impact",
+        "/company/qms/draft-environmantal-impact",
+        "/company/qms/edit-draft-environmantal-impact",
+        "/company/qms/view-draft-environmantal-impact",
+      ],
     },
     {
       id: "environmental-incidents",

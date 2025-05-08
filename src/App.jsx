@@ -344,6 +344,13 @@ import QmsViewEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/
 import QmsDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsDraftEnvironmentalAspect";
 import QmsEditDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsEditDraftEnvironmentalAspect";
 import QmsViewDraftEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsViewDraftEnvironmentalAspect";
+import QmsListEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsListEnvironmentalImpact";
+import QmsAddEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsAddEnvironmentalImpact";
+import QmsEditEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsEditEnvironmentalImpact";
+import QmsViewEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsViewEnvironmentalImpact";
+import QmsDraftEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsDraftEnvironmentalImpact";
+import QmsEditDraftEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsEditDraftEnvironmentalImpact";
+import QmsViewDraftEnvironmentalImpact from "./pages/QMS/RiskOpportunitiesManagement/EnvironmetalImpactAssesments/QmsViewDraftEnvironmentalImpact";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -634,9 +641,6 @@ const ThemedApp = () => {
 
 
 
-
-
-
           {/* QMS Risk & Opportunities Management*/}
           <Route path="qms/list-environmantal-aspect" element={<QmsListEnvironmentalAspect />} />
           <Route path="qms/add-environmantal-aspect" element={<QmsAddEnvironmentalAspect />} />
@@ -646,9 +650,13 @@ const ThemedApp = () => {
           <Route path="qms/edit-draft-environmantal-aspect" element={<QmsEditDraftEnvironmentalAspect />} />
           <Route path="qms/view-draft-environmantal-aspect" element={<QmsViewDraftEnvironmentalAspect />} />
 
-
-
-
+          <Route path="qms/list-environmantal-impact" element={<QmsListEnvironmentalImpact />} />
+          <Route path="qms/add-environmantal-impact" element={<QmsAddEnvironmentalImpact />} />
+          <Route path="qms/edit-environmantal-impact" element={<QmsEditEnvironmentalImpact />} />
+          <Route path="qms/view-environmantal-impact" element={<QmsViewEnvironmentalImpact />} />
+          <Route path="qms/draft-environmantal-impact" element={<QmsDraftEnvironmentalImpact />} />
+          <Route path="qms/edit-draft-environmantal-impact" element={<QmsEditDraftEnvironmentalImpact />} />
+          <Route path="qms/view-draft-environmantal-impact" element={<QmsViewDraftEnvironmentalImpact />} />
 
 
 

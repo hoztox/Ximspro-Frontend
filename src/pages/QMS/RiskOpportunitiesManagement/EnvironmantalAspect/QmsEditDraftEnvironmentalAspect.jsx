@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ProcessTypeModal from './ProcessTypeModal';
+import EditDraftQmsManualSuccessModal from '../../Documentation/Manual/Modals/EditDraftQmsManualSuccessModal';
+
 const QmsEditDraftEnvironmentalAspect = () => {
-    const navigate = useNavigate()
-    const { id } = useParams() // Get the ID from URL params
+    const navigate = useNavigate();
+    const { id } = useParams();
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
@@ -16,6 +18,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
     const [error, setError] = useState(null);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
+    const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -54,7 +57,8 @@ const QmsEditDraftEnvironmentalAspect = () => {
         impact: '',
         written_by: '',
         checked_by: '',
-        approved_by: ''
+        approved_by: '',
+        publish: false
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
@@ -64,8 +68,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         impact: false,
         day: false,
         month: false,
-        year: false
+        year: false,
     });
+
+    const [errors, setErrors] = useState({});
 
     const fetchEnvironmentalAspect = async () => {
         try {
@@ -73,7 +79,6 @@ const QmsEditDraftEnvironmentalAspect = () => {
             const response = await axios.get(`${BASE_URL}/qms/environmental-aspects/${id}/`);
             const data = response.data;
 
-            // Format the date if it exists
             const formattedDate = data.date
                 ? data.date
                 : `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
@@ -92,10 +97,12 @@ const QmsEditDraftEnvironmentalAspect = () => {
                 send_email_to_approved_by: data.send_email_to_approved_by !== undefined ? data.send_email_to_approved_by : true,
                 date: formattedDate,
                 impact: data.impact || '',
-                written_by: data.written_by || '',
-                checked_by: data.checked_by || '',
-                approved_by: data.approved_by || ''
+                written_by: data.written_by?.id || '',
+                checked_by: data.checked_by?.id || '',
+                approved_by: data.approved_by?.id || '',
+                publish: data.publish || false
             });
+
             setLoading(false);
         } catch (error) {
             console.error('Error fetching environmental aspect:', error);
@@ -157,8 +164,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
     );
 
     const documentTypes = [
-        'Significant',
-        'Non Significant',
+        'System',
+        'Paper',
+        'External',
+        'Work Instruction'
     ];
 
     const toggleDropdown = (dropdown) => {
@@ -168,7 +177,6 @@ const QmsEditDraftEnvironmentalAspect = () => {
         }));
     };
 
-    const [errors, setErrors] = useState({});
     const validateForm = () => {
         const newErrors = {};
 
@@ -178,6 +186,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
 
         if (!formData.written_by) {
             newErrors.written_by = "Written/Prepare By is required";
+        }
+
+        if (!formData.aspect_no.trim()) {
+            newErrors.aspect_no = "Aspect Number is required";
         }
 
         if (!formData.checked_by) {
@@ -196,7 +208,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
     const handleCloseProcessTypeModal = (newProcessAdded = false) => {
         setIsProcessTypeModalOpen(false);
         if (newProcessAdded) {
-            // You might want to refresh process data here if needed
+            // Refresh process data if needed
         }
     };
 
@@ -255,8 +267,8 @@ const QmsEditDraftEnvironmentalAspect = () => {
     };
 
     const handleListDraftEnvironmentalAspect = () => {
-        navigate('/company/qms/draft-environmantal-aspect')
-    }
+        navigate('/company/qms/draft-environmantal-aspect');
+    };
 
     const handleUpdateClick = async () => {
         if (!validateForm()) {
@@ -274,11 +286,28 @@ const QmsEditDraftEnvironmentalAspect = () => {
             }
 
             const submitData = new FormData();
+            submitData.append('company', companyId);
 
-            // Append all form data
-            Object.keys(formData).forEach(key => {
-                if (formData[key] !== null && formData[key] !== undefined) {
-                    submitData.append(key, formData[key]);
+            const apiFormData = {
+                ...formData,
+                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
+                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
+                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
+                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+            };
+
+            if (formData.approved_by === null || formData.approved_by === '') {
+                delete apiFormData.approved_by;
+            } else if (typeof formData.approved_by === 'string') {
+                apiFormData.approved_by = parseInt(formData.approved_by, 10);
+            }
+
+            Object.keys(apiFormData).forEach(key => {
+                if (key !== 'send_notification_to_checked_by' &&
+                    key !== 'send_email_to_checked_by' &&
+                    key !== 'send_notification_to_approved_by' &&
+                    key !== 'send_email_to_approved_by') {
+                    submitData.append(key, apiFormData[key]);
                 }
             });
 
@@ -289,7 +318,11 @@ const QmsEditDraftEnvironmentalAspect = () => {
             });
 
             setLoading(false);
-            navigate('/company/qms/list-environmantal-aspect');
+            setShowEditDraftManualSuccessModal(true);
+            setTimeout(() => {
+                setShowEditDraftManualSuccessModal(false);
+                navigate('/company/qms/list-environmantal-aspect');
+            }, 2000);
 
         } catch (err) {
             setLoading(false);
@@ -324,7 +357,6 @@ const QmsEditDraftEnvironmentalAspect = () => {
         <div className="bg-[#1C1C24] rounded-lg text-white p-5">
             <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
                 <h1 className="add-training-head">Edit Draft Environmental Aspect</h1>
-
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
                     onClick={handleListDraftEnvironmentalAspect}
@@ -338,12 +370,17 @@ const QmsEditDraftEnvironmentalAspect = () => {
                 onClose={handleCloseProcessTypeModal}
             />
 
+            <EditDraftQmsManualSuccessModal
+                showEditDraftManualSuccessModal={showEditDraftManualSuccessModal}
+                onClose={() => setShowEditDraftManualSuccessModal(false)}
+            />
+
             {loading && !formData.aspect_no ? (
                 <div className="flex justify-center items-center h-64">
                     <p>Loading environmental aspect data...</p>
                 </div>
             ) : (
-                <div className=" mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
+                <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
@@ -375,7 +412,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Aspect No
+                                Aspect No <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -385,7 +422,9 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                             />
+                            <ErrorMessage message={errors.aspect_no} />
                         </div>
+
                         <div></div>
 
                         <div className="flex flex-col gap-3 relative">
@@ -402,7 +441,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -427,6 +466,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                 className="w-full add-qms-manual-inputs"
                             />
                         </div>
+
                         <div>
                             <label className="add-qms-manual-label">
                                 Aspect Description
@@ -492,7 +532,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                                     name="send_notification_to_approved_by"
                                                     checked={formData.send_notification_to_approved_by}
                                                     onChange={handleCheckboxChange}
-                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                                                 />
                                                 <label className="add-qms-manual-label check-label">System Notify</label>
                                             </div>
@@ -504,7 +544,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                                     name="send_email_to_approved_by"
                                                     checked={formData.send_email_to_approved_by}
                                                     onChange={handleCheckboxChange}
-                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                                                 />
                                                 <label className="add-qms-manual-label check-label">Email Notify</label>
                                             </div>
@@ -541,7 +581,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                         Checked/Reviewed By <span className="text-red-500">*</span>
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
-                                        <div className="ml-5 flex items-center h-[24px] ">
+                                        <div className="ml-5 flex items-center h-[24px]">
                                             <div className="flex items-center h-14 justify-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -553,7 +593,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                                 <label className="add-qms-manual-label check-label">System Notify</label>
                                             </div>
                                         </div>
-                                        <div className="ml-5 flex items-center h-[24px] ">
+                                        <div className="ml-5 flex items-center h-[24px]">
                                             <div className="flex items-center h-14 justify-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -667,7 +707,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                     onBlur={() => setOpenDropdowns(prev => ({ ...prev, impact: false }))}
                                 >
                                     <option value="">Select Level of Impact</option>
-                                    {documentTypes.map(type => (
+                                    {['Significant', 'Non Significant'].map(type => (
                                         <option key={type} value={type}>
                                             {type}
                                         </option>
@@ -678,10 +718,8 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                 />
                             </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center mt-[22px] justify-end">
-                        <div className='flex gap-[22px] mb-6'>
+                    <div className="flex items-end mt-[22px] justify-end">
+                        <div className='flex gap-[22px]'>
                             <button
                                 className="cancel-btn duration-200"
                                 onClick={handleListDraftEnvironmentalAspect}
@@ -698,9 +736,12 @@ const QmsEditDraftEnvironmentalAspect = () => {
                             </button>
                         </div>
                     </div>
+                    </div>
+
                 </div>
             )}
         </div>
     );
 };
-export default QmsEditDraftEnvironmentalAspect
+
+export default QmsEditDraftEnvironmentalAspect;
