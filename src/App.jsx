@@ -365,6 +365,13 @@ import QmsViewEnvironmentalWasteManagement from "./pages/QMS/RiskOpportunitiesMa
 import QmsDraftEnvironmentalWasteManagement from "./pages/QMS/RiskOpportunitiesManagement/EnvironmentalWasteManagement/QmsDraftEnvironmentalWasteManagement";
 import QmsDraftEditEnvironmentalWasteManagement from "./pages/QMS/RiskOpportunitiesManagement/EnvironmentalWasteManagement/QmsDraftEditEnvironmentalWasteManagement";
 import QmsDraftViewEnvironmentalWasteManagement from "./pages/QMS/RiskOpportunitiesManagement/EnvironmentalWasteManagement/QmsDraftViewEnvironmentalWasteManagement";
+import QmsListHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsListHealthSafetyHazards";
+import QmsAddHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsAddHealthSafetyHazards";
+import QmsEditHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsEditHealthSafetyHazards";
+import QmsViewHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsViewHealthSafetyHazards";
+import QmsDraftHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsDraftHealthSafetyHazards";
+import QmsDraftEditHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsDraftEditHealthSafetyHazards";
+import QmsDraftViewHealthSafetyHazards from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyHazards/QmsDraftViewHealthSafetyHazards";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -687,6 +694,14 @@ const ThemedApp = () => {
           <Route path="qms/draft-environmantal-waste-management" element={<QmsDraftEnvironmentalWasteManagement />} />
           <Route path="qms/edit-draft-environmantal-waste-management" element={<QmsDraftEditEnvironmentalWasteManagement />} />
           <Route path="qms/view-draft-environmantal-waste-management" element={<QmsDraftViewEnvironmentalWasteManagement />} />
+
+          <Route path="qms/list-health-safety-hazards" element={<QmsListHealthSafetyHazards />} />
+          <Route path="qms/add-health-safety-hazards" element={<QmsAddHealthSafetyHazards />} />
+          <Route path="qms/edit-health-safety-hazards" element={<QmsEditHealthSafetyHazards />} />
+          <Route path="qms/view-health-safety-hazards" element={<QmsViewHealthSafetyHazards />} />
+          <Route path="qms/draft-health-safety-hazards" element={<QmsDraftHealthSafetyHazards />} />
+          <Route path="qms/edit-draft-health-safety-hazards" element={<QmsDraftEditHealthSafetyHazards />} />
+          <Route path="qms/view-draft-health-safety-hazards" element={<QmsDraftViewHealthSafetyHazards />} />
 
 
 

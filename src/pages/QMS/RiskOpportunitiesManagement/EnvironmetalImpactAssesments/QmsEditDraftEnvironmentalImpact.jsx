@@ -451,7 +451,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                     </div>
                 )} */}
 
-            <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
+            <div className="mx-[18px] pt-[22px] px-[104px]">
                 <div className="grid md:grid-cols-2 gap-5">
                     <div>
                         <label className="add-qms-manual-label">

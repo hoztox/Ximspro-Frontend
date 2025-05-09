@@ -83,7 +83,15 @@ const RiskOpportunitiesSubmenu = (props) => {
           className="w-[15px] h-[15px]"
         />
       ),
-      // path: "/company/qms/interested-parties",
+      path: "/company/qms/list-health-safety-hazards",
+      relatedPaths: [
+        "/company/qms/add-health-safety-hazards",
+        "/company/qms/edit-health-safety-hazards",
+        "/company/qms/view-health-safety-hazards",
+        "/company/qms/draft-health-safety-hazards",
+        "/company/qms/edit-draft-health-safety-hazards",
+        "/company/qms/view-draft-health-safety-hazards",
+      ],
     },
     {
       id: "health-and-safety-risk-assessments",
