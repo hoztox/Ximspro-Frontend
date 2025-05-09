@@ -1,31 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import { ChevronDown } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import file from "../../../../assets/images/Company Documentation/file-icon.svg"
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
-import ProcessTypeModal from './ProcessTypeModal';
-import EditDraftQmsManualSuccessModal from '../../Documentation/Manual/Modals/EditDraftQmsManualSuccessModal';
+import AddQmsManualSuccessModal from './Modals/AddQmsManualSuccessModal';
+import AddQmsManualDraftSuccessModal from './Modals/AddQmsManualDraftSuccessModal';
+import AddQmsManualDraftErrorModal from './Modals/AddQmsManualDraftErrorModal';
 
-const QmsEditDraftEnvironmentalAspect = () => {
-    const navigate = useNavigate();
-    const { id } = useParams();
+const QmsAddHealthSafetyRiskAssessments = () => {
+    const navigate = useNavigate()
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [fileObject, setFileObject] = useState(null);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [focusedDropdown, setFocusedDropdown] = useState(null);
-    const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
-    const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
+
+    const [showAddManualSuccessModal, setShowAddManualSuccessModal] = useState(false);
+    const [showDraftManualSuccessModal, setShowDraftManualSuccessModal] = useState(false);
+    const [showDraftManualErrorModal, setShowDarftManualErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
+        // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
 
+        // If user data exists with company_id
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
+            // Try to get company_id from user data that was stored during login
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
@@ -40,76 +47,37 @@ const QmsEditDraftEnvironmentalAspect = () => {
     };
 
     const companyId = getUserCompanyId();
+    console.log("Stored Company ID:", companyId);
 
     const [formData, setFormData] = useState({
-        source: '',
         title: '',
-        aspect_no: '',
-        related_process: '',
-        legal_requirement: '',
-        aspect_description: '',
-        corrections: '',
-        send_notification_to_checked_by: false,
-        send_email_to_checked_by: false,
-        send_notification_to_approved_by: false,
-        send_email_to_approved_by: false,
+        no: '',
+        send_notification_to_checked_by: true,
+        send_email_to_checked_by: true,
+        send_notification_to_approved_by: true,
+        send_email_to_approved_by: true,
+        rivision: '',
+        document_type: '',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
-        impact: '',
-        written_by: '',
-        checked_by: '',
-        approved_by: '',
-        publish: false
+        review_frequency_year: '',
+        review_frequency_month: '',
+        related_record_format: '',
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
         written_by: false,
         checked_by: false,
         approved_by: false,
-        impact: false,
+        document_type: false,
         day: false,
         month: false,
-        year: false,
+        year: false
     });
-
-    const [errors, setErrors] = useState({});
-
-    const fetchEnvironmentalAspect = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/environmental-aspects/${id}/`);
-            const data = response.data;
-
-            const formattedDate = data.date
-                ? data.date
-                : `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
-
-            setFormData({
-                source: data.source || '',
-                title: data.title || '',
-                aspect_no: data.aspect_no || '',
-                related_process: data.related_process || '',
-                legal_requirement: data.legal_requirement || '',
-                aspect_description: data.aspect_description || '',
-                corrections: data.corrections || '',
-                send_notification_to_checked_by: data.send_notification_to_checked_by !== undefined ? data.send_notification_to_checked_by : true,
-                send_email_to_checked_by: data.send_email_to_checked_by !== undefined ? data.send_email_to_checked_by : true,
-                send_notification_to_approved_by: data.send_notification_to_approved_by !== undefined ? data.send_notification_to_approved_by : true,
-                send_email_to_approved_by: data.send_email_to_approved_by !== undefined ? data.send_email_to_approved_by : true,
-                date: formattedDate,
-                impact: data.impact || '',
-                written_by: data.written_by?.id || '',
-                checked_by: data.checked_by?.id || '',
-                approved_by: data.approved_by?.id || '',
-                publish: data.publish || false
-            });
-
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching environmental aspect:', error);
-            setError('Failed to load environmental aspect data');
-            setLoading(false);
+    useEffect(() => {
+        if (companyId) {
+            fetchUsers();
         }
-    };
+    }, [companyId]);
 
     const fetchUsers = async () => {
         try {
@@ -117,29 +85,26 @@ const QmsEditDraftEnvironmentalAspect = () => {
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
 
+            console.log("API Response:", response.data);
+
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
+                console.log("Users loaded:", response.data);
             } else {
                 setUsers([]);
                 console.error("Unexpected response format:", response.data);
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            setError("Failed to load record formats. Please check your connection and try again.");
         }
     };
-
-    useEffect(() => {
-        if (companyId) {
-            fetchUsers();
-            fetchEnvironmentalAspect();
-        }
-    }, [companyId, id]);
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month, 0).getDate();
     };
 
+    // Parse date to get day, month, year
     const parseDate = () => {
         const dateObj = new Date(formData.date);
         return {
@@ -156,19 +121,21 @@ const QmsEditDraftEnvironmentalAspect = () => {
         (_, i) => i + 1
     );
 
+    // Generate months (1-12)
     const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
+    // Generate years (current year - 10 to current year + 10)
     const years = Array.from(
         { length: 21 },
         (_, i) => currentYear - 10 + i
     );
 
     const documentTypes = [
-        'System',
-        'Paper',
-        'External',
-        'Work Instruction'
-    ];
+        ('System', 'System'),
+        ('Paper', 'Paper'),
+        ('External', 'External'),
+        ('Work Instruction', 'Work Instruction')
+    ]
 
     const toggleDropdown = (dropdown) => {
         setOpenDropdowns(prev => ({
@@ -177,39 +144,40 @@ const QmsEditDraftEnvironmentalAspect = () => {
         }));
     };
 
+    const [errors, setErrors] = useState({});
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.title.trim()) {
-            newErrors.title = "Section Name/Title is required";
+        // Check required fields
+        if (!formData.no.trim()) {
+            newErrors.no = "Compliance/Obligation Number is required";
         }
 
         if (!formData.written_by) {
             newErrors.written_by = "Written/Prepare By is required";
         }
 
-        if (!formData.aspect_no.trim()) {
-            newErrors.aspect_no = "Aspect Number is required";
-        }
-
         if (!formData.checked_by) {
             newErrors.checked_by = "Checked/Reviewed By is required";
         }
 
+        // if (!formData.approved_by) {
+        //     newErrors.approved_by = "Approved By is required";
+        // }
+
+        // Validate review frequency if provided
+        if (formData.review_frequency_year && isNaN(parseInt(formData.review_frequency_year))) {
+            newErrors.review_frequency_year = "Year must be a number";
+        }
+
+        if (formData.review_frequency_month && isNaN(parseInt(formData.review_frequency_month))) {
+            newErrors.review_frequency_month = "Month must be a number";
+        }
+
         setErrors(newErrors);
 
+        // Return true if no errors
         return Object.keys(newErrors).length === 0;
-    };
-
-    const handleOpenProcessTypeModal = () => {
-        setIsProcessTypeModalOpen(true);
-    };
-
-    const handleCloseProcessTypeModal = (newProcessAdded = false) => {
-        setIsProcessTypeModalOpen(false);
-        if (newProcessAdded) {
-            // Refresh process data if needed
-        }
     };
 
     const handleChange = (e) => {
@@ -219,6 +187,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
             [name]: value
         }));
 
+
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -227,12 +196,21 @@ const QmsEditDraftEnvironmentalAspect = () => {
         }
     };
 
+
     const handleCheckboxChange = (e) => {
         const { name, checked } = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: checked
         }));
+    };
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setSelectedFile(file.name);
+            setFileObject(file);
+        }
     };
 
     const handleDropdownChange = (e, dropdown) => {
@@ -255,6 +233,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                 [dropdown]: value
             }));
 
+
             if (errors[dropdown]) {
                 setErrors(prev => ({
                     ...prev,
@@ -266,12 +245,18 @@ const QmsEditDraftEnvironmentalAspect = () => {
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
 
-    const handleListDraftEnvironmentalAspect = () => {
-        navigate('/company/qms/draft-environmantal-aspect');
-    };
+    const handleListSustainability = () => {
+        navigate('/company/qms/list-health-safety-assessments')
+    }
 
-    const handleUpdateClick = async () => {
+
+    const handleCancelClick = () => {
+        navigate('/company/qms/list-health-safety-assessments')
+    }
+
+    const handleSaveClick = async () => {
         if (!validateForm()) {
+            // Show the form has validation errors
             setError('Please correct the errors below');
             return;
         }
@@ -286,56 +271,114 @@ const QmsEditDraftEnvironmentalAspect = () => {
             }
 
             const submitData = new FormData();
+            console.log("procedure post ...................", formData)
             submitData.append('company', companyId);
 
-            const apiFormData = {
-                ...formData,
-                send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
-                send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
-                send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
-                send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
-            };
 
-            if (formData.approved_by === null || formData.approved_by === '') {
-                delete apiFormData.approved_by;
-            } else if (typeof formData.approved_by === 'string') {
-                apiFormData.approved_by = parseInt(formData.approved_by, 10);
-            }
-
-            Object.keys(apiFormData).forEach(key => {
-                if (key !== 'send_notification_to_checked_by' &&
-                    key !== 'send_email_to_checked_by' &&
-                    key !== 'send_notification_to_approved_by' &&
-                    key !== 'send_email_to_approved_by') {
-                    submitData.append(key, apiFormData[key]);
+            Object.keys(formData).forEach(key => {
+                if (key === 'send_notification_to_checked_by' || key === 'send_notification_to_approved_by' ||
+                    key === 'send_email_to_checked_by' || key === 'send_email_to_approved_by') {
+                    submitData.append(key, formData[key]);
+                    return;
                 }
+                submitData.append(key, formData[key]);
             });
 
-            const response = await axios.put(`${BASE_URL}/qms/environmental-aspects/${id}/`, submitData, {
+            if (fileObject) {
+                submitData.append('upload_attachment', fileObject);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/sustainability-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             setLoading(false);
-            setShowEditDraftManualSuccessModal(true);
+            setShowAddManualSuccessModal(true);
             setTimeout(() => {
-                setShowEditDraftManualSuccessModal(false);
-                navigate('/company/qms/list-environmantal-aspect');
-            }, 2000);
+                setShowAddManualSuccessModal(false);
+                navigate('/company/qms/list-health-safety-assessments');
+            }, 1500);
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update Environmental Aspect');
-            console.error('Update error:', err);
+            setError('Failed to save record formats');
+        }
+    };
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
+    const handleDraftClick = async () => {
+        try {
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const userId = getRelevantUserId();
+            if (!userId) {
+                setError('User ID not found. Please log in again.');
+                setLoading(false);
+                return;
+            }
+
+            const submitData = new FormData();
+
+            submitData.append('company', companyId);
+            submitData.append('user', userId);
+            submitData.append('is_draft', true);
+
+
+            Object.keys(formData).forEach(key => {
+                if (formData[key] !== null && formData[key] !== '') {
+                    submitData.append(key, formData[key]);
+                }
+            });
+
+            if (fileObject) {
+                submitData.append('upload_attachment', fileObject);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/sustainability/draft-create/`, submitData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setLoading(false);
+            setShowDraftManualSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftManualSuccessModal(false);
+                // navigate('/company/qms/draft-sustainability');
+            }, 1500);
+
+
+        } catch (err) {
+            setLoading(false);
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
+            console.error('Error saving manual:', err);
         }
     };
 
-    const formatUserName = (user) => {
-        if (!user) return '';
-        return `${user.first_name} ${user.last_name}`;
-    };
 
+    // Get month name from number
     const getMonthName = (monthNum) => {
         const monthNames = [
             'January', 'February', 'March', 'April', 'May', 'June',
@@ -344,6 +387,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         return monthNames[monthNum - 1];
     };
 
+    // Format user name for display
+    const formatUserName = (user) => {
+        return `${user.first_name} ${user.last_name}`;
+    };
     const ErrorMessage = ({ message }) => {
         if (!message) return null;
         return (
@@ -352,53 +399,47 @@ const QmsEditDraftEnvironmentalAspect = () => {
             </div>
         );
     };
-
     return (
-        <div className="bg-[#1C1C24] rounded-lg text-white p-5">
-            <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
-                <h1 className="add-training-head">Edit Draft Environmental Aspect</h1>
-                <button
-                    className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={handleListDraftEnvironmentalAspect}
-                >
-                    List Draft Environmental Aspect
-                </button>
-            </div>
+        <div className="bg-[#1C1C24] rounded-lg text-white">
+            <div>
+                <div className='flex items-center justify-between  px-[65px] 2xl:px-[122px]'>
+                    <h1 className="add-manual-sections !px-0">Add Health and Safety Risk Assessments</h1>
 
-            <ProcessTypeModal
-                isOpen={isProcessTypeModalOpen}
-                onClose={handleCloseProcessTypeModal}
-            />
+                    <button
+                        className="flex items-center justify-center  add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                        onClick={handleListSustainability}
+                    >
+                        <span>List Health and Safety Risk Assessments</span>
 
-            <EditDraftQmsManualSuccessModal
-                showEditDraftManualSuccessModal={showEditDraftManualSuccessModal}
-                onClose={() => setShowEditDraftManualSuccessModal(false)}
-            />
-
-            {loading && !formData.aspect_no ? (
-                <div className="flex justify-center items-center h-64">
-                    <p>Loading environmental aspect data...</p>
+                    </button>
                 </div>
-            ) : (
-                <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
+
+                {/* {error && (
+                    <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
+                        {error}
+                    </div>
+                )} */}
+
+                <AddQmsManualSuccessModal
+                    showAddManualSuccessModal={showAddManualSuccessModal}
+                    onClose={() => { setShowAddManualSuccessModal(false) }}
+                />
+
+                <AddQmsManualDraftSuccessModal
+                    showDraftManualSuccessModal={showDraftManualSuccessModal}
+                    onClose={() => { setShowDraftManualSuccessModal(false) }}
+                />
+
+                <AddQmsManualDraftErrorModal
+                    showDraftManualErrorModal={showDraftManualErrorModal}
+                    onClose={() => { setShowDarftManualErrorModal(false) }}
+                />
+
+                <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
-                                Aspect Source <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="source"
-                                value={formData.source}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
-                            />
-                            <ErrorMessage message={errors.source} />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect Name/Title <span className="text-red-500">*</span>
+                                Risk Assessment Name/Title
                             </label>
                             <input
                                 type="text"
@@ -406,88 +447,6 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                 value={formData.title}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
-                            />
-                            <ErrorMessage message={errors.title} />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect No <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="aspect_no"
-                                value={formData.aspect_no}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
-                                readOnly
-                            />
-                            <ErrorMessage message={errors.aspect_no} />
-                        </div>
-
-                        <div></div>
-
-                        <div className="flex flex-col gap-3 relative">
-                            <label className="add-training-label">Related Process/ Activity</label>
-                            <select
-                                name="related_process"
-                                value={formData.related_process}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("related_process")}
-                                onBlur={() => setFocusedDropdown(null)}
-                                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            >
-                                <option value="" disabled>Select Related Process/Activity Type</option>
-                            </select>
-                            <ChevronDown
-                                className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
-                                size={20}
-                                color="#AAAAAA"
-                            />
-                            <button
-                                className='flex justify-start add-training-label !text-[#1E84AF]'
-                                onClick={handleOpenProcessTypeModal}
-                                type="button"
-                            >
-                                View / Add Process/activities
-                            </button>
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Applicable Legal Requirement
-                            </label>
-                            <input
-                                type="text"
-                                name="legal_requirement"
-                                value={formData.legal_requirement}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect Description
-                            </label>
-                            <textarea
-                                name="aspect_description"
-                                value={formData.aspect_description}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs !h-[98px]"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Action or Corrections
-                            </label>
-                            <textarea
-                                name="corrections"
-                                value={formData.corrections}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs !h-[98px]"
                             />
                         </div>
 
@@ -516,62 +475,22 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                 />
                             </div>
                             <ErrorMessage message={errors.written_by} />
+
                         </div>
 
-                        <div className="flex">
-                            <div className="flex-grow">
-                                <div className='flex items-center justify-between h-[24px]'>
-                                    <label className="add-qms-manual-label">
-                                        Approved By
-                                    </label>
-                                    <div className='flex items-end justify-end space-y-1'>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_notification_to_approved_by"
-                                                    checked={formData.send_notification_to_approved_by}
-                                                    onChange={handleCheckboxChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">System Notify</label>
-                                            </div>
-                                        </div>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_email_to_approved_by"
-                                                    checked={formData.send_email_to_approved_by}
-                                                    onChange={handleCheckboxChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">Email Notify</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="approved_by"
-                                        value={formData.approved_by || ''}
-                                        onFocus={() => toggleDropdown('approved_by')}
-                                        onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map(user => (
-                                            <option key={`approved-${user.id}`} value={user.id}>
-                                                {formatUserName(user)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Risk Assessment Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="no"
+                                value={formData.no}
+                                onChange={handleChange}
+                                className="w-full add-qms-manual-inputs"
+                            />
+                            <ErrorMessage message={errors.no} />
+
                         </div>
 
                         <div className="flex">
@@ -581,7 +500,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                         Checked/Reviewed By <span className="text-red-500">*</span>
                                     </label>
                                     <div className='flex items-end justify-end space-y-1'>
-                                        <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="ml-5 flex items-center h-[24px] ">
                                             <div className="flex items-center h-14 justify-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -593,7 +512,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                                 <label className="add-qms-manual-label check-label">System Notify</label>
                                             </div>
                                         </div>
-                                        <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="ml-5 flex items-center h-[24px] ">
                                             <div className="flex items-center h-14 justify-center gap-2">
                                                 <input
                                                     type="checkbox"
@@ -628,6 +547,104 @@ const QmsEditDraftEnvironmentalAspect = () => {
                                     />
                                 </div>
                                 <ErrorMessage message={errors.checked_by} />
+
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Revision
+                            </label>
+                            <input
+                                type="text"
+                                name="rivision"
+                                value={formData.rivision}
+                                onChange={handleChange}
+                                className="w-full add-qms-manual-inputs"
+                            />
+                        </div>
+
+                        <div className="flex">
+                            <div className="flex-grow">
+                                <div className='flex items-center justify-between h-[24px]'>
+                                    <label className="add-qms-manual-label">
+                                        Approved By
+                                    </label>
+                                    <div className='flex items-end justify-end space-y-1'>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_notification_to_approved_by"
+                                                    checked={formData.send_notification_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">System Notify</label>
+                                            </div>
+                                        </div>
+                                        <div className="ml-5 flex items-center h-[24px]">
+                                            <div className="flex items-center h-14 justify-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    name="send_email_to_approved_by"
+                                                    checked={formData.send_email_to_approved_by}
+                                                    onChange={handleCheckboxChange}
+                                                    className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                />
+                                                <label className="add-qms-manual-label check-label">Email Notify</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <select
+                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                        name="approved_by"
+                                        value={formData.approved_by || ''}
+                                        onFocus={() => toggleDropdown('approved_by')}
+                                        onChange={(e) => handleDropdownChange(e, 'approved_by')}
+                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
+                                    >
+                                        <option value="">Select User</option>
+                                        {users.map(user => (
+                                            <option key={`approved-${user.id}`} value={user.id}>
+                                                {formatUserName(user)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown
+                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
+                                    />
+                                </div>
+                                {/* <ErrorMessage message={errors.approved_by} /> */}
+                            </div>
+
+                        </div>
+
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Document Type
+                            </label>
+                            <div className="relative">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    name="document_type"
+                                    value={formData.document_type}
+                                    onFocus={() => toggleDropdown('document_type')}
+                                    onChange={(e) => handleDropdownChange(e, 'document_type')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, document_type: false }))}
+                                >
+                                    <option value="" disabled>Select Document Type</option>
+                                    {documentTypes.map(type => (
+                                        <option key={type} value={type}>
+                                            {type}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.document_type ? 'rotate-180' : ''}`}
+                                />
                             </div>
                         </div>
 
@@ -695,53 +712,100 @@ const QmsEditDraftEnvironmentalAspect = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Level of Impact
+                                Attach Document
                             </label>
                             <div className="relative">
-                                <select
-                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="impact"
-                                    value={formData.impact}
-                                    onFocus={() => toggleDropdown('impact')}
-                                    onChange={(e) => handleDropdownChange(e, 'impact')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, impact: false }))}
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                                <button
+                                    type="button"
+                                    className="w-full add-qmsmanual-attach"
+                                    onClick={() => document.getElementById('fileInput').click()}
                                 >
-                                    <option value="">Select Level of Impact</option>
-                                    {['Significant', 'Non Significant'].map(type => (
-                                        <option key={type} value={type}>
-                                            {type}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.impact ? 'rotate-180' : ''}`}
+                                    <span className="file-input">
+                                        {selectedFile ? selectedFile : "Choose File"}
+                                    </span>
+                                    <img src={file} alt="File Icon" />
+                                </button>
+                                {!selectedFile && <p className="text-right no-file">No file chosen</p>}
+                            </div>
+                        </div>
+
+
+
+                        <div>
+                            <label className='add-qms-manual-label'>
+                                Review Frequency
+                            </label>
+                            <div className="flex space-x-5">
+                                <input
+                                    type="text"
+                                    name="review_frequency_year"
+                                    placeholder='Years'
+                                    value={formData.review_frequency_year}
+                                    onChange={handleChange}
+                                    className="w-full add-qms-manual-inputs"
+                                />
+                                <input
+                                    type="text"
+                                    name="review_frequency_month"
+                                    placeholder='Months'
+                                    value={formData.review_frequency_month}
+                                    onChange={handleChange}
+                                    className="w-full add-qms-manual-inputs"
                                 />
                             </div>
                         </div>
-                    <div className="flex items-end mt-[22px] justify-end">
-                        <div className='flex gap-[22px]'>
+                        <div>
+                            <label className="add-qms-manual-label">
+                                Relate Record/ Document
+                            </label>
+                            <input
+                                type="text"
+                                name="related_record_format"
+                                value={formData.related_record_format}
+                                onChange={handleChange}
+                                className="w-full add-qms-manual-inputs"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-center mt-[22px] justify-between">
+
+                        <div className='mb-6'>
+                            <button
+                                className="request-correction-btn duration-200"
+                                onClick={handleDraftClick}
+                            >
+                                Save as Draft
+                            </button>
+                        </div>
+
+                        <div className='flex gap-[22px] mb-6'>
                             <button
                                 className="cancel-btn duration-200"
-                                onClick={handleListDraftEnvironmentalAspect}
+                                onClick={handleCancelClick}
                                 disabled={loading}
                             >
                                 Cancel
                             </button>
                             <button
                                 className="save-btn duration-200"
-                                onClick={handleUpdateClick}
+                                onClick={handleSaveClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Updating...' : 'Update'}
+                                {loading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
                     </div>
-                    </div>
-
                 </div>
-            )}
+            </div>
         </div>
     );
 };
 
-export default QmsEditDraftEnvironmentalAspect;
+export default QmsAddHealthSafetyRiskAssessments

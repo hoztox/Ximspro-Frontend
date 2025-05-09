@@ -110,10 +110,10 @@ const QmsDraftEditHealthSafetyHazards = () => {
         description: '',
         action: '',
         related_process: '',
-        send_notification_to_checked_by: true,
-        send_email_to_checked_by: true,
-        send_notification_to_approved_by: true,
-        send_email_to_approved_by: true,
+        send_notification_to_checked_by: false,
+        send_email_to_checked_by: false,
+        send_notification_to_approved_by: false,
+        send_email_to_approved_by: false,
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({

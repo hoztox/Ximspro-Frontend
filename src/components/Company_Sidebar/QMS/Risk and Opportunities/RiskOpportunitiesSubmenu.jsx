@@ -97,7 +97,15 @@ const RiskOpportunitiesSubmenu = (props) => {
       id: "health-and-safety-risk-assessments",
       label: "Health and Safety Risk Assessments",
       icon: <img src={process} alt="Processes" className="w-[15px] h-[15px]" />,
-      // path: "/company/qms/processes",
+      path: "/company/qms/list-health-safety-assessments",
+      relatedPaths: [
+        "/company/qms/add-health-safety-assessments",
+        "/company/qms/edit-health-safety-assessments",
+        "/company/qms/view-health-safety-assessments",
+        "/company/qms/draft-health-safety-assessments",
+        "/company/qms/edit-draft-health-safety-assessments",
+        "/company/qms/view-draft-health-safety-assessments",
+      ],
     },
     {
       id: "health-and-safety-incidents",

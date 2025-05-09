@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg"
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
-import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
-const QmsEditDraftEnvironmentalImpact = () => {
+import EditQmsManualSuccessModal from './Modals/EditQmsManualSuccessModal';
+
+const QmsEditHealthSafetyRiskAssessments = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
+    const [manualDetails, setManualDetails] = useState(null);
+    const [corrections, setCorrections] = useState([]);
+    const [previewAttachment, setPreviewAttachment] = useState(null);
     const currentDate = new Date();
     const currentDay = currentDate.getDate();
     const currentMonth = currentDate.getMonth() + 1;
@@ -17,20 +21,80 @@ const QmsEditDraftEnvironmentalImpact = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [manuals, setManuals] = useState([]);
-    const [previewAttachment, setPreviewAttachment] = useState(null);
-    const [manualDetails, setManualDetails] = useState(null);
-    const { id } = useParams();
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-    const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
-    const [fieldErrors, setFieldErrors] = useState({
+    const [showEditManualSuccessModal, setShowEditManualSuccessModal] = useState(false);
+
+    const [formData, setFormData] = useState({
         title: '',
+        written_by: null,
+        no: '',
+        checked_by: null,
+        rivision: '',
+        approved_by: null,
+        document_type: 'System',
+        date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
+        review_frequency_year: '',
+        review_frequency_month: '',
+        send_notification_to_checked_by: false,
+        send_email_to_checked_by: false,
+        send_notification_to_approved_by: false,
+        send_email_to_approved_by: false,
+        related_record_format: '',
+    });
+
+    const [openDropdowns, setOpenDropdowns] = useState({
+        written_by: false,
+        checked_by: false,
+        approved_by: false,
+        document_type: false,
+        day: false,
+        month: false,
+        year: false
+    });
+    const [fieldErrors, setFieldErrors] = useState({
         written_by: '',
         no: '',
         checked_by: '',
         // approved_by: ''
     });
+    const closeAttachmentPreview = () => {
+        setPreviewAttachment(null);
+    };
+
+    // Add a method to handle attachment preview
+    const handleAttachmentPreview = () => {
+        // If there's an existing attachment from the manual details
+        if (manualDetails && manualDetails.upload_attachment) {
+            setPreviewAttachment(manualDetails.upload_attachment);
+        }
+        // If a new file is selected
+        else if (fileObject) {
+            // Create a URL for the selected file
+            const fileUrl = URL.createObjectURL(fileObject);
+            setPreviewAttachment(fileUrl);
+        }
+    };
+
+    // You can call this method after file selection or when manual details are loaded
+    useEffect(() => {
+        if (manualDetails && manualDetails.upload_attachment) {
+            handleAttachmentPreview();
+        }
+    }, [manualDetails]);
+
+    // Modify file change handler to trigger preview
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setSelectedFile(file.name);
+            setFileObject(file);
+            // Create a preview URL for the newly selected file
+            const fileUrl = URL.createObjectURL(file);
+            setPreviewAttachment(fileUrl);
+        }
+    };
+
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -51,19 +115,11 @@ const QmsEditDraftEnvironmentalImpact = () => {
     };
 
     const companyId = getUserCompanyId();
-    useEffect(() => {
-        if (companyId && id) {
-            fetchManualDetails();
-        }
-    }, [companyId, id]);
 
-    const handleListDraftEnvironmentalImpact = () => {
-        navigate('/company/qms/draft-environmantal-impact');
-    }
-
+    // Populate form data when manual details are loaded
+    // Modify this useEffect
     useEffect(() => {
         if (manualDetails) {
-            // Set the form data with properly mapped values from the backend
             setFormData({
                 title: manualDetails.title || '',
                 written_by: manualDetails.written_by?.id || null,
@@ -72,110 +128,77 @@ const QmsEditDraftEnvironmentalImpact = () => {
                 rivision: manualDetails.rivision || '',
                 approved_by: manualDetails.approved_by?.id || null,
                 document_type: manualDetails.document_type || 'System',
-                date: manualDetails.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
+                date: manualDetails.date || formData.date,
                 review_frequency_year: manualDetails.review_frequency_year || '',
                 review_frequency_month: manualDetails.review_frequency_month || '',
                 publish: manualDetails.publish || false,
-                // Fix: Use the correct property names from the API response
+                send_notification: manualDetails.send_notification || false,
+                related_record_format: manualDetails.related_record_format || '',
+
+                // Use the direct boolean values from the API response
                 send_notification_to_checked_by: manualDetails.send_notification_to_checked_by || false,
                 send_email_to_checked_by: manualDetails.send_email_to_checked_by || false,
                 send_notification_to_approved_by: manualDetails.send_notification_to_approved_by || false,
-                send_email_to_approved_by: manualDetails.send_email_to_approved_by || false,
-                retention_period: manualDetails.retention_period || ''
-            });
-
-            console.log("Setting form data with checkbox values:", {
-                send_notification_to_checked_by: manualDetails.send_notification_to_checked_by,
-                send_email_to_checked_by: manualDetails.send_email_to_checked_by,
-                send_notification_to_approved_by: manualDetails.send_notification_to_approved_by,
-                send_email_to_approved_by: manualDetails.send_email_to_approved_by
+                send_email_to_approved_by: manualDetails.send_email_to_approved_by || false
             });
         }
     }, [manualDetails]);
-
-    const fetchManualDetails = async () => {
-        try {
-            setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
-            setManualDetails(response.data);
-            setIsInitialLoad(false);
-            console.log("Manual Detailssssssssssss:", response.data);
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching procedures details:", err);
-            setError("Failed to load record format details");
-            setIsInitialLoad(false);
-            setLoading(false);
-        }
-    };
-
-    const renderAttachmentPreview = () => {
-        if (previewAttachment) {
-            const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
-
-            return (
-                <button
-                    onClick={() => window.open(previewAttachment, '_blank')}
-                    className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
-                >
-                    Click to view File
-                    <Eye size={17} />
-                </button>
-            );
-        }
-        return null;
-    };
-
-    const [formData, setFormData] = useState({
-        title: '',
-        written_by: null,
-        no: '',
-        checked_by: null,
-        rivision: '',
-        approved_by: null,
-        document_type: 'System',
-        date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
-        review_frequency_year: '',
-        review_frequency_month: '',
-        publish: false,
-        send_notification_to_checked_by: false,
-        send_email_to_checked_by: false,
-        send_notification_to_approved_by: false,
-        send_email_to_approved_by: false,
-        retention_period: ''
-    });
-
-    const [openDropdowns, setOpenDropdowns] = useState({
-        written_by: false,
-        checked_by: false,
-        approved_by: false,
-        document_type: false,
-        day: false,
-        month: false,
-        year: false
-    });
 
     useEffect(() => {
         if (companyId) {
             fetchUsers();
         }
-    }, [companyId]);
+    }, [companyId])
+
+    useEffect(() => {
+        if (companyId && id) {
+            fetchManualDetails();
+            fetchManualCorrections();
+        }
+    }, [companyId, id]);
 
     const fetchUsers = async () => {
         try {
             if (!companyId) return;
 
-            const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
 
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
                 setUsers([]);
                 console.error("Unexpected response format:", response.data);
+                setError("Unable to load users");
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load record format. Please check your connection and try again.");
+            setError("Failed to load users. Please check your connection and try again.");
+            setUsers([]);
+        }
+    };
+
+    const fetchManualDetails = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
+            setManualDetails(response.data);
+            setIsInitialLoad(false);
+            console.log("Manual Details:", response.data);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching record format details:", err);
+            setError("Failed to load record format details");
+            setIsInitialLoad(false);
+            setLoading(false);
+        }
+    };
+
+    const fetchManualCorrections = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/sustainability/${id}/corrections/`);
+            setCorrections(response.data);
+            console.log("Fetched Manual Corrections:", response.data);
+        } catch (error) {
+            console.error("Error fetching manual corrections:", error);
         }
     };
 
@@ -239,11 +262,6 @@ const QmsEditDraftEnvironmentalImpact = () => {
         let isValid = true;
         const newErrors = { ...fieldErrors };
 
-        // Validate title
-        if (!formData.title.trim()) {
-            newErrors.title = 'Section Name/Title is required';
-            isValid = false;
-        }
 
         // Validate written_by
         if (!formData.written_by) {
@@ -253,7 +271,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
 
         // Validate section number
         if (!formData.no.trim()) {
-            newErrors.no = 'Section Number is required';
+            newErrors.no = 'Compliance/Obligation Number is required';
             isValid = false;
         }
 
@@ -280,30 +298,6 @@ const QmsEditDraftEnvironmentalImpact = () => {
             [name]: checked
         }));
     };
-
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setSelectedFile(file.name);
-            setFileObject(file);
-        }
-    };
-
-    useEffect(() => {
-        const draftManualId = localStorage.getItem('selected_draft_manual_id');
-        const routeState = location.state?.draftManualId;
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlDraftManualId = urlParams.get('draftManualId');
-
-        const id = draftManualId || routeState || urlDraftManualId;
-
-        if (id) {
-            console.log("Draft Manual ID found:", id);
-            fetchDraftManualDetails(id);
-        } else {
-            console.warn("No draft manual ID found");
-        }
-    }, []);
 
     const handleDropdownChange = (e, dropdown) => {
         const value = e.target.value;
@@ -336,27 +330,14 @@ const QmsEditDraftEnvironmentalImpact = () => {
 
         setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
     };
-    const handleCancelClick = () => {
-        navigate('/company/qms/draft-environmantal-impact')
+
+    const handleListEvaluationCompliance = () => {
+        navigate('/company/qms/list-health-safety-assessments')
     }
 
-    useEffect(() => {
-        if (manualDetails?.upload_attachment) {
-            setPreviewAttachment(manualDetails.upload_attachment);
-        }
-    }, [manualDetails]);
-
-    const getMonthName = (monthNum) => {
-        const monthNames = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-        return monthNames[monthNum - 1];
-    };
-
-    const formatUserName = (user) => {
-        return `${user.first_name} ${user.last_name}`;
-    };
+    const handleCancelClick = () => {
+        navigate('/company/qms/list-health-safety-assessments')
+    }
 
     const handleUpdateClick = async () => {
         if (!validateForm()) {
@@ -374,6 +355,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
             }
 
             const submitData = new FormData();
+            console.log('qqqqqqqqqqqq', submitData);
             submitData.append('company', companyId);
 
             // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
@@ -393,7 +375,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                 apiFormData.approved_by = parseInt(formData.approved_by, '');
             }
 
-            // Add all form data except the original checkbox fields
+            // Add all form data
             Object.keys(apiFormData).forEach(key => {
                 // Skip the checkbox fields with boolean values
                 if (key !== 'send_notification_to_checked_by' &&
@@ -404,21 +386,24 @@ const QmsEditDraftEnvironmentalImpact = () => {
                 }
             });
 
+            // Add file if new file is selected
             if (fileObject) {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/record/create/${id}/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/sustainability/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             setLoading(false);
-            setShowEditDraftManualSuccessModal(true)
+            console.log('wwwwwwwww', response);
+
+            setShowEditManualSuccessModal(true)
             setTimeout(() => {
-                setShowEditDraftManualSuccessModal(false)
-                navigate('/company/qms/record-format');
+                setShowEditManualSuccessModal(false)
+                navigate('/company/qms/list-sustainability');
             }, 2000);
 
         } catch (err) {
@@ -427,23 +412,56 @@ const QmsEditDraftEnvironmentalImpact = () => {
             console.error('Error updating record format:', err);
         }
     };
+
+    const getMonthName = (monthNum) => {
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+        return monthNames[monthNum - 1];
+    };
+
+    const formatUserName = (user) => {
+        return `${user.first_name} ${user.last_name}`;
+    };
+
+    // Render loading state
+    // if (isInitialLoad) {
+    //     return <div className="text-white">Loading...</div>;
+    // }
+
+    const renderAttachmentPreview = () => {
+        // If there's a preview attachment from existing manual or newly selected file
+        if (previewAttachment) {
+            const attachmentName = selectedFile || manualDetails?.upload_attachment_name || 'Attachment';
+
+            return (
+                <button
+                    onClick={() => window.open(previewAttachment, '_blank')}
+                    className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
+                >
+                    Click to View File
+                    <Eye size={17} />
+                </button>
+            );
+        }
+        return null;
+    };
     const errorTextClass = "text-red-500 text-sm mt-1";
+
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white p-5">
-            <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
-                <h1 className="add-training-head">Edit Draft Environmental Impact Assessment</h1>
+            <div className='flex items-center justify-between  px-[65px] 2xl:px-[124px]'>
+                <h1 className="add-manual-sections !px-0">Edit Health and Safety Risk Assessments</h1>
+
                 <button
-                    className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={handleListDraftEnvironmentalImpact}
+                    className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
+                    onClick={handleListEvaluationCompliance}
                 >
-                    List Environmental Impact Assessment
+                    <span>List Health and Safety Risk Assessments</span>
+
                 </button>
             </div>
-
-            <EditDraftQmsManualSuccessModal
-                showEditDraftManualSuccessModal={showEditDraftManualSuccessModal}
-                onClose={() => { setShowEditDraftManualSuccessModal(false) }}
-            />
 
             {/* {error && (
                     <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
@@ -451,11 +469,16 @@ const QmsEditDraftEnvironmentalImpact = () => {
                     </div>
                 )} */}
 
-            <div className="mx-[18px] pt-[22px] px-[104px]">
+            <EditQmsManualSuccessModal
+                showEditManualSuccessModal={showEditManualSuccessModal}
+                onClose={() => { setShowEditManualSuccessModal(false) }}
+            />
+
+            <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                 <div className="grid md:grid-cols-2 gap-5">
                     <div>
                         <label className="add-qms-manual-label">
-                            Environmental Impact Assessment Name/Title
+                            Risk Assessment Name/Title
                         </label>
                         <input
                             type="text"
@@ -464,7 +487,6 @@ const QmsEditDraftEnvironmentalImpact = () => {
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />
-
                     </div>
 
                     <div>
@@ -492,11 +514,12 @@ const QmsEditDraftEnvironmentalImpact = () => {
                             />
                         </div>
                         {fieldErrors.written_by && <p className={errorTextClass}>{fieldErrors.written_by}</p>}
+
                     </div>
 
                     <div>
                         <label className="add-qms-manual-label">
-                            Environmental Impact Assessment Number <span className="text-red-500">*</span>
+                            Risk Assessment Number <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
@@ -594,7 +617,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                                                 name="send_notification_to_approved_by"
                                                 checked={formData.send_notification_to_approved_by}
                                                 onChange={handleCheckboxChange}
-                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
                                             />
                                             <label className="add-qms-manual-label check-label">System Notify</label>
                                         </div>
@@ -606,7 +629,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                                                 name="send_email_to_approved_by"
                                                 checked={formData.send_email_to_approved_by}
                                                 onChange={handleCheckboxChange}
-                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                                className=" cursor-pointer qms-manual-form-checkbox p-[7px]"
                                             />
                                             <label className="add-qms-manual-label check-label">Email Notify</label>
                                         </div>
@@ -634,6 +657,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                                 />
                             </div>
                             {/* {fieldErrors.approved_by && <p className={errorTextClass}>{fieldErrors.approved_by}</p>} */}
+
                         </div>
                     </div>
 
@@ -782,13 +806,20 @@ const QmsEditDraftEnvironmentalImpact = () => {
                         </label>
                         <input
                             type="text"
-                            name="retention_period"
-                            value={formData.retention_period}
+                            name="related_record_format"
+                            value={formData.related_record_format}
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />
                     </div>
                     <div className="flex items-end mt-[22px] justify-end">
+                        {/* <div className='mb-6'>
+                            <button
+                                className="request-correction-btn duration-200"
+                            >
+                                Save as Draft
+                            </button>
+                        </div> */}
                         <div className='flex gap-[22px]'>
                             <button
                                 className="cancel-btn duration-200"
@@ -802,7 +833,7 @@ const QmsEditDraftEnvironmentalImpact = () => {
                                 onClick={handleUpdateClick}
                                 disabled={loading}
                             >
-                                {loading ? 'Saving...' : 'Save'}
+                                {loading ? 'Updating...' : 'Update'}
                             </button>
                         </div>
                     </div>
@@ -810,7 +841,6 @@ const QmsEditDraftEnvironmentalImpact = () => {
 
             </div>
         </div>
-
     );
 };
-export default QmsEditDraftEnvironmentalImpact
+export default QmsEditHealthSafetyRiskAssessments

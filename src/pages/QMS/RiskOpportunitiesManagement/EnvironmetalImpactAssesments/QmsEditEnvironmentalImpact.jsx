@@ -33,10 +33,10 @@ const QmsEditEnvironmentalImpact = () => {
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         review_frequency_year: '',
         review_frequency_month: '',
-        send_notification_to_checked_by: true,
-        send_email_to_checked_by: true,
-        send_notification_to_approved_by: true,
-        send_email_to_approved_by: true,
+        send_notification_to_checked_by: false,
+        send_email_to_checked_by: false,
+        send_notification_to_approved_by: false,
+        send_email_to_approved_by: false,
         relate_document: ''
     });
 
