@@ -63,7 +63,15 @@ const RiskOpportunitiesSubmenu = (props) => {
       icon: (
         <img src={record} alt="Record Format" className="w-[15px] h-[15px]" />
       ),
-      // path: "/company/qms/record-format",
+      path: "/company/qms/list-environmantal-waste-management",
+      relatedPaths: [
+        "/company/qms/add-environmantal-waste-management",
+        "/company/qms/edit-environmantal-waste-management",
+        "/company/qms/view-environmantal-waste-management",
+        "/company/qms/draft-environmantal-waste-management",
+        "/company/qms/edit-draft-environmantal-waste-management",
+        "/company/qms/view-draft-environmantal-waste-management",
+      ],
     },
     {
       id: "health-and-safety-hazards",
