@@ -47,7 +47,15 @@ const RiskOpportunitiesSubmenu = (props) => {
       icon: (
         <img src={procedure} alt="Procedure" className="w-[15px] h-[15px]" />
       ),
-      // path: "/company/qms/procedure",
+      path: "/company/qms/list-environmantal-incident",
+      relatedPaths: [
+        "/company/qms/add-environmantal-incident",
+        "/company/qms/edit-environmantal-incident",
+        "/company/qms/view-environmantal-incident",
+        "/company/qms/draft-environmantal-incident",
+        "/company/qms/edit-draft-environmantal-incident",
+        "/company/qms/view-draft-environmantal-incident",
+      ],
     },
     {
       id: "environmental-waste-management",
