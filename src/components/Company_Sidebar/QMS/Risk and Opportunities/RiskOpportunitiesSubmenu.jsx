@@ -113,7 +113,15 @@ const RiskOpportunitiesSubmenu = (props) => {
       icon: (
         <img src={scope} alt="Scope Statements" className="w-[15px] h-[15px]" />
       ),
-      // path: "/company/qms/scope-statements",
+      path: "/company/qms/list-health-safety-incidents",
+      relatedPaths: [
+        "/company/qms/add-health-safety-incidents",
+        "/company/qms/edit-health-safety-incidents",
+        "/company/qms/view-health-safety-incidents",
+        "/company/qms/draft-health-safety-incidents",
+        "/company/qms/edit-draft-health-safety-incidents",
+        "/company/qms/view-draft-health-safety-incidents",
+      ],
     },
     {
       id: "process-risks-assessments",

@@ -379,6 +379,13 @@ import QmsViewHealthSafetyRiskAssessments from "./pages/QMS/RiskOpportunitiesMan
 import QmsDraftHealthSafetyRiskAssessments from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyRiskAssessments/QmsDraftHealthSafetyRiskAssessments";
 import QmsEditDraftHealthSafetyRiskAssessments from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyRiskAssessments/QmsEditDraftHealthSafetyRiskAssessments";
 import QmsViewDraftHealthSafetyRiskAssessments from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyRiskAssessments/QmsViewDraftHealthSafetyRiskAssessments";
+import QmsListHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsListHealthSafetyIncidents";
+import QmsAddHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsAddHealthSafetyIncidents";
+import QmsEditHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsEditHealthSafetyIncidents";
+import QmsViewHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsViewHealthSafetyIncidents";
+import QmsDraftHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsDraftHealthSafetyIncidents";
+import QmsDraftEditHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsDraftEditHealthSafetyIncidents";
+import QmsDraftViewHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesManagement/HealthandSafetyIncidents/QmsDraftViewHealthSafetyIncidents";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -714,9 +721,17 @@ const ThemedApp = () => {
           <Route path="qms/add-health-safety-assessments" element={<QmsAddHealthSafetyRiskAssessments />} />
           <Route path="qms/edit-health-safety-assessments" element={<QmsEditHealthSafetyRiskAssessments />} />
           <Route path="qms/view-health-safety-assessments" element={<QmsViewHealthSafetyRiskAssessments />} />
-          <Route path="qms/draft-health-safety-assessments" element={<QmsDraftHealthSafetyRiskAssessments  />} />
-          <Route path="qms/edit-draft-health-safety-assessments" element={<QmsEditDraftHealthSafetyRiskAssessments  />} />
-          <Route path="qms/view-draft-health-safety-assessments" element={<QmsViewDraftHealthSafetyRiskAssessments  />} />
+          <Route path="qms/draft-health-safety-assessments" element={<QmsDraftHealthSafetyRiskAssessments />} />
+          <Route path="qms/edit-draft-health-safety-assessments" element={<QmsEditDraftHealthSafetyRiskAssessments />} />
+          <Route path="qms/view-draft-health-safety-assessments" element={<QmsViewDraftHealthSafetyRiskAssessments />} />
+
+          <Route path="qms/list-health-safety-incidents" element={<QmsListHealthSafetyIncidents />} />
+          <Route path="qms/add-health-safety-incidents" element={<QmsAddHealthSafetyIncidents />} />
+          <Route path="qms/edit-health-safety-incidents" element={<QmsEditHealthSafetyIncidents />} />
+          <Route path="qms/view-health-safety-incidents" element={<QmsViewHealthSafetyIncidents />} />
+          <Route path="qms/draft-health-safety-incidents" element={<QmsDraftHealthSafetyIncidents />} />
+          <Route path="qms/edit-draft-health-safety-incidents" element={<QmsDraftEditHealthSafetyIncidents />} />
+          <Route path="qms/view-draft-health-safety-incidents" element={<QmsDraftViewHealthSafetyIncidents />} />
 
 
 

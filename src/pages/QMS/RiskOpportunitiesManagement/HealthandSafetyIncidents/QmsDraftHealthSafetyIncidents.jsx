@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import viewIcon from "../../../assets/images/Companies/view.svg";
-import deleteIcon from "../../../assets/images/Company Documentation/delete.svg";
+import viewIcon from "../../../../assets/images/Companies/view.svg";
+import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
-import { BASE_URL } from "../../../Utils/Config";
+import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
 
-
-const QmsDraftNonConformityReport = () => {
+const QmsDraftHealthSafetyIncidents = () => {
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
@@ -73,21 +72,21 @@ const QmsDraftNonConformityReport = () => {
     const filteredNonConformity = currentItems.filter(nonConformities =>
         (nonConformities.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (nonConformities.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (nonConformities.ncr_no?.toString() || '').includes(searchQuery.toLowerCase()) ||
-        (nonConformities.executor?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+        (nonConformities.hsi_no?.toString() || '').includes(searchQuery.toLowerCase()) ||
+        (nonConformities.report_by?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
     // Navigation handlers
     const handleClose = () => {
-        navigate('/company/qms/list-nonconformity');
+        navigate('/company/qms/list-health-safety-incidents');
     };
 
     const handleQmsViewDraftNonConformity = (id) => {
-        navigate(`/company/qms/view-draft-nonconformity/${id}`);
+        navigate(`/company/qms/view-draft-health-safety-incidents/${id}`);
     };
 
     const handleQmsEditDraftnonConformity = (id) => {
-        navigate(`/company/qms/edit-draft-nonconformity/${id}`);
+        navigate(`/company/qms/edit-draft-health-safety-incidents/${id}`);
     };
 
     // Delete draft non Conformities
@@ -115,7 +114,7 @@ const QmsDraftNonConformityReport = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
-                <h1 className="list-manual-head">Draft Non Conformity Reports</h1>
+                <h1 className="list-manual-head">Draft Health and Safety Incidents</h1>
                 <div className="flex gap-4">
                     <div className="relative">
                         <input
@@ -144,9 +143,8 @@ const QmsDraftNonConformityReport = () => {
                             <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                             <th className="px-2 text-left add-manual-theads">Title</th>
                             <th className="px-2 text-left add-manual-theads">Source</th>
-                            <th className="px-2 text-left add-manual-theads">NCR</th>
-                            <th className="px-2 text-left add-manual-theads">Executor</th>
-                            <th className="px-2 text-left add-manual-theads">Date Raised</th>
+                            <th className="px-2 text-left add-manual-theads">Incident No</th>
+                            <th className="px-2 text-left add-manual-theads">Report By</th>
                             <th className="px-2 text-left add-manual-theads">Action</th>
                             <th className="px-2 text-center add-manual-theads">View</th>
                             <th className="pr-2 text-center add-manual-theads">Delete</th>
@@ -159,11 +157,10 @@ const QmsDraftNonConformityReport = () => {
                                     <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td className="px-2 add-manual-datas">{nonConformities.title || '-'}</td>
                                     <td className="px-2 add-manual-datas">{nonConformities.source || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.ncr_no || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{nonConformities.hsi_no || '-'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {nonConformities.executor?.first_name} {nonConformities.executor?.last_name}
+                                        {nonConformities.report_by?.first_name} {nonConformities.report_by?.last_name}
                                     </td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.date_raised || '-'}</td>
                                     <td className="px-2 add-manual-datas">
                                         <button
                                             onClick={() => handleQmsEditDraftnonConformity(nonConformities.id)}
@@ -186,7 +183,7 @@ const QmsDraftNonConformityReport = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="9" className="text-center py-4 not-found">No Draft Non Conformity Found</td>
+                                <td colSpan="9" className="text-center py-4 not-found">No Draft Health Safety Incidents Found</td>
                             </tr>
                         )}
                     </tbody>
@@ -230,4 +227,4 @@ const QmsDraftNonConformityReport = () => {
     );
 };
 
-export default QmsDraftNonConformityReport
+export default QmsDraftHealthSafetyIncidents
