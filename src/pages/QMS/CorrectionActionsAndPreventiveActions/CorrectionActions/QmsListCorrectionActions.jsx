@@ -134,6 +134,15 @@ const QmsListCorrectionActions = () => {
         }
     };
 
+    const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
     if (loading) return <div className="text-white text-center p-5">Loading...</div>;
     if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
 
@@ -191,15 +200,15 @@ const QmsListCorrectionActions = () => {
                     </thead>
                     <tbody>
                         {filteredCorrections.length > 0 ? (
-                            filteredCorrections.map((correction) => (
+                            filteredCorrections.map((correction, index) => (
                                 <tr key={correction.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                    <td className="pl-5 pr-2 add-manual-datas">{correction.action_no || '-'}</td>
+                                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-2 add-manual-datas">{correction.title || '-'}</td>
                                     <td className="px-2 add-manual-datas">{correction.source || '-'}</td>
                                     <td className="px-2 add-manual-datas">{correction.action_no || '-'}</td>
                                     <td className="px-2 add-manual-datas">{correction.executor?.first_name} {correction.executor?.last_name}</td>
-                                    <td className="px-2 add-manual-datas">{correction.date_raised || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{correction.date_completed || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{formatDate(correction.date_raised || '-')}</td>
+                                    <td className="px-2 add-manual-datas">{formatDate(correction.date_completed || '-')}</td>
                                     <td className="px-2 add-manual-datas !text-center">
                                         <span
                                             className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${getStatusClass(correction.status)}`}

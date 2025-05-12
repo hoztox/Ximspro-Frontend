@@ -247,7 +247,7 @@ const QmsEditDraftCorrectionActions = () => {
             }
 
             // Update via API
-            const response = await axios.put(`${BASE_URL}/qms/car-numbers/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/car-draft/update/${id}/`, submissionData);
 
             console.log('Updated Draft CAR:', response.data);
             setIsLoading(false);

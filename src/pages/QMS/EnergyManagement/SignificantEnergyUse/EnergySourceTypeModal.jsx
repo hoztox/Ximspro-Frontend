@@ -31,7 +31,7 @@ const EnergySourceTypeModal = ({ isOpen, onClose, onAddEnergySource }) => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/source-type/company/${companyId}/`);
             setEnergySource(response.data);
         } catch (error) {
             console.error('Error fetching energySource:', error);
@@ -64,7 +64,7 @@ const EnergySourceTypeModal = ({ isOpen, onClose, onAddEnergySource }) => {
     // Handle delete cause
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
+            await axios.delete(`${BASE_URL}/qms/source-type/${id}/`);
             setEnergySource(energySource.filter(item => item.id !== id));
             setSuccessMessage('Cause deleted successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
@@ -89,7 +89,7 @@ const EnergySourceTypeModal = ({ isOpen, onClose, onAddEnergySource }) => {
                 return;
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/root-cause/create/`, {
+            const response = await axios.post(`${BASE_URL}/qms/source-type/create/`, {
                 company: companyId,
                 title: newEnergySourceTitle.trim()
             });

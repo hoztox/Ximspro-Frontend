@@ -53,12 +53,14 @@ const QmsViewDraftCorrectionActions = () => {
     );
 
     // Format dates for display
-    const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return date.toLocaleDateString();
-    };
-
+     const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
@@ -71,7 +73,7 @@ const QmsViewDraftCorrectionActions = () => {
                 </button>
             </div>
 
-            <div className="p-5 relative">
+            <div className="pt-5 relative">
                 {/* Vertical divider line */}
                 <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>
 

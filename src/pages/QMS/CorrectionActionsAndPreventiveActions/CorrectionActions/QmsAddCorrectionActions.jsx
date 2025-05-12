@@ -313,6 +313,7 @@ const QmsAddCorrectionActions = () => {
                 next_action_no: formData.next_action_no,
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
+                user: userId ,
                 is_draft: false
             };
 

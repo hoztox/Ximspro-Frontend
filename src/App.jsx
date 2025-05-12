@@ -295,13 +295,13 @@ import QmsViewObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsVi
 import QmsDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsDraftObjectives";
 import QmsEditDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsEditDraftObjectives";
 import QmsViewDraftObjectives from "./pages/QMS/ObjectivesAndTargets/Objectives/QmsViewDraftObjectives";
-import QmsListTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsListTargets";
-import QmsAddTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsAddTargets";
-import QmsEditTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditTargets";
-import QmsViewTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewTargets";
-import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsDraftTargets";
-import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsEditDraftTargets";
-import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targets/QmsViewDraftTargets";
+import QmsListTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsListTargets";
+import QmsAddTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsAddTargets";
+import QmsEditTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsEditTargets";
+import QmsViewTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsViewTargets";
+import QmsDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsDraftTargets";
+import QmsEditDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsEditDraftTargets";
+import QmsViewDraftTargets from "./pages/QMS/ObjectivesAndTargets/Targetss/QmsViewDraftTargets";
 import QmsListEnergyReview from "./pages/QMS/EnergyManagement/EnergyReview/QmsListEnergyReview"
 import QmsListEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsListEnvironmentalAspect";
 import QmsAddEnvironmentalAspect from "./pages/QMS/RiskOpportunitiesManagement/EnvironmantalAspect/QmsAddEnvironmentalAspect";
@@ -800,11 +800,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-preventive-actions" element={<QmsListPreventiveActions />} />
           <Route path="qms/add-preventive-actions" element={<QmsAddPreventiveActions />} />
-          <Route path="qms/edit-preventive-actions" element={<QmsEditPreventiveActions />} />
-          <Route path="qms/view-preventive-actions" element={<QmsViewPreventiveActions />} />
+          <Route path="qms/edit-preventive-actions/:id" element={<QmsEditPreventiveActions />} />
+          <Route path="qms/view-preventive-actions/:id" element={<QmsViewPreventiveActions />} />
           <Route path="qms/draft-preventive-actions" element={<QmsDraftPreventiveActions />} />
-          <Route path="qms/edit-draft-preventive-actions" element={<QmsEditDraftPreventiveActions />} />
-          <Route path="qms/view-draft-preventive-actions" element={<QmsViewDraftPreventiveActions />} />
+          <Route path="qms/edit-draft-preventive-actions/:id" element={<QmsEditDraftPreventiveActions />} />
+          <Route path="qms/view-draft-preventive-actions/:id" element={<QmsViewDraftPreventiveActions />} />
 
 
 
@@ -814,19 +814,19 @@ const ThemedApp = () => {
           {/* QMS Objectives & Targets*/}
           <Route path="qms/list-objectives" element={<QmsListObjectives />} />
           <Route path="qms/add-objectives" element={<QmsAddObjectives />} />
-          <Route path="qms/edit-objectives" element={<QmsEditObjectives />} />
-          <Route path="qms/view-objectives" element={<QmsViewObjectives />} />
+          <Route path="qms/edit-objectives/:id" element={<QmsEditObjectives />} />
+          <Route path="qms/view-objectives/:id" element={<QmsViewObjectives />} />
           <Route path="qms/draft-objectives" element={<QmsDraftObjectives />} />
-          <Route path="qms/edit-draft-objectives" element={<QmsEditDraftObjectives />} />
-          <Route path="qms/view-draft-objectives" element={<QmsViewDraftObjectives />} />
+          <Route path="qms/edit-draft-objectives/:id" element={<QmsEditDraftObjectives />} />
+          <Route path="qms/view-draft-objectives/:id" element={<QmsViewDraftObjectives />} />
 
           <Route path="qms/list-targets" element={<QmsListTargets />} />
           <Route path="qms/add-targets" element={<QmsAddTargets />} />
-          <Route path="qms/edit-targets" element={<QmsEditTargets />} />
-          <Route path="qms/view-targets" element={<QmsViewTargets />} />
+          <Route path="qms/edit-targets/:id" element={<QmsEditTargets />} />
+          <Route path="qms/view-targets/:id" element={<QmsViewTargets />} />
           <Route path="qms/draft-targets" element={<QmsDraftTargets />} />
-          <Route path="qms/edit-draft-targets" element={<QmsEditDraftTargets />} />
-          <Route path="qms/view-draft-targets" element={<QmsViewDraftTargets />} />
+          <Route path="qms/edit-draft-targets/:id" element={<QmsEditDraftTargets />} />
+          <Route path="qms/view-draft-targets/:id" element={<QmsViewDraftTargets />} /> 
 
 
 
@@ -853,11 +853,11 @@ const ThemedApp = () => {
           {/* QMS Non Conformity Report Management */}
           <Route path="qms/list-nonconformity" element={<QmsListNonconformityReport />} />
           <Route path="qms/add-nonconformity" element={<QmsAddNonConformityReport />} />
-          <Route path="qms/edit-nonconformity" element={<QmsEditNonConformityReport />} />
-          <Route path="qms/view-nonconformity" element={<QmsViewNonConformityReport />} />
+          <Route path="qms/edit-nonconformity/:id" element={<QmsEditNonConformityReport />} />
+          <Route path="qms/view-nonconformity/:id" element={<QmsViewNonConformityReport />} />
           <Route path="qms/draft-nonconformity" element={<QmsDraftNonConformityReport />} />
-          <Route path="qms/edit-draft-nonconformity" element={<QmsEditDraftNonConformity />} />
-          <Route path="qms/view-draft-nonconformity" element={<QmsViewDraftNonConformity />} />
+          <Route path="qms/edit-draft-nonconformity/:id" element={<QmsEditDraftNonConformity />} />
+          <Route path="qms/view-draft-nonconformity/:id" element={<QmsViewDraftNonConformity />} />
 
 
 

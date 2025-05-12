@@ -32,7 +32,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/review-type/company/${companyId}/`);
             setReview(response.data);
         } catch (error) {
             console.error('Error fetching review:', error);
@@ -65,7 +65,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
     // Handle delete cause
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
+            await axios.delete(`${BASE_URL}/qms/review-type/${id}/`);
             setReview(review.filter(item => item.id !== id));
             setSuccessMessage('Cause deleted successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
@@ -90,7 +90,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                 return;
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/root-cause/create/`, {
+            const response = await axios.post(`${BASE_URL}/qms/review-type/create/`, {
                 company: companyId,
                 title: newReviewTitle.trim()
             });

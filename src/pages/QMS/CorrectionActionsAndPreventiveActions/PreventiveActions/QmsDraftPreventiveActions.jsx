@@ -1,41 +1,90 @@
-import React, { useState } from 'react';
-import { Search, X } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Search, X } from "lucide-react";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
-import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const QmsDraftPreventiveActions = () => {
-  const initialData = [
-    { id: 1, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Solved' },
-    { id: 2, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Not Solved' },
-    { id: 3, title: 'Anonymous', source: 'Anonymous', date_raised: '03-12-2024', completed_by: '04-12-2024', executor: 'abc', status: 'Solved' },
-    { id: 4, title: 'New Issue', source: 'Internal', date_raised: '04-12-2024', completed_by: '04-12-2024', executor: 'xyz', status: 'Pending' },
-  ];
-
-
   // State
-  const [preventives, setPreventives] = useState(initialData);
+  const [preventives, setPreventives] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [formData, setFormData] = useState({
-    title: '',
-    source: '',
-    date_raised: '',
-    completed_by: '',
-    executor: '',
-    status: 'Solved'  // Default status set to 'Requested'
-  });
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
+  const userId = getRelevantUserId();
+
+  // Fetch preventive actions data
+  useEffect(() => {
+    fetchPreventiveActions();
+  }, []);
+
+  const fetchPreventiveActions = async () => {
+    if (!userId) {
+      setError("User/Company ID not found");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}/qms/preventive-draft/${userId}/`
+      );
+
+      if (response.data) {
+        setPreventives(response.data);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching preventive actions:", err);
+      setError("Failed to load preventive actions");
+      setLoading(false);
+    }
+  };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    setSearchTerm(value); // Update_raised searchTerm as well
     setCurrentPage(1);
   };
 
+  // Delete preventive action
+  const handleDeletePreventiveAction = async (id) => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/preventive-draft/edit/${id}/`);
+      setPreventives(preventives.filter((preventive) => preventive.id !== id));
+    } catch (err) {
+      console.error("Error deleting preventive action:", err);
+      alert("Failed to delete preventive action");
+    }
+  };
+
+  const handleClose = () => {
+    navigate("/company/qms/list-preventive-actions");
+  };
+
+  const handleQmsViewDraftPreventiveAction = (id) => {
+    navigate(`/company/qms/view-draft-preventive-actions/${id}`);
+  };
+
+  const handleQmsEditDraftPreventiveAction = (id) => {
+    navigate(`/company/qms/edit-draft-preventive-actions/${id}`);
+  };
 
   // Pagination
   const itemsPerPage = 10;
@@ -45,40 +94,50 @@ const QmsDraftPreventiveActions = () => {
   // Get current items
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = preventives.slice(indexOfFirstItem, indexOfLastItem);
 
   // Search functionality
-
-  const filteredPreventives = currentItems.filter(preventive =>
-    preventive.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    preventive.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    preventive.executor.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-
-  const handleClose = () => {
-    navigate('/company/qms/list-preventive-actions')
-  }
-
-
-  const handleQmsViewDraftPreventiveAction = () => {
-    navigate('/company/qms/view-draft-preventive-actions')
-  }
-
-  const handleQmsEditDraftPreventiveAction = () => {
-    navigate('/company/qms/edit-draft-preventive-actions')
-  }
-
-
-  // Delete  preventive
-  const handleDeletePreventiveAction = (id) => {
-    setPreventives(preventives.filter(preventive => preventive.id !== id));
-  };
+  const filteredPreventives = preventives
+    .filter(
+      (preventive) =>
+        (preventive.title &&
+          preventive.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (preventive.executor &&
+          `${preventive.executor.first_name} ${preventive.executor.last_name}`
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()))
+    )
+    .slice(indexOfFirstItem, indexOfLastItem);
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const nextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+
+  // Format date function
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
+  };
+
+  if (loading)
+    return (
+      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>
+    );
+
+  if (error)
+    return (
+      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+        Error: {error}
+      </div>
+    );
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -94,7 +153,7 @@ const QmsDraftPreventiveActions = () => {
               onChange={handleSearchChange}
               className="serach-input-manual focus:outline-none bg-transparent"
             />
-            <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
+            <div className="absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />
             </div>
           </div>
@@ -108,7 +167,7 @@ const QmsDraftPreventiveActions = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
-          <thead className='bg-[#24242D]'>
+          <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
@@ -121,68 +180,120 @@ const QmsDraftPreventiveActions = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredPreventives.map((preventive, index) => (
-              <tr key={preventive.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                <td className="pl-5 pr-2 add-manual-datas">{preventive.id}</td>
-                <td className="px-2 add-manual-datas">{preventive.title}</td>
-                <td className="px-2 add-manual-datas">{preventive.source}</td>
-                <td className="px-2 add-manual-datas">{preventive.executor}</td>
-                <td className="px-2 add-manual-datas">{preventive.date_raised}</td>
-             
-                <td className="px-2 add-manual-datas">
-                <button onClick={handleQmsEditDraftPreventiveAction} className='text-[#1E84AF]'>
-                                        Click to Continue
-                                    </button>
-                </td>
-                <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={handleQmsViewDraftPreventiveAction}>
-                    <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                  </button>
-                </td>
-                <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={handleDeletePreventiveAction}>
-                    <img src={deleteIcon} alt="Delete Icon" />
-                  </button>
+            {filteredPreventives.length > 0 ? (
+              filteredPreventives.map((preventive, index) => (
+                <tr
+                  key={preventive.id}
+                  className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
+                >
+                  <td className="pl-5 pr-2 add-manual-datas">
+                    {indexOfFirstItem + index + 1}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {preventive.title || "N/A"}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {preventive.action || "N/A"}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {preventive.executor
+                      ? `${preventive.executor.first_name} ${preventive.executor.last_name}`
+                      : "N/A"}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {formatDate(preventive.date_raised)}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    <button
+                      onClick={() =>
+                        handleQmsEditDraftPreventiveAction(preventive.id)
+                      }
+                      className="text-[#1E84AF]"
+                    >
+                      Click to Continue
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button
+                      onClick={() =>
+                        handleQmsViewDraftPreventiveAction(preventive.id)
+                      }
+                    >
+                      <img
+                        src={viewIcon}
+                        alt="View Icon"
+                        style={{
+                          filter:
+                            "brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)",
+                        }}
+                      />
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button
+                      onClick={() =>
+                        handleDeletePreventiveAction(preventive.id)
+                      }
+                    >
+                      <img src={deleteIcon} alt="Delete Icon" />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr className="border-b border-[#383840] h-[50px]">
+                <td colSpan="8" className="text-center py-4 not-found">
+                  No draft preventive actions found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-6 text-sm">
-        <div className='text-white total-text'>Total-{totalItems}</div>
-        <div className="flex items-center gap-5">
-          <button
-            onClick={prevPage}
-            disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-          >
-            Previous
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+      {preventives.length > 0 && (
+        <div className="flex justify-between items-center mt-6 text-sm">
+          <div className="text-white total-text">Total-{totalItems}</div>
+          <div className="flex items-center gap-5">
             <button
-              key={number}
-              onClick={() => paginate(number)}
-              className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                }`}
+              onClick={prevPage}
+              disabled={currentPage === 1}
+              className={`cursor-pointer swipe-text ${
+                currentPage === 1 ? "opacity-50" : ""
+              }`}
             >
-              {number}
+              Previous
             </button>
-          ))}
 
-          <button
-            onClick={nextPage}
-            disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-          >
-            Next
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`${
+                    currentPage === number ? "pagin-active" : "pagin-inactive"
+                  }`}
+                >
+                  {number}
+                </button>
+              )
+            )}
+
+            <button
+              onClick={nextPage}
+              disabled={currentPage === totalPages}
+              className={`cursor-pointer swipe-text ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
-export default QmsDraftPreventiveActions
+
+export default QmsDraftPreventiveActions;
