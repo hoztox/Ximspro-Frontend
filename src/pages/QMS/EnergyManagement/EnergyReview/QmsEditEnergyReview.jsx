@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -7,27 +7,29 @@ import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
 
 const QmsEditEnergyReview = () => {
-    const { id } = useParams(); // Get the review ID from URL
+    const { id } = useParams();
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [originalFile, setOriginalFile] = useState(null);
+    const [reviewTypes, setReviewTypes] = useState([]);
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        title: '',
-        review_number: '',
+        energy_name: '',
+        review_no: '',
         review_type: '',
         date: {
             day: '',
             month: '',
             year: ''
         },
-        document: null,
-        existingDocument: null,
-        business_process: '',
+        upload_attachment: null,
+        relate_business_process: '',
         remarks: '',
-        related_document_process: '',
+        relate_document_process: '',
         revision: '',
         send_notification: false
     });
@@ -51,78 +53,110 @@ const QmsEditEnergyReview = () => {
         return null;
     };
 
+    const companyId = getUserCompanyId();
+
     useEffect(() => {
-        const fetchEnergyReview = async () => {
-            try {
-                const response = await axios.get(`${BASE_URL}/energy/reviews/${id}/`);
-                const data = response.data;
-                
-                // Parse the date if it exists
-                let day = '', month = '', year = '';
-                if (data.date) {
-                    const dateParts = data.date.split('-');
-                    year = dateParts[0];
-                    month = dateParts[1];
-                    day = dateParts[2];
-                }
-
-                setFormData({
-                    title: data.title || '',
-                    review_number: data.review_number || '',
-                    review_type: data.review_type || '',
-                    date: {
-                        day: day,
-                        month: month,
-                        year: year
-                    },
-                    document: null,
-                    existingDocument: data.document || null,
-                    business_process: data.business_process || '',
-                    remarks: data.remarks || '',
-                    related_document_process: data.related_document_process || '',
-                    revision: data.revision || '',
-                    send_notification: data.send_notification || false
-                });
-            } catch (error) {
-                console.error('Error fetching energy review:', error);
-                setError('Failed to load energy review data.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchEnergyReview();
+        fetchReviewTypes();
     }, [id]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
+    const fetchEnergyReview = async () => {
+        setIsLoading(true);
+        setError('');
+        try {
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+            if (!id) {
+                setError('Energy review ID not provided.');
+                return;
+            }
 
-        // Handle file upload separately
-        if (name === 'document') {
+            const response = await axios.get(`${BASE_URL}/qms/energy-review/${id}/`);
+            const data = response.data;
+
+            let day = '', month = '', year = '';
+            if (data.date) {
+                const dateParts = data.date.split('-');
+                year = dateParts[0];
+                month = dateParts[1];
+                day = dateParts[2];
+            }
+
+            // Store the original file URL
+            if (data.upload_attachment) {
+                setOriginalFile(data.upload_attachment);
+                setSelectedFile(data.upload_attachment.split('/').pop());
+            }
+
             setFormData({
-                ...formData,
-                document: e.target.files[0],
-                existingDocument: null // Clear existing document when new one is uploaded
+                energy_name: data.energy_name || '',
+                review_no: data.review_no || '',
+                review_type: data.review_type?.id || data.review_type || '',
+                date: { day, month, year },
+                upload_attachment: null, // Important: Don't set the string URL here
+                relate_business_process: data.relate_business_process || '',
+                remarks: data.remarks || '',
+                relate_document_process: data.relate_document_process || '',
+                revision: data.revision || '',
+                send_notification: data.send_notification || false
             });
+
+        } catch (error) {
+            console.error('Error fetching energy review:', error);
+            setError('Failed to load energy review data.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchReviewTypes = async () => {
+        setIsLoading(true);
+        try {
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+
+            const response = await axios.get(`${BASE_URL}/qms/review-type/company/${companyId}/`);
+            setReviewTypes(response.data);
+        } catch (error) {
+            console.error('Error fetching review types:', error);
+            setError('Failed to load review types. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+
+        if (type === 'file') {
+            const file = files[0];
+            if (file) {
+                setSelectedFile(file.name);
+                setFormData({
+                    ...formData,
+                    upload_attachment: file,
+                });
+            }
             return;
         }
 
-        // Handle nested objects (dates)
+        if (type === 'checkbox') {
+            setFormData({ ...formData, [name]: checked });
+            return;
+        }
+
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
                 ...formData,
-                [parent]: {
-                    ...formData[parent],
-                    [child]: value
-                }
+                [parent]: { ...formData[parent], [child]: value }
             });
         } else {
-            // Handle regular inputs
-            setFormData({
-                ...formData,
-                [name]: value
-            });
+            setFormData({ ...formData, [name]: value });
         }
     };
 
@@ -133,7 +167,7 @@ const QmsEditEnergyReview = () => {
     const handleCloseReviewTypeModal = (newReviewAdded = false) => {
         setIsReviewTypeModalOpen(false);
         if (newReviewAdded) {
-            // You might want to refresh review types here if needed
+            fetchReviewTypes();
         }
     };
 
@@ -144,49 +178,62 @@ const QmsEditEnergyReview = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError('');
 
         try {
-            setIsLoading(true);
-            setError('');
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
 
-            // Format the date
             const formattedDate = formatDate(formData.date);
-            const companyId = getUserCompanyId();
-
-            // Prepare form data for submission
             const submissionData = new FormData();
-            if (companyId) submissionData.append('company', companyId);
-            submissionData.append('title', formData.title);
-            submissionData.append('review_number', formData.review_number);
+
+            // Add company ID
+            submissionData.append('company', companyId);
+
+            // Add text fields
+            submissionData.append('energy_name', formData.energy_name);
+            submissionData.append('review_no', formData.review_no);
             submissionData.append('review_type', formData.review_type);
             if (formattedDate) submissionData.append('date', formattedDate);
-            if (formData.document) {
-                submissionData.append('document', formData.document);
-            } else if (formData.existingDocument === null) {
-                // Explicitly indicate document should be removed if existing was cleared
-                submissionData.append('document', '');
-            }
-            submissionData.append('business_process', formData.business_process);
+            submissionData.append('relate_business_process', formData.relate_business_process);
             submissionData.append('remarks', formData.remarks);
-            submissionData.append('related_document_process', formData.related_document_process);
+            submissionData.append('relate_document_process', formData.relate_document_process);
             submissionData.append('revision', formData.revision);
             submissionData.append('send_notification', formData.send_notification);
 
-            // Submit to API
-            const response = await axios.put(`${BASE_URL}/energy/reviews/${id}/`, submissionData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
+            // Handle file upload - ONLY append if a new file was selected
+            if (formData.upload_attachment instanceof File) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            } else if (originalFile === null) {
+                // If there was no original file and no new file selected, send null
+                submissionData.append('upload_attachment', '');
+            }
+            // If there's an original file and no new file was selected, don't include the field
+            // This is key to fixing the issue - don't send the field if keeping the original file
+
+            const response = await axios.put(
+                `${BASE_URL}/qms/energy-review/update/${id}/`,
+                submissionData,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' }
                 }
-            });
+            );
 
             console.log('Energy Review updated:', response.data);
-
-            // Navigate to list view after successful submission
             navigate('/company/qms/list-energy-review');
-
         } catch (error) {
-            console.error('Error submitting form:', error);
-            setError('Failed to update energy review. Please check your inputs and try again.');
+            console.error('Error updating form:', error);
+            if (error.response && error.response.data) {
+                const errorMessages = Object.entries(error.response.data)
+                    .map(([key, value]) => `${key}: ${value}`)
+                    .join(', ');
+                setError(`Failed to update: ${errorMessages}`);
+            } else {
+                setError('Failed to update energy review. Please check your inputs and try again.');
+            }
         } finally {
             setIsLoading(false);
         }
@@ -196,15 +243,6 @@ const QmsEditEnergyReview = () => {
         navigate('/company/qms/list-energy-review');
     };
 
-    const handleRemoveDocument = () => {
-        setFormData({
-            ...formData,
-            document: null,
-            existingDocument: null
-        });
-    };
-
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -258,8 +296,8 @@ const QmsEditEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="energy_name"
+                        value={formData.energy_name}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                         required
@@ -272,8 +310,8 @@ const QmsEditEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="review_number"
-                        value={formData.review_number}
+                        name="review_no"
+                        value={formData.review_no}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                         required
@@ -291,6 +329,11 @@ const QmsEditEnergyReview = () => {
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>Select Review Type</option>
+                        {reviewTypes.map(type => (
+                            <option key={type.id} value={type.id}>
+                                {type.title}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
@@ -310,7 +353,6 @@ const QmsEditEnergyReview = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -330,8 +372,6 @@ const QmsEditEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -351,8 +391,6 @@ const QmsEditEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -380,7 +418,7 @@ const QmsEditEnergyReview = () => {
                     <div className="flex">
                         <input
                             type="file"
-                            name="document"
+                            name="upload_attachment"
                             onChange={handleChange}
                             className="hidden"
                             id="document-upload"
@@ -389,42 +427,34 @@ const QmsEditEnergyReview = () => {
                             htmlFor="document-upload"
                             className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
                         >
-                            <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                            <span className="text-[#AAAAAA] choose-file">
+                                {selectedFile ? selectedFile : "Choose File"}
+                            </span>
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.existingDocument && (
-                        <div className="flex justify-between items-center mt-2">
-                            <p className="text-[#AAAAAA]">
-                                Current file: {formData.existingDocument.split('/').pop()}
-                            </p>
-                            <button
-                                type="button"
-                                onClick={handleRemoveDocument}
-                                className="text-red-500 text-sm"
+                    <div className="flex items-center justify-between">
+                        {originalFile && (
+                            <div
+                                onClick={() => window.open(originalFile, '_blank')}
+                                className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
                             >
-                                Remove
-                            </button>
-                        </div>
-                    )}
-                    {formData.document && !formData.existingDocument && (
-                        <p className="text-[#AAAAAA] mt-2">
-                            New file: {formData.document.name}
-                        </p>
-                    )}
-                    {!formData.document && !formData.existingDocument && (
-                        <p className="text-[#AAAAAA] mt-2">
-                            No file chosen
-                        </p>
-                    )}
+                                Click to view file
+                                <Eye size={17} />
+                            </div>
+                        )}
+                        {!selectedFile && (
+                            <p className="text-right no-file">No file chosen</p>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Relate Business Process</label>
                     <input
                         type="text"
-                        name="business_process"
-                        value={formData.business_process}
+                        name="relate_business_process"
+                        value={formData.relate_business_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
@@ -443,8 +473,8 @@ const QmsEditEnergyReview = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Relate Document/Process</label>
                     <textarea
-                        name="related_document_process"
-                        value={formData.related_document_process}
+                        name="relate_document_process"
+                        value={formData.relate_document_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
                     />
@@ -467,8 +497,8 @@ const QmsEditEnergyReview = () => {
                             type="checkbox"
                             name="send_notification"
                             className="mr-2 form-checkboxes"
-                            checked={formData.send_notification || false}
-                            onChange={(e) => setFormData({...formData, send_notification: e.target.checked})}
+                            checked={formData.send_notification}
+                            onChange={handleChange}
                         />
                         <span className="permissions-texts cursor-pointer">
                             Send Notification
@@ -476,7 +506,6 @@ const QmsEditEnergyReview = () => {
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
                     <div className='flex gap-5'>
                         <button

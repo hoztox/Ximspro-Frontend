@@ -184,39 +184,42 @@ const QmsAddTargets = () => {
   };
 
   const prepareFormData = (isDraft) => {
-    const formDataToSend = new FormData();
-    console.log('formmmmmmdata', formData);
+  const formDataToSend = new FormData();
+  console.log('forrrrmDataToSend', formData); 
+  
+  // Append all basic fields
+  formDataToSend.append("user", userId);
+  formDataToSend.append("company", companyId);
+  formDataToSend.append("title", formData.title || "");
+  formDataToSend.append("target", formData.target || "");
+  formDataToSend.append("associative_objective", formData.associative_objective || "");
+  formDataToSend.append("results", formData.results || "");
+  formDataToSend.append("status", formData.status);
+  formDataToSend.append("responsible", formData.responsible);
+  formDataToSend.append("is_draft", isDraft);
+
+  // Append dates if they exist
+  const targetDate = formatDate(formData.target_date);
+  if (targetDate) formDataToSend.append("target_date", targetDate);
+
+  const reminderDate = formatDate(formData.reminder_date);
+  if (reminderDate) formDataToSend.append("reminder_date", reminderDate);
+
+  // Append file if it exists
+  if (formData.upload_attachment) {
+    formDataToSend.append("upload_attachment", formData.upload_attachment);
+  }
+
+  // Filter out empty program titles and convert to JSON string
+  const validPrograms = formData.programs
+    .filter(program => program.title.trim() !== "")
+    .map(program => ({ title: program.title }));
     
-    // Append all basic fields
-    formDataToSend.append("user", userId);
-    formDataToSend.append("company", companyId);
-    formDataToSend.append("title", formData.title || "");
-    formDataToSend.append("target", formData.target || "");
-    formDataToSend.append("associative_objective", formData.associative_objective || "");
-    formDataToSend.append("results", formData.results || "");
-    formDataToSend.append("status", formData.status);
-    formDataToSend.append("responsible", formData.responsible);
-    formDataToSend.append("is_draft", isDraft);
-
-    // Append dates if they exist
-    const targetDate = formatDate(formData.target_date);
-    if (targetDate) formDataToSend.append("target_date", targetDate);
-
-    const reminderDate = formatDate(formData.reminder_date);
-    if (reminderDate) formDataToSend.append("reminder_date", reminderDate);
-
-    // Append file if it exists
-    if (formData.upload_attachment) {
-      formDataToSend.append("upload_attachment", formData.upload_attachment);
-    }
-
-    // Filter out empty program titles
-    const validPrograms = formData.programs
-      .filter(program => program.title.trim() !== "")
-      .map(program => ({ title: program.title }));
-    formDataToSend.append('programs',validPrograms);
-    return formDataToSend;
-  };
+  // This is the key fix - JSON stringify the programs array
+  formDataToSend.append('programs', JSON.stringify(validPrograms));
+  
+  return formDataToSend;
+}; 
 
   const handleSubmit = async (e) => {
     e.preventDefault();

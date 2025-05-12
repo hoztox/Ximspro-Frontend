@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,12 @@ import ReviewTypeModal from './ReviewTypeModal';
 
 const QmsAddEnergyReview = () => {
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
+    const [reviewTypes, setReviewTypes] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const navigate = useNavigate();
+
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -27,103 +33,97 @@ const QmsAddEnergyReview = () => {
         return null;
     };
 
-    const companyId = getUserCompanyId();
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
-    const [nextReviewNo, setNextReviewNo] = useState("1");
-    const [error, setError] = useState('');
-    const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
 
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
     const [formData, setFormData] = useState({
-        title: '',
-        review_number: 'ER-1', // Initial format with prefix
+        energy_name: '',
+        review_no: 'ER-1',
         review_type: '',
         date: {
             day: '',
             month: '',
             year: ''
         },
-        document: null,
-        business_process: '',
+        upload_attachment: null,
+        relate_business_process: '',
         remarks: '',
-        related_document_process: '',
-        revision: ''
+        relate_document_process: '',
+        revision: '',
+        send_notification: false,
+        is_draft: false
     });
 
     useEffect(() => {
         fetchNextReviewNumber();
+        fetchReviewTypes();
     }, []);
 
     const fetchNextReviewNumber = async () => {
         try {
-            const companyId = getUserCompanyId();
             if (!companyId) {
-                // If no company ID, default to ER-1
-                setNextReviewNo("1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    review_number: "ER-1"
-                }));
+                setFormData(prev => ({ ...prev, review_no: "ER-1" }));
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/energy/review-number/next/${companyId}/`);
-            if (response.data && response.data.next_review_no) {
-                const reviewNumber = String(response.data.next_review_no);
-                setNextReviewNo(reviewNumber);
-
-                // Update the form data with the new review number in ER- format
-                setFormData(prevData => ({
-                    ...prevData,
-                    review_number: `ER-${reviewNumber}`
-                }));
-            } else {
-                // Default to ER-1 if no number is returned
-                setNextReviewNo("1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    review_number: "ER-1"
-                }));
-            }
+            const response = await axios.get(`${BASE_URL}/qms/energy-review/next-action/${companyId}/`);
+            const nextNumber = response.data?.next_review_no || "1";
+            setFormData(prev => ({ ...prev, review_no: `${nextNumber}` }));
         } catch (error) {
             console.error('Error fetching next review number:', error);
-            // Fallback to ER-1
-            setNextReviewNo("1");
-            setFormData(prevData => ({
-                ...prevData,
-                review_number: "ER-1"
-            }));
+            setFormData(prev => ({ ...prev, review_no: "ER-1" }));
+        }
+    };
+
+    const fetchReviewTypes = async () => {
+        setLoading(true);
+        try {
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+
+            const response = await axios.get(`${BASE_URL}/qms/review-type/company/${companyId}/`);
+            setReviewTypes(response.data);
+        } catch (error) {
+            console.error('Error fetching review types:', error);
+            setError('Failed to load review types. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked, files } = e.target;
 
-        // Handle file upload separately
-        if (name === 'document') {
-            setFormData({
-                ...formData,
-                document: e.target.files[0]
-            });
+        if (type === 'file') {
+            setFormData({ ...formData, upload_attachment: files[0] });
             return;
         }
 
-        // Handle nested objects (dates)
+        if (type === 'checkbox') {
+            setFormData({ ...formData, [name]: checked });
+            return;
+        }
+
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
                 ...formData,
-                [parent]: {
-                    ...formData[parent],
-                    [child]: value
-                }
+                [parent]: { ...formData[parent], [child]: value }
             });
         } else {
-            // Handle regular inputs
-            setFormData({
-                ...formData,
-                [name]: value
-            });
+            setFormData({ ...formData, [name]: value });
         }
     };
 
@@ -134,7 +134,7 @@ const QmsAddEnergyReview = () => {
     const handleCloseReviewTypeModal = (newReviewAdded = false) => {
         setIsReviewTypeModalOpen(false);
         if (newReviewAdded) {
-            fetchReview();
+            fetchReviewTypes();
         }
     };
 
@@ -143,48 +143,71 @@ const QmsAddEnergyReview = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
+    const prepareSubmissionData = () => {
+        const formattedDate = formatDate(formData.date);
+        const submissionData = new FormData();
+        console.log('Energy Review Form Data:', formData);
+
+        submissionData.append('company', companyId);
+        submissionData.append('user', userId);
+        submissionData.append('energy_name', formData.energy_name);
+        submissionData.append('review_no', formData.review_no);
+        submissionData.append('review_type', formData.review_type);
+        submissionData.append('date', formattedDate);
+        submissionData.append('remarks', formData.remarks);
+        submissionData.append('relate_business_process', formData.relate_business_process);
+        submissionData.append('relate_document_process', formData.relate_document_process);
+        submissionData.append('revision', formData.revision);
+        submissionData.append('send_notification', formData.send_notification);
+        if (formData.upload_attachment) {
+            submissionData.append('upload_attachment', formData.upload_attachment);
+        }
+        return submissionData;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+        setError('');
 
         try {
-            setIsLoading(true);
-            setError('');
+            const submissionData = prepareSubmissionData();
+            submissionData.append('is_draft', false);
 
-            // Format the date
-            const formattedDate = formatDate(formData.date);
-
-            // Prepare form data for submission
-            const submissionData = new FormData();
-            submissionData.append('company', companyId);
-            submissionData.append('title', formData.title);
-            submissionData.append('review_number', formData.review_number);
-            submissionData.append('review_type', formData.review_type);
-            submissionData.append('date', formattedDate);
-            if (formData.document) {
-                submissionData.append('document', formData.document);
-            }
-            submissionData.append('business_process', formData.business_process);
-            submissionData.append('remarks', formData.remarks);
-            submissionData.append('related_document_process', formData.related_document_process);
-            submissionData.append('revision', formData.revision);
-
-            // Submit to API
-            const response = await axios.post(`${BASE_URL}/energy/reviews/`, submissionData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
+            const response = await axios.post(`${BASE_URL}/qms/energy-review/create/`, submissionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             console.log('Energy Review created:', response.data);
-
-            // Navigate to list view after successful submission
             navigate('/company/qms/list-energy-review');
-
         } catch (error) {
             console.error('Error submitting form:', error);
             setError('Failed to save energy review. Please check your inputs and try again.');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
+        }
+    };
+
+    const handleSaveAsDraft = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const submissionData = prepareSubmissionData();
+            submissionData.append('is_draft', true);
+
+            const response = await axios.post(`${BASE_URL}/qms/energy-review/draft-create/`, submissionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            console.log('Energy Review saved as draft:', response.data);
+            navigate('/company/qms/draft-energy-review');
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            setError('Failed to save energy review as draft. Please check your inputs and try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -192,7 +215,6 @@ const QmsAddEnergyReview = () => {
         navigate('/company/qms/list-energy-review');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -218,11 +240,6 @@ const QmsAddEnergyReview = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
 
             <ReviewTypeModal
                 isOpen={isReviewTypeModalOpen}
@@ -236,8 +253,8 @@ const QmsAddEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="energy_name"
+                        value={formData.energy_name}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                         required
@@ -250,8 +267,8 @@ const QmsAddEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="review_number"
-                        value={formData.review_number}
+                        name="review_no"
+                        value={formData.review_no}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
                         required
@@ -269,6 +286,11 @@ const QmsAddEnergyReview = () => {
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>Select Review Type</option>
+                        {reviewTypes.map(type => (
+                            <option key={type.id} value={type.id}>
+                                {type.title}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
@@ -285,12 +307,9 @@ const QmsAddEnergyReview = () => {
                     </button>
                 </div>
 
-
-
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -310,8 +329,6 @@ const QmsAddEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -331,8 +348,6 @@ const QmsAddEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -360,37 +375,30 @@ const QmsAddEnergyReview = () => {
                     <div className="flex">
                         <input
                             type="file"
-                            name="document"
+                            name="upload_attachment"
                             onChange={handleChange}
                             className="hidden"
                             id="document-upload"
                         />
                         <label
-                            htmlFor="file-upload"
+                            htmlFor="document-upload"
                             className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
                         >
                             <span className="text-[#AAAAAA] choose-file">Choose File</span>
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.attachment && (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            {formData.document ? formData.document.name : "No file chosen"}
-                        </p>
-                    )}
-                    {!formData.attachment && (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            No file chosen
-                        </p>
-                    )}
+                    <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                        {formData.upload_attachment ? formData.upload_attachment.name : "No file chosen"}
+                    </p>
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Relate Business Process</label>
                     <input
                         type="text"
-                        name="business_process"
-                        value={formData.business_process}
+                        name="relate_business_process"
+                        value={formData.relate_business_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
@@ -409,8 +417,8 @@ const QmsAddEnergyReview = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Relate Document/Process</label>
                     <textarea
-                        name="related_document_process"
-                        value={formData.related_document_process}
+                        name="relate_document_process"
+                        value={formData.relate_document_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
                     />
@@ -433,7 +441,7 @@ const QmsAddEnergyReview = () => {
                             type="checkbox"
                             name="send_notification"
                             className="mr-2 form-checkboxes"
-                            checked={formData.send_notification || false}
+                            checked={formData.send_notification}
                             onChange={handleChange}
                         />
                         <span className="permissions-texts cursor-pointer">
@@ -442,12 +450,13 @@ const QmsAddEnergyReview = () => {
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button
                             type="button"
-                            className='request-correction-btn duration-200'>
+                            onClick={handleSaveAsDraft}
+                            className='request-correction-btn duration-200'
+                        >
                             Save as Draft
                         </button>
                     </div>
@@ -462,9 +471,9 @@ const QmsAddEnergyReview = () => {
                         <button
                             type="submit"
                             className="save-btn duration-200"
-                            disabled={isLoading}
+                            disabled={loading}
                         >
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {loading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

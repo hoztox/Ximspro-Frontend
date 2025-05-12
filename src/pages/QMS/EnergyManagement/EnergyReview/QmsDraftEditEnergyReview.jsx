@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -23,7 +23,6 @@ const QmsDraftEditEnergyReview = () => {
             year: ''
         },
         document: null,
-        existingDocument: null,
         business_process: '',
         remarks: '',
         related_document_process: '',
@@ -75,7 +74,6 @@ const QmsDraftEditEnergyReview = () => {
                         year: year
                     },
                     document: null,
-                    existingDocument: data.document || null,
                     business_process: data.business_process || '',
                     remarks: data.remarks || '',
                     related_document_process: data.related_document_process || '',
@@ -101,7 +99,6 @@ const QmsDraftEditEnergyReview = () => {
             setFormData({
                 ...formData,
                 document: e.target.files[0],
-                existingDocument: null // Clear existing document when new one is uploaded
             });
             return;
         }
@@ -161,9 +158,6 @@ const QmsDraftEditEnergyReview = () => {
             if (formattedDate) submissionData.append('date', formattedDate);
             if (formData.document) {
                 submissionData.append('document', formData.document);
-            } else if (formData.existingDocument === null) {
-                // Explicitly indicate document should be removed if existing was cleared
-                submissionData.append('document', '');
             }
             submissionData.append('business_process', formData.business_process);
             submissionData.append('remarks', formData.remarks);
@@ -199,7 +193,6 @@ const QmsDraftEditEnergyReview = () => {
         setFormData({
             ...formData,
             document: null,
-            existingDocument: null
         });
     };
 
@@ -392,30 +385,12 @@ const QmsDraftEditEnergyReview = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.existingDocument && (
-                        <div className="flex justify-between items-center mt-2">
-                            <p className="text-[#AAAAAA]">
-                                Current file: {formData.existingDocument.split('/').pop()}
-                            </p>
-                            <button
-                                type="button"
-                                onClick={handleRemoveDocument}
-                                className="text-red-500 text-sm"
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    )}
-                    {formData.document && !formData.existingDocument && (
-                        <p className="text-[#AAAAAA] mt-2">
-                            New file: {formData.document.name}
-                        </p>
-                    )}
-                    {!formData.document && !formData.existingDocument && (
-                        <p className="text-[#AAAAAA] mt-2">
-                            No file chosen
-                        </p>
-                    )}
+                    <div
+                        className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
+                    >
+                        Click to view file
+                        <Eye size={17} />
+                    </div>
                 </div>
 
                 <div className="flex flex-col gap-3">

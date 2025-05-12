@@ -743,11 +743,11 @@ const ThemedApp = () => {
           {/* QMS Energy Management*/}
           <Route path="qms/list-energy-review" element={<QmsListEnergyReview />} />
           <Route path="qms/add-energy-review" element={<QmsAddEnergyReview />} />
-          <Route path="qms/edit-energy-review" element={<QmsEditEnergyReview />} />
-          <Route path="qms/view-energy-review" element={<QmsViewEnergyReview />} />
+          <Route path="qms/edit-energy-review/:id" element={<QmsEditEnergyReview />} />
+          <Route path="qms/view-energy-review/:id" element={<QmsViewEnergyReview />} />
           <Route path="qms/draft-energy-review" element={<QmsDraftEnergyReview />} />
-          <Route path="qms/edit-draft-energy-review" element={<QmsDraftEditEnergyReview />} />
-          <Route path="qms/view-draft-energy-review" element={<QmsDraftViewEnergyReview />} />
+          <Route path="qms/edit-draft-energy-review/:id" element={<QmsDraftEditEnergyReview />} />
+          <Route path="qms/view-draft-energy-review/:id" element={<QmsDraftViewEnergyReview />} />
 
           <Route path="qms/list-energy-baselines" element={<QmsListEnergyBaselines />} />
           <Route path="qms/add-energy-baselines" element={<QmsAddEnergyBaseLines />} />
