@@ -6,15 +6,20 @@ import fileIcon from "../../../../assets/images/Company Documentation/file-icon.
 import { BASE_URL } from "../../../../Utils/Config";
 import EditQmsInterestedDraftSuccessModal from "./Modals/EditQmsInterestedDraftSuccessModal";
 import EditQmsInterestedDraftErrorModal from "./Modals/EditQmsInterestedDraftErrorModal";
+import InterestedPartiesTypeModal from "./InterestedPartiesTypeModal";
 
 const EditDraftQmsInterestedParties = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
+  const [causePartyOptions, setCausePartyOptions] = useState([]);
   const [showEditDraftInterestedSuccessModal, setShowEditDraftInterestedSuccessModal] = useState(false);
   const [showEditDraftInterestedErrorModal, setShowEditDraftInterestedErrorModal] = useState(false);
+  const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [focusedDropdown, setFocusedDropdown] = useState(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,6 +31,7 @@ const EditDraftQmsInterestedParties = () => {
     file: null,
     company: null,
     send_notification: false,
+    type: "",
   });
 
   const [dropdownRotation, setDropdownRotation] = useState({
@@ -38,11 +44,10 @@ const EditDraftQmsInterestedParties = () => {
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileUrl, setFileUrl] = useState(null);
 
-  // Helper functions for needs
   const addNeed = () => {
     setFormData(prev => ({
       ...prev,
-      needs: [...prev.needs, { needs: "", expectation: "" }]
+      needs: [...prev.needs, { needs: "", expectation: "" }],
     }));
   };
 
@@ -85,55 +90,67 @@ const EditDraftQmsInterestedParties = () => {
 
   const companyId = getUserCompanyId();
 
-  const fetchComplianceData = () => {
+  const fetchComplianceData = async () => {
     if (!companyId) {
       console.error("Company ID not found");
       return;
     }
 
-    axios.get(`${BASE_URL}/qms/compliance/${companyId}/`)
-      .then(response => {
-        setLegalRequirementOptions(response.data || []);
-      })
-      .catch(error => {
-        console.error("Error fetching legal requirements:", error);
-      });
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/compliance/${companyId}/`);
+      setLegalRequirementOptions(response.data || []);
+    } catch (error) {
+      console.error("Error fetching legal requirements:", error);
+    }
+  };
+
+  const fetchCauseParty = async () => {
+    try {
+      if (!companyId) {
+        setError("Company ID not found. Please log in again.");
+        return;
+      }
+      const response = await axios.get(`${BASE_URL}/qms/cause-party/company/${companyId}/`);
+      setCausePartyOptions(response.data || []);
+    } catch (error) {
+      console.error("Error fetching CauseParty:", error);
+      setError("Failed to load CauseParty types. Please try again.");
+    }
   };
 
   useEffect(() => {
     if (companyId) {
       setFormData(prev => ({
         ...prev,
-        company: companyId
+        company: companyId,
       }));
       fetchComplianceData();
+      fetchCauseParty();
     }
   }, [companyId]);
 
   useEffect(() => {
     if (!id) return;
-  
+
     const fetchData = async () => {
       setLoading(true);
       try {
         const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
         const data = response.data;
-        console.log('APIaaaaa Response:', data);
-  
-        // Process needs data from the response
+        console.log("API Response:", data);
+
         let needsData = [];
         if (data.needs && Array.isArray(data.needs)) {
           needsData = data.needs.map(need => ({
             needs: need.needs || "",
-            expectation: need.expectation || ""
+            expectation: need.expectation || "",
           }));
         }
-  
-        // If no needs exist, set default empty one
+
         if (needsData.length === 0) {
           needsData = [{ needs: "", expectation: "" }];
         }
-  
+
         setFormData({
           name: data.name || "",
           category: data.category || "Internal",
@@ -144,27 +161,31 @@ const EditDraftQmsInterestedParties = () => {
           file: null,
           company: data.company || companyId,
           send_notification: data.send_notification || false,
+          type: data.type ? String(data.type.id) : "",
         });
-  
+
+        if (data.legal_requirements === "N/A") {
+          setShowCustomField(true);
+        }
+
         if (data.file) {
-          // Check if the file path already contains a URL
-          if (data.file.startsWith('http')) {
+          if (data.file.startsWith("http")) {
             setFileUrl(data.file);
           } else {
             setFileUrl(`${BASE_URL}${data.file}`);
           }
-          setFileName(data.file.split('/').pop());
+          setFileName(data.file.split("/").pop());
         }
-  
       } catch (err) {
         console.error("Error fetching data:", err);
+        setError("Failed to load draft interested party data. Please try again.");
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchData();
-  }, [id]);
+  }, [id, companyId]);
 
   const toggleDropdown = (field) => {
     setDropdownRotation((prev) => ({
@@ -177,10 +198,10 @@ const EditDraftQmsInterestedParties = () => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     });
-    if (name === 'legal_requirements') {
-      setShowCustomField(value === 'N/A');
+    if (name === "legal_requirements") {
+      setShowCustomField(value === "N/A");
     }
   };
 
@@ -198,74 +219,86 @@ const EditDraftQmsInterestedParties = () => {
 
   const handleViewFile = () => {
     if (fileUrl && !selectedFile) {
-      // Open the fileUrl directly without any additional processing
-      window.open(fileUrl, '_blank');
+      window.open(fileUrl, "_blank");
     } else if (selectedFile) {
       const tempUrl = URL.createObjectURL(selectedFile);
-      window.open(tempUrl, '_blank');
+      window.open(tempUrl, "_blank");
     }
   };
+
+  const handleOpenReviewTypeModal = () => {
+    setIsReviewTypeModalOpen(true);
+  };
+
+  const handleCloseReviewTypeModal = (newReviewAdded = false) => {
+    setIsReviewTypeModalOpen(false);
+    if (newReviewAdded) {
+      fetchCauseParty();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);    
-  
+    setSubmitting(true);
+    setError(null);
+
     try {
       let response;
+      const typeValue = formData.type ? parseInt(formData.type, 10) : null;
+
       if (selectedFile) {
-        // When a new file is selected
         const formDataWithFile = new FormData();
-        formDataWithFile.append('name', formData.name);
-        formDataWithFile.append('category', formData.category);
-        formDataWithFile.append('special_requirements', formData.special_requirements);
-        formDataWithFile.append('legal_requirements', formData.legal_requirements);
-        formDataWithFile.append('custom_legal_requirements', formData.custom_legal_requirements);
-        formDataWithFile.append('send_notification', formData.send_notification);
-        formDataWithFile.append('company', formData.company);
-        formDataWithFile.append('file', selectedFile);
-  
-        // Add needs array as JSON string
-        formDataWithFile.append('needs', JSON.stringify(
-          formData.needs.filter(need =>
-            need.needs.trim() !== "" || need.expectation.trim() !== ""
+        formDataWithFile.append("name", formData.name);
+        formDataWithFile.append("category", formData.category);
+        formDataWithFile.append("special_requirements", formData.special_requirements || "");
+        formDataWithFile.append("legal_requirements", formData.legal_requirements || "");
+        formDataWithFile.append("custom_legal_requirements", formData.custom_legal_requirements || "");
+        formDataWithFile.append("send_notification", formData.send_notification);
+        formDataWithFile.append("company", formData.company);
+        if (typeValue !== null) {
+          formDataWithFile.append("type", typeValue);
+        }
+        formDataWithFile.append(
+          "needs",
+          JSON.stringify(
+            formData.needs.filter(need => need.needs.trim() !== "" || need.expectation.trim() !== "")
           )
-        ));
-  
+        );
+        formDataWithFile.append("file", selectedFile);
+
         response = await axios.put(
           `${BASE_URL}/qms/interst/create/${id}/`,
           formDataWithFile,
           {
             headers: {
-              'Content-Type': 'multipart/form-data',
+              "Content-Type": "multipart/form-data",
             },
           }
         );
       } else {
-        // When no new file is selected, don't include the file field at all
         const dataToSend = {
           name: formData.name,
           category: formData.category,
-          needs: formData.needs.filter(need =>
-            need.needs.trim() !== "" || need.expectation.trim() !== ""
-          ),
-          special_requirements: formData.special_requirements,
-          legal_requirements: formData.legal_requirements,
-          custom_legal_requirements: formData.custom_legal_requirements,
+          needs: formData.needs.filter(need => need.needs.trim() !== "" || need.expectation.trim() !== ""),
+          special_requirements: formData.special_requirements || "",
+          legal_requirements: formData.legal_requirements || "",
+          custom_legal_requirements: formData.custom_legal_requirements || "",
           send_notification: formData.send_notification,
           company: formData.company,
-          // Don't include file field to keep existing file
+          type: typeValue,
         };
-  
+
         response = await axios.put(
           `${BASE_URL}/qms/interst/create/${id}/`,
           dataToSend,
           {
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
           }
         );
       }
-      
+
       setShowEditDraftInterestedSuccessModal(true);
       setTimeout(() => {
         navigate("/company/qms/interested-parties");
@@ -274,8 +307,9 @@ const EditDraftQmsInterestedParties = () => {
       console.error("Error details:", {
         message: err.message,
         response: err.response?.data,
-        stack: err.stack
+        stack: err.stack,
       });
+      setError(err.response?.data?.detail || "Failed to update draft interested party. Please try again.");
       setShowEditDraftInterestedErrorModal(true);
       setTimeout(() => {
         setShowEditDraftInterestedErrorModal(false);
@@ -303,15 +337,26 @@ const EditDraftQmsInterestedParties = () => {
         Edit Draft Interested Parties
       </h1>
 
+      <InterestedPartiesTypeModal
+        isOpen={isReviewTypeModalOpen}
+        onClose={handleCloseReviewTypeModal}
+      />
+
       <EditQmsInterestedDraftSuccessModal
         showEditDraftInterestedSuccessModal={showEditDraftInterestedSuccessModal}
-        onClose={() => { setShowEditDraftInterestedSuccessModal(false) }}
+        onClose={() => setShowEditDraftInterestedSuccessModal(false)}
       />
 
       <EditQmsInterestedDraftErrorModal
         showEditDraftInterestedErrorModal={showEditDraftInterestedErrorModal}
-        onClose={() => { setShowEditDraftInterestedErrorModal(false) }}
+        onClose={() => setShowEditDraftInterestedErrorModal(false)}
       />
+
+      {error && (
+        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
@@ -328,7 +373,6 @@ const EditDraftQmsInterestedParties = () => {
                 required
               />
             </div>
-
             <div>
               <label className="block mb-3 add-qms-manual-label">Category</label>
               <div className="relative">
@@ -358,39 +402,26 @@ const EditDraftQmsInterestedParties = () => {
             {formData.needs.map((item, index) => (
               <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block mb-3 add-qms-manual-label">
-                    Needs
-                  </label>
+                  <label className="block mb-3 add-qms-manual-label">Needs</label>
                   <div className="flex">
                     <input
-                      type='text'
+                      type="text"
                       placeholder="Enter Needs"
                       value={item.needs}
-                      onChange={(e) => handleNeedChange(index, 'needs', e.target.value)}
+                      onChange={(e) => handleNeedChange(index, "needs", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
                       required
                     />
-                    {/* {index > 0 && (
-                      <button
-                        type="button"
-                        onClick={() => removeNeed(index)}
-                        className="ml-2 text-red-500"
-                      >
-                        ×
-                      </button>
-                    )} */}
                   </div>
                 </div>
                 <div>
-                  <label className="block mb-3 add-qms-manual-label">
-                    Expectation
-                  </label>
+                  <label className="block mb-3 add-qms-manual-label">Expectation</label>
                   <div className="flex">
                     <input
                       type="text"
                       placeholder="Enter Expectation"
                       value={item.expectation}
-                      onChange={(e) => handleNeedChange(index, 'expectation', e.target.value)}
+                      onChange={(e) => handleNeedChange(index, "expectation", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
                       required
                     />
@@ -410,7 +441,7 @@ const EditDraftQmsInterestedParties = () => {
                     <button
                       type="button"
                       onClick={addNeed}
-                     className="request-correction-btn flex items-center gap-[5px] duration-200 "
+                      className="request-correction-btn flex items-center gap-[5px] duration-200"
                     >
                       Add More <Plus size={18} />
                     </button>
@@ -432,7 +463,6 @@ const EditDraftQmsInterestedParties = () => {
                 placeholder="Enter Special Requirements"
               />
             </div>
-
             <div>
               <label className="block mb-3 add-qms-manual-label">
                 Applicable Legal/Regulatory Requirements
@@ -442,25 +472,28 @@ const EditDraftQmsInterestedParties = () => {
                   name="legal_requirements"
                   value={formData.legal_requirements}
                   onChange={handleInputChange}
-                  onFocus={() => toggleDropdown('legal_requirements')}
-                  onBlur={() => toggleDropdown('legal_requirements')}
+                  onFocus={() => toggleDropdown("legal_requirements")}
+                  onBlur={() => toggleDropdown("legal_requirements")}
                   className="w-full add-qms-intertested-inputs appearance-none cursor-pointer"
                 >
                   <option value="">Choose</option>
-                  {legalRequirementOptions
-                    .map((option, index) => (
-                      <option key={index} value={option.compliance_name || option.compliance_no}>
-                        {option.compliance_name || option.compliance_no}
-                      </option>
-                    ))}
+                  {legalRequirementOptions.map((option, index) => (
+                    <option
+                      key={index}
+                      value={option.compliance_name || option.compliance_no}
+                    >
+                      {option.compliance_name || option.compliance_no}
+                    </option>
+                  ))}
                   <option value="N/A">N/A</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <ChevronDown className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? 'rotate-180' : ''
-                    }`} />
+                  <ChevronDown
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? "rotate-180" : ""
+                      }`}
+                  />
                 </div>
               </div>
-
               {showCustomField && (
                 <div className="mt-3 transition-all duration-300 ease-in-out">
                   <textarea
@@ -473,7 +506,6 @@ const EditDraftQmsInterestedParties = () => {
                 </div>
               )}
             </div>
-
             <div>
               <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
               <div className="relative">
@@ -509,7 +541,39 @@ const EditDraftQmsInterestedParties = () => {
               </div>
             </div>
 
-            <div className='flex items-end justify-end'>
+            <div className="flex flex-col gap-3 relative">
+              <label className="add-training-label">Type</label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleInputChange}
+                onFocus={() => setFocusedDropdown("type")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="">Select Type</option>
+                {causePartyOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.title}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${focusedDropdown === "type" ? "rotate-180" : ""
+                  }`}
+                size={20}
+                color="#AAAAAA"
+              />
+              <button
+                className="flex justify-start add-training-label !text-[#1E84AF]"
+                onClick={handleOpenReviewTypeModal}
+                type="button"
+              >
+                View / Add Type
+              </button>
+            </div>
+
+            <div className="flex items-end justify-end col-span-2">
               <label className="flex items-center">
                 <input
                   type="checkbox"
@@ -521,9 +585,7 @@ const EditDraftQmsInterestedParties = () => {
                 <span className="permissions-texts cursor-pointer">Send Notification</span>
               </label>
             </div>
-
             <div></div>
-
             <div className="flex justify-end space-x-5">
               <button
                 type="button"
@@ -538,7 +600,7 @@ const EditDraftQmsInterestedParties = () => {
                 className="save-btn duration-200"
                 disabled={submitting}
               >
-                {submitting ? 'Saving...' : 'Save'}
+                {submitting ? "Saving..." : "Save"}
               </button>
             </div>
           </div>

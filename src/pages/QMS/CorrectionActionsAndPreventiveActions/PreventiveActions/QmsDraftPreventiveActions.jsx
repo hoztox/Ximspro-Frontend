@@ -66,7 +66,7 @@ const QmsDraftPreventiveActions = () => {
   // Delete preventive action
   const handleDeletePreventiveAction = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/qms/preventive-draft/edit/${id}/`);
+      await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
       setPreventives(preventives.filter((preventive) => preventive.id !== id));
     } catch (err) {
       console.error("Error deleting preventive action:", err);

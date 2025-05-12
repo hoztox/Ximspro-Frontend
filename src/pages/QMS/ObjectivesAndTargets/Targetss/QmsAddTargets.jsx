@@ -59,7 +59,7 @@ const QmsAddTargets = () => {
       year: "",
     },
     upload_attachment: null,
-    responsible: "",
+    responsible: "", 
     status: "On Going",
     reminder_date: {
       day: "",
@@ -67,6 +67,7 @@ const QmsAddTargets = () => {
       year: "",
     },
     is_draft: false,
+    programs: [{ "title": "" }],
   });
 
   const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -122,11 +123,18 @@ const QmsAddTargets = () => {
   };
 
   const handleProgramChange = (id, value) => {
-    setProgramFields(
-      programFields.map((field) =>
-        field.id === id ? { ...field, title: value } : field
-      )
+    // First update the programFields state for UI rendering
+    const updatedProgramFields = programFields.map((field) =>
+      field.id === id ? { ...field, title: value } : field
     );
+    setProgramFields(updatedProgramFields);
+    
+    // Then update the formData.programs with title-only objects
+    const updatedPrograms = updatedProgramFields.map(field => ({ title: field.title }));
+    setFormData({
+      ...formData,
+      programs: updatedPrograms,
+    });
   };
 
   const addProgramField = () => {
@@ -134,12 +142,28 @@ const QmsAddTargets = () => {
       programFields.length > 0
         ? Math.max(...programFields.map((f) => f.id)) + 1
         : 1;
-    setProgramFields([...programFields, { id: newId, title: "" }]);
+    const newProgramFields = [...programFields, { id: newId, title: "" }];
+    setProgramFields(newProgramFields);
+    
+    // Update formData.programs with title-only objects
+    const updatedPrograms = newProgramFields.map(field => ({ title: field.title }));
+    setFormData({
+      ...formData,
+      programs: updatedPrograms,
+    });
   };
 
   const removeProgramField = (id) => {
     if (programFields.length > 1) {
-      setProgramFields(programFields.filter((field) => field.id !== id));
+      const newProgramFields = programFields.filter((field) => field.id !== id);
+      setProgramFields(newProgramFields);
+      
+      // Update formData.programs with title-only objects
+      const updatedPrograms = newProgramFields.map(field => ({ title: field.title }));
+      setFormData({
+        ...formData,
+        programs: updatedPrograms,
+      });
     }
   };
 
@@ -149,8 +173,8 @@ const QmsAddTargets = () => {
   };
 
   const validatePrograms = () => {
-    const validPrograms = programFields.filter(
-      (field) => field.title.trim() !== ""
+    const validPrograms = formData.programs.filter(
+      (program) => program.title.trim() !== ""
     );
     if (validPrograms.length === 0) {
       setError("At least one program with a non-empty title is required.");
@@ -161,14 +185,14 @@ const QmsAddTargets = () => {
 
   const prepareFormData = (isDraft) => {
     const formDataToSend = new FormData();
-    console.log('formdataaaaa', formData);
+    console.log('formmmmmmdata', formData);
     
     // Append all basic fields
     formDataToSend.append("user", userId);
     formDataToSend.append("company", companyId);
     formDataToSend.append("title", formData.title || "");
     formDataToSend.append("target", formData.target || "");
-    formDataToSend.append("associative_objective",formData.associative_objective || "");
+    formDataToSend.append("associative_objective", formData.associative_objective || "");
     formDataToSend.append("results", formData.results || "");
     formDataToSend.append("status", formData.status);
     formDataToSend.append("responsible", formData.responsible);
@@ -186,11 +210,11 @@ const QmsAddTargets = () => {
       formDataToSend.append("upload_attachment", formData.upload_attachment);
     }
 
-    // Prepare programs data exactly as backend expects
-    const programs = programFields.map((field) => ({ title: field.title }));
-    // Append programs as a JSON string
-    formDataToSend.append("programs", JSON.stringify(programs));
-
+    // Filter out empty program titles
+    const validPrograms = formData.programs
+      .filter(program => program.title.trim() !== "")
+      .map(program => ({ title: program.title }));
+    formDataToSend.append('programs',validPrograms);
     return formDataToSend;
   };
 
@@ -200,7 +224,7 @@ const QmsAddTargets = () => {
 
     try {
       setIsLoading(true);
-      const formDataToSend = prepareFormData(false); // Now this will get the FormData
+      const formDataToSend = prepareFormData(false);
 
       const response = await axios.post(
         `${BASE_URL}/qms/targets/create/`,
@@ -213,15 +237,16 @@ const QmsAddTargets = () => {
       );
 
       console.log("Target Response", response.data);
-      setIsLoading(false);
+      setIsLoading(false); 
       navigate("/company/qms/list-targets");
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsLoading(false);
-      setError(
-        error.response?.data?.message ||
-          "Failed to save. Please check your inputs and try again."
-      );
+      const errorMessage =
+        error.response?.data?.errors?.programs
+          ? `Failed to save programs: ${JSON.stringify(error.response.data.errors.programs, null, 2)}`
+          : error.response?.data?.message || "Failed to save. Please check your inputs and try again.";
+      setError(errorMessage);
     }
   };
 
@@ -243,17 +268,17 @@ const QmsAddTargets = () => {
         }
       );
 
+      console.log("Draft Response", response.data);
       setIsLoading(false);
       navigate("/company/qms/list-targets");
     } catch (error) {
       console.error("Error saving as draft:", error);
       setIsLoading(false);
-      setError(
-        error.response?.data?.programs
-          ? "Failed to save programs as draft: " +
-              JSON.stringify(error.response.data.programs)
-          : "Failed to save as draft. Please check your inputs, especially programs, and try again."
-      );
+      const errorMessage =
+        error.response?.data?.errors?.programs
+          ? `Failed to save programs as draft: ${JSON.stringify(error.response.data.errors.programs, null, 2)}`
+          : error.response?.data?.message || "Failed to save as draft. Please check your inputs and try again.";
+      setError(errorMessage);
     }
   };
 
@@ -340,7 +365,7 @@ const QmsAddTargets = () => {
                 value={field.title}
                 onChange={(e) => handleProgramChange(field.id, e.target.value)}
                 className="add-training-inputs focus:outline-none flex-1"
-                required={index === 0} // Require at least the first program
+                required={index === 0}
               />
               {index === programFields.length - 1 && (
                 <button
@@ -384,11 +409,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -409,11 +433,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -434,11 +457,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -464,21 +486,20 @@ const QmsAddTargets = () => {
             </option>
             {users && users.length > 0
               ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
               : !isLoading && (
-                  <option value="" disabled>
-                    No users found
-                  </option>
-                )}
+                <option value="" disabled>
+                  No users found
+                </option>
+              )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${
-                          focusedDropdown === "responsible" ? "rotate-180" : ""
-                        }`}
+                        ${focusedDropdown === "responsible" ? "rotate-180" : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
@@ -530,11 +551,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -555,11 +575,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -580,11 +599,10 @@ const QmsAddTargets = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

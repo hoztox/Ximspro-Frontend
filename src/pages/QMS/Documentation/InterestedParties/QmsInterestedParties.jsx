@@ -52,7 +52,7 @@ const QmsInterestedParties = () => {
       const response = await axios.get(`${BASE_URL}/qms/interested-parties/${companyId}/`);
       console.log("Fetched interested parties data:", response.data);
       const data = Array.isArray(response.data) ? response.data : [response.data];
-      
+
       // Sort data by id in ascending order (oldest first), with fallback to written_at or created_at
       const sortedData = data.sort((a, b) => {
         if (a.id && b.id) {
@@ -63,7 +63,7 @@ const QmsInterestedParties = () => {
         const dateB = new Date(b.written_at || b.created_at || 0);
         return dateA - dateB;
       });
-      
+
       setFormData(sortedData);
       setError(null);
     } catch (err) {
@@ -139,6 +139,18 @@ const QmsInterestedParties = () => {
   const cancelDelete = () => {
     setShowDeleteInterestedModal(false);
     setInterestedToDelete(null);
+  };
+
+  const getTypeTitle = (item) => {
+    // Check if type exists and has a title property
+    if (item.type && typeof item.type === 'object' && item.type.title) {
+      return item.type.title;
+    } else if (typeof item.type === 'string') {
+      // If type is a string, return it directly
+      return item.type;
+    }
+    // Fallback
+    return "N/A";
   };
 
 
@@ -275,6 +287,8 @@ const QmsInterestedParties = () => {
                   <th className="px-4 qms-interested-parties-thead text-left">No</th>
                   <th className="px-4 qms-interested-parties-thead text-left">Name</th>
                   <th className="px-4 qms-interested-parties-thead text-left">Category</th>
+                  <th className="px-4 qms-interested-parties-thead text-left">Type</th>
+                  <th className="px-4 qms-interested-parties-thead text-left">Entered By</th>
                   {/* <th className="px-4 qms-interested-parties-thead text-left">Needs</th>
                   <th className="px-4 qms-interested-parties-thead text-left">Expectations</th> */}
                   <th className="px-4 qms-interested-parties-thead text-left">Date</th>
@@ -289,6 +303,8 @@ const QmsInterestedParties = () => {
                     <td className="px-4 qms-interested-parties-data">{(currentPage - 1) * recordsPerPage + index + 1}</td>
                     <td className="px-4 qms-interested-parties-data">{item.name}</td>
                     <td className="px-4 qms-interested-parties-data">{item.category}</td>
+                    <td className="px-4 qms-interested-parties-data">{getTypeTitle(item)}</td>
+                    <td className="px-4 qms-interested-parties-data">{item.user.first_name} {item.user.last_name}</td>
                     {/* <td className="px-4 qms-interested-parties-data">{item.needs}</td>
                     <td className="px-4 qms-interested-parties-data">{item.expectations}</td> */}
                     <td className="px-4 qms-interested-parties-data">{formatDate(item.created_at)}</td>

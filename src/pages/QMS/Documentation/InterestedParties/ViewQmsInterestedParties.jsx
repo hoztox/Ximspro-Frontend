@@ -40,10 +40,10 @@ const ViewQmsInterestedParties = () => {
     const handlePrint = () => {
         // Store the original page title
         const originalTitle = document.title;
-        
+
         // Change the document title to be used as the PDF filename
         document.title = `Interested Parties - ${formData?.name || 'Details'}`;
-        
+
         // Create a style element for print-specific styles
         const style = document.createElement('style');
         style.innerHTML = `
@@ -75,10 +75,10 @@ const ViewQmsInterestedParties = () => {
             }
         `;
         document.head.appendChild(style);
-        
+
         // Trigger the print dialog
         window.print();
-        
+
         // Clean up after printing
         document.title = originalTitle;
         document.head.removeChild(style);
@@ -89,6 +89,8 @@ const ViewQmsInterestedParties = () => {
             try {
                 const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
                 setFormData(response.data);
+                console.log('resoneeeee', response.data);
+
             } catch (error) {
                 console.error("Failed to fetch interested party data", error);
             }
@@ -106,7 +108,7 @@ const ViewQmsInterestedParties = () => {
                     <X size={23} className="text-white" />
                 </button>
             </div>
-            
+
             {/* Printable content container */}
             <div className="print-container" ref={printRef}>
                 <div className="p-4 space-y-6">
@@ -114,7 +116,7 @@ const ViewQmsInterestedParties = () => {
                     <h1 className="text-2xl font-bold text-center mb-6 hidden print:block print:text-black">
                         Interested Parties: {formData.name}
                     </h1>
-                    
+
                     <div className="flex flex-col md:flex-row">
                         <div className="md:w-1/2 md:pr-6 space-y-[40px]">
                             {/* Left column content */}
@@ -170,28 +172,36 @@ const ViewQmsInterestedParties = () => {
                                         : formData.legal_requirements}
                                 </div>
                             </div>
-                            <div className="flex justify-end space-x-10 non-printable">
-                                <button
-                                    onClick={handlePrint}
-                                    className="flex flex-col items-center view-interested-parties-label gap-[8px]"
-                                >
-                                    <span>Print</span>
-                                    <img src={prints} alt="Print Icon" className="w-[20px] h-[20px]" /> 
-                                </button>
-                                <button
-                                    onClick={() => handleEdit(id)}
-                                    className="flex flex-col items-center view-interested-parties-label gap-[8px]"
-                                >
-                                    <span>Edit</span>
-                                    <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(id)}
-                                    className="flex flex-col items-center view-interested-parties-label gap-[8px]"
-                                >
-                                    <span>Delete</span>
-                                    <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
-                                </button>
+                            <div className="flex justify-between">
+                                <div>
+                                    <label className="block view-interested-parties-label mb-[6px]">Type</label>
+                                    <div className="text-white view-interested-parties-data">
+                                        {formData.type && formData.type.title ? formData.type.title : 'N/A'}
+                                    </div>
+                                </div>
+                                <div className="flex justify-end space-x-10 non-printable">
+                                    <button
+                                        onClick={handlePrint}
+                                        className="flex flex-col items-center view-interested-parties-label gap-[8px]"
+                                    >
+                                        <span>Print</span>
+                                        <img src={prints} alt="Print Icon" className="w-[20px] h-[20px]" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleEdit(id)}
+                                        className="flex flex-col items-center view-interested-parties-label gap-[8px]"
+                                    >
+                                        <span>Edit</span>
+                                        <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(id)}
+                                        className="flex flex-col items-center view-interested-parties-label gap-[8px]"
+                                    >
+                                        <span>Delete</span>
+                                        <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

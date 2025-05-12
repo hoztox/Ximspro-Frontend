@@ -115,7 +115,7 @@ const QmsListPreventiveActions = () => {
   // Delete preventive action
   const handleDeletePreventiveAction = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/qms/preventive-actions/${id}/edit/`);
+      await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
       // Update state after successful deletion
       setPreventiveActions(
         preventiveActions.filter((preventive) => preventive.id !== id)

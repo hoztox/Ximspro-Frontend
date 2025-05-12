@@ -10,7 +10,7 @@ const ViewQmsDraftInterestedParties = () => {
     const { id } = useParams();
     const [formData, setFormData] = useState(null);
     const handleClose = () => {
-        navigate('/company/qms/interested-parties');
+        navigate('/company/qms/draft-interested-parties');
     };
     const handleDelete = () => {
         setFormData(null);
@@ -86,6 +86,12 @@ const ViewQmsDraftInterestedParties = () => {
                         <div>
                             <label className="block view-interested-parties-label mb-[6px]">Applicable Legal/Regulatory Requirements</label>
                             <div className="text-white view-interested-parties-data">{formData.legal_requirements}</div>
+                        </div>
+                        <div>
+                            <label className="block view-interested-parties-label mb-[6px]">Type</label>
+                            <div className="text-white view-interested-parties-data">
+                                {formData.type && formData.type.title ? formData.type.title : 'N/A'}
+                            </div>
                         </div>
                     </div>
                 </div>

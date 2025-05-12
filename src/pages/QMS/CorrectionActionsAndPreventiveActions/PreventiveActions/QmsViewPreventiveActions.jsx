@@ -60,7 +60,7 @@ const QmsViewPreventiveActions = () => {
       window.confirm("Are you sure you want to delete this preventive action?")
     ) {
       try {
-        await axios.delete(`${BASE_URL}/qms/preventive-actions/${id}/edit/`);
+        await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
         navigate("/company/qms/list-preventive-actions");
       } catch (err) {
         console.error("Error deleting preventive action:", err);

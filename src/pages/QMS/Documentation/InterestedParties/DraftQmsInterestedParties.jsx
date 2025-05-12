@@ -157,6 +157,16 @@ const DraftQmsInterestedParties = ({ userId }) => {
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).replace(/\//g, '-');
+  };
+
   const getPageNumbers = () => {
     const maxPagesToShow = 5;
     if (totalPages <= maxPagesToShow) {
@@ -219,6 +229,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
               <th className="px-4 qms-interested-parties-thead text-left">
                 Category
               </th>
+              <th className="px-4 qms-interested-parties-thead text-left">
+                Entered By
+              </th>
               {/* <th className="px-4 qms-interested-parties-thead text-left">
                 Needs
               </th>
@@ -255,6 +268,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
                   <td className="px-4 qms-interested-parties-data">
                     {item.category}
                   </td>
+                  <td className="px-4 qms-interested-parties-data">
+                    {item.user.first_name} {item.user.last_name}
+                  </td>
                   {/* <td className="px-4 qms-interested-parties-data">
                     {item.needs}
                   </td>
@@ -262,7 +278,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
                     {item.expectations}
                   </td> */}
                   <td className="px-4 qms-interested-parties-data">
-                    {item.created_at?.slice(0, 10)}
+                    {formatDate(item.created_at)}
                   </td>
                   <td className="px-4 qms-interested-parties-data">
                     <button
@@ -302,9 +318,8 @@ const DraftQmsInterestedParties = ({ userId }) => {
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
           >
             <span>Previous</span>
           </button>
@@ -312,9 +327,8 @@ const DraftQmsInterestedParties = ({ userId }) => {
             <button
               key={page}
               onClick={() => goToPage(page)}
-              className={`${
-                currentPage === page ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === page ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {page}
             </button>
@@ -335,9 +349,8 @@ const DraftQmsInterestedParties = ({ userId }) => {
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages || totalPages === 0 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? "opacity-50" : ""
+              }`}
           >
             <span>Next</span>
           </button>
