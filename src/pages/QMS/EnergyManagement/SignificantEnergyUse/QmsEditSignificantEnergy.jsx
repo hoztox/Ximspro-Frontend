@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { ChevronDown, Eye } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -7,7 +7,7 @@ import { BASE_URL } from "../../../../Utils/Config";
 import EnergySourceTypeModal from './EnergySourceTypeModal';
 
 const QmsEditSignificantEnergy = () => {
-    const { id } = useParams(); // Get the ID from the URL
+    const { id } = useParams();
     const navigate = useNavigate();
 
     const getUserCompanyId = () => {
@@ -29,7 +29,19 @@ const QmsEditSignificantEnergy = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
     const [isEnergySourceModalOpen, setIsEnergySourceModalOpen] = useState(false);
     const [energySources, setEnergySources] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -37,14 +49,14 @@ const QmsEditSignificantEnergy = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        next_seu_no: '',
-        energy_source_type: '',
+        significant: '',
+        source_type: '',
         date: {
             day: '',
             month: '',
             year: ''
         },
-        attachment: '',
+        upload_attachment: null,
         facility: '',
         consumption: '',
         action: '',
@@ -52,40 +64,40 @@ const QmsEditSignificantEnergy = () => {
         impact: '',
         remarks: '',
         revision: '',
-        send_notification: false,
+        is_notification: false,
         is_draft: false
     });
 
+    const [existingAttachment, setExistingAttachment] = useState(null);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
     useEffect(() => {
-        // Fetch all necessary data
         fetchSignificantEnergy();
         fetchEnergySources();
     }, [id]);
 
-    // Fetch the significant energy data
     const fetchSignificantEnergy = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/significant-energy/${id}/`);
+            if (!companyId || !id) {
+                setError('Company ID or record ID not found. Please try again.');
+                return;
+            }
+            const response = await axios.get(`${BASE_URL}/qms/significant/${id}/`);
             const data = response.data;
-            console.log('Significant Energy Data:', data);
 
-            // Process dates to split into day, month, year
             const processDate = (dateString) => {
                 if (!dateString) return { day: '', month: '', year: '' };
                 const [year, month, day] = dateString.split('-');
                 return { day, month, year };
             };
 
-            // Prepare form data
-            const formData = {
+            setFormData({
                 title: data.title || '',
-                next_seu_no: `SEU-${data.next_seu_no}` || '',
-                energy_source_type: data.energy_source_type?.id || '',
+                significant: data.significant || '',
+                source_type: data.source_type?.id || data.source_type || '',
                 date: processDate(data.date),
-                attachment: data.attachment || '',
+                upload_attachment: null,
                 facility: data.facility || '',
                 consumption: data.consumption || '',
                 action: data.action || '',
@@ -93,16 +105,29 @@ const QmsEditSignificantEnergy = () => {
                 impact: data.impact || '',
                 remarks: data.remarks || '',
                 revision: data.revision || '',
-                send_notification: data.send_notification || false,
+                is_notification: data.is_notification || false,
                 is_draft: data.is_draft || false
-            };
-
-            setFormData(formData);
-            setIsLoading(false);
+            });
+            setExistingAttachment(data.upload_attachment || null);
         } catch (error) {
             console.error('Error fetching significant energy:', error);
             setError('Failed to load significant energy data. Please try again.');
+        } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchEnergySources = async () => {
+        try {
+            if (!companyId) {
+                setError('Company ID not found. Please try again.');
+                return;
+            }
+            const response = await axios.get(`${BASE_URL}/qms/source-type/company/${companyId}/`);
+            setEnergySources(response.data);
+        } catch (error) {
+            console.error('Error fetching energy sources:', error);
+            setError('Failed to load energy sources. Please try again.');
         }
     };
 
@@ -118,32 +143,28 @@ const QmsEditSignificantEnergy = () => {
     };
 
     const handleListSignificantEnergy = () => {
-        navigate('/company/qms/list-significant-energy')
-    }
+        navigate('/company/qms/list-significant-energy');
+    };
 
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0],
+            upload_attachment: e.target.files[0],
         });
     };
 
-    const fetchEnergySources = async () => {
-        try {
-            const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
-            setEnergySources(response.data);
-        } catch (error) {
-            console.error('Error fetching energy sources:', error);
-            setError('Failed to load energy sources. Please check your connection and try again.');
+    const handleViewFile = () => {
+        if (existingAttachment) {
+            window.open(existingAttachment, "_blank");
+        } else {
+            setError("No existing file attached to this record.");
         }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'next_seu_no') return;
+        if (name === 'significant') return;
 
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -154,13 +175,11 @@ const QmsEditSignificantEnergy = () => {
                 }
             });
         } else if (e.target.type === 'checkbox') {
-            // Handle checkboxes
             setFormData({
                 ...formData,
                 [name]: e.target.checked
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -173,53 +192,58 @@ const QmsEditSignificantEnergy = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
+        if (asDraft) {
+            handleDraftSave(e);
+            return;
+        }
 
         try {
             setIsLoading(true);
             setError('');
-            const companyId = getUserCompanyId();
+            if (!companyId || !userId || !id) {
+                setError('Company, user, or record ID not found. Please try again.');
+                return;
+            }
+            if (!formData.significant) {
+                setError('Significant Energy Use Number is required.');
+                return;
+            }
 
-            // Format the dates
             const date = formatDate(formData.date);
+            const formDataToSend = new FormData();
+            formDataToSend.append('company', companyId);
+            formDataToSend.append('user', userId);
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('significant', formData.significant);
+            formDataToSend.append('source_type', formData.source_type);
+            if (date) formDataToSend.append('date', date);
+            if (formData.upload_attachment) formDataToSend.append('upload_attachment', formData.upload_attachment);
+            formDataToSend.append('facility', formData.facility);
+            formDataToSend.append('consumption', formData.consumption);
+            formDataToSend.append('action', formData.action);
+            formDataToSend.append('consequences', formData.consequences);
+            formDataToSend.append('impact', formData.impact);
+            formDataToSend.append('remarks', formData.remarks);
+            formDataToSend.append('revision', formData.revision);
+            formDataToSend.append('is_notification', formData.is_notification);
+            formDataToSend.append('is_draft', false);
 
-            // Prepare submission data
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                next_seu_no: formData.next_seu_no.replace('SEU-', ''),
-                energy_source_type: formData.energy_source_type,
-                date: date,
-                attachment: formData.attachment,
-                facility: formData.facility,
-                consumption: formData.consumption,
-                action: formData.action,
-                consequences: formData.consequences,
-                impact: formData.impact,
-                remarks: formData.remarks,
-                revision: formData.revision,
-                send_notification: formData.send_notification,
-                is_draft: formData.is_draft
-            };
-
-            // Update via API
-            const response = await axios.put(`${BASE_URL}/qms/significant-energy/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/significant/update/${id}/`, formDataToSend, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             console.log('Updated Significant Energy:', response.data);
-            setIsLoading(false);
-
-            // Navigate to the list page after successful submission
             navigate('/company/qms/list-significant-energy');
-
         } catch (error) {
             console.error('Error updating form:', error);
-            setIsLoading(false);
             setError('Failed to update. Please check your inputs and try again.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -239,7 +263,7 @@ const QmsEditSignificantEnergy = () => {
                 <h1 className="add-training-head">Edit Significant Energy Use</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={() => handleListSignificantEnergy()}
+                    onClick={handleListSignificantEnergy}
                 >
                     List Significant Energy Use
                 </button>
@@ -262,7 +286,7 @@ const QmsEditSignificantEnergy = () => {
                         onClose={handleEnergySourceModal}
                     />
 
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+                    <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">
                                 Significant Energy Use Name/Title
@@ -282,21 +306,21 @@ const QmsEditSignificantEnergy = () => {
                             </label>
                             <input
                                 type="text"
-                                name="next_seu_no"
-                                value={formData.next_seu_no}
+                                name="significant"
+                                value={formData.significant}
                                 className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                                 readOnly
-                                title="Existing SEU number cannot be changed"
+                                title="Significant number cannot be changed"
                             />
                         </div>
 
                         <div className="flex flex-col gap-3 relative">
                             <label className="add-training-label">Energy Source Type</label>
                             <select
-                                name="energy_source_type"
-                                value={formData.energy_source_type}
+                                name="source_type"
+                                value={formData.source_type}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("energy_source_type")}
+                                onFocus={() => setFocusedDropdown("source_type")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
@@ -304,9 +328,9 @@ const QmsEditSignificantEnergy = () => {
                                     Select Energy Source
                                 </option>
                                 {energySources && energySources.length > 0 ? (
-                                    energySources.map(cause => (
-                                        <option key={cause.id} value={cause.id}>
-                                            {cause.title}
+                                    energySources.map(source => (
+                                        <option key={source.id} value={source.id}>
+                                            {source.title}
                                         </option>
                                     ))
                                 ) : (
@@ -315,7 +339,7 @@ const QmsEditSignificantEnergy = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                    ${focusedDropdown === "energy_source_type" ? "rotate-180" : ""}`}
+                                    ${focusedDropdown === "source_type" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -331,7 +355,6 @@ const QmsEditSignificantEnergy = () => {
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">Date</label>
                             <div className="grid grid-cols-3 gap-5">
-                                {/* Day */}
                                 <div className="relative">
                                     <select
                                         name="date.day"
@@ -351,8 +374,6 @@ const QmsEditSignificantEnergy = () => {
                                         color="#AAAAAA"
                                     />
                                 </div>
-
-                                {/* Month */}
                                 <div className="relative">
                                     <select
                                         name="date.month"
@@ -372,8 +393,6 @@ const QmsEditSignificantEnergy = () => {
                                         color="#AAAAAA"
                                     />
                                 </div>
-
-                                {/* Year */}
                                 <div className="relative">
                                     <select
                                         name="date.year"
@@ -414,27 +433,28 @@ const QmsEditSignificantEnergy = () => {
                                 </label>
                             </div>
                             <div className='flex justify-between items-center'>
-                                <button className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'>
-                                    Click to view file <Eye size={17}/>
-                                </button>
-                                {formData.attachment && (
-                                    <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                                        {typeof formData.attachment === 'string' ?
-                                            'Existing file attached' :
-                                            formData.attachment.name}
-                                    </p>
+                                {existingAttachment && (
+                                    <button
+                                        onClick={handleViewFile}
+                                        className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'
+                                        type="button"
+                                    >
+                                        Click to view file <Eye size={17} />
+                                    </button>
                                 )}
-                                {!formData.attachment && (
-                                    <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                                        No file chosen
-                                    </p>
-                                )}
+                                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                    {formData.upload_attachment
+                                        ? formData.upload_attachment.name
+                                        : existingAttachment
+                                            ? 'Existing file attached'
+                                            : 'No file chosen'}
+                                </p>
                             </div>
                         </div>
 
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">
-                                Facility/Process/ Activity
+                                Facility/Process/Activity
                             </label>
                             <input
                                 type="text"
@@ -499,7 +519,7 @@ const QmsEditSignificantEnergy = () => {
 
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">
-                                Significant Energy use Remarks
+                                Significant Energy Use Remarks
                             </label>
                             <textarea
                                 name="remarks"
@@ -521,15 +541,14 @@ const QmsEditSignificantEnergy = () => {
                                 className="add-training-inputs focus:outline-none"
                             />
                         </div>
-                        <div></div>
 
-                        <div className="flex items-end justify-end mt-3">
+                        <div className="flex items-end justify-end mt-3 col-span-2">
                             <label className="flex items-center">
                                 <input
                                     type="checkbox"
-                                    name="send_notification"
+                                    name="is_notification"
                                     className="mr-2 form-checkboxes"
-                                    checked={formData.send_notification || false}
+                                    checked={formData.is_notification}
                                     onChange={handleChange}
                                 />
                                 <span className="permissions-texts cursor-pointer">
@@ -538,10 +557,8 @@ const QmsEditSignificantEnergy = () => {
                             </label>
                         </div>
 
-                        {/* Form Actions */}
                         <div className="md:col-span-2 flex gap-4 justify-end">
-
-                            <div className='flex gap-5'>
+                            <div className="flex gap-5">
                                 <button
                                     type="button"
                                     onClick={handleListSignificantEnergy}

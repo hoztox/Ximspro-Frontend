@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from 'react-router-dom';
@@ -26,19 +26,100 @@ const QmsAddSignificantEnergy = () => {
         return null;
     };
 
-    // Now you can safely use the function
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
     const [isEnergySourceModalOpen, setIsEnergySourceModalOpen] = useState(false);
     const navigate = useNavigate();
     const [energySources, setEnergySources] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [nextSeuno, setNextSeuNo] = useState("1");
+    const [isSaveLoading, setIsSaveLoading] = useState(false);
+    const [isDraftLoading, setIsDraftLoading] = useState(false);
+    const [significantNo, setSignificantNo] = useState("SEU-1");
     const [error, setError] = useState('');
+
+    const [formData, setFormData] = useState({
+        title: '',
+        significant: '',
+        source_type: '',
+        date: {
+            day: '',
+            month: '',
+            year: ''
+        },
+        upload_attachment: null,
+        facility: '',
+        consumption: '',
+        action: '',
+        consequences: '',
+        impact: '',
+        remarks: '',
+        revision: '',
+        is_notification: false,
+        is_draft: false
+    });
+
+    const [focusedDropdown, setFocusedDropdown] = useState(null);
 
     useEffect(() => {
         fetchEnergySources();
-        fetchNextSeuNumber();
+        fetchNextSignificantNumber();
     }, []);
+
+    const fetchEnergySources = async () => {
+        setIsLoading(true);
+        try {
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+            const response = await axios.get(`${BASE_URL}/qms/source-type/company/${companyId}/`);
+            setEnergySources(response.data);
+        } catch (error) {
+            console.error('Error fetching energy sources:', error);
+            setError('Failed to load energy sources. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchNextSignificantNumber = async () => {
+        try {
+            if (!companyId) {
+                setSignificantNo("");
+                setFormData(prevData => ({
+                    ...prevData,
+                    significant: ""
+                }));
+                return;
+            }
+
+            const response = await axios.get(`${BASE_URL}/qms/significant/next-action/${companyId}/`);
+            const significantNumber = response.data?.next_significant;
+            setSignificantNo(significantNumber);
+            setFormData(prevData => ({
+                ...prevData,
+                significant: significantNumber
+            }));
+        } catch (error) {
+            console.error('Error fetching next significant number:', error);
+            setSignificantNo("SEU-1");
+            setFormData(prevData => ({
+                ...prevData,
+                significant: "SEU-1"
+            }));
+        }
+    };
 
     const handleOpenEnergySourceModal = () => {
         setIsEnergySourceModalOpen(true);
@@ -51,102 +132,17 @@ const QmsAddSignificantEnergy = () => {
         }
     };
 
-    const [formData, setFormData] = useState({
-        title: '',
-        next_seu_no: '',
-        energy_source_type: '',
-        date: {
-            day: '',
-            month: '',
-            year: ''
-        },
-        attachment: '',
-        facility: '',
-        consumption: '',
-        action: '',
-        consequences: '',
-        impact: '',
-        remarks: '',
-        revision: '',
-        send_notification: false,
-        is_draft: false
-    });
-
-    const [focusedDropdown, setFocusedDropdown] = useState(null);
-
-    const handleListSignificantEnergy = () => {
-        navigate('/company/qms/list-significant-energy')
-    }
-
-    // New function to fetch the next available action number
-    const fetchNextSeuNumber = async () => {
-        try {
-            const companyId = getUserCompanyId();
-            if (!companyId) {
-                // If no company ID, default to SEU-1
-                setNextSeuNo("SEU-1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_seu_no: "SEU-1"
-                }));
-                return;
-            }
-
-            const response = await axios.get(`${BASE_URL}/qms/car-number/next-action/${companyId}/`);
-            if (response.data && response.data.next_seu_no) {
-                const seuNumber = `SEU-${response.data.next_seu_no}`;
-                setNextSeuNo(seuNumber);
-                console.log('SEU Number:', seuNumber);
-
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_seu_no: seuNumber
-                }));
-            } else {
-                // If response doesn't contain a valid number, default to "SEU-1"
-                setNextSeuNo("SEU-1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_seu_no: "SEU-1"
-                }));
-            }
-        } catch (error) {
-            console.error('Error fetching next seu number:', error);
-            // Set a fallback value if the API fails
-            setNextSeuNo("SEU-1");
-            setFormData(prevData => ({
-                ...prevData,
-                next_seu_no: "SEU-1"
-            }));
-        }
-    };
-
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0],
+            upload_attachment: e.target.files[0],
         });
-    };
-
-
-    const fetchEnergySources = async () => {
-        try {
-            setIsLoading(true);
-            const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
-            setEnergySources(response.data);
-            setIsLoading(false);
-        } catch (error) {
-            console.error('Error fetching root causes:', error);
-            setIsLoading(false);
-        }
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'next_seu_no') return;
+        if (name === 'significant') return;
 
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -157,13 +153,11 @@ const QmsAddSignificantEnergy = () => {
                 }
             });
         } else if (e.target.type === 'checkbox') {
-            // Handle checkboxes
             setFormData({
                 ...formData,
                 [name]: e.target.checked
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -178,112 +172,108 @@ const QmsAddSignificantEnergy = () => {
 
     const handleDraftSave = async (e) => {
         e.preventDefault();
-
         try {
-            setIsLoading(true);
+            setIsDraftLoading(true);
             setError('');
-            const companyId = getUserCompanyId();
+            if (!companyId || !userId) {
+                setError('Company or user ID not found. Please log in again.');
+                return;
+            }
 
-            // Format the dates
+            // Add defensive check for significant
+            if (!formData.significant) {
+                setError('Significant Energy Use Number is required. Please refresh the page.');
+                return;
+            }
+
             const date = formatDate(formData.date);
+            const formDataToSend = new FormData();
+            console.log('ttttttttttt', formData);
+            
+            formDataToSend.append('company', companyId);
+            formDataToSend.append('user', userId);
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('significant', formData.significant);
+            formDataToSend.append('source_type', formData.source_type);
+            if (date) formDataToSend.append('date', date);
+            if (formData.upload_attachment) formDataToSend.append('upload_attachment', formData.upload_attachment);
+            formDataToSend.append('facility', formData.facility);
+            formDataToSend.append('consumption', formData.consumption);
+            formDataToSend.append('action', formData.action);
+            formDataToSend.append('consequences', formData.consequences);
+            formDataToSend.append('impact', formData.impact);
+            formDataToSend.append('remarks', formData.remarks);
+            formDataToSend.append('revision', formData.revision);
+            formDataToSend.append('is_notification', formData.is_notification);
+            formDataToSend.append('is_draft', true);
 
-            // Prepare submission data
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                next_seu_no: formData.next_seu_no.replace('SEU-', ''),
-                energy_source_type: formData.energy_source_type,
-                date: date,
-                attachment: formData.attachment,
-                facility: formData.facility,
-                consumption: formData.consumption,
-                action: formData.action,
-                consequences: formData.consequences,
-                impact: formData.impact,
-                remarks: formData.remarks,
-                revision: formData.revision,
-                send_notification: formData.send_notification,
-                is_draft: true
-            };
-            // Submit to draft-specific API endpoint
-            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
+            const response = await axios.post(`${BASE_URL}/qms/significant/draft-create/`, formDataToSend, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             console.log('Saved Significant Energy Draft:', response.data);
-
-            setIsLoading(false);
-
-            // Show success message or navigate
-            navigate('/company/qms/draft-correction-actions');
-
+            navigate('/company/qms/draft-significant-energy');
         } catch (error) {
             console.error('Error saving draft:', error);
-            setIsLoading(false);
             setError('Failed to save draft. Please check your inputs and try again.');
+        } finally {
+            setIsDraftLoading(false);
         }
     };
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
-
-        // If saving as draft, use the specialized draft save function
         if (asDraft) {
             handleDraftSave(e);
             return;
         }
 
         try {
-            setIsLoading(true);
-            const companyId = getUserCompanyId();
-
-            // Format the dates
-            const date = formatDate(formData.date);
-            const dateCompleted = formatDate(formData.date_completed);
-
-            // Prepare submission data
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                next_seu_no: formData.next_seu_no.replace('SEU-', ''),
-                energy_source_type: formData.energy_source_type,
-                date: date,
-                attachment: formData.attachment,
-                facility: formData.facility,
-                consumption: formData.consumption,
-                action: formData.action,
-                consequences: formData.consequences,
-                impact: formData.impact,
-                remarks: formData.remarks,
-                revision: formData.revision,
-                send_notification: formData.send_notification,
-                is_draft: true
-            };
-
-            // Add supplier only if source is 'Supplier'
-            if (formData.source === 'Supplier') {
-                submissionData.supplier = formData.supplier;
+            setIsSaveLoading(true);
+            setError('');
+            if (!companyId || !userId) {
+                setError('Company or user ID not found. Please log in again.');
+                return;
             }
 
-            // Submit to API
-            const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
+            // Add defensive check for significant
+            if (!formData.significant) {
+                setError('Significant Energy Use Number is required. Please refresh the page.');
+                return;
+            }
 
-            console.log('Added Significant:', submissionData);
+            const date = formatDate(formData.date);
+            const formDataToSend = new FormData();
+            formDataToSend.append('company', companyId);
+            formDataToSend.append('user', userId);
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('significant', formData.significant);
+            formDataToSend.append('source_type', formData.source_type);
+            if (date) formDataToSend.append('date', date);
+            if (formData.upload_attachment) formDataToSend.append('upload_attachment', formData.upload_attachment);
+            formDataToSend.append('facility', formData.facility);
+            formDataToSend.append('consumption', formData.consumption);
+            formDataToSend.append('action', formData.action);
+            formDataToSend.append('consequences', formData.consequences);
+            formDataToSend.append('impact', formData.impact);
+            formDataToSend.append('remarks', formData.remarks);
+            formDataToSend.append('revision', formData.revision);
+            formDataToSend.append('is_notification', formData.is_notification);
+            formDataToSend.append('is_draft', false);
 
-            setIsLoading(false);
+            const response = await axios.post(`${BASE_URL}/qms/significant/create/`, formDataToSend, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
+            console.log('Added Significant Energy:', response.data);
+            navigate('/company/qms/list-significant-energy');
 
-            navigate('/company/qms/list-correction-actions');
-
-            // Reset form and fetch new action number for next time
             setFormData({
                 title: '',
-                next_seu_no: '',
-                energy_source_type: '',
-                date: {
-                    day: '',
-                    month: '',
-                    year: ''
-                },
-                attachment: '',
+                significant: '',
+                source_type: '',
+                date: { day: '', month: '', year: '' },
+                upload_attachment: null,
                 facility: '',
                 consumption: '',
                 action: '',
@@ -291,21 +281,23 @@ const QmsAddSignificantEnergy = () => {
                 impact: '',
                 remarks: '',
                 revision: '',
-                send_notification: false,
+                is_notification: false,
                 is_draft: false
             });
 
-            // After successful submission, fetch the next action number for next time
-            fetchNextSeuNumber();
-
+            fetchNextSignificantNumber();
         } catch (error) {
             console.error('Error submitting form:', error);
-            setIsLoading(false);
             setError('Failed to save. Please check your inputs and try again.');
+        } finally {
+            setIsSaveLoading(false);
         }
     };
 
-    // Generate options for dropdowns
+    const handleListSignificantEnergy = () => {
+        navigate('/company/qms/list-significant-energy');
+    };
+
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -325,7 +317,7 @@ const QmsAddSignificantEnergy = () => {
                 <h1 className="add-training-head">Add Significant Energy Use</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={() => handleListSignificantEnergy()}
+                    onClick={handleListSignificantEnergy}
                 >
                     List Significant Energy Use
                 </button>
@@ -343,11 +335,8 @@ const QmsAddSignificantEnergy = () => {
             />
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
-
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Significant Energy Use Name/Title
-                    </label>
+                    <label className="add-training-label">Significant Energy Use Name/Title</label>
                     <input
                         type="text"
                         name="title"
@@ -358,26 +347,24 @@ const QmsAddSignificantEnergy = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Significant Energy Use Number <span className="text-red-500">*</span>
-                    </label>
+                    <label className="add-training-label">Significant Energy Use Number <span className="text-red-500">*</span></label>
                     <input
                         type="text"
-                        name="next_seu_no"
-                        value={formData.next_seu_no}
+                        name="significant"
+                        value={formData.significant}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
-                        title="Auto-generated seu number"
+                        title="Auto-generated significant number"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Energy Source Type</label>
                     <select
-                        name="energy_source_type"
-                        value={formData.energy_source_type}
+                        name="source_type"
+                        value={formData.source_type}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("energy_source_type")}
+                        onFocus={() => setFocusedDropdown("source_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
@@ -385,9 +372,9 @@ const QmsAddSignificantEnergy = () => {
                             {isLoading ? "Loading..." : "Select Energy Source"}
                         </option>
                         {energySources && energySources.length > 0 ? (
-                            energySources.map(cause => (
-                                <option key={cause.id} value={cause.id}>
-                                    {cause.title}
+                            energySources.map(source => (
+                                <option key={source.id} value={source.id}>
+                                    {source.title}
                                 </option>
                             ))
                         ) : !isLoading && (
@@ -396,7 +383,7 @@ const QmsAddSignificantEnergy = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${focusedDropdown === "energy_source_type" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "source_type" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -412,7 +399,6 @@ const QmsAddSignificantEnergy = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -432,8 +418,6 @@ const QmsAddSignificantEnergy = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -453,8 +437,6 @@ const QmsAddSignificantEnergy = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -494,12 +476,12 @@ const QmsAddSignificantEnergy = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.attachment && (
+                    {formData.upload_attachment && (
                         <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            {formData.attachment.name}
+                            {formData.upload_attachment.name}
                         </p>
                     )}
-                    {!formData.attachment && (
+                    {!formData.upload_attachment && (
                         <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
                             No file chosen
                         </p>
@@ -507,9 +489,7 @@ const QmsAddSignificantEnergy = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Facility/Process/ Activity
-                    </label>
+                    <label className="add-training-label">Facility/Process/Activity</label>
                     <input
                         type="text"
                         name="facility"
@@ -520,109 +500,95 @@ const QmsAddSignificantEnergy = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Average Consumption
-                    </label>
+                    <label className="add-training-label">Average Consumption</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="consumption"
+                        value={formData.consumption}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Action Required
-                    </label>
+                    <label className="add-training-label">Action Required</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="action"
+                        value={formData.action}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Potential Consequences of Energy Use
-                    </label>
+                    <label className="add-training-label">Potential Consequences of Energy Use</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="consequences"
+                        value={formData.consequences}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Impact on Processes/Activity/Cost
-                    </label>
+                    <label className="add-training-label">Impact on Processes/Activity/Cost</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="impact"
+                        value={formData.impact}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Significant Energy use Remarks
-                    </label>
+                    <label className="add-training-label">Significant Energy Use Remarks</label>
                     <textarea
-                        name="title"
-                        value={formData.title}
+                        name="remarks"
+                        value={formData.remarks}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Revision
-                    </label>
+                    <label className="add-training-label">Revision</label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="revision"
+                        value={formData.revision}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
                 </div>
-                <div></div>
 
-                <div className="flex items-end justify-end mt-3">
+                <div className="flex items-end justify-end mt-3 col-span-2">
                     <label className="flex items-center">
                         <input
                             type="checkbox"
-                            name="send_notification"
+                            name="is_notification"
                             className="mr-2 form-checkboxes"
-                            checked={formData.send_notification || false}
+                            checked={formData.is_notification}
                             onChange={handleChange}
                         />
-                        <span className="permissions-texts cursor-pointer">
-                            Send Notification
-                        </span>
+                        <span className="permissions-texts cursor-pointer">Send Notification</span>
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button
                             type="button"
                             onClick={handleDraftSave}
-                            className='request-correction-btn duration-200'>
-                            Save as Draft
+                            className="request-correction-btn duration-200"
+                            disabled={isDraftLoading}
+                        >
+                            {isDraftLoading ? 'Saving Draft...' : 'Save as Draft'}
                         </button>
                     </div>
-                    <div className='flex gap-5'>
+                    <div className="flex gap-5">
                         <button
                             type="button"
                             onClick={handleListSignificantEnergy}
@@ -633,9 +599,9 @@ const QmsAddSignificantEnergy = () => {
                         <button
                             type="submit"
                             className="save-btn duration-200"
-                            disabled={isLoading}
+                            disabled={isSaveLoading}
                         >
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {isSaveLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>
@@ -643,4 +609,5 @@ const QmsAddSignificantEnergy = () => {
         </div>
     );
 };
-export default QmsAddSignificantEnergy
+
+export default QmsAddSignificantEnergy;

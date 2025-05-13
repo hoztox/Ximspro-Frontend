@@ -759,11 +759,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-significant-energy" element={<QmsListSignificantEnergy />} />
           <Route path="qms/add-significant-energy" element={<QmsAddSignificantEnergy />} />
-          <Route path="qms/edit-significant-energy" element={<QmsEditSignificantEnergy />} />
-          <Route path="qms/view-significant-energy" element={<QmsViewSignificantEnergy />} />
+          <Route path="qms/edit-significant-energy/:id" element={<QmsEditSignificantEnergy />} />
+          <Route path="qms/view-significant-energy/:id" element={<QmsViewSignificantEnergy />} />
           <Route path="qms/draft-significant-energy" element={<QmsDraftSignificantEnergy />} />
-          <Route path="qms/edit-draft-significant-energy" element={<QmsEditDraftSignificantEnergy />} />
-          <Route path="qms/view-draft-significant-energy" element={<QmsViewDraftSignificantEnergy />} />
+          <Route path="qms/edit-draft-significant-energy/:id" element={<QmsEditDraftSignificantEnergy />} />
+          <Route path="qms/view-draft-significant-energy/:id" element={<QmsViewDraftSignificantEnergy />} />
 
           <Route path="qms/list-energy-improvement-opportunities" element={<QmsListEnergyImprovement />} />
           <Route path="qms/add-energy-improvement-opportunities" element={<QmsAddEnergyImprovement />} />
