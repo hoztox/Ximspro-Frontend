@@ -1,34 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsDraftEnergyBaseLines = () => {
-    const initialData = [
-        { id: 1, title: 'Improve product quality', date: '03-12-2024', relate_energy_review: 'Test', responsible: 'Test' },
-        { id: 2, title: 'Reduce production waste', date: '03-12-2024', relate_energy_review: 'Test', responsible: 'Test' },
-    ];
-
-    // State
-    const [energyBaseLines, setEnergyBaseLines] = useState(initialData);
+    const [energyBaseLines, setEnergyBaseLines] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const [formData, setFormData] = useState({
-        title: '',
-        relate_energy_review: '',
-        responsible: '',
-        date: '',
+    const [currentPage, setCurrentPage] = useState(1);
 
-    });
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
+    const userId = getRelevantUserId();
+
+    const fetchDraftBaselines = async () => {
+        try {
+            setIsLoading(true);
+            setError('');
+            if (!userId) return;
+
+            const response = await axios.get(`${BASE_URL}/qms/baselines-draft/${userId}/`, {
+                params: { is_draft: true }
+            });
+            if (Array.isArray(response.data)) {
+                setEnergyBaseLines(response.data);
+            } else {
+                setEnergyBaseLines([]);
+                console.error("Unexpected response format:", response.data);
+            }
+            console.log('Draft Baselines:', response.data);
+            
+        } catch (error) {
+            console.error("Error fetching draft baselines:", error);
+            setError("Failed to load draft baselines. Please check your connection and try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchDraftBaselines();
+    }, []);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        setSearchTerm(value);
         setCurrentPage(1);
     };
 
@@ -44,25 +96,35 @@ const QmsDraftEnergyBaseLines = () => {
 
     // Search functionality
     const filteredEnergyBaseLines = currentItems.filter(energyBaseLine =>
-        energyBaseLine.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        energyBaseLine.relate_energy_review.toLowerCase().includes(searchQuery.toLowerCase())
+        energyBaseLine.basline_title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        energyBaseLine.energy_review?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        energyBaseLine.responsible?.first_name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     const handleClose = () => {
-        navigate('/company/qms/list-energy-baselines')
-    }
+        navigate('/company/qms/list-energy-baselines');
+    };
 
-    const handleQmsViewEnergyBaseLines = () => {
-        navigate('/company/qms/view-draft-energy-baselines')
-    }
+    const handleQmsViewEnergyBaseLines = (id) => {
+        navigate(`/company/qms/view-draft-energy-baselines/${id}`);
+    };
 
-    const handleQmsEditEnergyBaseLines = () => {
-        navigate('/company/qms/edit-draft-energy-baselines')
-    }
+    const handleQmsEditEnergyBaseLines = (id) => {
+        navigate(`/company/qms/edit-draft-energy-baselines/${id}`);
+    };
 
-    // Delete energyBaseLine
-    const handleDeleteEnergyBaseLines = (id) => {
-        setEnergyBaseLines(energyBaseLines.filter(energyBaseLine => energyBaseLine.id !== id));
+    const handleDeleteEnergyBaseLines = async (id) => {
+        try {
+            setIsLoading(true);
+            setError('');
+            await axios.delete(`${BASE_URL}/qms/baselines/${id}/`);
+            setEnergyBaseLines(energyBaseLines.filter(energyBaseLine => energyBaseLine.id !== id));
+        } catch (error) {
+            console.error("Error deleting draft baseline:", error);
+            setError("Failed to delete draft baseline. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     // Change page
@@ -94,6 +156,13 @@ const QmsDraftEnergyBaseLines = () => {
                 </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
+                    {error}
+                </div>
+            )}
+
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -109,29 +178,44 @@ const QmsDraftEnergyBaseLines = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredEnergyBaseLines.map((energyBaseLine, index) => (
-                            <tr key={energyBaseLine.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{energyBaseLine.id}</td>
-                                <td className="px-2 add-manual-datas">{energyBaseLine.title}</td>
-                                <td className="px-2 add-manual-datas">{energyBaseLine.relate_energy_review}</td>
-                                <td className="px-2 add-manual-datas">{energyBaseLine.responsible}</td>
-                                <td className="px-2 add-manual-datas">
-                                    <button onClick={handleQmsEditEnergyBaseLines} className='text-[#1E84AF]'>
-                                        Click to Continue
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewEnergyBaseLines}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={() => handleDeleteEnergyBaseLines(energyBaseLine.id)}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="8" className="text-center py-4">Loading...</td>
                             </tr>
-                        ))}
+                        ) : filteredEnergyBaseLines.length === 0 ? (
+                            <tr>
+                                <td colSpan="8" className="text-center py-4 not-found">No draft baselines found</td>
+                            </tr>
+                        ) : (
+                            filteredEnergyBaseLines.map((energyBaseLine, index) => (
+                                <tr key={energyBaseLine.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{energyBaseLine.basline_title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{energyBaseLine.energy_review?.title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">
+                                        {energyBaseLine.responsible?.first_name} {energyBaseLine.responsible?.last_name || 'N/A'}
+                                    </td> 
+                                    <td className="px-2 add-manual-datas">
+                                        <button
+                                            onClick={() => handleQmsEditEnergyBaseLines(energyBaseLine.id)}
+                                            className='text-[#1E84AF]'
+                                        >
+                                            Click to Continue
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsViewEnergyBaseLines(energyBaseLine.id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteEnergyBaseLines(energyBaseLine.id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -152,8 +236,7 @@ const QmsDraftEnergyBaseLines = () => {
                         <button
                             key={number}
                             onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
                         >
                             {number}
                         </button>
@@ -171,4 +254,5 @@ const QmsDraftEnergyBaseLines = () => {
         </div>
     );
 };
-export default QmsDraftEnergyBaseLines
+
+export default QmsDraftEnergyBaseLines;

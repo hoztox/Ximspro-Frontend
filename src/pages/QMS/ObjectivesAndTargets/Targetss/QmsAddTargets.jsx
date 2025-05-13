@@ -59,7 +59,7 @@ const QmsAddTargets = () => {
       year: "",
     },
     upload_attachment: null,
-    responsible: "", 
+    responsible: "",
     status: "On Going",
     reminder_date: {
       day: "",
@@ -123,47 +123,42 @@ const QmsAddTargets = () => {
   };
 
   const handleProgramChange = (id, value) => {
-    // First update the programFields state for UI rendering
-    const updatedProgramFields = programFields.map((field) =>
+    const updatedProgramFields = programFields.map(field =>
       field.id === id ? { ...field, title: value } : field
     );
+
     setProgramFields(updatedProgramFields);
-    
-    // Then update the formData.programs with title-only objects
-    const updatedPrograms = updatedProgramFields.map(field => ({ title: field.title }));
-    setFormData({
-      ...formData,
-      programs: updatedPrograms,
-    });
+
+    // Update formData with the new programs array
+    setFormData(prev => ({
+      ...prev,
+      programs: updatedProgramFields.map(field => ({ title: field.title }))
+    }));
   };
 
   const addProgramField = () => {
-    const newId =
-      programFields.length > 0
-        ? Math.max(...programFields.map((f) => f.id)) + 1
-        : 1;
+    const newId = programFields.length > 0
+      ? Math.max(...programFields.map(f => f.id)) + 1
+      : 1;
+
     const newProgramFields = [...programFields, { id: newId, title: "" }];
+
     setProgramFields(newProgramFields);
-    
-    // Update formData.programs with title-only objects
-    const updatedPrograms = newProgramFields.map(field => ({ title: field.title }));
-    setFormData({
-      ...formData,
-      programs: updatedPrograms,
-    });
+    setFormData(prev => ({
+      ...prev,
+      programs: newProgramFields.map(field => ({ title: field.title }))
+    }));
   };
 
   const removeProgramField = (id) => {
     if (programFields.length > 1) {
-      const newProgramFields = programFields.filter((field) => field.id !== id);
+      const newProgramFields = programFields.filter(field => field.id !== id);
+
       setProgramFields(newProgramFields);
-      
-      // Update formData.programs with title-only objects
-      const updatedPrograms = newProgramFields.map(field => ({ title: field.title }));
-      setFormData({
-        ...formData,
-        programs: updatedPrograms,
-      });
+      setFormData(prev => ({
+        ...prev,
+        programs: newProgramFields.map(field => ({ title: field.title }))
+      }));
     }
   };
 
@@ -184,42 +179,46 @@ const QmsAddTargets = () => {
   };
 
   const prepareFormData = (isDraft) => {
-  const formDataToSend = new FormData();
-  console.log('forrrrmDataToSend', formData); 
-  
-  // Append all basic fields
-  formDataToSend.append("user", userId);
-  formDataToSend.append("company", companyId);
-  formDataToSend.append("title", formData.title || "");
-  formDataToSend.append("target", formData.target || "");
-  formDataToSend.append("associative_objective", formData.associative_objective || "");
-  formDataToSend.append("results", formData.results || "");
-  formDataToSend.append("status", formData.status);
-  formDataToSend.append("responsible", formData.responsible);
-  formDataToSend.append("is_draft", isDraft);
+    const formDataToSend = new FormData();
 
-  // Append dates if they exist
-  const targetDate = formatDate(formData.target_date);
-  if (targetDate) formDataToSend.append("target_date", targetDate);
+    // Append all basic fields
+    formDataToSend.append("user", userId);
+    formDataToSend.append("company", companyId);
+    formDataToSend.append("title", formData.title || "");
+    formDataToSend.append("target", formData.target || "");
+    formDataToSend.append("associative_objective", formData.associative_objective || "");
+    formDataToSend.append("results", formData.results || "");
+    formDataToSend.append("status", formData.status);
+    formDataToSend.append("responsible", formData.responsible);
+    formDataToSend.append("is_draft", isDraft);
 
-  const reminderDate = formatDate(formData.reminder_date);
-  if (reminderDate) formDataToSend.append("reminder_date", reminderDate);
+    // Format and append dates
+    const targetDate = formatDate(formData.target_date);
+    if (targetDate) formDataToSend.append("target_date", targetDate);
 
-  // Append file if it exists
-  if (formData.upload_attachment) {
-    formDataToSend.append("upload_attachment", formData.upload_attachment);
-  }
+    const reminderDate = formatDate(formData.reminder_date);
+    if (reminderDate) formDataToSend.append("reminder_date", reminderDate);
 
-  // Filter out empty program titles and convert to JSON string
-  const validPrograms = formData.programs
-    .filter(program => program.title.trim() !== "")
-    .map(program => ({ title: program.title }));
-    
-  // This is the key fix - JSON stringify the programs array
-  formDataToSend.append('programs', JSON.stringify(validPrograms));
-  
-  return formDataToSend;
-}; 
+    // Append file if it exists
+    if (formData.upload_attachment) {
+      formDataToSend.append("upload_attachment", formData.upload_attachment);
+    }
+
+    // Append programs correctly - the key fix for both normal and draft submissions
+    const validPrograms = formData.programs.filter(p => p.title.trim() !== "");
+
+    // Use JSON string for draft endpoint
+    if (isDraft) {
+      formDataToSend.append("programs", JSON.stringify(validPrograms));
+    } else {
+      // Use the indexed approach for the regular create endpoint
+      validPrograms.forEach((program, index) => {
+        formDataToSend.append(`programs[${index}]title`, program.title);
+      });
+    }
+
+    return formDataToSend;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -240,7 +239,7 @@ const QmsAddTargets = () => {
       );
 
       console.log("Target Response", response.data);
-      setIsLoading(false); 
+      setIsLoading(false);
       navigate("/company/qms/list-targets");
     } catch (error) {
       console.error("Error submitting form:", error);
@@ -261,6 +260,9 @@ const QmsAddTargets = () => {
       setIsLoading(true);
       const formDataToSend = prepareFormData(true);
 
+      // Log the form data for debugging
+      console.log("Draft Form Data:", Object.fromEntries(formDataToSend.entries()));
+
       const response = await axios.post(
         `${BASE_URL}/qms/targets/draft-create/`,
         formDataToSend,
@@ -273,7 +275,7 @@ const QmsAddTargets = () => {
 
       console.log("Draft Response", response.data);
       setIsLoading(false);
-      navigate("/company/qms/list-targets");
+      navigate("/company/qms/draft-targets");
     } catch (error) {
       console.error("Error saving as draft:", error);
       setIsLoading(false);
@@ -281,7 +283,7 @@ const QmsAddTargets = () => {
         error.response?.data?.errors?.programs
           ? `Failed to save programs as draft: ${JSON.stringify(error.response.data.errors.programs, null, 2)}`
           : error.response?.data?.message || "Failed to save as draft. Please check your inputs and try again.";
-      setError(errorMessage);
+      setError(errorMessage); 
     }
   };
 

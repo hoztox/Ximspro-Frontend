@@ -1,37 +1,73 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
+import axios from 'axios';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsListTargets = () => {
-    const initialData = [
-        { id: 1, targets: 'Improve product quality', target_date: '03-12-2024', responsible: 'Quality Team', status: 'Achieved' },
-        { id: 2, targets: 'Reduce production waste', target_date: '03-12-2024', responsible: 'Production Team', status: 'OnGoing' },
-        { id: 3, targets: 'Implement new testing protocol', target_date: '03-12-2024', responsible: 'R&D Department', status: 'Not Achieved' },
-        { id: 4, targets: 'New safety standards', target_date: '04-12-2024', responsible: 'Safety Officer', status: 'Modified' },
-    ];
-
     // State
-    const [targets, setTargets] = useState(initialData);
-    const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [targets, setTargets] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [formData, setFormData] = useState({
-        targets: '',
-        target_date: '',
-        responsible: '',
-        status: 'OnGoing'
-    });
+    const [currentPage, setCurrentPage] = useState(1);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+
+    // Fetch targets from backend
+    const fetchTargets = async () => {
+        if (!companyId) {
+            setError("Company ID not found");
+            setLoading(false);
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await axios.get(`${BASE_URL}/qms/targets/${companyId}`);
+            setTargets(response.data);
+            setLoading(false);
+        } catch (err) {
+            setError('Failed to fetch targets. Please try again.');
+            console.error('Error fetching targets:', err);
+            setLoading(false);
+        }
+    };
+
+    // Initial fetch
+    useEffect(() => {
+        fetchTargets();
+    }, [companyId]);
+
+    // Handle search input
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        setSearchTerm(value);
-        setCurrentPage(1);
+        setCurrentPage(1); // Reset to first page on search
     };
 
     // Pagination
@@ -42,39 +78,82 @@ const QmsListTargets = () => {
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = targets.slice(indexOfFirstItem, indexOfLastItem);
 
-    // Search functionality
-    const filteredTargets = currentItems.filter(target =>
-        target.targets.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        target.responsible.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Filter targets based on search query
+    const filteredTargets = targets
+        .filter(target => {
+            const searchLower = searchQuery.toLowerCase();
+            return (
+                (target.target && target.target.toLowerCase().includes(searchLower)) ||
+                (target.responsible && target.responsible.toLowerCase().includes(searchLower)) ||
+                (target.status && target.status.toLowerCase().includes(searchLower))
+            );
+        })
+        .slice(indexOfFirstItem, indexOfLastItem);
 
+    // Navigation handlers
     const handleAddTargets = () => {
-        navigate('/company/qms/add-targets')
-    }
-
-    const handleDraftTargets = () => {
-        navigate('/company/qms/draft-targets')
-    }
-
-    const handleQmsViewTargets = () => {
-        navigate('/company/qms/view-targets ')
-    }
-
-    const handleQmsEditTargets = () => {
-        navigate('/company/qms/edit-targets')
-    }
-
-    // Delete target
-    const handleDeleteTargets = (id) => {
-        setTargets(targets.filter(target => target.id !== id));
+        navigate('/company/qms/add-targets');
     };
 
-    // Change page
+    const handleDraftTargets = () => {
+        navigate('/company/qms/draft-targets');
+    };
+
+    const handleQmsViewTargets = (id) => {
+        navigate(`/company/qms/view-targets/${id}`);
+    };
+
+    const handleQmsEditTargets = (id) => {
+        navigate(`/company/qms/edit-targets/${id}`);
+    };
+
+    // Delete target
+    const handleDeleteTargets = async (id) => {
+        if (window.confirm('Are you sure you want to delete this target?')) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/targets-get/${id}/`);
+                setTargets(targets.filter(target => target.id !== id));
+                // If we deleted the last item on the page, go to previous page
+                if (filteredTargets.length === 1 && currentPage > 1) {
+                    setCurrentPage(prev => prev - 1);
+                }
+            } catch (err) {
+                setError('Failed to delete target. Please try again.');
+                console.error('Error deleting target:', err);
+            }
+        }
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
+    // Pagination handlers
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-[60vh]">
+                <div className="not-found">Loading...</div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-[60vh]">
+                <div className="text-white">Error: {error}</div>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -110,6 +189,11 @@ const QmsListTargets = () => {
                 </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div className="text-red-500 mb-4">{error}</div>
+            )}
+
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -126,80 +210,103 @@ const QmsListTargets = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTargets.map((target, index) => (
-                            <tr key={target.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{target.id}</td>
-                                <td className="px-2 add-manual-datas">{target.targets}</td>
-                                <td className="px-2 add-manual-datas">{target.target_date}</td>
-                                <td className="px-2 add-manual-datas">{target.responsible}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <span
-                                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${target.status === 'Achieved'
-                                            ? 'bg-[#36DDAE11] text-[#36DDAE]'
-                                            : target.status === 'OnGoing'
-                                                ? 'bg-[#1E84AF11] text-[#1E84AF]'
-                                                : target.status === 'Not Achieved'
-                                                    ? 'bg-[#dd363611] text-[#dd3636]'
-                                                    : 'bg-[#FFA50011] text-[#FFA500]' // Modified status
-                                            }`}
-                                    >
-                                        {target.status}
-                                    </span>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewTargets}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditTargets}>
-                                        <img src={editIcon} alt="Edit Icon" />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={() => handleDeleteTargets(target.id)}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                </td>
+                        {filteredTargets.length > 0 ? (
+                            filteredTargets.map((target, index) => (
+                                <tr key={target.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{target.target || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{formatDate(target.target_date)}</td>
+                                    <td className="px-2 add-manual-datas"> {target.responsible?.first_name} {target.responsible?.last_name || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <span
+                                            className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${target.status === 'Achieved'
+                                                ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                                : target.status === 'On Going'
+                                                    ? 'bg-[#1E84AF11] text-[#1E84AF]'
+                                                    : target.status === 'Not Achieved'
+                                                        ? 'bg-[#dd363611] text-[#dd3636]'
+                                                        : 'bg-[#FFA50011] text-[#FFA500]' // Modified status
+                                                }`}
+                                        >
+                                            {target.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsViewTargets(target.id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleQmsEditTargets(target.id)}>
+                                            <img src={editIcon} alt="Edit Icon" />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteTargets(target.id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="8" className="text-center py-4 not-found">No targets found.</td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
 
             {/* Pagination */}
-            <div className="flex justify-between items-center mt-6 text-sm">
-                <div className='text-white total-text'>Total-{totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        onClick={prevPage}
-                        disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            {targets.length > 0 && (
+                <div className="flex justify-between items-center mt-6 text-sm">
+                    <div className='text-white total-text'>Total-{totalItems}</div>
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            onClick={prevPage}
+                            disabled={currentPage === 1}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        onClick={nextPage}
-                        disabled={currentPage === totalPages}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                    >
-                        Next
-                    </button>
+                        {/* Show up to 5 page numbers at a time */}
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                            let pageNumber;
+                            if (totalPages <= 5) {
+                                pageNumber = i + 1;
+                            } else {
+                                if (currentPage <= 3) {
+                                    pageNumber = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNumber = totalPages - 4 + i;
+                                } else {
+                                    pageNumber = currentPage - 2 + i;
+                                }
+                            }
+                            return (
+                                <button
+                                    key={pageNumber}
+                                    onClick={() => paginate(pageNumber)}
+                                    className={`${currentPage === pageNumber ? 'pagin-active' : 'pagin-inactive'}`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            );
+                        })}
+
+                        <button
+                            onClick={nextPage}
+                            disabled={currentPage === totalPages}
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
-export default QmsListTargets
+
+export default QmsListTargets;

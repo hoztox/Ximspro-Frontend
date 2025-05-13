@@ -11,6 +11,7 @@ const QmsAddEnergyBaseLines = () => {
     const [reviews, setReviews] = useState([]);
     const [enpiFields, setEnpiFields] = useState([{ id: 1, value: '' }]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isDraftLoading, setIsDraftLoading] = useState(false);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const navigate = useNavigate();
@@ -155,7 +156,11 @@ const QmsAddEnergyBaseLines = () => {
 
     const prepareSubmissionData = () => {
         const formattedDate = formatDate(formData.date);
-        const enpis = enpiFields.map(field => field.value).filter(Boolean);
+        const enpis = enpiFields
+            .map(field => field.value)
+            .filter(Boolean)
+            .map(value => ({ enpi: value }));
+
         return {
             company: companyId,
             user: userId,
@@ -180,7 +185,7 @@ const QmsAddEnergyBaseLines = () => {
                 is_draft: false
             };
 
-            const response = await axios.post(`${BASE_URL}/qms/baselines/create/`, submissionData, { 
+            const response = await axios.post(`${BASE_URL}/qms/baselines/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
@@ -199,7 +204,7 @@ const QmsAddEnergyBaseLines = () => {
     const handleSaveAsDraft = async (e) => {
         e.preventDefault();
         try {
-            setIsLoading(true);
+            setIsDraftLoading(true);
             setError('');
 
             const submissionData = {
@@ -214,12 +219,12 @@ const QmsAddEnergyBaseLines = () => {
             });
 
             console.log('Baseline saved as draft:', response.data);
-            navigate('/company/qms/list-energy-baselines');
+            navigate('/company/qms/draft-energy-baselines');
         } catch (error) {
             console.error('Error saving draft:', error);
             setError('Failed to save baseline as draft. Please check your inputs and try again.');
         } finally {
-            setIsLoading(false);
+            setIsDraftLoading(false);
         }
     };
 
@@ -474,9 +479,9 @@ const QmsAddEnergyBaseLines = () => {
                             type="button"
                             onClick={handleSaveAsDraft}
                             className='request-correction-btn duration-200'
-                            disabled={isLoading}
+                            disabled={isDraftLoading}
                         >
-                            {isLoading ? 'Saving...' : 'Save as Draft'}
+                            {isDraftLoading ? 'Saving...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>

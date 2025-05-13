@@ -236,7 +236,7 @@ const QmsDraftEditEnergyReview = () => {
 
     if (isLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg">
                 <div className="flex justify-center items-center h-64">
                     <p>Loading energy review data...</p>
                 </div>

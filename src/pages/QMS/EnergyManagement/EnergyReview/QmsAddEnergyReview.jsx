@@ -10,6 +10,7 @@ const QmsAddEnergyReview = () => {
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
     const [reviewTypes, setReviewTypes] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [saveDraftLoading, setSaveDraftLoading] = useState(false); // New separate loading state for draft
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const navigate = useNavigate();
@@ -190,7 +191,7 @@ const QmsAddEnergyReview = () => {
 
     const handleSaveAsDraft = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setSaveDraftLoading(true); // Use separate loading state for draft
         setError('');
 
         try {
@@ -207,7 +208,7 @@ const QmsAddEnergyReview = () => {
             console.error('Error saving draft:', error);
             setError('Failed to save energy review as draft. Please check your inputs and try again.');
         } finally {
-            setLoading(false);
+            setSaveDraftLoading(false); // Reset draft loading state
         }
     };
 
@@ -456,8 +457,9 @@ const QmsAddEnergyReview = () => {
                             type="button"
                             onClick={handleSaveAsDraft}
                             className='request-correction-btn duration-200'
+                            disabled={saveDraftLoading}
                         >
-                            Save as Draft
+                            {saveDraftLoading ? 'Saving Draft...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
