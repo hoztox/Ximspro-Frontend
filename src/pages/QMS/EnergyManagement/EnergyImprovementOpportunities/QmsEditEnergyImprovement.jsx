@@ -6,7 +6,7 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsEditEnergyImprovement = () => {
-    const { id } = useParams(); // Get the EIO ID from URL
+    const { id } = useParams();
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
@@ -33,13 +33,16 @@ const QmsEditEnergyImprovement = () => {
         return null;
     };
 
+    const getCurrentUserId = () => {
+        return localStorage.getItem("user_id");
+    };
+
     const fetchUsers = async () => {
         try {
             const companyId = getUserCompanyId();
             if (!companyId) return;
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
@@ -55,35 +58,43 @@ const QmsEditEnergyImprovement = () => {
     const fetchEnergyImprovement = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/energy/reviews/${id}/`);
+            const companyId = getUserCompanyId();
+            if (!companyId || !id) {
+                setError("Invalid company or improvement ID.");
+                return;
+            }
 
-            // Parse the date from the response
-            const dateParts = response.data.date ? response.data.date.split('-') : ['', '', ''];
+            const response = await axios.get(`${BASE_URL}/qms/energy-improvements/${id}/`, {
+                params: { company_id: companyId },
+            });
+
+            const data = response.data;
+            const dateParts = data.date ? data.date.split('-') : ['', '', ''];
 
             setFormData({
-                eio_no: `EIO-${response.data.eio_no}`,
-                eio_title: response.data.eio_title || '',
-                target: response.data.target || '',
-                associated_objective: response.data.associated_objective || '',
-                results: response.data.results || '',
+                eio: data.eio || '',
+                eio_title: data.eio_title || '',
+                target: data.target || '',
+                associated_objective: data.associated_objective || '',
+                results: data.results || '',
                 date: {
                     day: dateParts[2] || '',
                     month: dateParts[1] || '',
                     year: dateParts[0] || ''
                 },
-                responsible: response.data.responsible || '',
-                status: response.data.status || 'OnGoing',
-                attachment: response.data.attachment || ''
+                responsible: data.responsible?.id || '',
+                status: data.status || 'On Going',
+                upload_attachment: null,
+                is_draft: data.is_draft || false
             });
 
-            if (response.data.attachment) {
-                setExistingAttachment(response.data.attachment);
+            if (data.upload_attachment) {
+                setExistingAttachment(data.upload_attachment);
             }
-
-            setIsLoading(false);
         } catch (error) {
             console.error("Error fetching energy improvement:", error);
             setError("Failed to load energy improvement data. Please try again.");
+        } finally {
             setIsLoading(false);
         }
     };
@@ -94,9 +105,10 @@ const QmsEditEnergyImprovement = () => {
     }, [id]);
 
     const companyId = getUserCompanyId();
+    const userId = getCurrentUserId();
 
     const [formData, setFormData] = useState({
-        eio_no: '',
+        eio: '',
         eio_title: '',
         target: '',
         associated_objective: '',
@@ -107,17 +119,16 @@ const QmsEditEnergyImprovement = () => {
             year: ''
         },
         responsible: '',
-        status: 'OnGoing',
-        attachment: ''
+        status: 'On Going',
+        upload_attachment: null,
+        is_draft: false
     });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Prevent manual editing of eio_no
-        if (name === 'eio_no') return;
+        if (name === 'eio') return;
 
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -128,7 +139,6 @@ const QmsEditEnergyImprovement = () => {
                 }
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -139,9 +149,9 @@ const QmsEditEnergyImprovement = () => {
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0],
+            upload_attachment: e.target.files[0],
         });
-        setExistingAttachment(null); // Clear existing attachment when new file is selected
+        setExistingAttachment(null);
     };
 
     const formatDate = (dateObj) => {
@@ -156,31 +166,37 @@ const QmsEditEnergyImprovement = () => {
             setIsLoading(true);
             setError('');
 
-            // Format the date
             const formattedDate = formatDate(formData.date);
 
-            // Prepare form data for submission
             const submissionData = new FormData();
+            submissionData.append('user', userId);
             submissionData.append('company', companyId);
-            submissionData.append('eio_no', formData.eio_no.replace('EIO-', ''));
+            submissionData.append('eio', formData.eio);
             submissionData.append('eio_title', formData.eio_title);
             submissionData.append('target', formData.target);
             submissionData.append('associated_objective', formData.associated_objective);
             submissionData.append('results', formData.results);
-            submissionData.append('date', formattedDate);
+            if (formattedDate) submissionData.append('date', formattedDate);
             submissionData.append('responsible', formData.responsible);
             submissionData.append('status', formData.status);
+            submissionData.append('is_draft', false);
+            
+            // Only append upload_attachment if a new file is selected
+            if (formData.upload_attachment instanceof File) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            }
+            
+            // If no new file and we want to keep existing file, don't include upload_attachment
+            // This tells the backend to keep the existing file
 
-            // Only append new attachment if one was selected
-            if (formData.attachment instanceof File) {
-                submissionData.append('attachment', formData.attachment);
-            } else if (existingAttachment) {
-                // Keep existing attachment if no new one was selected
-                submissionData.append('attachment', existingAttachment);
+            // Add a flag to indicate if we need to clear the existing attachment
+            const shouldClearAttachment = !formData.upload_attachment && !existingAttachment;
+            if (shouldClearAttachment) {
+                submissionData.append('clear_attachment', 'true');
             }
 
-            // Submit to API (using PUT for update)
-            const response = await axios.put(`${BASE_URL}/energy/reviews/${id}/`, submissionData, {
+            // Use PUT method for updating
+            const response = await axios.put(`${BASE_URL}/qms/energy-improvements/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -188,9 +204,8 @@ const QmsEditEnergyImprovement = () => {
 
             console.log('Energy Review updated:', response.data);
             navigate('/company/qms/list-energy-improvement-opportunities');
-
         } catch (error) {
-            console.error('Error submitting form:', error);
+            console.error('Error updating form:', error);
             setError('Failed to update energy review. Please check your inputs and try again.');
         } finally {
             setIsLoading(false);
@@ -201,7 +216,6 @@ const QmsEditEnergyImprovement = () => {
         navigate('/company/qms/list-energy-improvement-opportunities');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -218,7 +232,7 @@ const QmsEditEnergyImprovement = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-                <h1 className="add-training-head">Edit Energy Improvement Opportunities</h1>
+                <h1 className="add-training-head">Edit Energy Improvement Opportunities {formData.is_draft ? "(Draft)" : ""}</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
                     onClick={() => navigate('/company/qms/list-energy-improvement-opportunities')}
@@ -243,8 +257,8 @@ const QmsEditEnergyImprovement = () => {
                         </label>
                         <input
                             type="text"
-                            name="eio_no"
-                            value={formData.eio_no}
+                            name="eio"
+                            value={formData.eio}
                             className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                             readOnly
                             title="Existing EIO number"
@@ -259,6 +273,7 @@ const QmsEditEnergyImprovement = () => {
                             value={formData.eio_title}
                             onChange={handleChange}
                             className="add-training-inputs focus:outline-none"
+                            maxLength={50}
                             required
                         />
                     </div>
@@ -271,6 +286,7 @@ const QmsEditEnergyImprovement = () => {
                             value={formData.target}
                             onChange={handleChange}
                             className="add-training-inputs focus:outline-none"
+                            maxLength={50}
                         />
                     </div>
 
@@ -282,6 +298,7 @@ const QmsEditEnergyImprovement = () => {
                             value={formData.associated_objective}
                             onChange={handleChange}
                             className="add-training-inputs focus:outline-none"
+                            maxLength={50}
                         />
                     </div>
 
@@ -298,7 +315,6 @@ const QmsEditEnergyImprovement = () => {
                     <div className="flex flex-col gap-3">
                         <label className="add-training-label">Target Date</label>
                         <div className="grid grid-cols-3 gap-5">
-                            {/* Day */}
                             <div className="relative">
                                 <select
                                     name="date.day"
@@ -319,7 +335,6 @@ const QmsEditEnergyImprovement = () => {
                                 />
                             </div>
 
-                            {/* Month */}
                             <div className="relative">
                                 <select
                                     name="date.month"
@@ -340,7 +355,6 @@ const QmsEditEnergyImprovement = () => {
                                 />
                             </div>
 
-                            {/* Year */}
                             <div className="relative">
                                 <select
                                     name="date.year"
@@ -407,7 +421,7 @@ const QmsEditEnergyImprovement = () => {
                             required
                         >
                             <option value="" disabled>Select Status</option>
-                            <option value="OnGoing">OnGoing</option>
+                            <option value="On Going">On Going</option>
                             <option value="Achieved">Achieved</option>
                             <option value="Not Achieved">Not Achieved</option>
                             <option value="Modified">Modified</option>
@@ -437,13 +451,20 @@ const QmsEditEnergyImprovement = () => {
                                 <img src={file} alt="" />
                             </label>
                         </div>
-                        <div className='flex justify-between items-center'> 
-                            <button className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'>
-                                Click to view file <Eye size={17}/>
-                            </button>
-                            {formData.attachment instanceof File ? (
+                        <div className='flex justify-between items-center'>
+                            {existingAttachment && (
+                                <a
+                                    href={existingAttachment}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'
+                                >
+                                    Click to view file <Eye size={17} />
+                                </a>
+                            )}
+                            {formData.upload_attachment instanceof File ? (
                                 <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                                    {formData.attachment.name}
+                                    {formData.upload_attachment.name}
                                 </p>
                             ) : existingAttachment ? (
                                 <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
@@ -457,9 +478,7 @@ const QmsEditEnergyImprovement = () => {
                         </div>
                     </div>
 
-
-                    <div className="flex gap-4 justify-end items-end">
-
+                    <div className="md:col-span-2 flex gap-4 justify-end">
                         <div className='flex gap-5'>
                             <button
                                 type="button"

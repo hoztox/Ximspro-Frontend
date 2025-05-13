@@ -7,7 +7,8 @@ import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsAddEnergyImprovement = () => {
     const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [nextEioNo, setNextEioNo] = useState("EIO-1");
@@ -32,42 +33,53 @@ const QmsAddEnergyImprovement = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
     const fetchNextEioNumber = async () => {
         try {
             const companyId = getUserCompanyId();
             if (!companyId) {
-                // If no company ID, default to EIO-1
-                setNextEioNo("EIO-1");
+                setNextEioNo("");
                 setFormData(prevData => ({
                     ...prevData,
-                    eio_no: "EIO-1"
+                    eio: ""
                 }));
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/energy/reviews/next-eio-number/${companyId}/`);
-            if (response.data && response.data.next_eio_no) {
-                const eioNumber = `EIO-${response.data.next_eio_no}`;
+            const response = await axios.get(`${BASE_URL}/qms/energy-improvements/next-action/${companyId}/`);
+            if (response.data && response.data.next_eio) {
+                const eioNumber = response.data?.next_eio;
                 setNextEioNo(eioNumber);
                 setFormData(prevData => ({
                     ...prevData,
-                    eio_no: eioNumber
+                    eio: eioNumber
                 }));
+
+                console.log('Next EIO number:', eioNumber);
+                
             } else {
-                // If response doesn't contain a valid number, default to "EIO-1"
-                setNextEioNo("EIO-1");
+                setNextEioNo();
                 setFormData(prevData => ({
                     ...prevData,
-                    eio_no: "EIO-1"
+                    eio: ""
                 }));
             }
         } catch (error) {
             console.error('Error fetching next EIO number:', error);
-            // Set a fallback value if the API fails
             setNextEioNo("EIO-1");
             setFormData(prevData => ({
                 ...prevData,
-                eio_no: "EIO-1"
+                eio: "EIO-1"
             }));
         }
     };
@@ -78,7 +90,6 @@ const QmsAddEnergyImprovement = () => {
             if (!companyId) return;
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
@@ -97,9 +108,10 @@ const QmsAddEnergyImprovement = () => {
     }, []);
 
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const [formData, setFormData] = useState({
-        eio_no: nextEioNo,
+        eio: '',
         eio_title: '',
         target: '',
         associated_objective: '',
@@ -110,17 +122,14 @@ const QmsAddEnergyImprovement = () => {
             year: ''
         },
         responsible: '',
-        status: 'OnGoing',
-        attachment: ''
+        status: 'On Going',
+        upload_attachment: null,
+        is_draft: false
     });
 
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Prevent manual editing of eio_no
-        if (name === 'eio_no') return;
-
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -131,7 +140,6 @@ const QmsAddEnergyImprovement = () => {
                 }
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -142,7 +150,7 @@ const QmsAddEnergyImprovement = () => {
     const handleFileChange = (e) => {
         setFormData({
             ...formData,
-            attachment: e.target.files[0],
+            upload_attachment: e.target.files[0],
         });
     };
 
@@ -155,27 +163,30 @@ const QmsAddEnergyImprovement = () => {
         e.preventDefault();
 
         try {
-            setIsLoading(true);
+            setIsSaving(true);
             setError('');
 
-            // Format the date
             const formattedDate = formatDate(formData.date);
+            console.log('aaaaaa', formData);
+            
 
-            // Prepare form data for submission
             const submissionData = new FormData();
+            submissionData.append('user', userId);
             submissionData.append('company', companyId);
-            submissionData.append('eio_no', formData.eio_no.replace('EIO-', ''));
+            // submissionData.append('eio', formData.eio);
             submissionData.append('eio_title', formData.eio_title);
             submissionData.append('target', formData.target);
             submissionData.append('associated_objective', formData.associated_objective);
             submissionData.append('results', formData.results);
-            submissionData.append('date', formattedDate);
+            if (formattedDate) submissionData.append('date', formattedDate);
             submissionData.append('responsible', formData.responsible);
             submissionData.append('status', formData.status);
+            submissionData.append('is_draft', false);
+            if (formData.upload_attachment) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            }
 
-
-            // Submit to API
-            const response = await axios.post(`${BASE_URL}/energy/reviews/`, submissionData, {
+            const response = await axios.post(`${BASE_URL}/qms/energy-improvements/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -188,7 +199,49 @@ const QmsAddEnergyImprovement = () => {
             console.error('Error submitting form:', error);
             setError('Failed to save energy review. Please check your inputs and try again.');
         } finally {
-            setIsLoading(false);
+            setIsSaving(false);
+        }
+    };
+
+    const handleSaveDraft = async (e) => {
+        e.preventDefault();
+
+        try {
+            setIsSavingDraft(true);
+            setError('');
+
+            const formattedDate = formatDate(formData.date);
+
+            const submissionData = new FormData();
+            submissionData.append('user', userId);
+            submissionData.append('company', companyId);
+            submissionData.append('eio', formData.eio);
+            submissionData.append('eio_title', formData.eio_title);
+            submissionData.append('target', formData.target);
+            submissionData.append('associated_objective', formData.associated_objective);
+            submissionData.append('results', formData.results);
+            if (formattedDate) submissionData.append('date', formattedDate);
+            submissionData.append('responsible', formData.responsible);
+            submissionData.append('status', formData.status);
+            submissionData.append('is_draft', true);
+            if (formData.upload_attachment) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/energy-improvements/draft-create/`, submissionData, {  
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            console.log('Energy Review draft saved:', response.data);
+            navigate('/company/qms/list-energy-improvement-opportunities');
+
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            setError('Failed to save draft. Please check your inputs and try again.');
+        } finally {
+            setIsSavingDraft(false);
         }
     };
 
@@ -196,7 +249,6 @@ const QmsAddEnergyImprovement = () => {
         navigate('/company/qms/list-energy-improvement-opportunities');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -235,8 +287,8 @@ const QmsAddEnergyImprovement = () => {
                     </label>
                     <input
                         type="text"
-                        name="eio_no"
-                        value={formData.eio_no}
+                        name="eio"
+                        value={formData.eio}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
                         title="Auto-generated EIO number"
@@ -251,6 +303,7 @@ const QmsAddEnergyImprovement = () => {
                         value={formData.eio_title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
+                        maxLength={50}
                     />
                 </div>
 
@@ -262,6 +315,7 @@ const QmsAddEnergyImprovement = () => {
                         value={formData.target}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
+                        maxLength={50}
                     />
                 </div>
 
@@ -273,6 +327,7 @@ const QmsAddEnergyImprovement = () => {
                         value={formData.associated_objective}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
+                        maxLength={50}
                     />
                 </div>
 
@@ -289,7 +344,6 @@ const QmsAddEnergyImprovement = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Target Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -310,7 +364,6 @@ const QmsAddEnergyImprovement = () => {
                             />
                         </div>
 
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -331,7 +384,6 @@ const QmsAddEnergyImprovement = () => {
                             />
                         </div>
 
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -366,7 +418,7 @@ const QmsAddEnergyImprovement = () => {
                         required
                     >
                         <option value="" disabled>
-                            {isLoading ? "Loading..." : "Select Responsible"}
+                            {users.length === 0 ? "Loading..." : "Select Responsible"}
                         </option>
                         {users && users.length > 0 ? (
                             users.map(user => (
@@ -374,7 +426,7 @@ const QmsAddEnergyImprovement = () => {
                                     {user.first_name} {user.last_name || ''}
                                 </option>
                             ))
-                        ) : !isLoading && (
+                        ) : (
                             <option value="" disabled>No users found</option>
                         )}
                     </select>
@@ -398,7 +450,7 @@ const QmsAddEnergyImprovement = () => {
                         required
                     >
                         <option value="" disabled>Select Status</option>
-                        <option value="OnGoing">OnGoing</option>
+                        <option value="On Going">On Going</option>
                         <option value="Achieved">Achieved</option>
                         <option value="Not Achieved">Not Achieved</option>
                         <option value="Modified">Modified</option>
@@ -428,25 +480,27 @@ const QmsAddEnergyImprovement = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.attachment && (
+                    {formData.upload_attachment && (
                         <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            {formData.attachment.name}
+                            {formData.upload_attachment.name}
                         </p>
                     )}
-                    {!formData.attachment && (
+                    {!formData.upload_attachment && (
                         <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
                             No file chosen
                         </p>
                     )}
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button
                             type="button"
-                            className='request-correction-btn duration-200'>
-                            Save as Draft
+                            className='request-correction-btn duration-200'
+                            onClick={handleSaveDraft}
+                            disabled={isSavingDraft || isSaving}
+                        >
+                            {isSavingDraft ? 'Saving Draft...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -454,15 +508,16 @@ const QmsAddEnergyImprovement = () => {
                             type="button"
                             onClick={handleCancel}
                             className="cancel-btn duration-200"
+                            disabled={isSaving || isSavingDraft}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             className="save-btn duration-200"
-                            disabled={isLoading}
+                            disabled={isSaving || isSavingDraft}
                         >
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>
@@ -470,4 +525,5 @@ const QmsAddEnergyImprovement = () => {
         </div>
     );
 };
-export default QmsAddEnergyImprovement
+
+export default QmsAddEnergyImprovement;

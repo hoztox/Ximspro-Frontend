@@ -767,11 +767,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-energy-improvement-opportunities" element={<QmsListEnergyImprovement />} />
           <Route path="qms/add-energy-improvement-opportunities" element={<QmsAddEnergyImprovement />} />
-          <Route path="qms/edit-energy-improvement-opportunities" element={<QmsEditEnergyImprovement />} />
-          <Route path="qms/view-energy-improvement-opportunities" element={<QmsViewEnergyImprovement />} />
+          <Route path="qms/edit-energy-improvement-opportunities/:id" element={<QmsEditEnergyImprovement />} />
+          <Route path="qms/view-energy-improvement-opportunities/:id" element={<QmsViewEnergyImprovement />} />
           <Route path="qms/draft-energy-improvement-opportunities" element={<QmsDraftEnergyImprovements />} />
-          <Route path="qms/edit-draft-energy-improvement-opportunities" element={<QmsEditDraftEnergyImprovement />} />
-          <Route path="qms/view-draft-energy-improvement-opportunities" element={<QmsViewDraftEnergyImprovement />} />
+          <Route path="qms/edit-draft-energy-improvement-opportunities/:id" element={<QmsEditDraftEnergyImprovement />} />
+          <Route path="qms/view-draft-energy-improvement-opportunities/:id" element={<QmsViewDraftEnergyImprovement />} />
 
           <Route path="qms/list-energy-action-plan" element={<QmsListEnergyAction />} />
           <Route path="qms/add-energy-action-plan" element={<QmsAddEnergyAction />} />
