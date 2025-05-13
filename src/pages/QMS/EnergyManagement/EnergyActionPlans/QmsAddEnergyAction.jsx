@@ -6,7 +6,7 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsAddEnergyAction = () => {
-  const [nextEapNo, setNextEapNo] = useState("EAP-1");
+  const [nextActionNo, setNextActionNo] = useState("EAP-1");
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -33,31 +33,45 @@ const QmsAddEnergyAction = () => {
     return null;
   };
 
-  const fetchNextEapNumber = async () => {
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
+  // const companyId = getUserCompanyId();
+  // const userId = getRelevantUserId();
+
+  const fetchNextActionNumber = async () => {
     try {
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setNextEapNo("EAP-1");
-        setFormData((prev) => ({ ...prev, eap_no: "EAP-1" }));
+        setNextActionNo("EAP-1");
+        setFormData((prev) => ({ ...prev, action_plan: "EAP-1" }));
         return;
       }
 
       const response = await axios.get(
-        `${BASE_URL}/qms/targets/next-eap-number/${companyId}/`
+        `${BASE_URL}/qms/energy-action/next-action/${companyId}/`
       );
 
-      if (response.data?.next_eap_no) {
-        const eapNumber = `EAP-${response.data.next_eap_no}`;
-        setNextEapNo(eapNumber);
-        setFormData((prev) => ({ ...prev, eap_no: eapNumber }));
+      if (response.data?.next_action) {
+        const actionNumber = `EAP-${response.data.next_action}`;
+        setNextActionNo(actionNumber);
+        setFormData((prev) => ({ ...prev, action_plan: actionNumber }));
       } else {
-        setNextEapNo("EAP-1");
-        setFormData((prev) => ({ ...prev, eap_no: "EAP-1" }));
+        setNextActionNo();
+        setFormData((prev) => ({ ...prev, action_plan: "EAP-1" }));
       }
     } catch (error) {
-      console.error("Error fetching next EAP number:", error);
-      setNextEapNo("EAP-1");
-      setFormData((prev) => ({ ...prev, eap_no: "EAP-1" }));
+      console.error("Error fetching next action number:", error);
+      setNextActionNo("EAP-1");
+      setFormData((prev) => ({ ...prev, action_plan: "EAP-1" }));
     }
   };
 
@@ -86,17 +100,17 @@ const QmsAddEnergyAction = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchNextEapNumber();
+    fetchNextActionNumber();
   }, []);
 
-  const companyId = getUserCompanyId();
+
 
   const [formData, setFormData] = useState({
-    eap_no: nextEapNo,
+    action_plan: '',
     title: "",
-    associated_objective: "",
-    attachment: null,
-    associated_legal_requirements: "",
+    associative_objective: "",
+    upload_attachment: null,
+    legal_requirements: "",
     means: "",
     date: {
       day: "",
@@ -104,8 +118,8 @@ const QmsAddEnergyAction = () => {
       year: "",
     },
     responsible: "",
-    energy_improvement: "",
-    result_verification: "",
+    energy_improvements: "",
+    statement: "",
   });
 
   const handleListEnergyAction = () => {
@@ -115,15 +129,14 @@ const QmsAddEnergyAction = () => {
   const handleFileChange = (e) => {
     setFormData({
       ...formData,
-      attachment: e.target.files[0],
+      upload_attachment: e.target.files[0],
     });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Prevent manual editing of eap_no
-    if (name === "eap_no") return;
+    if (name === "action_plan") return;
 
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -169,37 +182,61 @@ const QmsAddEnergyAction = () => {
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
   };
 
+  const prepareSubmissionData = (isDraft) => {
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
+
+    const programs = programFields
+      .filter((field) => field.value.trim() !== "")
+      .map((field) => ({ Program: field.value }));
+
+    const date = formatDate(formData.date);
+
+    return {
+      company: companyId,
+      user: userId,
+      is_draft: isDraft,
+      action_plan: formData.action_plan,
+      title: formData.title,
+      associative_objective: formData.associative_objective,
+      legal_requirements: formData.legal_requirements,
+      means: formData.means,
+      date: date,
+      responsible: formData.responsible,
+      energy_improvements: formData.energy_improvements,
+      statement: formData.statement,
+      programs: programs,
+    };
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       setIsLoading(true);
-      const companyId = getUserCompanyId();
+      const submissionData = prepareSubmissionData(false);
 
-      const programs = programFields
-        .map((field) => field.value)
-        .filter(Boolean)
-        .join(", ");
+      const formDataToSend = new FormData();
+      for (const key in submissionData) {
+        if (key === "programs") {
+          formDataToSend.append(key, JSON.stringify(submissionData[key]));
+        } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
+          formDataToSend.append(key, submissionData[key]);
+        }
+      }
 
-      const date = formatDate(formData.date);
-
-      const submissionData = {
-        company: companyId,
-        eap_no: formData.eap_no.replace("EAP-", ""), // Remove prefix before saving
-        title: formData.title,
-        associated_objective: formData.associated_objective,
-        programs: programs,
-        associated_legal_requirements: formData.associated_legal_requirements,
-        means: formData.means,
-        date: date,
-        responsible: formData.responsible,
-        energy_improvement: formData.energy_improvement,
-        result_verification: formData.result_verification,
-      };
+      if (formData.upload_attachment) {
+        formDataToSend.append("upload_attachment", formData.upload_attachment);
+      }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/targets/`,
-        submissionData
+        `${BASE_URL}/qms/energy-action/create/`, 
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       console.log("Added Energy Action:", response.data);
@@ -207,6 +244,46 @@ const QmsAddEnergyAction = () => {
     } catch (error) {
       console.error("Error submitting form:", error);
       setError("Failed to save. Please check your inputs and try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveAsDraft = async (e) => {
+    e.preventDefault();
+
+    try {
+      setIsLoading(true);
+      const submissionData = prepareSubmissionData(true);
+
+      const formDataToSend = new FormData();
+      for (const key in submissionData) {
+        if (key === "programs") {
+          formDataToSend.append(key, JSON.stringify(submissionData[key]));
+        } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
+          formDataToSend.append(key, submissionData[key]);
+        }
+      }
+
+      if (formData.upload_attachment) {
+        formDataToSend.append("upload_attachment", formData.upload_attachment);
+      }
+
+      const response = await axios.post(
+        `${BASE_URL}/qms/energy-action/draft-create/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Saved Energy Action as Draft:", response.data);
+      navigate("/company/qms/list-energy-action-plan");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      setError("Failed to save draft. Please check your inputs and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -254,8 +331,8 @@ const QmsAddEnergyAction = () => {
           </label>
           <input
             type="text"
-            name="eap_no"
-            value={formData.eap_no}
+            name="action_plan"
+            value={formData.action_plan}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
             readOnly
@@ -264,7 +341,6 @@ const QmsAddEnergyAction = () => {
           />
         </div>
 
-        {/* Rest of your form fields remain the same */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             Action Plan Title/Name <span className="text-red-500">*</span>
@@ -283,8 +359,8 @@ const QmsAddEnergyAction = () => {
           <label className="add-training-label">Associated Objective</label>
           <input
             type="text"
-            name="associated_objective"
-            value={formData.associated_objective}
+            name="associative_objective"
+            value={formData.associative_objective}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
           />
@@ -307,24 +383,23 @@ const QmsAddEnergyAction = () => {
               <img src={file} alt="" />
             </label>
           </div>
-          {formData.attachment && (
+          {formData.upload_attachment && (
             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-              {formData.attachment.name}
+              {formData.upload_attachment.name}
             </p>
           )}
-          {!formData.attachment && (
+          {!formData.upload_attachment && (
             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
               No file chosen
             </p>
           )}
         </div>
 
-        {/* Dynamic Program Fields */}
         {programFields.map((field, index) => (
           <div key={field.id} className="flex flex-col gap-3">
             <div className="flex items-center gap-2 justify-between last:pr-[57px]">
               <label className="add-training-label">
-                Program(s) {/*{index > 0 && `#${index + 1}`}*/}
+                Program(s)
               </label>
               {index > 0 && (
                 <button
@@ -362,8 +437,8 @@ const QmsAddEnergyAction = () => {
           </label>
           <input
             type="text"
-            name="associated_legal_requirements"
-            value={formData.associated_legal_requirements}
+            name="legal_requirements"
+            value={formData.legal_requirements}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
           />
@@ -383,7 +458,6 @@ const QmsAddEnergyAction = () => {
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Target Date</label>
           <div className="grid grid-cols-3 gap-5">
-            {/* Day */}
             <div className="relative">
               <select
                 name="date.day"
@@ -400,17 +474,15 @@ const QmsAddEnergyAction = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.day"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Month */}
             <div className="relative">
               <select
                 name="date.month"
@@ -427,17 +499,15 @@ const QmsAddEnergyAction = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.month"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Year */}
             <div className="relative">
               <select
                 name="date.year"
@@ -454,11 +524,10 @@ const QmsAddEnergyAction = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.year"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -484,21 +553,20 @@ const QmsAddEnergyAction = () => {
             </option>
             {users && users.length > 0
               ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
               : !isLoading && (
-                  <option value="" disabled>
-                    No users found
-                  </option>
-                )}
+                <option value="" disabled>
+                  No users found
+                </option>
+              )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[38%] transform transition-transform duration-300
-                         ${
-                           focusedDropdown === "responsible" ? "rotate-180" : ""
-                         }`}
+                         ${focusedDropdown === "responsible" ? "rotate-180" : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
@@ -509,8 +577,8 @@ const QmsAddEnergyAction = () => {
             Statement on Energy Improvement Performance
           </label>
           <textarea
-            name="energy_improvement"
-            value={formData.energy_improvement}
+            name="energy_improvements"
+            value={formData.energy_improvements}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
           />
@@ -521,8 +589,8 @@ const QmsAddEnergyAction = () => {
             Statement on Result Verification
           </label>
           <textarea
-            name="result_verification"
-            value={formData.result_verification}
+            name="statement"
+            value={formData.statement}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
           />
@@ -532,6 +600,7 @@ const QmsAddEnergyAction = () => {
           <div>
             <button
               type="button"
+              onClick={handleSaveAsDraft}
               className="request-correction-btn duration-200"
             >
               Save as Draft
