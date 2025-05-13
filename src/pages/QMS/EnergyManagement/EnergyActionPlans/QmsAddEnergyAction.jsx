@@ -564,7 +564,7 @@ const QmsAddEnergyAction = () => {
               )}
           </select>
           <ChevronDown
-            className={`absolute right-3 top-[38%] transform transition-transform duration-300
+            className={`absolute right-3 top-[60%] transform transition-transform duration-300
                          ${focusedDropdown === "responsible" ? "rotate-180" : ""
               }`}
             size={20}
