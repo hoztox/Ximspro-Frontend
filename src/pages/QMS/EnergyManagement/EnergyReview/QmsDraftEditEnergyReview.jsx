@@ -5,29 +5,32 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
+
 const QmsDraftEditEnergyReview = () => {
-    const { id } = useParams(); // Get the review ID from URL
+    const { id } = useParams();
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const [reviewTypes, setReviewTypes] = useState([]);
+    const [selectedFile, setSelectedFile] = useState(null); // Added for file display
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        title: '',
-        review_number: '',
+        energy_name: '',
+        review_no: '',
         review_type: '',
         date: {
             day: '',
             month: '',
             year: ''
         },
-        document: null,
-        business_process: '',
+        upload_attachment: null,
+        relate_business_process: '',
         remarks: '',
-        related_document_process: '',
+        relate_document_process: '',
         revision: '',
-        send_notification: false
+        send_notification: false,
     });
 
     const getUserCompanyId = () => {
@@ -49,13 +52,32 @@ const QmsDraftEditEnergyReview = () => {
         return null;
     };
 
+    const companyId = getUserCompanyId();
+
+    const fetchReviewTypes = async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/review-type/company/${companyId}/`);
+            setReviewTypes(response.data);
+        } catch (error) {
+            console.error('Error fetching review types:', error);
+            setError('Failed to load review types. Please try again.');
+        }
+    };
+
     useEffect(() => {
         const fetchEnergyReview = async () => {
             try {
-                const response = await axios.get(`${BASE_URL}/energy/reviews/${id}/`);
+                const companyId = getUserCompanyId();
+                if (!companyId) {
+                    setError('Company ID not found. Please log in again.');
+                    return;
+                }
+
+                await fetchReviewTypes();
+
+                const response = await axios.get(`${BASE_URL}/qms/energy-review/${id}/`);
                 const data = response.data;
 
-                // Parse the date if it exists
                 let day = '', month = '', year = '';
                 if (data.date) {
                     const dateParts = data.date.split('-');
@@ -65,21 +87,22 @@ const QmsDraftEditEnergyReview = () => {
                 }
 
                 setFormData({
-                    title: data.title || '',
-                    review_number: data.review_number || '',
-                    review_type: data.review_type || '',
-                    date: {
-                        day: day,
-                        month: month,
-                        year: year
-                    },
-                    document: null,
-                    business_process: data.business_process || '',
+                    energy_name: data.energy_name || '',
+                    review_no: data.review_no || '',
+                    review_type: data.review_type?.id || '',
+                    date: { day, month, year },
+                    upload_attachment: data.upload_attachment || null,
+                    relate_business_process: data.relate_business_process || '',
                     remarks: data.remarks || '',
-                    related_document_process: data.related_document_process || '',
+                    relate_document_process: data.relate_document_process || '',
                     revision: data.revision || '',
-                    send_notification: data.send_notification || false
+                    send_notification: data.send_notification || false,
                 });
+
+                if (data.upload_attachment) {
+                    setSelectedFile(data.upload_attachment.split('/').pop());
+                }
+
             } catch (error) {
                 console.error('Error fetching energy review:', error);
                 setError('Failed to load energy review data.');
@@ -94,16 +117,6 @@ const QmsDraftEditEnergyReview = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Handle file upload separately
-        if (name === 'document') {
-            setFormData({
-                ...formData,
-                document: e.target.files[0],
-            });
-            return;
-        }
-
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -114,10 +127,26 @@ const QmsDraftEditEnergyReview = () => {
                 }
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
+            });
+        }
+    };
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file.name);
+            setFormData({
+                ...formData,
+                upload_attachment: file,
+            });
+        } else {
+            setSelectedFile(null);
+            setFormData({
+                ...formData,
+                upload_attachment: null,
             });
         }
     };
@@ -128,8 +157,8 @@ const QmsDraftEditEnergyReview = () => {
 
     const handleCloseReviewTypeModal = (newReviewAdded = false) => {
         setIsReviewTypeModalOpen(false);
-        if (newReviewAdded) {
-            // You might want to refresh review types here if needed
+        if (newReviewAdded && companyId) {
+            fetchReviewTypes();
         }
     };
 
@@ -145,36 +174,33 @@ const QmsDraftEditEnergyReview = () => {
             setIsLoading(true);
             setError('');
 
-            // Format the date
             const formattedDate = formatDate(formData.date);
             const companyId = getUserCompanyId();
 
-            // Prepare form data for submission
             const submissionData = new FormData();
-            if (companyId) submissionData.append('company', companyId);
-            submissionData.append('title', formData.title);
-            submissionData.append('review_number', formData.review_number);
+            console.log('formDataaaaa', formData);
+            
+            submissionData.append('company', companyId);
+            submissionData.append('energy_name', formData.energy_name);
+            submissionData.append('review_no', formData.review_no);
             submissionData.append('review_type', formData.review_type);
             if (formattedDate) submissionData.append('date', formattedDate);
-            if (formData.document) {
-                submissionData.append('document', formData.document);
+            if (formData.upload_attachment && typeof formData.upload_attachment === 'object') {
+                submissionData.append('upload_attachment', formData.upload_attachment);
             }
-            submissionData.append('business_process', formData.business_process);
+            submissionData.append('relate_business_process', formData.relate_business_process);
             submissionData.append('remarks', formData.remarks);
-            submissionData.append('related_document_process', formData.related_document_process);
+            submissionData.append('relate_document_process', formData.relate_document_process);
             submissionData.append('revision', formData.revision);
             submissionData.append('send_notification', formData.send_notification);
 
-            // Submit to API
-            const response = await axios.put(`${BASE_URL}/energy/reviews/${id}/`, submissionData, {
+            const response = await axios.put(`${BASE_URL}/qms/energy-review-draft/update/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
             console.log('Energy Review updated:', response.data);
-
-            // Navigate to list view after successful submission
             navigate('/company/qms/list-energy-review');
 
         } catch (error) {
@@ -189,14 +215,12 @@ const QmsDraftEditEnergyReview = () => {
         navigate('/company/qms/draft-energy-review');
     };
 
-    const handleRemoveDocument = () => {
-        setFormData({
-            ...formData,
-            document: null,
-        });
+    const handleViewFile = () => {
+        if (formData.upload_attachment && typeof formData.upload_attachment === 'string') {
+            window.open(formData.upload_attachment, '_blank');
+        }
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -250,8 +274,8 @@ const QmsDraftEditEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="energy_name"
+                        value={formData.energy_name}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                         required
@@ -264,11 +288,12 @@ const QmsDraftEditEnergyReview = () => {
                     </label>
                     <input
                         type="text"
-                        name="review_number"
-                        value={formData.review_number}
+                        name="review_no"
+                        value={formData.review_no}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className="add-training-inputs focus:outline-none cursor-not-allowed"
                         required
+                        readOnly
                     />
                 </div>
 
@@ -283,6 +308,11 @@ const QmsDraftEditEnergyReview = () => {
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>Select Review Type</option>
+                        {reviewTypes.map((type) => (
+                            <option key={type.id} value={type.id}>
+                                {type.title}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
@@ -302,7 +332,6 @@ const QmsDraftEditEnergyReview = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -322,8 +351,6 @@ const QmsDraftEditEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -343,8 +370,6 @@ const QmsDraftEditEnergyReview = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -369,27 +394,37 @@ const QmsDraftEditEnergyReview = () => {
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Upload Attachments</label>
-                    <div className="flex">
+                    <div className="relative">
                         <input
                             type="file"
-                            name="document"
-                            onChange={handleChange}
+                            id="fileInput"
                             className="hidden"
-                            id="document-upload"
+                            onChange={handleFileChange}
                         />
-                        <label
-                            htmlFor="document-upload"
-                            className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+                        <button
+                            type="button"
+                            className="w-full add-qmsmanual-attach"
+                            onClick={() => document.getElementById("fileInput").click()}
                         >
-                            <span className="text-[#AAAAAA] choose-file">Choose File</span>
-                            <img src={file} alt="" />
-                        </label>
-                    </div>
-                    <div
-                        className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
-                    >
-                        Click to view file
-                        <Eye size={17} />
+                            <span className="file-input">
+                                {selectedFile ? selectedFile : "Choose File"}
+                            </span>
+                            <img src={file} alt="File Icon" />
+                        </button>
+                        <div className="flex items-center justify-between">
+                            {(typeof formData.upload_attachment === 'string' || selectedFile) && (
+                                <div
+                                    onClick={handleViewFile}
+                                    className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
+                                >
+                                    Click to view file
+                                    <Eye size={17} />
+                                </div>
+                            )}
+                            {!selectedFile && (
+                                <p className="text-right no-file">No file chosen</p>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -397,8 +432,8 @@ const QmsDraftEditEnergyReview = () => {
                     <label className="add-training-label">Relate Business Process</label>
                     <input
                         type="text"
-                        name="business_process"
-                        value={formData.business_process}
+                        name="relate_business_process"
+                        value={formData.relate_business_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
@@ -417,8 +452,8 @@ const QmsDraftEditEnergyReview = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Relate Document/Process</label>
                     <textarea
-                        name="related_document_process"
-                        value={formData.related_document_process}
+                        name="relate_document_process"
+                        value={formData.relate_document_process}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
                     />
@@ -441,7 +476,7 @@ const QmsDraftEditEnergyReview = () => {
                             type="checkbox"
                             name="send_notification"
                             className="mr-2 form-checkboxes"
-                            checked={formData.send_notification || false}
+                            checked={formData.send_notification}
                             onChange={(e) => setFormData({ ...formData, send_notification: e.target.checked })}
                         />
                         <span className="permissions-texts cursor-pointer">
@@ -450,7 +485,6 @@ const QmsDraftEditEnergyReview = () => {
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
                     <div className='flex gap-5'>
                         <button
@@ -473,4 +507,5 @@ const QmsDraftEditEnergyReview = () => {
         </div>
     );
 };
-export default QmsDraftEditEnergyReview
+
+export default QmsDraftEditEnergyReview;

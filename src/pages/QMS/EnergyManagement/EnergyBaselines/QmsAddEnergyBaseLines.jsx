@@ -8,7 +8,26 @@ import ReviewTypeModal from './ReviewTypeModal';
 const QmsAddEnergyBaseLines = () => {
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
     const [users, setUsers] = useState([]);
-    const [enpiFields, setEnpiFields] = useState([{ id: 1, value: '' }]); // Initial EnPI field
+    const [reviews, setReviews] = useState([]);
+    const [enpiFields, setEnpiFields] = useState([{ id: 1, value: '' }]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const navigate = useNavigate();
+
+    const [formData, setFormData] = useState({
+        basline_title: '',
+        established_basline: '',
+        remarks: '',
+        date: {
+            day: '',
+            month: '',
+            year: ''
+        },
+        responsible: '',
+        energy_review: '',
+        is_draft: false,
+    });
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -29,14 +48,24 @@ const QmsAddEnergyBaseLines = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const fetchUsers = async () => {
         try {
-            const companyId = getUserCompanyId();
             if (!companyId) return;
-
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
@@ -49,28 +78,28 @@ const QmsAddEnergyBaseLines = () => {
         }
     };
 
+    const fetchReviews = async () => {
+        try {
+            if (!companyId) return;
+            const response = await axios.get(`${BASE_URL}/qms/baseline-reviewtype/company/${companyId}`, {
+                params: { company: companyId }
+            });
+            if (Array.isArray(response.data)) {
+                setReviews(response.data);
+            } else {
+                setReviews([]);
+                console.error("Unexpected reviews response format:", response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching reviews:", error);
+            setError("Failed to load reviews. Please check your connection and try again.");
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
+        fetchReviews();
     }, []);
-
-    const companyId = getUserCompanyId();
-    const navigate = useNavigate();
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [focusedDropdown, setFocusedDropdown] = useState(null);
-
-    const [formData, setFormData] = useState({
-        title: '',
-        established_baseline: '',
-        remarks: '',
-        date: {
-            day: '',
-            month: '',
-            year: ''
-        },
-        responsible: '',
-        related_energy_review: '',
-    });
 
     const handleEnpiChange = (id, value) => {
         setEnpiFields(enpiFields.map(field =>
@@ -91,8 +120,6 @@ const QmsAddEnergyBaseLines = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -103,7 +130,6 @@ const QmsAddEnergyBaseLines = () => {
                 }
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -118,7 +144,7 @@ const QmsAddEnergyBaseLines = () => {
     const handleCloseReviewTypeModal = (newReviewAdded = false) => {
         setIsReviewTypeModalOpen(false);
         if (newReviewAdded) {
-            fetchReview();
+            fetchReviews();
         }
     };
 
@@ -127,43 +153,71 @@ const QmsAddEnergyBaseLines = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
+    const prepareSubmissionData = () => {
+        const formattedDate = formatDate(formData.date);
+        const enpis = enpiFields.map(field => field.value).filter(Boolean);
+        return {
+            company: companyId,
+            user: userId,
+            basline_title: formData.basline_title,
+            established_basline: formData.established_basline,
+            remarks: formData.remarks,
+            date: formattedDate,
+            responsible: formData.responsible,
+            energy_review: formData.energy_review || null,
+            enpis: enpis
+        };
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-
         try {
             setIsLoading(true);
             setError('');
 
-            // Format the date
-            const formattedDate = formatDate(formData.date);
+            const submissionData = {
+                ...prepareSubmissionData(),
+                is_draft: false
+            };
 
-            // Combine all EnPI values
-            const associatedEnpis = enpiFields.map(field => field.value).filter(Boolean).join(', ');
-
-            // Prepare form data for submission
-            const submissionData = new FormData();
-            submissionData.append('company', companyId);
-            submissionData.append('title', formData.title);
-            submissionData.append('established_baseline', formData.established_baseline);
-            submissionData.append('remarks', formData.remarks);
-            submissionData.append('date', formattedDate);
-            submissionData.append('responsible', formData.responsible);
-            submissionData.append('related_energy_review', formData.related_energy_review);
-            submissionData.append('associated_enpi', associatedEnpis);
-
-            // Submit to API
-            const response = await axios.post(`${BASE_URL}/energy/reviews/`, submissionData, {
+            const response = await axios.post(`${BASE_URL}/qms/baselines/create/`, submissionData, { 
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'application/json'
                 }
             });
 
-            console.log('Energy Review created:', response.data);
+            console.log('Baseline created:', response.data);
             navigate('/company/qms/list-energy-baselines');
-
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError('Failed to save energy review. Please check your inputs and try again.');
+            setError('Failed to save baseline. Please check your inputs and try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleSaveAsDraft = async (e) => {
+        e.preventDefault();
+        try {
+            setIsLoading(true);
+            setError('');
+
+            const submissionData = {
+                ...prepareSubmissionData(),
+                is_draft: true
+            };
+
+            const response = await axios.post(`${BASE_URL}/qms/baselines/draft-create/`, submissionData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('Baseline saved as draft:', response.data);
+            navigate('/company/qms/list-energy-baselines');
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            setError('Failed to save baseline as draft. Please check your inputs and try again.');
         } finally {
             setIsLoading(false);
         }
@@ -173,7 +227,6 @@ const QmsAddEnergyBaseLines = () => {
         navigate('/company/qms/list-energy-baselines');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -217,8 +270,8 @@ const QmsAddEnergyBaseLines = () => {
                     </label>
                     <input
                         type="text"
-                        name="title"
-                        value={formData.title}
+                        name="basline_title"
+                        value={formData.basline_title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                         required
@@ -229,8 +282,8 @@ const QmsAddEnergyBaseLines = () => {
                     <label className="add-training-label">Established Baseline</label>
                     <input
                         type="text"
-                        name="established_baseline"
-                        value={formData.established_baseline}
+                        name="established_basline"
+                        value={formData.established_basline}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
                     />
@@ -249,7 +302,6 @@ const QmsAddEnergyBaseLines = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -270,7 +322,6 @@ const QmsAddEnergyBaseLines = () => {
                             />
                         </div>
 
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -291,7 +342,6 @@ const QmsAddEnergyBaseLines = () => {
                             />
                         </div>
 
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -328,7 +378,7 @@ const QmsAddEnergyBaseLines = () => {
                         <option value="" disabled>
                             {isLoading ? "Loading..." : "Select Responsible"}
                         </option>
-                        {users && users.length > 0 ? (
+                        {users.length > 0 ? (
                             users.map(user => (
                                 <option key={user.id} value={user.id}>
                                     {user.first_name} {user.last_name || ''}
@@ -349,18 +399,27 @@ const QmsAddEnergyBaseLines = () => {
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Related Energy Review</label>
                     <select
-                        name="related_energy_review"
-                        value={formData.related_energy_review}
+                        name="energy_review"
+                        value={formData.energy_review}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("related_energy_review")}
+                        onFocus={() => setFocusedDropdown("energy_review")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>Select Review Type</option>
+                        {reviews.length > 0 ? (
+                            reviews.map(review => (
+                                <option key={review.id} value={review.id}>
+                                    {review.title || 'Untitled Review'}
+                                </option>
+                            ))
+                        ) : (
+                            <option value="" disabled>No reviews found</option>
+                        )}
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                        ${focusedDropdown === "related_energy_review" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "energy_review" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -377,7 +436,7 @@ const QmsAddEnergyBaseLines = () => {
                     <div key={field.id} className="flex flex-col gap-3">
                         <div className="flex items-center gap-2 justify-between last:pr-[57px]">
                             <label className="add-training-label">
-                                Associated EnPI(s) {/*{index > 0 && `#${index + 1}`}*/}
+                                Associated EnPI(s)
                             </label>
                             {index > 0 && (
                                 <button
@@ -409,13 +468,15 @@ const QmsAddEnergyBaseLines = () => {
                     </div>
                 ))}
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button
                             type="button"
-                            className='request-correction-btn duration-200'>
-                            Save as Draft
+                            onClick={handleSaveAsDraft}
+                            className='request-correction-btn duration-200'
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Saving...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -439,4 +500,5 @@ const QmsAddEnergyBaseLines = () => {
         </div>
     );
 };
-export default QmsAddEnergyBaseLines
+
+export default QmsAddEnergyBaseLines;

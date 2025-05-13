@@ -90,7 +90,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                 return;
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/baseline-reviewtype/`, {
+            const response = await axios.post(`${BASE_URL}/qms/baseline-reviewtype/create/`, {
                 company: companyId,
                 title: newReviewTitle.trim()
             });

@@ -751,11 +751,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-energy-baselines" element={<QmsListEnergyBaselines />} />
           <Route path="qms/add-energy-baselines" element={<QmsAddEnergyBaseLines />} />
-          <Route path="qms/edit-energy-baselines" element={<QmsEditEnergyBaseLines />} />
-          <Route path="qms/view-energy-baselines" element={<QmsViewEnergyBaseLines />} />
+          <Route path="qms/edit-energy-baselines/:id" element={<QmsEditEnergyBaseLines />} />
+          <Route path="qms/view-energy-baselines/:id" element={<QmsViewEnergyBaseLines />} />
           <Route path="qms/draft-energy-baselines" element={<QmsDraftEnergyBaseLines />} />
-          <Route path="qms/edit-draft-energy-baselines" element={<QmsEditDraftEnergyBaseLines />} />
-          <Route path="qms/view-draft-energy-baselines" element={<QmsViewDraftEnergyBaseLines />} />
+          <Route path="qms/edit-draft-energy-baselines/:id" element={<QmsEditDraftEnergyBaseLines />} />
+          <Route path="qms/view-draft-energy-baselines/:id" element={<QmsViewDraftEnergyBaseLines />} />
 
           <Route path="qms/list-significant-energy" element={<QmsListSignificantEnergy />} />
           <Route path="qms/add-significant-energy" element={<QmsAddSignificantEnergy />} />
