@@ -15,6 +15,7 @@ const QmsAddEnvironmentalAspect = () => {
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
   const [users, setUsers] = useState([]);
+  const [process, setProcess] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -45,29 +46,32 @@ const QmsAddEnvironmentalAspect = () => {
   const companyId = getUserCompanyId();
 
   const [formData, setFormData] = useState({
-    source: '',
+    aspect_source: '',
     title: '',
     aspect_no: 'EA-1',
-    related_process: '',
+    process_activity: '',
     legal_requirement: '',
-    aspect_description: '',
-    corrections: '',
+    description: '',
+    action: '',
     send_notification_to_checked_by: true,
     send_email_to_checked_by: true,
     send_notification_to_approved_by: true,
     send_email_to_approved_by: true,
     date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
-    impact: '',
+    level_of_impact: '',
+    written_by: '',
+    checked_by: '',
+    approved_by: '',
   });
 
   const [openDropdowns, setOpenDropdowns] = useState({
     written_by: false,
     checked_by: false,
     approved_by: false,
-    impact: false,
+    level_of_impact: false,
     day: false,
     month: false,
-    year: false
+    year: false,
   });
 
   const fetchNextAspectNumber = async () => {
@@ -81,13 +85,13 @@ const QmsAddEnvironmentalAspect = () => {
         }));
         return;
       }
-      const response = await axios.get(`${BASE_URL}/qms/environmental-aspect-number/next/${companyId}/`);
+      const response = await axios.get(`${BASE_URL}/qms/aspect/next-action/${companyId}/`);
       if (response.data && response.data.next_aspect_no) {
         const aspectNumber = String(response.data.next_aspect_no);
         setNextAspectNo(aspectNumber);
         setFormData(prevData => ({
           ...prevData,
-          aspect_no: `EA-${aspectNumber}`
+          aspect_no: `${aspectNumber}`
         }));
       } else {
         setNextAspectNo("1");
@@ -106,13 +110,6 @@ const QmsAddEnvironmentalAspect = () => {
     }
   };
 
-  useEffect(() => {
-    if (companyId) {
-      fetchUsers();
-      fetchNextAspectNumber();
-    }
-  }, [companyId]);
-
   const fetchUsers = async () => {
     try {
       if (!companyId) return;
@@ -128,6 +125,32 @@ const QmsAddEnvironmentalAspect = () => {
       setError("Failed to load users. Please check your connection and try again.");
     }
   };
+
+  const fetchProcess = async () => {
+    setLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found. Please log in again.");
+        return;
+      }
+      const response = await axios.get(`${BASE_URL}/qms/process-activity/company/${companyId}/`);
+      setProcess(response.data);
+    } catch (error) {
+      console.error("Error fetching process:", error);
+      setError("Failed to load process. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (companyId) {
+      fetchUsers();
+      fetchNextAspectNumber();
+      fetchProcess();
+    }
+  }, [companyId]);
 
   const getDaysInMonth = (month, year) => {
     return new Date(year, month, 0).getDate();
@@ -170,8 +193,7 @@ const QmsAddEnvironmentalAspect = () => {
   const handleCloseProcessTypeModal = (newProcessAdded = false) => {
     setIsProcessTypeModalOpen(false);
     if (newProcessAdded) {
-      // Note: fetchProcess() is not defined in the original code. Assuming it’s a placeholder.
-      // If needed, implement fetchProcess() to refresh related_process options.
+      fetchProcess();
     }
   };
 
@@ -225,15 +247,17 @@ const QmsAddEnvironmentalAspect = () => {
       submitData.append('company', companyId);
       Object.keys(formData).forEach(key => {
         if (key === 'send_notification_to_checked_by' || key === 'send_notification_to_approved_by' ||
-          key === 'send_email_to_checked_by' || key === 'send_email_to_approved_by') {
+            key === 'send_email_to_checked_by' || key === 'send_email_to_approved_by') {
           submitData.append(key, formData[key]);
           return;
         }
         submitData.append(key, formData[key]);
       });
-      const response = await axios.post(`${BASE_URL}/qms/environmental-aspect-create/`, submitData, {
+      const response = await axios.post(`${BASE_URL}/qms/aspect-create/`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
+      console.log('Environmental Aspect:', response.data);
+      
       setLoading(false);
       setShowAddManualSuccessModal(true);
       setTimeout(() => {
@@ -280,14 +304,14 @@ const QmsAddEnvironmentalAspect = () => {
           submitData.append(key, formData[key]);
         }
       });
-      const response = await axios.post(`${BASE_URL}/qms/environmental-aspect/draft-create/`, submitData, {
+      const response = await axios.post(`${BASE_URL}/qms/aspect/draft-create/`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setLoading(false);
       setShowDraftManualSuccessModal(true);
       setTimeout(() => {
         setShowDraftManualSuccessModal(false);
-        navigate('/company/qms/draftenvironmentalaspect');
+        navigate('/company/qms/draft-environmantal-aspect');
       }, 1500);
     } catch (err) {
       setLoading(false);
@@ -350,7 +374,7 @@ const QmsAddEnvironmentalAspect = () => {
         onClose={handleCloseProcessTypeModal}
       />
 
-      <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
+      <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[98px]">
         <div className="grid md:grid-cols-2 gap-5">
           <div>
             <label className="add-qms-manual-label">
@@ -358,12 +382,12 @@ const QmsAddEnvironmentalAspect = () => {
             </label>
             <input
               type="text"
-              name="source"
-              value={formData.source}
+              name="aspect_source"
+              value={formData.aspect_source}
               onChange={handleChange}
               className="w-full add-qms-manual-inputs"
             />
-            <ErrorMessage message={errors.source} />
+            <ErrorMessage message={errors.aspect_source} />
           </div>
           <div>
             <label className="add-qms-manual-label">
@@ -394,18 +418,23 @@ const QmsAddEnvironmentalAspect = () => {
           <div className="flex flex-col gap-3 relative">
             <label className="add-training-label">Related Process/ Activity</label>
             <select
-              name="related_process"
-              value={formData.related_process}
+              name="process_activity"
+              value={formData.process_activity}
               onChange={handleChange}
-              onFocus={() => setFocusedDropdown("related_process")}
+              onFocus={() => setFocusedDropdown("process_activity")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
             >
               <option value="" disabled>Select Related Process/Activity Type</option>
+              {process.map(proc => (
+                <option key={proc.id} value={proc.id}>
+                  {proc.title}
+                </option>
+              ))}
             </select>
             <ChevronDown
               className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "process_activity" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
@@ -414,7 +443,7 @@ const QmsAddEnvironmentalAspect = () => {
               onClick={handleOpenProcessTypeModal}
               type="button"
             >
-              View / Add Process/activities
+              View / Add Process/Activities
             </button>
           </div>
           <div>
@@ -430,19 +459,19 @@ const QmsAddEnvironmentalAspect = () => {
           <div>
             <label className="add-qms-manual-label">Aspect Description</label>
             <textarea
-              name="aspect_description"
-              value={formData.aspect_description}
+              name="description"
+              value={formData.description}
               onChange={handleChange}
-              className="w-full add-qms-manual-inputs !h-[98px]"
+              className="w-full add-qms-manual-inputs !h-[98px] py-2"
             />
           </div>
           <div>
             <label className="add-qms-manual-label">Action or Corrections</label>
             <textarea
-              name="corrections"
-              value={formData.corrections}
+              name="action"
+              value={formData.action}
               onChange={handleChange}
-              className="w-full add-qms-manual-inputs !h-[98px]"
+              className="w-full add-qms-manual-inputs !h-[98px] py-2"
             />
           </div>
           <div>
@@ -642,11 +671,11 @@ const QmsAddEnvironmentalAspect = () => {
             <div className="relative">
               <select
                 className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                name="impact"
-                value={formData.impact}
-                onFocus={() => toggleDropdown('impact')}
-                onChange={(e) => handleDropdownChange(e, 'impact')}
-                onBlur={() => setOpenDropdowns(prev => ({ ...prev, impact: false }))}
+                name="level_of_impact"
+                value={formData.level_of_impact}
+                onFocus={() => toggleDropdown('level_of_impact')}
+                onChange={(e) => handleDropdownChange(e, 'level_of_impact')}
+                onBlur={() => setOpenDropdowns(prev => ({ ...prev, level_of_impact: false }))}
               >
                 <option value="">Select Level of Impact</option>
                 {documentTypes.map(type => (
@@ -654,7 +683,7 @@ const QmsAddEnvironmentalAspect = () => {
                 ))}
               </select>
               <ChevronDown
-                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.impact ? 'rotate-180' : ''}`}
+                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.level_of_impact ? 'rotate-180' : ''}`}
               />
             </div>
           </div>

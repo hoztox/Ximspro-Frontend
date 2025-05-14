@@ -1,23 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { Search } from "lucide-react";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from "framer-motion";
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import publishIcon from "../../../../assets/images/Modal/publish.svg";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
-import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
-import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
-import PublishSuccessModal from './Modals/PublishSuccessModal';
-import PublishErrorModal from './Modals/PublishErrorModal';
+import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
+import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
+import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
+import PublishSuccessModal from "./Modals/PublishSuccessModal";
+import PublishErrorModal from "./Modals/PublishErrorModal";
 
 const QmsListEnvironmentalAspect = () => {
   // State
   const [environmentalAspects, setEnvironmentalAspects] = useState([]);
+  const [corrections, setCorrections] = useState({});
   const [draftCount, setDraftCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,25 +43,27 @@ const QmsListEnvironmentalAspect = () => {
 
   // Format date function
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
   // Get current user
   const getCurrentUser = () => {
-    const role = localStorage.getItem('role');
+    const role = localStorage.getItem("role");
     try {
-      if (role === 'company') {
+      if (role === "company") {
         const companyData = {};
         Object.keys(localStorage)
-          .filter(key => key.startsWith('company_'))
-          .forEach(key => {
-            const cleanKey = key.replace('company_', '');
+          .filter((key) => key.startsWith("company_"))
+          .forEach((key) => {
+            const cleanKey = key.replace("company_", "");
             try {
               companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
             } catch (e) {
@@ -68,16 +71,16 @@ const QmsListEnvironmentalAspect = () => {
             }
           });
         companyData.role = role;
-        companyData.company_id = localStorage.getItem('company_id');
-        companyData.company_name = localStorage.getItem('company_name');
-        companyData.email_address = localStorage.getItem('email_address');
+        companyData.company_id = localStorage.getItem("company_id");
+        companyData.company_name = localStorage.getItem("company_name");
+        companyData.email_address = localStorage.getItem("email_address");
         return companyData;
-      } else if (role === 'user') {
+      } else if (role === "user") {
         const userData = {};
         Object.keys(localStorage)
-          .filter(key => key.startsWith('user_'))
-          .forEach(key => {
-            const cleanKey = key.replace('user_', '');
+          .filter((key) => key.startsWith("user_"))
+          .forEach((key) => {
+            const cleanKey = key.replace("user_", "");
             try {
               userData[cleanKey] = JSON.parse(localStorage.getItem(key));
             } catch (e) {
@@ -85,7 +88,7 @@ const QmsListEnvironmentalAspect = () => {
             }
           });
         userData.role = role;
-        userData.user_id = localStorage.getItem('user_id');
+        userData.user_id = localStorage.getItem("user_id");
         return userData;
       }
     } catch (error) {
@@ -113,7 +116,7 @@ const QmsListEnvironmentalAspect = () => {
 
   // Check if user is involved with an aspect
   const isUserInvolvedWithAspect = (aspect) => {
-    const currentUserId = Number(localStorage.getItem('user_id'));
+    const currentUserId = Number(localStorage.getItem("user_id"));
     return (
       (aspect.written_by && aspect.written_by.id === currentUserId) ||
       (aspect.checked_by && aspect.checked_by.id === currentUserId) ||
@@ -123,12 +126,12 @@ const QmsListEnvironmentalAspect = () => {
 
   // Filter aspects by visibility
   const filterAspectsByVisibility = (aspectsData) => {
-    const role = localStorage.getItem('role');
-    return aspectsData.filter(aspect => {
-      if (aspect.status === 'Published') {
+    const role = localStorage.getItem("role");
+    return aspectsData.filter((aspect) => {
+      if (aspect.status === "Published") {
         return true;
       }
-      if (role === 'company') {
+      if (role === "company") {
         return true;
       }
       return isUserInvolvedWithAspect(aspect);
@@ -140,7 +143,9 @@ const QmsListEnvironmentalAspect = () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
-      const response = await axios.get(`${BASE_URL}/qms/environmental-aspects/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/aspect/${companyId}/`
+      );
       const filteredAspects = filterAspectsByVisibility(response.data);
       const sortedAspects = filteredAspects.sort((a, b) => a.id - b.id);
       setEnvironmentalAspects(sortedAspects);
@@ -157,20 +162,52 @@ const QmsListEnvironmentalAspect = () => {
     const fetchAllData = async () => {
       try {
         const companyId = getUserCompanyId();
-        const aspectsResponse = await axios.get(`${BASE_URL}/qms/environmental-aspects/${companyId}/`);
+        const aspectsResponse = await axios.get(
+          `${BASE_URL}/qms/aspect/${companyId}/`
+        );
         const filteredAspects = filterAspectsByVisibility(aspectsResponse.data);
         const sortedAspects = filteredAspects.sort((a, b) => a.id - b.id);
         setEnvironmentalAspects(sortedAspects);
 
+        // Fetch corrections for visible aspects
+        const correctionsPromises = sortedAspects.map(async (aspect) => {
+          try {
+            const correctionResponse = await axios.get(
+              `${BASE_URL}/qms/aspect/${aspect.id}/corrections/`
+            );
+            return {
+              aspectId: aspect.id,
+              corrections: correctionResponse.data,
+            };
+          } catch (correctionError) {
+            console.error(
+              `Error fetching corrections for aspect ${aspect.id}:`,
+              correctionError
+            );
+            return { aspectId: aspect.id, corrections: [] };
+          }
+        });
+
+        // Process all corrections
+        const correctionResults = await Promise.all(correctionsPromises);
+        const correctionsByAspect = correctionResults.reduce((acc, result) => {
+          acc[result.aspectId] = result.corrections;
+          return acc;
+        }, {});
+
+        setCorrections(correctionsByAspect);
+
         const id = getRelevantUserId();
-        const draftResponse = await axios.get(`${BASE_URL}/qms/environmental-aspects/drafts-count/${id}/`);
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/aspect/drafts-count/${id}/`
+        );
         setDraftCount(draftResponse.data.count);
 
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        // setError("Failed to load data. Please try again.");
+        setError("Failed to load data. Please try again.");
         setLoading(false);
       }
     };
@@ -199,16 +236,19 @@ const QmsListEnvironmentalAspect = () => {
   const filteredEnvironmentalAspects = environmentalAspects.filter(
     (aspect) =>
       aspect.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      aspect.source?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      aspect.aspect_source?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       aspect.aspect_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      aspect.applicable_legal_requirement?.toLowerCase().includes(searchQuery.toLowerCase())
+      aspect.legal_requirement?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalItems = filteredEnvironmentalAspects.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredEnvironmentalAspects.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredEnvironmentalAspects.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -233,11 +273,11 @@ const QmsListEnvironmentalAspect = () => {
   };
 
   const handleQmsViewEnvironmentalAspect = (id) => {
-    navigate(`/company/qms/view-environmental-aspect/${id}`);
+    navigate(`/company/qms/view-environmantal-aspect/${id}`);
   };
 
   const handleQmsEditEnvironmentalAspect = (id) => {
-    navigate(`/company/qms/edit-environmental-aspect/${id}`);
+    navigate(`/company/qms/edit-environmantal-aspect/${id}`);
   };
 
   // Delete handlers
@@ -249,7 +289,9 @@ const QmsListEnvironmentalAspect = () => {
   const handleConfirmDelete = async () => {
     if (aspectToDelete) {
       try {
-        await axios.delete(`${BASE_URL}/qms/environmental-aspect-detail/${aspectToDelete}/`);
+        await axios.delete(
+          `${BASE_URL}/qms/aspect-detail/${aspectToDelete}/`
+        );
         setShowDeleteModal(false);
         setShowDeleteManualSuccessModal(true);
         setTimeout(() => {
@@ -291,19 +333,22 @@ const QmsListEnvironmentalAspect = () => {
         return;
       }
       setIsPublishing(true);
-      const userId = localStorage.getItem('user_id');
-      const companyId = localStorage.getItem('company_id');
+      const userId = localStorage.getItem("user_id");
+      const companyId = localStorage.getItem("company_id");
       const publisherId = userId || companyId;
       if (!publisherId) {
         alert("User information not found. Please log in again.");
         setIsPublishing(false);
         return;
       }
-      await axios.post(`${BASE_URL}/qms/environmental-aspect/${selectedAspectId}/publish-notification/`, {
-        company_id: getUserCompanyId(),
-        published_by: userId,
-        send_notification: sendNotification
-      });
+      await axios.post(
+        `${BASE_URL}/qms/aspect/${selectedAspectId}/publish-notification/`,
+        {
+          company_id: getUserCompanyId(),
+          published_by: userId,
+          send_notification: sendNotification,
+        }
+      );
       setShowPublishSuccessModal(true);
       setTimeout(() => {
         setShowPublishSuccessModal(false);
@@ -324,13 +369,23 @@ const QmsListEnvironmentalAspect = () => {
 
   // Check if user can review
   const canReview = (aspect) => {
-    const currentUserId = Number(localStorage.getItem('user_id'));
+    const currentUserId = Number(localStorage.getItem("user_id"));
+    const aspectCorrections = corrections[aspect.id] || [];
+
     if (aspect.status === "Pending for Review/Checking") {
       return currentUserId === aspect.checked_by?.id;
     }
+
+    if (aspect.status === "Correction Requested") {
+      return aspectCorrections.some(
+        (correction) => correction.to_user.id === currentUserId
+      );
+    }
+
     if (aspect.status === "Reviewed,Pending for Approval") {
       return currentUserId === aspect.approved_by?.id;
     }
+
     return false;
   };
 
@@ -403,7 +458,9 @@ const QmsListEnvironmentalAspect = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         {loading ? (
-          <div className="text-center py-4 text-white">Loading environmental aspects...</div>
+          <div className="text-center py-4 not-found">
+            Loading...
+          </div>
         ) : error ? (
           <div className="text-center py-4 text-red-500">{error}</div>
         ) : (
@@ -414,13 +471,9 @@ const QmsListEnvironmentalAspect = () => {
                 <th className="px-2 text-left add-manual-theads">Title</th>
                 <th className="px-2 text-left add-manual-theads">Source</th>
                 <th className="px-2 text-left add-manual-theads">Aspect No</th>
-                <th className="px-2 text-left add-manual-theads">
-                  Applicable Legal Requirement
-                </th>
+                {/* <th className="px-2 text-left add-manual-theads">Applicable Legal Requirement</th> */}
                 <th className="px-2 text-left add-manual-theads">Date Raised</th>
-                <th className="px-2 text-left add-manual-theads">
-                  Level of Impact
-                </th>
+                <th className="px-2 text-left add-manual-theads">Level of Impact</th>
                 <th className="px-2 text-left add-manual-theads">Status</th>
                 <th className="px-2 text-left add-manual-theads">Action</th>
                 <th className="px-2 text-center add-manual-theads">View</th>
@@ -437,30 +490,63 @@ const QmsListEnvironmentalAspect = () => {
                       key={aspect.id}
                       className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
                     >
-                      <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                      <td className="px-2 add-manual-datas">{aspect.title || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{aspect.source || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{aspect.aspect_no || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{aspect.applicable_legal_requirement || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{formatDate(aspect.date_raised)}</td>
-                      <td className="px-2 add-manual-datas">{aspect.level_of_impact || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{aspect.status || 'N/A'}</td>
+                      <td className="pl-5 pr-2 add-manual-datas">
+                        {(currentPage - 1) * itemsPerPage + index + 1}
+                      </td>
                       <td className="px-2 add-manual-datas">
-                        {aspect.status === 'Pending for Publish' ? (
-                          <button className="text-[#36DDAE]" onClick={() => handlePublish(aspect)}>Click to Publish</button>
+                        {aspect.title || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {aspect.aspect_source || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {aspect.aspect_no || "N/A"}
+                      </td>
+                      {/* <td className="px-2 add-manual-datas">
+                        {aspect.legal_requirement || "N/A"}
+                      </td> */}
+                      <td className="px-2 add-manual-datas">
+                        {formatDate(aspect.date)}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {aspect.level_of_impact || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {aspect.status || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {aspect.status === "Pending for Publish" ? (
+                          <button
+                            className="text-[#36DDAE]"
+                            onClick={() => handlePublish(aspect)}
+                          >
+                            Click to Publish
+                          </button>
                         ) : canApprove ? (
                           <button
-                            onClick={() => handleQmsViewEnvironmentalAspect(aspect.id)}
+                            onClick={() =>
+                              handleQmsViewEnvironmentalAspect(aspect.id)
+                            }
                             className="text-[#1E84AF]"
                           >
-                            {aspect.status === 'Pending for Review/Checking' ? 'Review' : 'Click to Approve'}
+                            {aspect.status === "Pending for Review/Checking"
+                              ? "Review"
+                              : aspect.status === "Correction Requested"
+                              ? "Correct"
+                              : "Click to Approve"}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">No Action Required</span>
+                          <span className="text-[#858585]">
+                            No Action Required
+                          </span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
-                        <button onClick={() => handleQmsViewEnvironmentalAspect(aspect.id)}>
+                        <button
+                          onClick={() =>
+                            handleQmsViewEnvironmentalAspect(aspect.id)
+                          }
+                        >
                           <img
                             src={viewIcon}
                             alt="View Icon"
@@ -472,12 +558,20 @@ const QmsListEnvironmentalAspect = () => {
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
-                        <button onClick={() => handleQmsEditEnvironmentalAspect(aspect.id)}>
+                        <button
+                          onClick={() =>
+                            handleQmsEditEnvironmentalAspect(aspect.id)
+                          }
+                        >
                           <img src={editIcon} alt="Edit Icon" />
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
-                        <button onClick={() => handleDeleteEnvironmentalAspect(aspect.id)}>
+                        <button
+                          onClick={() =>
+                            handleDeleteEnvironmentalAspect(aspect.id)
+                          }
+                        >
                           <img src={deleteIcon} alt="Delete Icon" />
                         </button>
                       </td>
@@ -503,7 +597,9 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""}`}
+            className={`cursor-pointer swipe-text ${
+              currentPage === 1 ? "opacity-50" : ""
+            }`}
           >
             Previous
           </button>
@@ -511,7 +607,9 @@ const QmsListEnvironmentalAspect = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"}`}
+              className={`${
+                currentPage === number ? "pagin-active" : "pagin-inactive"
+              }`}
             >
               {number}
             </button>
@@ -519,7 +617,9 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""}`}
+            className={`cursor-pointer swipe-text ${
+              currentPage === totalPages ? "opacity-50" : ""
+            }`}
           >
             Next
           </button>
@@ -546,15 +646,17 @@ const QmsListEnvironmentalAspect = () => {
                 duration: 0.3,
                 type: "spring",
                 stiffness: 300,
-                damping: 30
+                damping: 30,
               }}
             >
               <div className="p-6">
-                <div className='flex flex-col justify-center items-center space-y-7'>
-                  <img src={publishIcon} alt="Publish Icon" className='mt-3' />
-                  <div className='flex gap-[113px] mb-5'>
+                <div className="flex flex-col justify-center items-center space-y-7">
+                  <img src={publishIcon} alt="Publish Icon" className="mt-3" />
+                  <div className="flex gap-[113px] mb-5">
                     <div className="flex items-center">
-                      <span className="mr-3 add-qms-manual-label">Send Notification?</span>
+                      <span className="mr-3 add-qms-manual-label">
+                        Send Notification?
+                      </span>
                       <input
                         type="checkbox"
                         className="qms-manual-form-checkbox"
@@ -563,14 +665,19 @@ const QmsListEnvironmentalAspect = () => {
                       />
                     </div>
                   </div>
-                  <div className='flex gap-5'>
-                    <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
+                  <div className="flex gap-5">
+                    <button
+                      onClick={closePublishModal}
+                      className="cancel-btn duration-200 text-white"
+                    >
+                      Cancel
+                    </button>
                     <button
                       onClick={handlePublishSave}
-                      className='save-btn duration-200 text-white'
+                      className="save-btn duration-200 text-white"
                       disabled={isPublishing}
                     >
-                      {isPublishing ? 'Publishing...' : 'Publish'}
+                      {isPublishing ? "Publishing..." : "Publish"}
                     </button>
                   </div>
                 </div>

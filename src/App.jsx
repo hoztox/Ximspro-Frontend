@@ -679,11 +679,11 @@ const ThemedApp = () => {
           {/* QMS Risk & Opportunities Management*/}
           <Route path="qms/list-environmantal-aspect" element={<QmsListEnvironmentalAspect />} />
           <Route path="qms/add-environmantal-aspect" element={<QmsAddEnvironmentalAspect />} />
-          <Route path="qms/edit-environmantal-aspect" element={<QmsEditEnvironmentalAspect />} />
-          <Route path="qms/view-environmantal-aspect" element={<QmsViewEnvironmentalAspect />} />
+          <Route path="qms/edit-environmantal-aspect/:id" element={<QmsEditEnvironmentalAspect />} />
+          <Route path="qms/view-environmantal-aspect/:id" element={<QmsViewEnvironmentalAspect />} />
           <Route path="qms/draft-environmantal-aspect" element={<QmsDraftEnvironmentalAspect />} />
-          <Route path="qms/edit-draft-environmantal-aspect" element={<QmsEditDraftEnvironmentalAspect />} />
-          <Route path="qms/view-draft-environmantal-aspect" element={<QmsViewDraftEnvironmentalAspect />} />
+          <Route path="qms/edit-draft-environmantal-aspect/:id" element={<QmsEditDraftEnvironmentalAspect />} />
+          <Route path="qms/view-draft-environmantal-aspect/:id" element={<QmsViewDraftEnvironmentalAspect />} />
 
           <Route path="qms/list-environmantal-impact" element={<QmsListEnvironmentalImpact />} />
           <Route path="qms/add-environmantal-impact" element={<QmsAddEnvironmentalImpact />} />
