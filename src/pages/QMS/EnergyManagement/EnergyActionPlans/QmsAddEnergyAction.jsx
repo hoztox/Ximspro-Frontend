@@ -51,8 +51,8 @@ const QmsAddEnergyAction = () => {
     try {
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setNextActionNo("EAP-1");
-        setFormData((prev) => ({ ...prev, action_plan: "EAP-1" }));
+        setNextActionNo("");
+        setFormData((prev) => ({ ...prev, action_plan: "" }));
         return;
       }
 
@@ -60,13 +60,13 @@ const QmsAddEnergyAction = () => {
         `${BASE_URL}/qms/energy-action/next-action/${companyId}/`
       );
 
-      if (response.data?.next_action) {
-        const actionNumber = `EAP-${response.data.next_action}`;
+      if (response.data?.next_action_plan) {
+        const actionNumber = `${response.data.next_action_plan}`;
         setNextActionNo(actionNumber);
         setFormData((prev) => ({ ...prev, action_plan: actionNumber }));
       } else {
         setNextActionNo();
-        setFormData((prev) => ({ ...prev, action_plan: "EAP-1" }));
+        setFormData((prev) => ({ ...prev, action_plan: "" }));
       }
     } catch (error) {
       console.error("Error fetching next action number:", error);
