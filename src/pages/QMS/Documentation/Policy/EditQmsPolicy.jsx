@@ -1,48 +1,50 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
-import bold from "../../../../assets/images/Company Documentation/bold.svg"
-import itallic from "../../../../assets/images/Company Documentation/itallic.svg"
-import underline from "../../../../assets/images/Company Documentation/underline.svg"
-import files from "../../../../assets/images/Company Documentation/file-icon.svg"
-import leftalign from "../../../../assets/images/Company Documentation/text-align-left.svg"
-import centeralign from "../../../../assets/images/Company Documentation/text-allign-center.svg"
-import rightalign from "../../../../assets/images/Company Documentation/text-align-right.svg"
-import sentencetext from "../../../../assets/images/Company Documentation/text-sentence.svg"
-import orderedlist from "../../../../assets/images/Company Documentation/ordered-list.svg"
-import unorderedlist from "../../../../assets/images/Company Documentation/unorderedlist.svg"
-import textindednt from "../../../../assets/images/Company Documentation/text-indent.svg"
-import textoutdent from "../../../../assets/images/Company Documentation/text-outdent.svg"
+import React, { useRef, useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import bold from "../../../../assets/images/Company Documentation/bold.svg";
+import itallic from "../../../../assets/images/Company Documentation/itallic.svg";
+import underline from "../../../../assets/images/Company Documentation/underline.svg";
+import files from "../../../../assets/images/Company Documentation/file-icon.svg";
+import leftalign from "../../../../assets/images/Company Documentation/text-align-left.svg";
+import centeralign from "../../../../assets/images/Company Documentation/text-allign-center.svg";
+import rightalign from "../../../../assets/images/Company Documentation/text-align-right.svg";
+import sentencetext from "../../../../assets/images/Company Documentation/text-sentence.svg";
+import orderedlist from "../../../../assets/images/Company Documentation/ordered-list.svg";
+import unorderedlist from "../../../../assets/images/Company Documentation/unorderedlist.svg";
+import textindednt from "../../../../assets/images/Company Documentation/text-indent.svg";
+import textoutdent from "../../../../assets/images/Company Documentation/text-outdent.svg";
 import imagelink from "../../../../assets/images/Company Documentation/image-link.svg";
 import imageupload from "../../../../assets/images/Company Documentation/image-upload.svg";
-import addlinks from "../../../../assets/images/Company Documentation/add-link.svg"
-import removelinks from "../../../../assets/images/Company Documentation/remove-link.svg"
-import textcolor from "../../../../assets/images/Company Documentation/text-color.svg"
-import textbgcolor from "../../../../assets/images/Company Documentation/bg-color.svg"
-import { ChevronDown, Eye } from 'lucide-react';
+import addlinks from "../../../../assets/images/Company Documentation/add-link.svg";
+import removelinks from "../../../../assets/images/Company Documentation/remove-link.svg";
+import textcolor from "../../../../assets/images/Company Documentation/text-color.svg";
+import textbgcolor from "../../../../assets/images/Company Documentation/bg-color.svg";
+import { ChevronDown, Eye } from "lucide-react";
 import { BASE_URL } from "../../../../Utils/Config";
-import "./addqmspolicys.css"
-import EditQmsPolicySuccessModal from './Modals/EditQmsPolicySuccessModal';
-import EditQmsPolicyErrorModal from './Modals/EditQmsPolicyErrorModal';
+import "./addqmspolicys.css";
+import EditQmsPolicySuccessModal from "./Modals/EditQmsPolicySuccessModal";
+import EditQmsPolicyErrorModal from "./Modals/EditQmsPolicyErrorModal";
 
 const EditQmsPolicy = () => {
   const { id } = useParams(); // Get policy ID from URL
   const navigate = useNavigate();
   const [qmsPolicies, setQmsPolicies] = useState([]);
-
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
+    title: "",
+    content: "",
     existingPolicy: null,
-    newPolicy: null
+    newPolicy: null,
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  const [showEditPolicySuccessModal, setShowEditPolicySuccessModal] = useState(false);
-  const [showEditPolicyErrorModal, setShowEditPolicyErrorModal] = useState(false);
+  const [titleError, setTitleError] = useState("");
+  const [showEditPolicySuccessModal, setShowEditPolicySuccessModal] =
+    useState(false);
+  const [showEditPolicyErrorModal, setShowEditPolicyErrorModal] =
+    useState(false);
 
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -53,48 +55,67 @@ const EditQmsPolicy = () => {
     bold: false,
     italic: false,
     underline: false,
-    align: 'left',
+    align: "left",
     unorderedList: false,
     orderedList: false,
     indent: false,
     outdent: false,
-    textColor: '#FFFFFF',
-    bgColor: 'transparent'
+    textColor: "#FFFFFF",
+    bgColor: "transparent",
   });
 
   const colorPalette = [
-    '#FFFFFF', '#000000', '#FF0000', '#00FF00', '#0000FF',
-    '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080',
-    '#800000', '#808000', '#008000', '#800080', '#008080',
-    '#000080', '#FFA500', '#A52A2A', '#F5F5DC', '#FFD700'
+    "#FFFFFF",
+    "#000000",
+    "#FF0000",
+    "#00FF00",
+    "#0000FF",
+    "#FFFF00",
+    "#00FFFF",
+    "#FF00FF",
+    "#C0C0C0",
+    "#808080",
+    "#800000",
+    "#808000",
+    "#008000",
+    "#800080",
+    "#008080",
+    "#000080",
+    "#FFA500",
+    "#A52A2A",
+    "#F5F5DC",
+    "#FFD700",
   ];
 
   const fontSizes = [
-    { label: 'Small', value: '1' },
-    { label: 'Normal', value: '3' },
-    { label: 'Large', value: '5' },
-    { label: 'Extra Large', value: '7' }
+    { label: "Small", value: "1" },
+    { label: "Normal", value: "3" },
+    { label: "Large", value: "5" },
+    { label: "Extra Large", value: "7" },
   ];
 
   const fontStyles = [
-    { label: 'Arial', value: 'Arial' },
-    { label: 'Times New Roman', value: 'Times New Roman' },
-    { label: 'Courier New', value: 'Courier New' },
-    { label: 'Georgia', value: 'Georgia' }
+    { label: "Arial", value: "Arial" },
+    { label: "Times New Roman", value: "Times New Roman" },
+    { label: "Courier New", value: "Courier New" },
+    { label: "Georgia", value: "Georgia" },
   ];
 
   const fontFormats = [
-    { label: 'Paragraph', value: 'p' },
-    { label: 'Heading 1', value: 'h1' },
-    { label: 'Heading 2', value: 'h2' },
-    { label: 'Heading 3', value: 'h3' },
-    { label: 'Preformatted', value: 'pre' }
+    { label: "Paragraph", value: "p" },
+    { label: "Heading 1", value: "h1" },
+    { label: "Heading 2", value: "h2" },
+    { label: "Heading 3", value: "h3" },
+    { label: "Preformatted", value: "pre" },
   ];
 
   const [selectedFontSize, setSelectedFontSize] = useState(fontSizes[1].label);
-  const [selectedFontStyle, setSelectedFontStyle] = useState(fontStyles[0].label);
-  const [selectedFontFormat, setSelectedFontFormat] = useState(fontFormats[0].label);
-
+  const [selectedFontStyle, setSelectedFontStyle] = useState(
+    fontStyles[0].label
+  );
+  const [selectedFontFormat, setSelectedFontFormat] = useState(
+    fontFormats[0].label
+  );
 
   useEffect(() => {
     fetchPolicyDetails();
@@ -108,7 +129,6 @@ const EditQmsPolicy = () => {
     // If user data exists with company_id
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
-
       const userData = localStorage.getItem("user_company_id");
       if (userData) {
         try {
@@ -126,7 +146,7 @@ const EditQmsPolicy = () => {
 
   const extractFilenameFromUrl = (url) => {
     if (!url) return null;
-    const parts = url.split('/');
+    const parts = url.split("/");
     return parts[parts.length - 1];
   };
 
@@ -134,36 +154,34 @@ const EditQmsPolicy = () => {
     // Check if there's an existing policy with a URL to open
     if (formData.existingPolicy && formData.existingPolicy.url) {
       // Open the URL in a new tab
-      window.open(formData.existingPolicy.url, '_blank');
+      window.open(formData.existingPolicy.url, "_blank");
     } else {
-      toast.error('No file is available to view');
+      toast.error("No file is available to view");
     }
   };
   const handleTitleChange = (e) => {
     setFormData({
       ...formData,
-      title: e.target.value
+      title: e.target.value,
     });
+    setTitleError(""); // Clear error when user types
   };
-
 
   const fetchPolicyDetails = async () => {
     try {
-      console.log('Fetching policy with ID:', id);
+      console.log("Fetching policy with ID:", id);
 
       // Fetch specific policy details using the ID from URL
-      const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {
-
-      });
+      const response = await axios.get(`${BASE_URL}/qms/policy-get/${id}/`, {});
       const policyData = response.data;
       console.log("Policy data:", response.data);
-      
+
       // Set form data with the title
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        title: policyData.title || ''
+        title: policyData.title || "",
       }));
-      
+
       // Set editor content
       if (editorRef.current && policyData.text) {
         editorRef.current.innerHTML = policyData.text;
@@ -172,19 +190,19 @@ const EditQmsPolicy = () => {
       // Set file information if exists
       if (policyData.energy_policy) {
         const filename = extractFilenameFromUrl(policyData.energy_policy);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           existingPolicy: {
             name: filename,
-            url: policyData.energy_policy
-          }
+            url: policyData.energy_policy,
+          },
         }));
       }
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching policy details:', error);
-      toast.error('Failed to load policy details');
+      console.error("Error fetching policy details:", error);
+      toast.error("Failed to load policy details");
       setIsLoading(false);
     }
   };
@@ -192,9 +210,9 @@ const EditQmsPolicy = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        newPolicy: file
+        newPolicy: file,
       }));
     }
   };
@@ -204,8 +222,8 @@ const EditQmsPolicy = () => {
       const file = e.target.files[0];
 
       // Only process image files
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select an image file");
         return;
       }
 
@@ -220,19 +238,19 @@ const EditQmsPolicy = () => {
         editorRef.current.focus();
 
         // Insert the image at the current cursor position
-        document.execCommand('insertImage', false, imageUrl);
+        document.execCommand("insertImage", false, imageUrl);
 
         // Apply some basic styling to the image
         setTimeout(() => {
-          const images = editorRef.current.querySelectorAll('img');
+          const images = editorRef.current.querySelectorAll("img");
           const insertedImage = images[images.length - 1];
 
           if (insertedImage) {
             // Set reasonable max dimensions while maintaining aspect ratio
-            insertedImage.style.maxWidth = '100%';
-            insertedImage.style.height = 'auto';
-            insertedImage.style.display = 'block';
-            insertedImage.style.margin = '10px 0';
+            insertedImage.style.maxWidth = "100%";
+            insertedImage.style.height = "auto";
+            insertedImage.style.display = "block";
+            insertedImage.style.margin = "10px 0";
           }
         }, 0);
       };
@@ -252,13 +270,13 @@ const EditQmsPolicy = () => {
     editorRef.current.focus();
 
     // Set default font style
-    document.execCommand('fontName', false, fontStyles[0].value);
+    document.execCommand("fontName", false, fontStyles[0].value);
 
     // Set default font size
-    document.execCommand('fontSize', false, fontSizes[1].value);
+    document.execCommand("fontSize", false, fontSizes[1].value);
 
     // Set default format block
-    document.execCommand('formatBlock', false, fontFormats[0].value);
+    document.execCommand("formatBlock", false, fontFormats[0].value);
   };
 
   const execCommand = (command, value = null) => {
@@ -270,7 +288,10 @@ const EditQmsPolicy = () => {
       document.execCommand(command, false, value);
 
       // Special handling for list commands which can be finicky
-      if (command === 'insertUnorderedList' || command === 'insertOrderedList') {
+      if (
+        command === "insertUnorderedList" ||
+        command === "insertOrderedList"
+      ) {
         // Force update after a short delay to ensure command is applied
         setTimeout(() => {
           updateActiveStyles();
@@ -282,14 +303,14 @@ const EditQmsPolicy = () => {
   };
 
   const handleTextColor = (color) => {
-    execCommand('foreColor', color);
-    setActiveStyles(prev => ({ ...prev, textColor: color }));
+    execCommand("foreColor", color);
+    setActiveStyles((prev) => ({ ...prev, textColor: color }));
     setShowTextColorPicker(false);
   };
 
   const handleBackgroundColor = (color) => {
-    execCommand('hiliteColor', color);
-    setActiveStyles(prev => ({ ...prev, bgColor: color }));
+    execCommand("hiliteColor", color);
+    setActiveStyles((prev) => ({ ...prev, bgColor: color }));
     setShowBgColorPicker(false);
   };
 
@@ -307,15 +328,18 @@ const EditQmsPolicy = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
+      if (
+        colorPickerRef.current &&
+        !colorPickerRef.current.contains(event.target)
+      ) {
         setShowTextColorPicker(false);
         setShowBgColorPicker(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -324,47 +348,53 @@ const EditQmsPolicy = () => {
     if (document.activeElement !== editorRef.current) return;
 
     // Check format block state
-    const formatBlock = document.queryCommandValue('formatBlock');
-    const textColor = document.queryCommandValue('foreColor');
-    const bgColor = document.queryCommandValue('hiliteColor') || 'transparent';
+    const formatBlock = document.queryCommandValue("formatBlock");
+    const textColor = document.queryCommandValue("foreColor");
+    const bgColor = document.queryCommandValue("hiliteColor") || "transparent";
 
     setActiveStyles({
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline'),
-      align: document.queryCommandState('justifyCenter') ? 'center' :
-        document.queryCommandState('justifyRight') ? 'right' :
-          document.queryCommandState('justifyFull') ? 'justify' : 'left',
-      unorderedList: document.queryCommandState('insertUnorderedList'),
-      orderedList: document.queryCommandState('insertOrderedList'),
+      bold: document.queryCommandState("bold"),
+      italic: document.queryCommandState("italic"),
+      underline: document.queryCommandState("underline"),
+      align: document.queryCommandState("justifyCenter")
+        ? "center"
+        : document.queryCommandState("justifyRight")
+        ? "right"
+        : document.queryCommandState("justifyFull")
+        ? "justify"
+        : "left",
+      unorderedList: document.queryCommandState("insertUnorderedList"),
+      orderedList: document.queryCommandState("insertOrderedList"),
       indent: false, // No direct state for indent
       outdent: false, // No direct state for outdent
-      formatBlock: formatBlock || 'p',
-      textColor: textColor || '#FFFFFF',
-      bgColor: bgColor || 'transparent'
+      formatBlock: formatBlock || "p",
+      textColor: textColor || "#FFFFFF",
+      bgColor: bgColor || "transparent",
     });
 
     // Update selected format
     if (formatBlock) {
-      const fontFormatOption = fontFormats.find(option => option.value === formatBlock);
+      const fontFormatOption = fontFormats.find(
+        (option) => option.value === formatBlock
+      );
       if (fontFormatOption) {
         setSelectedFontFormat(fontFormatOption.label);
       }
     }
 
     // Update font style
-    const fontName = document.queryCommandValue('fontName');
+    const fontName = document.queryCommandValue("fontName");
     if (fontName) {
       // Check if it's a system font stack or one of our defined fonts
       const matchedFont = fontStyles.find(
-        font => fontName.includes(font.value) || font.value === fontName
+        (font) => fontName.includes(font.value) || font.value === fontName
       );
 
       if (matchedFont) {
         setSelectedFontStyle(matchedFont.label);
-      } else if (fontName.includes(',')) {
+      } else if (fontName.includes(",")) {
         // Handle system font stack by displaying the first font in the stack
-        const firstFont = fontName.split(',')[0].trim().replace(/"/g, '');
+        const firstFont = fontName.split(",")[0].trim().replace(/"/g, "");
         setSelectedFontStyle(firstFont);
       } else {
         setSelectedFontStyle(fontName);
@@ -372,9 +402,11 @@ const EditQmsPolicy = () => {
     }
 
     // Update font size
-    const fontSize = document.queryCommandValue('fontSize');
+    const fontSize = document.queryCommandValue("fontSize");
     if (fontSize) {
-      const fontSizeOption = fontSizes.find(option => option.value === fontSize);
+      const fontSizeOption = fontSizes.find(
+        (option) => option.value === fontSize
+      );
       if (fontSizeOption) {
         setSelectedFontSize(fontSizeOption.label);
       }
@@ -387,7 +419,7 @@ const EditQmsPolicy = () => {
     editorRef.current.focus();
 
     // Determine the command to execute
-    const command = type === 'ul' ? 'insertUnorderedList' : 'insertOrderedList';
+    const command = type === "ul" ? "insertUnorderedList" : "insertOrderedList";
 
     // Execute the list command
     document.execCommand(command, false, null);
@@ -395,26 +427,26 @@ const EditQmsPolicy = () => {
     // Fix list styling after creation
     setTimeout(() => {
       // Find all lists in the editor and ensure they have proper styling
-      const lists = editorRef.current.querySelectorAll('ul, ol');
+      const lists = editorRef.current.querySelectorAll("ul, ol");
 
-      lists.forEach(list => {
+      lists.forEach((list) => {
         // Make sure list has the correct display and list-style properties
-        if (list.tagName === 'UL') {
-          list.style.display = 'block';
-          list.style.listStyleType = 'disc';
-          list.style.paddingLeft = '40px';
-          list.style.marginLeft = '0';
-        } else if (list.tagName === 'OL') {
-          list.style.display = 'block';
-          list.style.listStyleType = 'decimal';
-          list.style.paddingLeft = '40px';
-          list.style.marginLeft = '0';
+        if (list.tagName === "UL") {
+          list.style.display = "block";
+          list.style.listStyleType = "disc";
+          list.style.paddingLeft = "40px";
+          list.style.marginLeft = "0";
+        } else if (list.tagName === "OL") {
+          list.style.display = "block";
+          list.style.listStyleType = "decimal";
+          list.style.paddingLeft = "40px";
+          list.style.marginLeft = "0";
         }
 
         // Ensure list items also have proper styling
-        const items = list.querySelectorAll('li');
-        items.forEach(item => {
-          item.style.display = 'list-item';
+        const items = list.querySelectorAll("li");
+        items.forEach((item) => {
+          item.style.display = "list-item";
         });
       });
 
@@ -447,7 +479,7 @@ const EditQmsPolicy = () => {
     // See if we're in a list item
     let listItem = null;
     while (currentNode && currentNode !== editorRef.current) {
-      if (currentNode.nodeName === 'LI') {
+      if (currentNode.nodeName === "LI") {
         listItem = currentNode;
         break;
       }
@@ -456,18 +488,18 @@ const EditQmsPolicy = () => {
 
     // If we're in a list item, we can use the built-in indent
     if (listItem) {
-      execCommand('indent');
+      execCommand("indent");
     } else {
       // Otherwise, apply padding to create indentation effect
       // This works for paragraphs and other block elements
-      execCommand('formatBlock', '<div>');
+      execCommand("formatBlock", "<div>");
       const selectedElement = document.getSelection().anchorNode.parentNode;
 
       // Add indentation through inline style
-      const currentPadding = parseInt(selectedElement.style.paddingLeft || '0');
-      selectedElement.style.paddingLeft = (currentPadding + 40) + 'px';
+      const currentPadding = parseInt(selectedElement.style.paddingLeft || "0");
+      selectedElement.style.paddingLeft = currentPadding + 40 + "px";
 
-      setActiveStyles(prev => ({ ...prev, indent: true }));
+      setActiveStyles((prev) => ({ ...prev, indent: true }));
     }
   };
 
@@ -490,7 +522,7 @@ const EditQmsPolicy = () => {
     // See if we're in a list item
     let listItem = null;
     while (currentNode && currentNode !== editorRef.current) {
-      if (currentNode.nodeName === 'LI') {
+      if (currentNode.nodeName === "LI") {
         listItem = currentNode;
         break;
       }
@@ -499,71 +531,74 @@ const EditQmsPolicy = () => {
 
     // If we're in a list item, we can use the built-in outdent
     if (listItem) {
-      execCommand('outdent');
+      execCommand("outdent");
     } else {
       // Otherwise, reduce padding to create outdentation effect
       const selectedElement = document.getSelection().anchorNode.parentNode;
 
       // Reduce indentation through inline style
-      const currentPadding = parseInt(selectedElement.style.paddingLeft || '0');
+      const currentPadding = parseInt(selectedElement.style.paddingLeft || "0");
       if (currentPadding > 0) {
-        selectedElement.style.paddingLeft = Math.max(0, currentPadding - 40) + 'px';
+        selectedElement.style.paddingLeft =
+          Math.max(0, currentPadding - 40) + "px";
       }
 
-      setActiveStyles(prev => ({ ...prev, outdent: currentPadding <= 0 }));
+      setActiveStyles((prev) => ({ ...prev, outdent: currentPadding <= 0 }));
     }
   };
 
   // Updated dropdown handlers to set selected state
   const handleFontSize = (size) => {
-    execCommand('fontSize', size);
+    execCommand("fontSize", size);
 
     // Update the selected font size title based on size value
-    const fontSizeOption = fontSizes.find(option => option.value === size);
+    const fontSizeOption = fontSizes.find((option) => option.value === size);
     if (fontSizeOption) {
       setSelectedFontSize(fontSizeOption.label);
     }
   };
 
   const handleFontStyle = (font) => {
-    execCommand('fontName', font);
+    execCommand("fontName", font);
     setSelectedFontStyle(font);
   };
 
   const handleFontFormat = (format) => {
-    execCommand('formatBlock', format);
+    execCommand("formatBlock", format);
 
     // Update the selected format title based on format value
-    const fontFormatOption = fontFormats.find(option => option.value === format);
+    const fontFormatOption = fontFormats.find(
+      (option) => option.value === format
+    );
     if (fontFormatOption) {
       setSelectedFontFormat(fontFormatOption.label);
     }
   };
 
   const handleCreateLink = () => {
-    const url = prompt('Enter URL:', 'http://');
+    const url = prompt("Enter URL:", "http://");
     if (url) {
-      execCommand('createLink', url);
+      execCommand("createLink", url);
     }
   };
 
   // Handle inserting image via URL
   const handleInsertImage = () => {
-    const url = prompt('Enter image URL:', 'http://');
+    const url = prompt("Enter image URL:", "http://");
     if (url) {
-      execCommand('insertImage', url);
+      execCommand("insertImage", url);
 
       // Apply styling to the inserted image
       setTimeout(() => {
-        const images = editorRef.current.querySelectorAll('img');
+        const images = editorRef.current.querySelectorAll("img");
         const insertedImage = images[images.length - 1];
 
         if (insertedImage) {
           // Set reasonable max dimensions while maintaining aspect ratio
-          insertedImage.style.maxWidth = '100%';
-          insertedImage.style.height = 'auto';
-          insertedImage.style.display = 'block';
-          insertedImage.style.margin = '10px 0';
+          insertedImage.style.maxWidth = "100%";
+          insertedImage.style.height = "auto";
+          insertedImage.style.display = "block";
+          insertedImage.style.margin = "10px 0";
         }
       }, 0);
     }
@@ -579,7 +614,7 @@ const EditQmsPolicy = () => {
   // Initialize the editor with CSS styling for lists
   const initializeEditor = () => {
     // Add a stylesheet for the editor
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
           [contenteditable] {
             outline: none;
@@ -615,7 +650,7 @@ const EditQmsPolicy = () => {
     if (editorRef.current) {
       // Set content to ensure proper initialization (if empty)
       if (!editorRef.current.innerHTML.trim()) {
-        editorRef.current.innerHTML = '<p><br></p>';
+        editorRef.current.innerHTML = "<p><br></p>";
       }
     }
   };
@@ -636,7 +671,7 @@ const EditQmsPolicy = () => {
 
     const handleKeyDown = (e) => {
       // Check for Tab key for indentation within lists
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         // Prevent default tab behavior
         e.preventDefault();
 
@@ -666,37 +701,37 @@ const EditQmsPolicy = () => {
       e.preventDefault();
 
       // Get text representation of clipboard
-      const text = e.clipboardData.getData('text/plain');
+      const text = e.clipboardData.getData("text/plain");
 
       // Insert as plain text (preserving line breaks)
-      document.execCommand('insertText', false, text);
+      document.execCommand("insertText", false, text);
     };
 
-    editor.addEventListener('keydown', handleKeyDown);
-    editor.addEventListener('paste', handlePaste);
-    document.addEventListener('selectionchange', handleSelectionChange);
+    editor.addEventListener("keydown", handleKeyDown);
+    editor.addEventListener("paste", handlePaste);
+    document.addEventListener("selectionchange", handleSelectionChange);
 
     return () => {
-      editor.removeEventListener('keydown', handleKeyDown);
-      editor.removeEventListener('paste', handlePaste);
-      document.removeEventListener('selectionchange', handleSelectionChange);
+      editor.removeEventListener("keydown", handleKeyDown);
+      editor.removeEventListener("paste", handlePaste);
+      document.removeEventListener("selectionchange", handleSelectionChange);
     };
   }, []);
 
   const handleCancel = () => {
     // Reset form data
     setFormData({
-      title: '',
-      content: '',
-      energyPolicy: null
+      title: "",
+      content: "",
+      energyPolicy: null,
     });
 
     // Clear editor content
     if (editorRef.current) {
-      editorRef.current.innerHTML = '<p><br></p>';
+      editorRef.current.innerHTML = "<p><br></p>";
     }
 
-    navigate('/company/qms/policy')
+    navigate("/company/qms/policy");
   };
 
   useEffect(() => {
@@ -714,32 +749,35 @@ const EditQmsPolicy = () => {
     }
   }, []);
 
-
   const handleSave = async () => {
     try {
-      setIsSubmitting(true); // Set loading state to true when starting the update
+      setIsSubmitting(true);
 
-      const editorContent = editorRef.current ? editorRef.current.innerHTML.trim() : '';
-
-      if (!editorContent.length) {
-        toast.error('Please enter policy content');
-        setIsSubmitting(false); // Reset loading state on error
-        return;
-      }
+      const editorContent = editorRef.current
+        ? editorRef.current.innerHTML.trim()
+        : "";
 
       if (!formData.title.trim()) {
-        toast.error('Please enter a policy title');
-        setIsSubmitting(false); // Reset loading state on error
+        setTitleError("Policy title is required");
+        toast.error("Please enter a policy title");
+        setIsSubmitting(false);
+        return;
+      } else {
+        setTitleError("");
+      }
+
+      if (!editorContent.length) {
+        toast.error("Please enter policy content");
+        setIsSubmitting(false);
         return;
       }
 
       const apiFormData = new FormData();
-      apiFormData.append('title', formData.title);
-      apiFormData.append('text', editorContent);
+      apiFormData.append("title", formData.title);
+      apiFormData.append("text", editorContent);
 
-      // Add policy file if selected
       if (formData.newPolicy) {
-        apiFormData.append('energy_policy', formData.newPolicy);
+        apiFormData.append("energy_policy", formData.newPolicy);
       }
 
       const response = await axios.put(
@@ -747,35 +785,40 @@ const EditQmsPolicy = () => {
         apiFormData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-          }
+            "Content-Type": "multipart/form-data",
+          },
         }
       );
 
       if (response?.status === 200 || response?.status === 201) {
-        setShowEditPolicySuccessModal(true)
+        setShowEditPolicySuccessModal(true);
         setTimeout(() => {
-          setShowEditPolicySuccessModal(false)
-          navigate('/company/qms/policy');
+          setShowEditPolicySuccessModal(false);
+          navigate("/company/qms/policy");
         }, 2000);
-
       } else {
+        setErrorMessage("Failed to update policy. Please try again.");
         setShowEditPolicyErrorModal(true);
         setTimeout(() => {
           setShowEditPolicyErrorModal(false);
+          setErrorMessage("");
         }, 3000);
-        setIsSubmitting(false); // Reset loading state on error
       }
     } catch (error) {
-      console.error('Error details:', error.response?.data || error.message);
+      console.error("Error details:", error.response?.data || error.message);
+      const errorMsg =
+        error.response?.data?.message ||
+        "An error occurred while updating the policy.";
+      setErrorMessage(errorMsg);
       setShowEditPolicyErrorModal(true);
       setTimeout(() => {
         setShowEditPolicyErrorModal(false);
+        setErrorMessage("");
       }, 3000);
-      setIsSubmitting(false); // Reset loading state on error
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
 
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -787,7 +830,10 @@ const EditQmsPolicy = () => {
           className="px-2 py-1 bg-transparent border border-[#AAAAAA] rounded flex items-center custom-fonts"
           onClick={() => setIsOpen(!isOpen)}
         >
-          {displayTitle} <span className="ml-1"><ChevronDown size={15} /></span>
+          {displayTitle}{" "}
+          <span className="ml-1">
+            <ChevronDown size={15} />
+          </span>
         </button>
 
         {isOpen && (
@@ -815,12 +861,17 @@ const EditQmsPolicy = () => {
     const [customColor, setCustomColor] = useState(activeColor);
 
     return (
-      <div className="absolute z-20 mt-2 p-3 right-0 bg-gray-800 border border-gray-700 rounded-md shadow-lg" ref={colorPickerRef}>
+      <div
+        className="absolute z-20 mt-2 p-3 right-0 bg-gray-800 border border-gray-700 rounded-md shadow-lg"
+        ref={colorPickerRef}
+      >
         <div className="grid grid-cols-5 gap-2 mb-3">
           {colorPalette.map((color, index) => (
             <button
               key={index}
-              className={`w-6 h-6 rounded-sm border ${color === activeColor ? 'border-blue-500' : 'border-gray-600'}`}
+              className={`w-6 h-6 rounded-sm border ${
+                color === activeColor ? "border-blue-500" : "border-gray-600"
+              }`}
               style={{ backgroundColor: color }}
               onClick={() => onColorSelect(color)}
               title={color}
@@ -852,50 +903,65 @@ const EditQmsPolicy = () => {
 
       <EditQmsPolicySuccessModal
         showEditPolicySuccessModal={showEditPolicySuccessModal}
-        onClose={() => { setShowEditPolicySuccessModal(false) }}
+        onClose={() => {
+          setShowEditPolicySuccessModal(false);
+        }}
       />
 
       <EditQmsPolicyErrorModal
         showEditPolicyErrorModal={showEditPolicyErrorModal}
-        onClose={() => { setShowEditPolicyErrorModal(false) }}
+        onClose={() => {
+          setShowEditPolicyErrorModal(false);
+          setErrorMessage("");
+        }}
+        errorMessage={errorMessage}
       />
 
-      <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
+      <div className="border-t border-[#383840] mt-[21px] mb-5"></div>
 
       {/* Add Title Input Field */}
       <div className="mb-5">
-        <label className="block text-white mb-2 text-sm font-medium">Policy Title</label>
+        <label className="block add-qms-manual-label">Policy Title</label>
         <input
           type="text"
           value={formData.title}
           onChange={handleTitleChange}
-          className="w-full px-4 py-2 bg-[#24242D] border border-[#383840] rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={`add-qms-manual-inputs ${
+            titleError ? "border-red-500" : ""
+          }`}
           placeholder="Enter policy title"
           required
         />
+        {titleError && (
+          <p className="text-red-500 text-sm mt-1">{titleError}</p>
+        )}
       </div>
-
-
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.bold ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('bold')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.bold ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("bold")}
           title="Bold"
         >
           <img src={bold} alt="Bold" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.italic ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('italic')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.italic ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("italic")}
           title="Italic"
         >
           <img src={itallic} alt="Itallic" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.underline ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('underline')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.underline ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("underline")}
           title="Underline"
         >
           <img src={underline} alt="Underline" />
@@ -903,50 +969,62 @@ const EditQmsPolicy = () => {
 
         {/* Alignment */}
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'left' ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('justifyLeft')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.align === "left" ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("justifyLeft")}
           title="Align Left"
         >
           <img src={leftalign} alt="Text Left Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'center' ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('justifyCenter')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.align === "center" ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("justifyCenter")}
           title="Align Center"
         >
           <img src={centeralign} alt="Text Center Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'right' ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('justifyRight')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.align === "right" ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("justifyRight")}
           title="Align Right"
         >
           <img src={rightalign} alt="Text Right Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'justify' ? 'bg-gray-700' : ''}`}
-          onClick={() => execCommand('justifyFull')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.align === "justify" ? "bg-gray-700" : ""
+          }`}
+          onClick={() => execCommand("justifyFull")}
           title="Justify"
         >
           <img src={sentencetext} alt="Align Justify" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.orderedList ? 'bg-gray-700' : ''}`}
-          onClick={() => handleList('ol')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.orderedList ? "bg-gray-700" : ""
+          }`}
+          onClick={() => handleList("ol")}
           title="Ordered List"
         >
           <img src={orderedlist} alt="Ordered List" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.unorderedList ? 'bg-gray-700' : ''}`}
-          onClick={() => handleList('ul')}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
+            activeStyles.unorderedList ? "bg-gray-700" : ""
+          }`}
+          onClick={() => handleList("ul")}
           title="Unordered List"
         >
           <img src={unorderedlist} alt="unordered List" />
         </button>
 
         {/* Font dropdowns */}
-        <div className='flex'>
+        <div className="flex">
           <div className="flex items-center mr-[10px]">
             <Dropdown
               title="Font Size"
@@ -976,7 +1054,6 @@ const EditQmsPolicy = () => {
         </div>
 
         {/* Lists and indentation */}
-
 
         <button
           className="p-1 mx-1 hover:bg-gray-700 rounded"
@@ -1017,15 +1094,13 @@ const EditQmsPolicy = () => {
         </button>
         <button
           className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={() => execCommand('unlink')}
+          onClick={() => execCommand("unlink")}
           title="Remove Link"
         >
           <img src={removelinks} alt="remove Links" />
         </button>
 
         {/* Images */}
-
-
 
         {/* Color pickers */}
         <div className="relative">
@@ -1051,7 +1126,15 @@ const EditQmsPolicy = () => {
             onClick={toggleBgColorPicker}
             title="Background Color"
           >
-            <img src={textbgcolor} style={{ color: activeStyles.bgColor !== 'transparent' ? activeStyles.bgColor : undefined }} />
+            <img
+              src={textbgcolor}
+              style={{
+                color:
+                  activeStyles.bgColor !== "transparent"
+                    ? activeStyles.bgColor
+                    : undefined,
+              }}
+            />
           </button>
           {showBgColorPicker && (
             <ColorPickerPanel
@@ -1062,13 +1145,17 @@ const EditQmsPolicy = () => {
         </div>
       </div>
       <div className="rounded-md mb-6">
-
         {/* Editor Content Area */}
         <div
           ref={editorRef}
           contentEditable
           className="bg-[#24242D] px-5 py-[16px] min-h-[300px] focus:outline-none rounded-[4px]"
-          onInput={() => setFormData(prev => ({ ...prev, content: editorRef.current.innerHTML }))}
+          onInput={() =>
+            setFormData((prev) => ({
+              ...prev,
+              content: editorRef.current.innerHTML,
+            }))
+          }
         />
       </div>
 
@@ -1077,11 +1164,11 @@ const EditQmsPolicy = () => {
         <label className="attach-policy-text">Attach Quality Policy:</label>
         <div className="flex items-center ">
           <button
-            className='flex items-center text-[#1E84AF] gap-2 mr-3 click-view-file-btn'
+            className="flex items-center text-[#1E84AF] gap-2 mr-3 click-view-file-btn"
             onClick={handleViewFile}
           >
             Click to view file
-            <Eye size={18} className='text-[#1E84AF]' />
+            <Eye size={18} className="text-[#1E84AF]" />
           </button>
           <label className="flex justify-center gap-[10px] items-center w-[326px] h-[44px] px-[10px] text-[#AAAAAA] rounded-md border border-[#383840] cursor-pointer transition">
             Choose File
@@ -1098,11 +1185,10 @@ const EditQmsPolicy = () => {
               ? formData.existingPolicy.name
               : "No file chosen"}
           </div>
-
         </div>
       </div>
 
-      <div className='border-t border-[#383840] mb-8'></div>
+      <div className="border-t border-[#383840] mb-8"></div>
 
       {/* Hidden input for image upload */}
       <input
@@ -1110,12 +1196,12 @@ const EditQmsPolicy = () => {
         ref={imageInputRef}
         onChange={handleImageUpload}
         accept="image/*"
-        style={{ display: 'none' }}
+        style={{ display: "none" }}
       />
       <div className="flex justify-end gap-[21px]">
         <button
           className="cancel-btn duration-200"
-          onClick={() => navigate('/company/qms/policy')}
+          onClick={() => navigate("/company/qms/policy")}
         >
           Cancel
         </button>
@@ -1124,11 +1210,11 @@ const EditQmsPolicy = () => {
           onClick={handleSave}
           disabled={isSubmitting} // Disable button when submitting
         >
-          {isSubmitting ? 'Updating...' : 'Update'}
+          {isSubmitting ? "Updating..." : "Update"}
         </button>
       </div>
     </div>
   );
 };
 
-export default EditQmsPolicy
+export default EditQmsPolicy;
