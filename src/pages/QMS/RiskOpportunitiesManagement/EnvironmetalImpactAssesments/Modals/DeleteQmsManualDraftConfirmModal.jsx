@@ -36,7 +36,7 @@ const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel
                             <h3 className="confirmations">
                                 Are you sure you want to delete
                                 <br />
-                                this Drafted Record Format?
+                                this Drafted Environmental Impact?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}

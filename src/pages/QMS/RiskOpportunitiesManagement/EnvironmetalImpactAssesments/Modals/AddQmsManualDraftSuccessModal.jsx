@@ -35,7 +35,7 @@ const AddQmsManualDraftSuccessModal = ({ showDraftManualSuccessModal, onClose })
                             <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
                             <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Record Format Drafted Successfully</p>
+                            <p className="success-messege">Environmental Impact Drafted Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>
