@@ -270,7 +270,7 @@ const QmsPolicy = () => {
         </div>
       ) : (
         <div className="bg-[#24242D] rounded-md p-5 text-center">
-          <p className="text-gray-500">No policies found.</p>
+          <p className="not-found">No Policies Found</p>
         </div>
       )}
 
