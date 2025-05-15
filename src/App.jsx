@@ -530,7 +530,7 @@ const ThemedApp = () => {
           <Route path="qms/list-outbox" element={<QmsListOutboxSystemMessaging />} />
           <Route path="qms/list-draft" element={<QmsListDraftSystemMessaging />} />
           <Route path="qms/compose" element={<QmsComposeSystemMessaging />} />
-          <Route path="qms/inbox-replay" element={<QmsInboxReplay />} />
+          <Route path="qms/inbox-replay/:id" element={<QmsInboxReplay />} /> 
           <Route path="qms/inbox-forward" element={<QmsInboxForward />} />
           <Route path="qms/outbox-replay" element={<QmsOutboxReplay />} />
           <Route path="qms/outbox-forward" element={<QmsOutboxReplay />} />

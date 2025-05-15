@@ -19,6 +19,7 @@ const QmsComposeSystemMessaging = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -43,13 +44,17 @@ const QmsComposeSystemMessaging = () => {
     const userRole = localStorage.getItem("role");
     const userId = localStorage.getItem("user_id");
 
-    if (userRole === "user" && userId) {
+    if (userId) {
+      setCurrentUserId(userId);
       return userId;
     }
     return null;
   };
 
   useEffect(() => {
+    // Set current user ID when component mounts
+    getRelevantUserId();
+    
     const fetchUsers = async () => {
       try {
         const companyId = getUserCompanyId();
@@ -61,7 +66,14 @@ const QmsComposeSystemMessaging = () => {
         const response = await axios.get(
           `${BASE_URL}/company/users-active/${companyId}/`
         );
-        setUsers(response.data);
+        
+        // Filter out the current user from the users list
+        const currentId = getRelevantUserId();
+        const filteredUsers = response.data.filter(user => 
+          user.id.toString() !== currentId?.toString()
+        );
+        
+        setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Failed to fetch users");
@@ -157,7 +169,6 @@ const QmsComposeSystemMessaging = () => {
       }
 
       const formDataToSend = new FormData();
-      console.log('formDataaaaaa', formData);
       
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
@@ -182,9 +193,7 @@ const QmsComposeSystemMessaging = () => {
           },
         }
       );
-      console.log('responseeeeeeee:', response.data);
       
-
       navigate("/company/qms/list-inbox");
     } catch (error) {
       console.error("Error submitting message:", error);
@@ -208,7 +217,6 @@ const QmsComposeSystemMessaging = () => {
       }
 
       const formDataToSend = new FormData();
-      console.log('draft formdata', formData);
       
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
@@ -234,10 +242,8 @@ const QmsComposeSystemMessaging = () => {
           },
         }
       );
-
-      console.log('draft response......', response.data);
       
-      // Show success message or navigate to drafts folder
+      // Navigate to drafts folder
       navigate("/company/qms/list-draft");
     } catch (error) {
       console.error("Error saving draft:", error);
@@ -389,7 +395,11 @@ const QmsComposeSystemMessaging = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+              <button 
+                type="button"
+                className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
+                disabled={!formData.file}
+              >
                 Click to view file <Eye size={17} />
               </button>
             </div>
@@ -453,4 +463,4 @@ const QmsComposeSystemMessaging = () => {
   );
 };
 
-export default QmsComposeSystemMessaging;
+export default QmsComposeSystemMessaging; 

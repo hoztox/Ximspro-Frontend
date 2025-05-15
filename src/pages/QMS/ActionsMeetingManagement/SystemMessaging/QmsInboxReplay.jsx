@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 
 const QmsInboxReplay = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const [formData, setFormData] = useState({
+    message_related: null,
     to_users: [],
     subject: "",
     file: null,
@@ -18,7 +21,6 @@ const QmsInboxReplay = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-  // Removed showDropdown state since we want the list to always be visible
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -42,19 +44,50 @@ const QmsInboxReplay = () => {
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     const userId = localStorage.getItem("user_id");
-
-    if (userRole === "user" && userId) {
-      return userId;
-    }
+    if (userRole === "user" && userId) return userId;
     return null;
   };
 
   useEffect(() => {
+    const fetchReplyMessage = async () => {
+      if (!id) {
+        setError("Message ID not provided in URL");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
+        const messageData = response.data;
+        
+        if (messageData.from_user && messageData.from_user.id) {
+          setFormData({
+            message_related: id,
+            to_users: [messageData.from_user.id],
+            subject: "",
+            file: null, 
+            message: "",
+          });
+          
+          setSelectedUserNames({
+            [messageData.from_user.id]: `${messageData.from_user.first_name} ${messageData.from_user.last_name}`
+          });
+        }
+        
+        fetchUsers();
+      } catch (error) {
+        console.error("Error fetching reply message:", error);
+        setError("Failed to fetch reply message details");
+        setLoading(false);
+      }
+    };
+
     const fetchUsers = async () => {
       try {
         const companyId = getUserCompanyId();
         if (!companyId) {
           setError("Company ID not found");
+          setLoading(false);
           return;
         }
 
@@ -62,14 +95,16 @@ const QmsInboxReplay = () => {
           `${BASE_URL}/company/users-active/${companyId}/`
         );
         setUsers(response.data);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Failed to fetch users");
+        setLoading(false);
       }
     };
 
-    fetchUsers();
-  }, []);
+    fetchReplyMessage();
+  }, [id]);
 
   const handleInbox = () => {
     navigate("/company/qms/list-inbox");
@@ -96,33 +131,20 @@ const QmsInboxReplay = () => {
 
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
-        // Remove user
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
-
-        // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
-
-        return {
-          ...prev,
-          to_users: updatedUsers,
-        };
+        return { ...prev, to_users: updatedUsers };
       } else {
-        // Add user
         setSelectedUserNames({
           ...selectedUserNames,
           [userId]: userName,
         });
-
-        return {
-          ...prev,
-          to_users: [...prev.to_users, userId],
-        };
+        return { ...prev, to_users: [...prev.to_users, userId] };
       }
     });
 
-    // Clear the search term after selection
     setSearchTerm("");
   };
 
@@ -148,6 +170,12 @@ const QmsInboxReplay = () => {
       return;
     }
 
+    if (!formData.message_related) {
+      setError("Original message ID is missing");
+      setLoading(false);
+      return;
+    }
+
     try {
       const companyId = getUserCompanyId();
       const fromUserId = getRelevantUserId();
@@ -157,13 +185,12 @@ const QmsInboxReplay = () => {
       }
 
       const formDataToSend = new FormData();
+      formDataToSend.append("message_related", formData.message_related);
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
-
       formData.to_users.forEach((userId) => {
         formDataToSend.append("to_users", userId);
       });
-
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
       if (formData.file) {
@@ -171,7 +198,7 @@ const QmsInboxReplay = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/messages/create/`,
+        `${BASE_URL}/qms/replay-message/send/`,
         formDataToSend,
         {
           headers: {
@@ -181,6 +208,8 @@ const QmsInboxReplay = () => {
       );
 
       navigate("/company/qms/list-inbox");
+      console.log("Replay sent successfully:", response.data);
+      
     } catch (error) {
       console.error("Error submitting message:", error);
       setError(error.response?.data?.message || "Failed to send message");
@@ -193,26 +222,28 @@ const QmsInboxReplay = () => {
     navigate("/company/qms/list-inbox");
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.first_name} ${user.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  // Filter out the current user from the list
+  const filteredUsers = users.filter((user) => {
+    const currentUserId = getRelevantUserId();
+    return (
+      user.id.toString() !== currentUserId?.toString() &&
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
-      if (inputElement) {
-        inputElement.focus();
-      }
+      if (inputElement) inputElement.focus();
     }
   };
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-        <h1 className="add-training-head">Replay  Message</h1>
+        <h1 className="add-training-head">Reply Message</h1>
         <button
           className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
           onClick={handleInbox}
@@ -223,11 +254,12 @@ const QmsInboxReplay = () => {
 
       {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
 
+      {loading && <div className="px-[104px] py-2">Loading...</div>}
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -242,7 +274,7 @@ const QmsInboxReplay = () => {
                   key={userId}
                   className="flex items-center bg-[#1C1C24] text-white text-sm rounded px-2 py-1 mr-1 mb-1"
                 >
-                  <span>{selectedUserNames[userId]}</span>
+                  <span>{selectedUserNames[userId] || "Loading..."}</span>
                   <X
                     size={14}
                     className="ml-1 cursor-pointer"
@@ -259,9 +291,7 @@ const QmsInboxReplay = () => {
                   formData.to_users.length > 0 ? "" : "Search users..."
                 }
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-none bg-transparent outline-none flex-grow min-w-[100px] p-0"
               />
               <Search
@@ -362,23 +392,22 @@ const QmsInboxReplay = () => {
         </div>
         <div></div>
 
-         
-          <div className="flex gap-5 justify-between">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="cancel-btn duration-200 !w-full"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="save-btn duration-200 !w-full"
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "Send"}
-            </button>
+        <div className="flex gap-5 justify-between">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="cancel-btn duration-200 !w-full"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="save-btn duration-200 !w-full"
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send"}
+          </button>
         </div>
       </form>
     </div>

@@ -10,10 +10,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
-import DeleteQmsManualSuccessModal from "./Modals/DeleteQmsManualSuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
 import PublishSuccessModal from "./Modals/PublishSuccessModal";
 import PublishErrorModal from "./Modals/PublishErrorModal";
+import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualSuccessModal";
 
 const QmsListEnvironmentalImpact = () => {
   const [environmentalImpacts, setEnvironmentalImpacts] = useState([]);
@@ -431,7 +431,7 @@ const QmsListEnvironmentalImpact = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
-      <DeleteQmsManualSuccessModal
+      <DeleteQmsManualsuccessModal
         showDeleteManualSuccessModal={showDeleteManualSuccessModal}
         onClose={() => setShowDeleteManualSuccessModal(false)}
       />
