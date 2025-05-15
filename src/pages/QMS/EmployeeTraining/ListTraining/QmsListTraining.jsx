@@ -284,14 +284,16 @@ const QmsListTraining = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <span
-                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                        training.status === "Completed"
+                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === "Completed"
                           ? "bg-[#36DDAE11] text-[#36DDAE]"
-                          : "bg-[#ddd23611] text-[#ddd236]"
-                      }`}
+                          : training.status === "Cancelled"
+                            ? "bg-[#FF000011] text-[#FF0000]" // red background and text
+                            : "bg-[#ddd23611] text-[#ddd236]"
+                        }`}
                     >
                       {training.status}
                     </span>
+
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     {training.status === "Requested" ? (
@@ -299,7 +301,7 @@ const QmsListTraining = () => {
                         onClick={() => handleMarkAsCompleted(training.id)}
                         className=" text-[#1E84AF] text-xs py-1 px-2 rounded  "
                       >
-                        Mark as Completed
+                        Change Status
                       </button>
                     ) : (
                       <span className="text-xs text-gray-400">
@@ -351,9 +353,8 @@ const QmsListTraining = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -363,9 +364,8 @@ const QmsListTraining = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {number}
                 </button>
@@ -375,9 +375,8 @@ const QmsListTraining = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>

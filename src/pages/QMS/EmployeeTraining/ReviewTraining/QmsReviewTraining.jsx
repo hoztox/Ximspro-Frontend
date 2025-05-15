@@ -30,7 +30,7 @@ const QmsReviewTraining = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [attendees, setAttendees] = useState([]);
-    const [isPublishing, setIsPublishing] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const { id } = useParams(); // Get training ID from URL
     const navigate = useNavigate();
@@ -108,46 +108,59 @@ const QmsReviewTraining = () => {
         }
     }, [id]);
 
-    const handlePublishSave = async () => {
+    const handleStatusChange = async (newStatus) => {
+        // If the status hasn't changed, don't do anything
+        if (newStatus === training.status) {
+            return;
+        }
+
         try {
             if (!id) {
                 alert("Training ID not found");
                 return;
             }
 
-            setIsPublishing(true);
+            setIsProcessing(true);
 
             const userId = localStorage.getItem('user_id');
-      const companyId = localStorage.getItem('company_id');
-      const publisherId = userId || companyId;
-      if (!publisherId) {
-        alert("User information not found. Please log in again.");
-        setIsPublishing(false);
-        return;
-      }
+            const companyId = localStorage.getItem('company_id');
+            const publisherId = userId || companyId;
 
-            await axios.post(`${BASE_URL}/qms/training/${id}/complete/`, {
-                company_id: getUserCompanyId(),
-                published_by: userId,
-                send_notification: training.send_notification
-            });
+            if (!publisherId) {
+                alert("User information not found. Please log in again.");
+                setIsProcessing(false);
+                return;
+            }
 
-            alert("Training published successfully");
+            if (newStatus === 'Completed') {
+                await axios.post(`${BASE_URL}/qms/training/${id}/complete/`, {
+                    company_id: getUserCompanyId(),
+                    published_by: userId,
+                    send_notification: training.send_notification
+                });
+                alert("Training marked as completed");
+            } else if (newStatus === 'Cancelled') {
+                await axios.post(`${BASE_URL}/qms/training/${id}/cancel/`, {
+                    company_id: getUserCompanyId(),
+                    cancelled_by: userId
+                });
+                alert("Training marked as cancelled");
+            }
 
             setTimeout(() => {
-                setIsPublishing(false);
-                // Update the status to completed
+                setIsProcessing(false);
+                // Update the status
                 setTraining({
                     ...training,
-                    status: 'Completed'
+                    status: newStatus
                 });
             }, 1500);
         } catch (error) {
-            console.error("Error publishing training:", error);
-            alert("Failed to publish training");
+            console.error(`Error updating training status to ${newStatus}:`, error);
+            alert(`Failed to update training status to ${newStatus}`);
 
             setTimeout(() => {
-                setIsPublishing(false);
+                setIsProcessing(false);
             }, 1500);
         }
     };
@@ -281,7 +294,11 @@ const QmsReviewTraining = () => {
                         <div>
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Status</p>
                             <p className="text-white view-training-data">
-                                <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === 'Completed' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#ddd23611] text-[#ddd236]'
+                                <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === 'Completed'
+                                        ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                        : training.status === 'Cancelled'
+                                            ? 'bg-[#FF4D4F11] text-[#FF4D4F]'
+                                            : 'bg-[#ddd23611] text-[#ddd236]'
                                     }`}>
                                     {training.status}
                                 </span>
@@ -317,6 +334,38 @@ const QmsReviewTraining = () => {
                                         : 'None specified'}
                                 </p>
                             </div>
+
+                        </div>
+
+                        <div className='flex justify-between'>
+                            <div>
+                                <p className="text-[#AAAAAA] view-training-label mb-[6px]">Update Status</p>
+                                <div className="relative">
+                                    <select
+                                        value={training.status}
+                                        onChange={(e) => handleStatusChange(e.target.value)}
+                                        disabled={isProcessing}
+                                        className="bg-[#24242D] text-white rounded-md px-4 py-2 w-[250px] appearance-none cursor-pointer border border-[#383840] focus:outline-none focus:border-[#1E84AF]" 
+                                    >
+                                        <option value="" disabled>Select Status</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                        {training.status !== "Completed" && training.status !== "Cancelled" && (
+                                            <option value={training.status}>{training.status}</option>
+                                        )}
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
+                                    {isProcessing && (
+                                        <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             <div className="flex gap-10">
                                 <button
                                     onClick={handleEdit}
@@ -334,16 +383,6 @@ const QmsReviewTraining = () => {
                                     <img src={deletes} alt="Delete Icon" className='w-[18px] h-[18px]' />
                                 </button>
                             </div>
-                        </div>
-
-                        <div>
-                            <button
-                                onClick={handlePublishSave}
-                                className='save-btn duration-200 text-white'
-                                disabled={isPublishing}
-                            >
-                                {isPublishing ? 'Completing...' : 'Complete'}
-                            </button>
                         </div>
                     </div>
                 </div>
