@@ -13,7 +13,7 @@ import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
 import PublishSuccessModal from "./Modals/PublishSuccessModal";
 import PublishErrorModal from "./Modals/PublishErrorModal";
-import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualSuccessModal";
+import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
 
 const QmsListEnvironmentalImpact = () => {
   const [environmentalImpacts, setEnvironmentalImpacts] = useState([]);
