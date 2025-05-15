@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 
 const QmsOutboxForward = () => {
   const navigate = useNavigate();
+  const { messageId } = useParams();
   const [formData, setFormData] = useState({
     to_users: [],
     subject: "",
@@ -18,7 +19,11 @@ const QmsOutboxForward = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-  // Removed showDropdown state since we want the list to always be visible
+
+  // Add this function to get current user ID
+  const getCurrentUserId = () => {
+    return localStorage.getItem("user_id");
+  };
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -96,10 +101,7 @@ const QmsOutboxForward = () => {
 
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
-        // Remove user
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
-
-        // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
@@ -109,7 +111,6 @@ const QmsOutboxForward = () => {
           to_users: updatedUsers,
         };
       } else {
-        // Add user
         setSelectedUserNames({
           ...selectedUserNames,
           [userId]: userName,
@@ -122,7 +123,6 @@ const QmsOutboxForward = () => {
       }
     });
 
-    // Clear the search term after selection
     setSearchTerm("");
   };
 
@@ -152,13 +152,14 @@ const QmsOutboxForward = () => {
       const companyId = getUserCompanyId();
       const fromUserId = getRelevantUserId();
 
-      if (!companyId || !fromUserId) {
-        throw new Error("Missing required user information");
+      if (!companyId || !fromUserId || !messageId) {
+        throw new Error("Missing required information");
       }
 
       const formDataToSend = new FormData();
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
+      formDataToSend.append("message_related", messageId);
 
       formData.to_users.forEach((userId) => {
         formDataToSend.append("to_users", userId);
@@ -171,7 +172,7 @@ const QmsOutboxForward = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/messages/create/`,
+        `${BASE_URL}/qms/forward-message/send/`,
         formDataToSend,
         {
           headers: {
@@ -182,8 +183,8 @@ const QmsOutboxForward = () => {
 
       navigate("/company/qms/list-outbox");
     } catch (error) {
-      console.error("Error submitting message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
+      console.error("Error forwarding message:", error);
+      setError(error.response?.data?.message || "Failed to forward message");
     } finally {
       setLoading(false);
     }
@@ -193,13 +194,17 @@ const QmsOutboxForward = () => {
     navigate("/company/qms/list-outbox");
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.first_name} ${user.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  // Filter out the current user from the list
+  const filteredUsers = users.filter((user) => {
+    const currentUserId = getCurrentUserId();
+    return (
+      user.id.toString() !== currentUserId?.toString() &&
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
@@ -227,7 +232,6 @@ const QmsOutboxForward = () => {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -259,9 +263,7 @@ const QmsOutboxForward = () => {
                   formData.to_users.length > 0 ? "" : "Search users..."
                 }
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-none bg-transparent outline-none flex-grow min-w-[100px] p-0"
               />
               <Search
@@ -331,11 +333,9 @@ const QmsOutboxForward = () => {
             </label>
           </div>
           <div className="flex items-center justify-between">
-            <div>
-              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
-                Click to view file <Eye size={17} />
-              </button>
-            </div>
+            <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+              Click to view file <Eye size={17} />
+            </button>
             {formData.file && (
               <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
                 {formData.file.name}
@@ -383,4 +383,5 @@ const QmsOutboxForward = () => {
     </div>
   );
 };
+
 export default QmsOutboxForward;

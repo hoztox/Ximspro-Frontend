@@ -1,48 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Search, X, Eye } from 'lucide-react';
-import view from "../../../../assets/images/ActionMeetings/view.svg"
-import restore from "../../../../assets/images/ActionMeetings/restore.svg"
-import deletes from "../../../../assets/images/ActionMeetings/delete.svg"
-import "./viewpage.css"
+import view from "../../../../assets/images/ActionMeetings/view.svg";
+import restore from "../../../../assets/images/ActionMeetings/restore.svg";
+import deletes from "../../../../assets/images/ActionMeetings/delete.svg";
+import "./viewpage.css";
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion'; // For animations
+import { BASE_URL } from "../../../../Utils/Config";
+import { motion, AnimatePresence } from 'framer-motion';
 
 const QmsListTrashSystemMessaging = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMessage, setSelectedMessage] = useState(null); // Track which message is being viewed
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [replyMessages, setReplyMessages] = useState([]);
+  const [forwardMessages, setForwardMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  // Demo data with added content
-  const [trainingItems, setTrainingItems] = useState([
-    {
-      id: 1,
-      title: 'Anonymous',
-      date: '03-04-2025',
-      time: '09:00:24am',
-      to: 'user123',
-      message: 'abcd',
-      subject: 'xyz'
-    },
-    {
-      id: 2,
-      title: 'Anonymous',
-      date: '03-04-2025',
-      time: '09:00:24am',
-      to: 'user123',
-      message: 'abcd',
-      subject: 'xyz'
-    },
-  ]);
+  // Get the relevant user ID for API calls
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
+  useEffect(() => {
+    const fetchAllMessages = async () => {
+      try {
+        const userId = getRelevantUserId();
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+
+        // Fetch trashed messages, replies, and forwards
+        const [messageResponse, replyResponse, forwardResponse] = await Promise.all([
+          axios.get(`${BASE_URL}/qms/messages/trash/${userId}/`),
+          axios.get(`${BASE_URL}/qms/messages/replay-trash/${userId}/`),
+          axios.get(`${BASE_URL}/qms/messages/forward-trash/${userId}/`)
+        ]);
+
+        setMessages(messageResponse.data);
+        setReplyMessages(replyResponse.data);
+        setForwardMessages(forwardResponse.data);
+        setLoading(false);
+        console.log('Fetched trashed messages:', messageResponse.data);
+        console.log('Fetched trashed reply messages:', replyResponse.data);
+        console.log('Fetched trashed forward messages:', forwardResponse.data);
+      } catch (err) {
+        console.error("Error fetching messages:", err);
+        setError(err.message || "Failed to fetch messages");
+        setLoading(false);
+      }
+    };
+
+    fetchAllMessages();
+  }, []);
+
+  // Format date from created_at
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  // Format time from created_at
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    let hours = date.getHours();
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'pm' : 'am';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    return `${hours}:${minutes}:${seconds}${ampm}`;
+  };
+
+  // Combine messages with type indicator
+  const allMessages = [
+    ...messages.map(msg => ({ ...msg, messageType: 'message' })),
+    ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
+    ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   const itemsPerPage = 10;
-  const totalItems = trainingItems.length;
+  const totalItems = allMessages.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // Filter items based on search query
-  const filteredItems = trainingItems.filter(item =>
-    item.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredItems = allMessages.filter(item =>
+    (item.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.from_user && item.from_user.name && item.from_user.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Get current page items
@@ -55,25 +113,115 @@ const QmsListTrashSystemMessaging = () => {
   };
 
   const handleInbox = () => {
-    navigate('/company/qms/list-inbox')
-  }
+    navigate('/company/qms/list-inbox');
+  };
 
-  // Handle view button click
   const handleView = (item) => {
     setSelectedMessage(item);
     setIsModalOpen(true);
-  }
+  };
 
-  // Close modal
   const closeModal = () => {
     setIsModalOpen(false);
-    // Small delay to allow animation to complete before clearing selected message
     setTimeout(() => setSelectedMessage(null), 300);
-  }
+  };
+
+  const handleRestore = async (id, messageType) => {
+    try {
+      const userId = getRelevantUserId();
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+
+      let restoreUrl;
+      switch (messageType) {
+        case 'message':
+          restoreUrl = `${BASE_URL}/qms/messages/${id}/restore/`;
+          break;
+        case 'reply':
+          restoreUrl = `${BASE_URL}/qms/messages-replay/${id}/restore/`;
+          break;
+        case 'forward':
+          restoreUrl = `${BASE_URL}/qms/messages-forward/${id}/restore/`;
+          break;
+        default:
+          throw new Error("Invalid message type");
+      }
+
+      await axios.put(restoreUrl, {
+        is_trash: false,
+        trash_user: null
+      });
+
+      // Update local state
+      if (messageType === 'message') {
+        setMessages(messages.filter(msg => msg.id !== id));
+      } else if (messageType === 'reply') {
+        setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+      } else if (messageType === 'forward') {
+        setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
+      }
+    } catch (err) {
+      console.error("Error restoring message:", err);
+      setError(err.message || "Failed to restore message");
+    }
+  };
+
+  const handleDelete = async (id, messageType) => {
+    try {
+      const userId = getRelevantUserId();
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
+
+      let deleteUrl;
+      switch (messageType) {
+        case 'message':
+          deleteUrl = `${BASE_URL}/qms/messages/${id}/delete/`;
+          break;
+        case 'reply':
+          deleteUrl = `${BASE_URL}/qms/replay/${id}/delete/`;
+          break;
+        case 'forward':
+          deleteUrl = `${BASE_URL}/qms/forward/${id}/delete/`;
+          break;
+        default:
+          throw new Error("Invalid message type");
+      }
+
+      await axios.delete(deleteUrl);
+
+      // Update local state
+      if (messageType === 'message') {
+        setMessages(messages.filter(msg => msg.id !== id));
+      } else if (messageType === 'reply') {
+        setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+      } else if (messageType === 'forward') {
+        setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
+      }
+    } catch (err) {
+      console.error("Error deleting message:", err);
+      setError(err.message || "Failed to delete message");
+    }
+  };
+
+  // Determine message type for display
+  const getMessageTypeLabel = (message) => {
+    switch (message.messageType) {
+      case 'reply':
+        return "Reply Message";
+      case 'forward':
+        return "Forwarded Message";
+      default:
+        return "Message";
+    }
+  };
+
+  if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
+  if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg relative">
-      {/* Modal Backdrop */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div
@@ -84,19 +232,18 @@ const QmsListTrashSystemMessaging = () => {
             className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
             onClick={closeModal}
           >
-            {/* Modal Content */}
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="bg-[#1C1C24] rounded p-5 w-[528px] h-[449px]"
+              className="bg-[#1C1C24] rounded p-5 w-[528px] h-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {selectedMessage && (
                 <>
                   <div className="flex justify-between items-center pb-5 border-b border-[#383840]">
-                    <h2 className="message-head">Message</h2>
+                    <h2 className="message-head">{getMessageTypeLabel(selectedMessage)}</h2>
                     <button
                       onClick={closeModal}
                       className="text-white bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -107,8 +254,25 @@ const QmsListTrashSystemMessaging = () => {
 
                   <div className='space-y-[40px] pt-5'>
                     <div>
+                      <label className='view-page-label pb-[6px]'>From</label>
+                      <p className='view-page-data'>
+                        {selectedMessage.from_user?.name || 'Anonymous'}
+                      </p>
+                    </div>
+
+                    <div>
                       <label className='view-page-label pb-[6px]'>To</label>
-                      <p className='view-page-data'>{selectedMessage.to}</p>
+                      <ul className='view-page-data list-disc list-inside space-y-1'>
+                        {selectedMessage.to_user?.length > 0 ? (
+                          selectedMessage.to_user.map(user => (
+                            <li key={user.id}>
+                              {user.first_name} {user.last_name}
+                            </li>
+                          ))
+                        ) : (
+                          <li>Anonymous</li>
+                        )}
+                      </ul>
                     </div>
 
                     <div>
@@ -116,19 +280,43 @@ const QmsListTrashSystemMessaging = () => {
                       <p className='view-page-data'>{selectedMessage.subject}</p>
                     </div>
 
-                    <div className='flex flex-col items-start'>
-                      <label className='view-page-label pb-[6px]'>Document</label>
-                      <button className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'>
-                        Click to view file <Eye size={17} />
-                      </button>
-                    </div>
+                    {selectedMessage.file && (
+                      <div className='flex flex-col items-start'>
+                        <label className='view-page-label pb-[6px]'>Document</label>
+                        <a
+                          href={selectedMessage.file}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'
+                        >
+                          Click to view file <Eye size={17} />
+                        </a>
+                      </div>
+                    )}
 
                     <div>
                       <label className='view-page-label pb-[6px]'>Message</label>
                       <p className='view-page-data'>{selectedMessage.message}</p>
                     </div>
-                  </div>
 
+                    {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
+                      <div className="mt-4 pt-4 border-t border-[#383840]">
+                        <label className='view-page-label pb-[6px]'>In Response To</label>
+                        <p className='view-page-data text-gray-400'>
+                          {selectedMessage.original_message.subject}
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
+                      <div className="mt-4 pt-4 border-t border-[#383840]">
+                        <label className='view-page-label pb-[6px]'>Forwarded From</label>
+                        <p className='view-page-data text-gray-400'>
+                          {selectedMessage.original_message.subject}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </motion.div>
@@ -173,29 +361,35 @@ const QmsListTrashSystemMessaging = () => {
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((item, index) => (
-              <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
-                <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                <td className="px-3 list-awareness-training-datas">{item.title}</td>
-                <td className="px-3 list-awareness-training-datas">{item.date}</td>
-                <td className="px-3 list-awareness-training-datas">{item.time}</td>
-                <td className="list-awareness-training-datas text-center">
-                  <button onClick={() => handleView(item)}>
-                    <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
-                  </button>
-                </td>
-                <td className="list-awareness-training-datas text-center">
-                  <button>
-                    <img src={restore} alt="Restore Icon" className='w-[16px] h-[16px]' />
-                  </button>
-                </td>
-                <td className="list-awareness-training-datas text-center">
-                  <button>
-                    <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
-                  </button>
-                </td>
+            {currentItems.length > 0 ? (
+              currentItems.map((item, index) => (
+                <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                  <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
+                  <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
+                  <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
+                  <td className="px-3 list-awareness-training-datas">{formatTime(item.created_at)}</td>
+                  <td className="list-awareness-training-datas text-center">
+                    <button onClick={() => handleView(item)}>
+                      <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
+                    </button>
+                  </td>
+                  <td className="list-awareness-training-datas text-center">
+                    <button onClick={() => handleRestore(item.id, item.messageType)}>
+                      <img src={restore} alt="Restore Icon" className='w-[16px] h-[16px]' />
+                    </button>
+                  </td>
+                  <td className="list-awareness-training-datas text-center">
+                    <button onClick={() => handleDelete(item.id, item.messageType)}>
+                      <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="7" className="text-center py-4 not-found">No Trashed Messages Found</td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -214,8 +408,7 @@ const QmsListTrashSystemMessaging = () => {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
             <button
               key={number}
-              className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                }`}
+              className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
               onClick={() => handlePageChange(number)}
             >
               {number}
@@ -233,6 +426,6 @@ const QmsListTrashSystemMessaging = () => {
       </div>
     </div>
   );
-}
+};
 
 export default QmsListTrashSystemMessaging;

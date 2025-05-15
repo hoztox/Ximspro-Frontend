@@ -15,8 +15,9 @@ const QmsListOutboxSystemMessaging = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [messages, setMessages] = useState([]);
+    const [outboxMessages, setOutboxMessages] = useState([]);
     const [replyMessages, setReplyMessages] = useState([]);
+    const [forwardMessages, setForwardMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -45,17 +46,20 @@ const QmsListOutboxSystemMessaging = () => {
                     throw new Error("User ID not found");
                 }
 
-                // Fetch both outbox messages and reply messages
-                const [outboxResponse, replyResponse] = await Promise.all([
+                // Fetch outbox, reply, and forward messages
+                const [outboxResponse, replyResponse, forwardResponse] = await Promise.all([
                     axios.get(`${BASE_URL}/qms/messages/outbox/${userId}/`),
-                    axios.get(`${BASE_URL}/qms/messages-replay/outbox/${userId}/`)
+                    axios.get(`${BASE_URL}/qms/messages-replay/outbox/${userId}/`),
+                    axios.get(`${BASE_URL}/qms/messages-forward/outbox/${userId}/`)
                 ]);
 
-                setMessages(outboxResponse.data);
+                setOutboxMessages(outboxResponse.data);
                 setReplyMessages(replyResponse.data);
+                setForwardMessages(forwardResponse.data);
                 setLoading(false);
                 console.log('Fetched outbox messages:', outboxResponse.data);
                 console.log('Fetched reply messages:', replyResponse.data);
+                console.log('Fetched forward messages:', forwardResponse.data);
 
             } catch (err) {
                 console.error("Error fetching messages:", err);
@@ -67,7 +71,7 @@ const QmsListOutboxSystemMessaging = () => {
         fetchAllMessages();
     }, []);
 
-    // Format date from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "08-05-2025")
+    // Format date from created_at
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
@@ -76,7 +80,7 @@ const QmsListOutboxSystemMessaging = () => {
         return `${day}-${month}-${year}`;
     };
 
-    // Format time from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "03:46:46am")
+    // Format time from created_at
     const formatTime = (dateString) => {
         const date = new Date(dateString);
         let hours = date.getHours();
@@ -84,14 +88,16 @@ const QmsListOutboxSystemMessaging = () => {
         const seconds = String(date.getSeconds()).padStart(2, '0');
         const ampm = hours >= 12 ? 'pm' : 'am';
         hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours ? hours : 12;
         return `${hours}:${minutes}:${seconds}${ampm}`;
     };
 
-    // Combine both regular messages and reply messages
-    const allMessages = [...messages, ...replyMessages].sort((a, b) => {
-        return new Date(b.created_at) - new Date(a.created_at);
-    });
+    // Combine messages with type indicator
+    const allMessages = [
+        ...outboxMessages.map(msg => ({ ...msg, messageType: 'outbox' })),
+        ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
+        ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const itemsPerPage = 10;
     const totalItems = allMessages.length;
@@ -116,14 +122,14 @@ const QmsListOutboxSystemMessaging = () => {
     const handleInbox = () => {
         navigate('/company/qms/list-inbox');
     };
-     
-    const handleOutboxReplay = (id) => {
-        navigate(`/company/qms/outbox-replay/${id}`);
+
+    const handleOutboxReplay = (id, messageType) => {
+        navigate(`/company/qms/outbox-replay/${id}`, { state: { messageType } });
     };
 
-    const handleOutboxForward = (message) => {
-        navigate('/company/qms/outbox-forward', { state: { message } });
-    };
+    const handleOutboxForward =  (id, messageType) => {
+        navigate(`/company/qms/outbox-forward/${id}`, { state: { messageType } });
+    }; 
 
     const handleView = (item) => {
         setSelectedMessage(item);
@@ -135,30 +141,57 @@ const QmsListOutboxSystemMessaging = () => {
         setTimeout(() => setSelectedMessage(null), 300);
     };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id, messageType) => {
         try {
             const userId = getRelevantUserId();
             if (!userId) {
                 throw new Error("User ID not found");
             }
 
-            await axios.put(`${BASE_URL}/qms/messages/${id}/trash/`, {
+            let deleteUrl;
+            switch (messageType) {
+                case 'outbox':
+                    deleteUrl = `${BASE_URL}/qms/messages/${id}/trash/`;
+                    break;
+                case 'reply':
+                    deleteUrl = `${BASE_URL}/qms/messages-replay/${id}/trash/`;
+                    break;
+                case 'forward':
+                    deleteUrl = `${BASE_URL}/qms/messages-forward/${id}/trash/`;
+                    break;
+                default:
+                    throw new Error("Invalid message type");
+            }
+
+            await axios.put(deleteUrl, {
                 is_trash: true,
                 trash_user: userId
             });
 
-            // Update local state to remove the message from the UI
-            setMessages(messages.filter(msg => msg.id !== id));
-            setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+            // Update local state
+            if (messageType === 'outbox') {
+                setOutboxMessages(outboxMessages.filter(msg => msg.id !== id));
+            } else if (messageType === 'reply') {
+                setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+            } else if (messageType === 'forward') {
+                setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
+            }
         } catch (err) {
             console.error("Error deleting message:", err);
             setError(err.message || "Failed to delete message");
         }
     };
 
-    // Function to determine if a message is a reply
-    const isReplyMessage = (message) => {
-        return replyMessages.some(reply => reply.id === message.id);
+    // Determine message type for display
+    const getMessageTypeLabel = (message) => {
+        switch (message.messageType) {
+            case 'reply':
+                return "Reply Message";
+            case 'forward':
+                return "Forwarded Message";
+            default:
+                return "Message";
+        }
     };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
@@ -190,7 +223,7 @@ const QmsListOutboxSystemMessaging = () => {
                                 <>
                                     <div className="flex justify-between items-center pb-5 border-b border-[#383840]">
                                         <h2 className="message-head">
-                                            {isReplyMessage(selectedMessage) ? "Reply Message" : "Message"}
+                                            {getMessageTypeLabel(selectedMessage)}
                                         </h2>
                                         <button
                                             onClick={closeModal}
@@ -240,9 +273,18 @@ const QmsListOutboxSystemMessaging = () => {
                                             <p className='view-page-data'>{selectedMessage.message}</p>
                                         </div>
 
-                                        {isReplyMessage(selectedMessage) && selectedMessage.original_message && (
+                                        {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
                                             <div className="mt-4 pt-4 border-t border-[#383840]">
                                                 <label className='view-page-label pb-[6px]'>In Response To</label>
+                                                <p className='view-page-data text-gray-400'>
+                                                    {selectedMessage.original_message.subject}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
+                                            <div className="mt-4 pt-4 border-t border-[#383840]">
+                                                <label className='view-page-label pb-[6px]'>Forwarded From</label>
                                                 <p className='view-page-data text-gray-400'>
                                                     {selectedMessage.original_message.subject}
                                                 </p>
@@ -297,7 +339,7 @@ const QmsListOutboxSystemMessaging = () => {
                     <tbody>
                         {currentItems.length > 0 ? (
                             currentItems.map((item, index) => (
-                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
@@ -308,17 +350,17 @@ const QmsListOutboxSystemMessaging = () => {
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleOutboxReplay(item.id)}>
+                                        <button onClick={() => handleOutboxReplay(item.id, item.messageType)}>
                                             <img src={replay} alt="Replay Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleOutboxForward(item)}>
+                                        <button onClick={() => handleOutboxForward(item.id, item.messageType)}>
                                             <img src={forward} alt="Forward Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleDelete(item.id)}>
+                                        <button onClick={() => handleDelete(item.id, item.messageType)}>
                                             <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>

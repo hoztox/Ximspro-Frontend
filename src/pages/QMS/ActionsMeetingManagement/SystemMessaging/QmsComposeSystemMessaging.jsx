@@ -54,7 +54,7 @@ const QmsComposeSystemMessaging = () => {
   useEffect(() => {
     // Set current user ID when component mounts
     getRelevantUserId();
-    
+
     const fetchUsers = async () => {
       try {
         const companyId = getUserCompanyId();
@@ -66,13 +66,13 @@ const QmsComposeSystemMessaging = () => {
         const response = await axios.get(
           `${BASE_URL}/company/users-active/${companyId}/`
         );
-        
+
         // Filter out the current user from the users list
         const currentId = getRelevantUserId();
-        const filteredUsers = response.data.filter(user => 
+        const filteredUsers = response.data.filter(user =>
           user.id.toString() !== currentId?.toString()
         );
-        
+
         setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -169,7 +169,7 @@ const QmsComposeSystemMessaging = () => {
       }
 
       const formDataToSend = new FormData();
-      
+
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
 
@@ -193,7 +193,7 @@ const QmsComposeSystemMessaging = () => {
           },
         }
       );
-      
+
       navigate("/company/qms/list-inbox");
     } catch (error) {
       console.error("Error submitting message:", error);
@@ -216,42 +216,75 @@ const QmsComposeSystemMessaging = () => {
         throw new Error("Missing required user information");
       }
 
-      const formDataToSend = new FormData();
-      
-      formDataToSend.append("company", companyId);
-      formDataToSend.append("from_user", fromUserId);
+      // Prepare the data as a JSON object
+      const dataToSend = {
+        company: companyId,
+        from_user: fromUserId,
+        to_user: formData.to_user, // This is already an array of integers
+        subject: formData.subject || "(No Subject)",
+        message: formData.message || "",
+        is_draft: true,
+      };
 
-      // For drafts, we can save even without recipients
-      formData.to_user.forEach((userId) => {
-        formDataToSend.append("to_user", userId);
-      });
-
-      formDataToSend.append("subject", formData.subject);
-      formDataToSend.append("message", formData.message);
-
+      // If there's a file, we'll need to handle it differently
       if (formData.file) {
+        const formDataToSend = new FormData();
+        console.log('Form data to send:', formData); 
+        
+        formDataToSend.append("company", companyId);
+        formDataToSend.append("from_user", fromUserId);
+        formDataToSend.append("to_user", JSON.stringify(formData.to_user)); // Stringify the array
+        formDataToSend.append("subject", formData.subject || "(No Subject)");
+        formDataToSend.append("message", formData.message || "");
+        formDataToSend.append("is_draft", "true");
         formDataToSend.append("file", formData.file);
-      }
 
-      const response = await axios.post(
-        `${BASE_URL}/qms/message/draft-create/`,
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        const response = await axios.post(
+          `${BASE_URL}/qms/message/draft-create/`,
+          formDataToSend,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        if (response.data?.message === "Message saved as draft") {
+          navigate("/company/qms/list-draft");
+        } else {
+          throw new Error("Unexpected response from server");
         }
-      );
-      
-      // Navigate to drafts folder
-      navigate("/company/qms/list-draft");
+      } else {
+        // Send as JSON if no file
+        const response = await axios.post(
+          `${BASE_URL}/qms/message/draft-create/`,
+          dataToSend,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.data?.message === "Message saved as draft") {
+          navigate("/company/qms/list-draft");
+        } else {
+          throw new Error("Unexpected response from server");
+        }
+      }
     } catch (error) {
       console.error("Error saving draft:", error);
       setError(error.response?.data?.message || "Failed to save draft");
+
+      if (error.response) {
+        console.log("Backend response data:", error.response.data);
+        console.log("Backend response status:", error.response.status);
+      }
     } finally {
       setDraftLoading(false);
     }
   };
+
 
   const handleCancel = () => {
     navigate("/company/qms/list-inbox");
@@ -395,7 +428,7 @@ const QmsComposeSystemMessaging = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <button 
+              <button
                 type="button"
                 className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
                 disabled={!formData.file}

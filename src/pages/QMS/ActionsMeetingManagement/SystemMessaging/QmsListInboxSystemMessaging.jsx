@@ -15,8 +15,9 @@ const QmsListInboxSystemMessaging = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [messages, setMessages] = useState([]);
+    const [inboxMessages, setInboxMessages] = useState([]);
     const [replyMessages, setReplyMessages] = useState([]);
+    const [forwardMessages, setForwardMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -45,17 +46,20 @@ const QmsListInboxSystemMessaging = () => {
                     throw new Error("User ID not found");
                 }
 
-                // Fetch both inbox messages and reply messages
-                const [inboxResponse, replyResponse] = await Promise.all([
+                // Fetch inbox, reply, and forward messages
+                const [inboxResponse, replyResponse, forwardResponse] = await Promise.all([
                     axios.get(`${BASE_URL}/qms/messages/inbox/${userId}/`),
                     axios.get(`${BASE_URL}/qms/messages-replay/inbox/${userId}/`),
+                    axios.get(`${BASE_URL}/qms/messages-forward/inbox/${userId}/`)
                 ]);
 
-                setMessages(inboxResponse.data);
+                setInboxMessages(inboxResponse.data);
                 setReplyMessages(replyResponse.data);
+                setForwardMessages(forwardResponse.data);
                 setLoading(false);
                 console.log('Fetched inbox messages:', inboxResponse.data);
                 console.log('Fetched reply messages:', replyResponse.data);
+                console.log('Fetched forward messages:', forwardResponse.data);
 
             } catch (err) {
                 console.error("Error fetching messages:", err);
@@ -67,7 +71,7 @@ const QmsListInboxSystemMessaging = () => {
         fetchAllMessages();
     }, []);
 
-    // Format date from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "08-05-2025")
+    // Format date from created_at
     const formatDate = (dateString) => {
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, '0');
@@ -76,7 +80,7 @@ const QmsListInboxSystemMessaging = () => {
         return `${day}-${month}-${year}`;
     };
 
-    // Format time from created_at (e.g., "2025-05-08T03:46:46.730477Z" to "03:46:46am")
+    // Format time from created_at
     const formatTime = (dateString) => {
         const date = new Date(dateString);
         let hours = date.getHours();
@@ -84,14 +88,16 @@ const QmsListInboxSystemMessaging = () => {
         const seconds = String(date.getSeconds()).padStart(2, '0');
         const ampm = hours >= 12 ? 'pm' : 'am';
         hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
+        hours = hours ? hours : 12;
         return `${hours}:${minutes}:${seconds}${ampm}`;
     };
 
-    // Combine both regular messages and reply messages
-    const allMessages = [...messages, ...replyMessages].sort((a, b) => {
-        return new Date(b.created_at) - new Date(a.created_at);
-    });
+    // Combine messages with type indicator
+    const allMessages = [
+        ...inboxMessages.map(msg => ({ ...msg, messageType: 'inbox' })),
+        ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
+        ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     const itemsPerPage = 10;
     const totalItems = allMessages.length;
@@ -113,64 +119,91 @@ const QmsListInboxSystemMessaging = () => {
     };
 
     const handleTrash = () => {
-        navigate('/company/qms/list-trash')
-    }
+        navigate('/company/qms/list-trash');
+    };
 
     const handleOutbox = () => {
-        navigate('/company/qms/list-outbox')
-    }
+        navigate('/company/qms/list-outbox');
+    };
 
     const handleDraft = () => {
-        navigate('/company/qms/list-draft')
-    }
+        navigate('/company/qms/list-draft');
+    };
 
     const handleCompose = () => {
-        navigate('/company/qms/compose')
-    }
+        navigate('/company/qms/compose');
+    };
 
-    const handleInboxReplay = (id) => {
-        navigate(`/company/qms/inbox-replay/${id}`)
-    }
+    const handleInboxReplay = (id, messageType) => {
+        navigate(`/company/qms/inbox-replay/${id}`, { state: { messageType } });
+    };
 
-    const handleInboxForward = (message) => {
-        navigate('/company/qms/inbox-forward', { state: { message } })
-    }
+    const handleInboxForward = (id, messageType) => {
+        navigate(`/company/qms/inbox-forward/${id}`, { state: { messageType } });
+    };
 
     const handleView = (item) => {
         setSelectedMessage(item);
         setIsModalOpen(true);
-    }
+    };
 
     const closeModal = () => {
         setIsModalOpen(false);
         setTimeout(() => setSelectedMessage(null), 300);
-    }
+    };
 
-    const handleDelete = async (id) => {
+    const handleDelete = async (id, messageType) => {
         try {
             const userId = getRelevantUserId();
             if (!userId) {
                 throw new Error("User ID not found");
             }
 
-            await axios.put(`${BASE_URL}/qms/messages/${id}/trash/`, {
+            let deleteUrl;
+            switch (messageType) {
+                case 'inbox':
+                    deleteUrl = `${BASE_URL}/qms/messages/${id}/trash/`;
+                    break;
+                case 'reply':
+                    deleteUrl = `${BASE_URL}/qms/messages-replay/${id}/trash/`;
+                    break;
+                case 'forward':
+                    deleteUrl = `${BASE_URL}/qms/messages-forward/${id}/trash/`;
+                    break;
+                default:
+                    throw new Error("Invalid message type");
+            }
+
+            await axios.put(deleteUrl, {
                 is_trash: true,
                 trash_user: userId
             });
 
-            // Update local state to remove the message from the UI
-            setMessages(messages.filter(msg => msg.id !== id));
-            setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+            // Update local state
+            if (messageType === 'inbox') {
+                setInboxMessages(inboxMessages.filter(msg => msg.id !== id));
+            } else if (messageType === 'reply') {
+                setReplyMessages(replyMessages.filter(msg => msg.id !== id));
+            } else if (messageType === 'forward') {
+                setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
+            }
         } catch (err) {
             console.error("Error deleting message:", err);
             setError(err.message || "Failed to delete message");
         }
-    }
+    };
 
-    // Function to determine if a message is a reply
-    const isReplyMessage = (message) => {
-        return replyMessages.some(reply => reply.id === message.id);
-    }
+    // Determine message type for display
+    const getMessageTypeLabel = (message) => {
+        switch (message.messageType) {
+            case 'reply':
+                return "Reply Message";
+            case 'forward':
+                return "Forwarded Message";
+            default:
+                return "Message";
+        }
+    };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
     if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
@@ -201,7 +234,7 @@ const QmsListInboxSystemMessaging = () => {
                                 <>
                                     <div className="flex justify-between items-center pb-5 border-b border-[#383840]">
                                         <h2 className="message-head">
-                                            {isReplyMessage(selectedMessage) ? "Reply Message" : "Message"}
+                                            {getMessageTypeLabel(selectedMessage)}
                                         </h2>
                                         <button
                                             onClick={closeModal}
@@ -212,13 +245,6 @@ const QmsListInboxSystemMessaging = () => {
                                     </div>
 
                                     <div className='space-y-[40px] pt-5'>
-                                        {/* <div>
-                                            <label className='view-page-label pb-[6px]'>From</label>
-                                            <p className='view-page-data'>
-                                                {selectedMessage.from_user?.name || 'Anonymous'}
-                                            </p>
-                                        </div> */}
-
                                         <div>
                                             <label className='view-page-label pb-[6px]'>To</label>
                                             <ul className='view-page-data list-disc list-inside space-y-1'>
@@ -258,10 +284,18 @@ const QmsListInboxSystemMessaging = () => {
                                             <p className='view-page-data'>{selectedMessage.message}</p>
                                         </div>
 
-                                        {/* If it's a reply message, show the original message reference */}
-                                        {isReplyMessage(selectedMessage) && selectedMessage.original_message && (
+                                        {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
                                             <div className="mt-4 pt-4 border-t border-[#383840]">
                                                 <label className='view-page-label pb-[6px]'>In Response To</label>
+                                                <p className='view-page-data text-gray-400'>
+                                                    {selectedMessage.original_message.subject}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
+                                            <div className="mt-4 pt-4 border-t border-[#383840]">
+                                                <label className='view-page-label pb-[6px]'>Forwarded From</label>
                                                 <p className='view-page-data text-gray-400'>
                                                     {selectedMessage.original_message.subject}
                                                 </p>
@@ -333,7 +367,7 @@ const QmsListInboxSystemMessaging = () => {
                     <tbody>
                         {currentItems.length > 0 ? (
                             currentItems.map((item, index) => (
-                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
@@ -344,17 +378,17 @@ const QmsListInboxSystemMessaging = () => {
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleInboxReplay(item.id)}>
+                                        <button onClick={() => handleInboxReplay(item.id, item.messageType)}>
                                             <img src={replay} alt="replay Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleInboxForward(item)}>
+                                        <button onClick={() => handleInboxForward(item.id, item.messageType)}>
                                             <img src={forward} alt="forward Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleDelete(item.id)}>
+                                        <button onClick={() => handleDelete(item.id, item.messageType)}>
                                             <img src={deletes} alt="delete Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
@@ -383,8 +417,7 @@ const QmsListInboxSystemMessaging = () => {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
                         <button
                             key={number}
-                            className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
                             onClick={() => handlePageChange(number)}
                         >
                             {number}
@@ -402,6 +435,6 @@ const QmsListInboxSystemMessaging = () => {
             </div>
         </div>
     );
-}
+};
 
 export default QmsListInboxSystemMessaging;

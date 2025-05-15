@@ -1,13 +1,21 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 
 const QmsInboxForward = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  // Add this function to get current user ID
+  const getCurrentUserId = () => {
+    return localStorage.getItem("user_id");
+  };
+
   const [formData, setFormData] = useState({
+    message_related: null,
     to_users: [],
     subject: "",
     file: null,
@@ -18,7 +26,6 @@ const QmsInboxForward = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-  // Removed showDropdown state since we want the list to always be visible
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -42,33 +49,63 @@ const QmsInboxForward = () => {
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     const userId = localStorage.getItem("user_id");
-
     if (userRole === "user" && userId) {
       return userId;
     }
     return null;
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/company/users-active/${companyId}/`
-        );
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setError("Failed to fetch users");
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found");
+        return;
       }
-    };
+      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setError("Failed to fetch users");
+    }
+  };
 
-    fetchUsers();
+  const fetchForwardMessage = async () => {
+    if (!id) {
+      setError("Message ID not provided in URL");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
+      const messageData = response.data;
+
+      if (messageData.from_user && messageData.from_user.id) {
+        setFormData({
+          message_related: id,
+          to_users: [messageData.from_user.id],
+          subject: `Fwd: ${messageData.subject || ""}`,
+          file: null,
+          message: `\n\n--- Forwarded Message ---\nFrom: ${messageData.from_user.first_name} ${messageData.from_user.last_name}\nSubject: ${messageData.subject}\n\n${messageData.message}`,
+        });
+
+        setSelectedUserNames({
+          [messageData.from_user.id]: `${messageData.from_user.first_name} ${messageData.from_user.last_name}`,
+        });
+      }
+
+      await fetchUsers();
+    } catch (error) {
+      console.error("Error fetching forward message:", error);
+      setError("Failed to fetch message details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchForwardMessage();
   }, []);
 
   const handleInbox = () => {
@@ -96,25 +133,19 @@ const QmsInboxForward = () => {
 
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
-        // Remove user
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
-
-        // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
-
         return {
           ...prev,
           to_users: updatedUsers,
         };
       } else {
-        // Add user
         setSelectedUserNames({
           ...selectedUserNames,
           [userId]: userName,
         });
-
         return {
           ...prev,
           to_users: [...prev.to_users, userId],
@@ -122,7 +153,6 @@ const QmsInboxForward = () => {
       }
     });
 
-    // Clear the search term after selection
     setSearchTerm("");
   };
 
@@ -159,6 +189,9 @@ const QmsInboxForward = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
+      if (formData.message_related) {
+        formDataToSend.append("message_related", formData.message_related);
+      }
 
       formData.to_users.forEach((userId) => {
         formDataToSend.append("to_users", userId);
@@ -171,7 +204,7 @@ const QmsInboxForward = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/messages/create/`,
+        `${BASE_URL}/qms/forward-message/send/`,
         formDataToSend,
         {
           headers: {
@@ -182,7 +215,7 @@ const QmsInboxForward = () => {
 
       navigate("/company/qms/list-inbox");
     } catch (error) {
-      console.error("Error submitting message:", error);
+      console.error("Error submitting forward message:", error);
       setError(error.response?.data?.message || "Failed to send message");
     } finally {
       setLoading(false);
@@ -193,13 +226,17 @@ const QmsInboxForward = () => {
     navigate("/company/qms/list-inbox");
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.first_name} ${user.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  // Filter out the current user from the list
+  const filteredUsers = users.filter((user) => {
+    const currentUserId = getCurrentUserId();
+    return (
+      user.id.toString() !== currentUserId?.toString() &&
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
@@ -223,11 +260,12 @@ const QmsInboxForward = () => {
 
       {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
 
+      {loading && <div className="px-[104px] py-2 text-gray-400">Loading...</div>}
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -332,16 +370,19 @@ const QmsInboxForward = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+              <button
+                type="button"
+                className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
+                disabled={!formData.file}
+              >
                 Click to view file <Eye size={17} />
               </button>
             </div>
-            {formData.file && (
+            {formData.file ? (
               <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
                 {formData.file.name}
               </p>
-            )}
-            {!formData.file && (
+            ) : (
               <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
                 No file chosen
               </p>

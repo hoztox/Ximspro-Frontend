@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from "react";
+  const handleInbox = () => {
+    navigate("/company/qms/list-inbox");
+  };import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 
 const QmsEditDraftSystemMessaging = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Get message ID from URL for editing draft
   const [formData, setFormData] = useState({
     to_users: [],
     subject: "",
@@ -18,7 +21,7 @@ const QmsEditDraftSystemMessaging = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-  // Removed showDropdown state since we want the list to always be visible
+  const [currentUserId, setCurrentUserId] = useState(null);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -41,14 +44,27 @@ const QmsEditDraftSystemMessaging = () => {
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-    const userId = localStorage.getItem("user_id");
 
-    if (userRole === "user" && userId) {
-      return userId;
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
     return null;
   };
 
+  // Get current user ID on component mount
+  useEffect(() => {
+    const userId = getRelevantUserId();
+    // Ensure it's stored as a string for consistent comparison
+    setCurrentUserId(userId ? userId.toString() : null);
+    console.log("Setting current user ID:", userId);
+  }, []);
+
+  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -57,23 +73,93 @@ const QmsEditDraftSystemMessaging = () => {
           setError("Company ID not found");
           return;
         }
-
+        
+        const userId = getRelevantUserId();
+        const currentUserIdStr = userId ? userId.toString() : null;
+        
         const response = await axios.get(
           `${BASE_URL}/company/users-active/${companyId}/`
         );
-        setUsers(response.data);
+        
+        // Filter out the current user from the users list
+        const filteredUsers = response.data.filter(user => {
+          const userIdStr = user.id ? user.id.toString() : null;
+          return userIdStr !== currentUserIdStr;
+        });
+        
+        console.log("Current User ID:", currentUserIdStr);
+        console.log("Filtered users count:", filteredUsers.length);
+        
+        setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
         setError("Failed to fetch users");
       }
     };
-
     fetchUsers();
   }, []);
 
-  const handleInbox = () => {
-    navigate("/company/qms/list-inbox");
-  };
+  // Fetch draft message if editing
+  useEffect(() => {
+    if (id) {
+      const fetchDraftMessage = async () => {
+        try {
+          setLoading(true);
+          const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
+          const message = response.data;
+          console.log('Response from API:', message);
+          
+          if (message.is_draft) {
+            // Handle to_user as array of objects with id property
+            const toUserIds = Array.isArray(message.to_user) 
+              ? message.to_user.map(user => user.id) 
+              : [];
+            
+            // Get current user ID for filtering
+            const currentId = getRelevantUserId();
+            const currentIdStr = currentId ? currentId.toString() : null;
+            
+            // Filter out current user from recipients
+            const filteredUserIds = toUserIds.filter(id => 
+              id.toString() !== currentIdStr
+            );
+            
+            // Create mapping of usernames
+            const userNames = {};
+            if (Array.isArray(message.to_user)) {
+              message.to_user.forEach((user) => {
+                // Skip current user
+                if (user.id.toString() !== currentIdStr) {
+                  userNames[user.id] = `${user.first_name} ${user.last_name}`;
+                }
+              });
+            }
+            
+            setFormData({
+              to_users: filteredUserIds,
+              subject: message.subject || "",
+              file: message.file ? { name: message.file.split('/').pop() } : null,
+              message: message.message || "",
+            });
+            setSelectedUserNames(userNames);
+            console.log('Processed to_users:', filteredUserIds);
+            console.log('Selected user names:', userNames);
+          } else {
+            setError("Message is not a draft");
+          }
+        } catch (error) {
+          console.error("Error fetching draft message:", error);
+          setError("Failed to fetch draft message");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchDraftMessage();
+    }
+  }, [id, currentUserId]);
+
+  // Remove isCurrentUser debug function that was added temporarily
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,36 +179,27 @@ const QmsEditDraftSystemMessaging = () => {
   const toggleUserSelection = (userId) => {
     const user = users.find((u) => u.id === userId);
     const userName = user ? `${user.first_name} ${user.last_name}` : "";
-
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
-        // Remove user
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
-
-        // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
-
         return {
           ...prev,
           to_users: updatedUsers,
         };
       } else {
-        // Add user
         setSelectedUserNames({
           ...selectedUserNames,
           [userId]: userName,
         });
-
         return {
           ...prev,
           to_users: [...prev.to_users, userId],
         };
       }
     });
-
-    // Clear the search term after selection
     setSearchTerm("");
   };
 
@@ -131,47 +208,53 @@ const QmsEditDraftSystemMessaging = () => {
       ...prev,
       to_users: prev.to_users.filter((id) => id !== userId),
     }));
-
     const newSelectedNames = { ...selectedUserNames };
     delete newSelectedNames[userId];
     setSelectedUserNames(newSelectedNames);
   };
 
+  // Send message
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-
     if (formData.to_users.length === 0) {
       setError("Please select at least one recipient");
       setLoading(false);
       return;
     }
-
     try {
       const companyId = getUserCompanyId();
       const fromUserId = getRelevantUserId();
-
       if (!companyId || !fromUserId) {
         throw new Error("Missing required user information");
       }
-
       const formDataToSend = new FormData();
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
-
+      
+      // Make sure we're not including the current user in to_user
+      const currentUserIdStr = fromUserId.toString();
       formData.to_users.forEach((userId) => {
-        formDataToSend.append("to_users", userId);
+        if (userId.toString() !== currentUserIdStr) {
+          formDataToSend.append("to_user", userId);
+        }
       });
-
+      
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
-      if (formData.file) {
+      if (formData.file instanceof File) {
         formDataToSend.append("file", formData.file);
       }
-
+      if (id) {
+        formDataToSend.append("id", id); // Include ID to update draft to sent
+      }
+      
+      console.log("Sending message to users:", formData.to_users.filter(id => 
+        id.toString() !== currentUserIdStr));
+      
       const response = await axios.post(
-        `${BASE_URL}/qms/messages/create/`,
+        `${BASE_URL}/qms/message-draft/edit/${id}`,
         formDataToSend,
         {
           headers: {
@@ -179,7 +262,6 @@ const QmsEditDraftSystemMessaging = () => {
           },
         }
       );
-
       navigate("/company/qms/list-outbox");
     } catch (error) {
       console.error("Error submitting message:", error);
@@ -199,11 +281,10 @@ const QmsEditDraftSystemMessaging = () => {
       .includes(searchTerm.toLowerCase())
   );
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
-      if (inputElement) {
+      if (inputElement) { 
         inputElement.focus();
       }
     }
@@ -212,7 +293,7 @@ const QmsEditDraftSystemMessaging = () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-        <h1 className="add-training-head">Drafted Message</h1>
+        <h1 className="add-training-head">Compose Message</h1>
         <button
           className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
           onClick={handleInbox}
@@ -223,11 +304,12 @@ const QmsEditDraftSystemMessaging = () => {
 
       {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
 
+      {loading && <div className="px-[104px] py-2 text-blue-500">Loading...</div>}
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -259,9 +341,7 @@ const QmsEditDraftSystemMessaging = () => {
                   formData.to_users.length > 0 ? "" : "Search users..."
                 }
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-none bg-transparent outline-none flex-grow min-w-[100px] p-0"
               />
               <Search
@@ -361,25 +441,27 @@ const QmsEditDraftSystemMessaging = () => {
           />
         </div>
         <div></div>
-          <div className="flex gap-5 w-full justify-between">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="cancel-btn duration-200 !w-full"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="save-btn duration-200 !w-full"
-              disabled={loading}
-            >
-              {loading ? "Sending..." : "Send"}
-            </button>
-          </div>
+
+        <div className="flex gap-5 w-full justify-between">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="cancel-btn duration-200 !w-full"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="save-btn duration-200 !w-full"
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send"}
+          </button>
+        </div>
       </form>
     </div>
   );
 };
+
 export default QmsEditDraftSystemMessaging;
