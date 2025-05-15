@@ -189,10 +189,17 @@ const QmsViewTraining = () => {
                         <div>
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Status</p>
                             <p className="text-white view-training-data">
-                                <span className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === 'Completed' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#ddd23611] text-[#ddd236]'
-                                    }`}>
+                                <span
+                                    className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === 'Completed'
+                                            ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                            : training.status === 'Cancelled'
+                                                ? 'bg-[#FF000011] text-[#FF0000]'
+                                                : 'bg-[#ddd23611] text-[#ddd236]'
+                                        }`}
+                                >
                                     {training.status}
                                 </span>
+
                             </p>
                         </div>
 
