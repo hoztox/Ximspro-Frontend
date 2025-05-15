@@ -30,7 +30,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/incident-root/company/${companyId}/`);
             setCauses(response.data);
         } catch (error) {
             console.error('Error fetching causes:', error);
@@ -63,7 +63,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     // Handle delete cause
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
+            await axios.delete(`${BASE_URL}/qms/incident-root/${id}/`);
             setCauses(causes.filter(item => item.id !== id));
             setSuccessMessage('Cause deleted successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
@@ -87,8 +87,9 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 setIsAdding(false);
                 return;
             }
+            
 
-            const response = await axios.post(`${BASE_URL}/qms/root-cause/create/`, {
+            const response = await axios.post(`${BASE_URL}/qms/incident-root/create/`, {
                 company: companyId,
                 title: newCauseTitle.trim()
             });
