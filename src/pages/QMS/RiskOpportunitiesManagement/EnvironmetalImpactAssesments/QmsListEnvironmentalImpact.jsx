@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
-import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
+import DeleteQmsManualSuccessModal from "./Modals/DeleteQmsManualSuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
 import PublishSuccessModal from "./Modals/PublishSuccessModal";
 import PublishErrorModal from "./Modals/PublishErrorModal";
@@ -110,6 +110,17 @@ const QmsListEnvironmentalImpact = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
   const isUserInvolvedWithImpact = (impact) => {
     const currentUserId = Number(localStorage.getItem("user_id"));
     return (
@@ -136,17 +147,17 @@ const QmsListEnvironmentalImpact = () => {
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
-      const response = await axios.get(
-        `${BASE_URL}/qms/environmental-impact/${companyId}/`
-      );
+      if (!companyId) {
+        setError("Company ID not found. Please log in again.");
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`); 
       const filteredImpacts = filterImpactsByVisibility(response.data);
       const sortedImpacts = filteredImpacts.sort((a, b) => {
-        if (a.id && b.id) {
-          return a.id - b.id;
-        }
         const dateA = new Date(a.date || 0);
         const dateB = new Date(b.date || 0);
-        return dateA - dateB;
+        return dateB - dateA; // Sort by date descending
       });
       setEnvironmentalImpacts(sortedImpacts);
       setLoading(false);
@@ -161,31 +172,31 @@ const QmsListEnvironmentalImpact = () => {
     const fetchAllData = async () => {
       try {
         const companyId = getUserCompanyId();
-        const impactsResponse = await axios.get(
-          `${BASE_URL}/qms/environmental-impact/${companyId}/`
-        );
+        if (!companyId) {
+          setError("Company ID not found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch environmental impacts
+        const impactsResponse = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`);
         const filteredImpacts = filterImpactsByVisibility(impactsResponse.data);
         const sortedImpacts = filteredImpacts.sort((a, b) => {
-          if (a.id && b.id) {
-            return a.id - b.id;
-          }
           const dateA = new Date(a.date || 0);
           const dateB = new Date(b.date || 0);
-          return dateA - dateB;
+          return dateB - dateA;
         });
         setEnvironmentalImpacts(sortedImpacts);
 
+        // Fetch corrections for each impact
         const correctionsPromises = sortedImpacts.map(async (impact) => {
           try {
             const correctionResponse = await axios.get(
-              `${BASE_URL}/qms/environmental-impact/${impact.id}/corrections/`
+              `${BASE_URL}/qms/impact/${impact.id}/corrections/`
             );
             return { impactId: impact.id, corrections: correctionResponse.data };
           } catch (correctionError) {
-            console.error(
-              `Error fetching corrections for impact ${impact.id}:`,
-              correctionError
-            );
+            console.error(`Error fetching corrections for impact ${impact.id}:`, correctionError);
             return { impactId: impact.id, corrections: [] };
           }
         });
@@ -197,33 +208,25 @@ const QmsListEnvironmentalImpact = () => {
         }, {});
         setCorrections(correctionsByImpact);
 
+        // Fetch draft count
         const id = getRelevantUserId();
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/environmental-impact/drafts-count/${id}/`
-        );
-        setDraftCount(draftResponse.data.count);
+        if (id) {
+          const draftResponse = await axios.get(
+            `${BASE_URL}/qms/impact/drafts-count/${id}/`
+          );
+          setDraftCount(draftResponse.data.count || 0);
+        }
 
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        // setError("Failed to load data. Please try again.");
+        setError("Failed to load data. Please try again.");
         setLoading(false);
       }
     };
     fetchAllData();
   }, []);
-
-  const getRelevantUserId = () => {
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      const userId = localStorage.getItem("user_id");
-      if (userId) return userId;
-    }
-    const companyId = localStorage.getItem("company_id");
-    if (companyId) return companyId;
-    return null;
-  };
 
   const handleClickApprove = (id) => {
     navigate(`/company/qms/view-environmantal-impact/${id}`);
@@ -237,28 +240,27 @@ const QmsListEnvironmentalImpact = () => {
   const handleConfirmDelete = async () => {
     if (impactToDelete) {
       try {
-        await axios.delete(
-          `${BASE_URL}/qms/environmental-impact-detail/${impactToDelete}/`
-        );
+        await axios.delete(`${BASE_URL}/qms/impact-detail/${impactToDelete}/`);
         setShowDeleteModal(false);
         setShowDeleteManualSuccessModal(true);
         setTimeout(() => {
-            setShowDeleteManualSuccessModal(false);
+          setShowDeleteManualSuccessModal(false);
           fetchEnvironmentalImpacts();
-        }, 2000);
+        }, 1500);
       } catch (err) {
         console.error("Error deleting environmental impact:", err);
         setShowDeleteModal(false);
         setShowDeleteManualErrorModal(true);
         setTimeout(() => {
-            setShowDeleteManualErrorModal(false);
-        }, 2000);
+          setShowDeleteManualErrorModal(false);
+        }, 1500);
       }
     }
   };
 
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
+    setImpactToDelete(null);
   };
 
   const handleSearchChange = (e) => {
@@ -286,19 +288,20 @@ const QmsListEnvironmentalImpact = () => {
   const handlePublish = (impact) => {
     setSelectedImpactId(impact.id);
     setShowPublishModal(true);
-    setSendNotification(false);
+    setSendNotification(impact.send_notification || false);
   };
 
   const closePublishModal = () => {
-    fetchEnvironmentalImpacts();
     setShowPublishModal(false);
+    setSelectedImpactId(null);
     setIsPublishing(false);
   };
 
   const handlePublishSave = async () => {
     try {
       if (!selectedImpactId) {
-        alert("No environmental impact selected for publishing");
+        setError("No environmental impact selected for publishing");
+        setIsPublishing(false);
         return;
       }
       setIsPublishing(true);
@@ -306,15 +309,15 @@ const QmsListEnvironmentalImpact = () => {
       const companyId = localStorage.getItem("company_id");
       const publisherId = userId || companyId;
       if (!publisherId) {
-        alert("User information not found. Please log in again.");
+        setError("User information not found. Please log in again.");
         setIsPublishing(false);
         return;
       }
       await axios.post(
-        `${BASE_URL}/qms/environmental-impact/${selectedImpactId}/publish-notification/`,
+        `${BASE_URL}/qms/impact/${selectedImpactId}/publish-notification/`,
         {
           company_id: getUserCompanyId(),
-          published_by: userId,
+          published_by: publisherId,
           send_notification: sendNotification,
         }
       );
@@ -323,16 +326,15 @@ const QmsListEnvironmentalImpact = () => {
         setShowPublishSuccessModal(false);
         closePublishModal();
         fetchEnvironmentalImpacts();
-        navigate("/company/qms/environmental-impact");
-        setIsPublishing(false);
       }, 1500);
     } catch (error) {
       console.error("Error publishing environmental impact:", error);
       setShowPublishErrorModal(true);
-      setIsPublishing(false);
       setTimeout(() => {
         setShowPublishErrorModal(false);
-      }, 3000);
+      }, 1500);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -344,7 +346,7 @@ const QmsListEnvironmentalImpact = () => {
     }
     if (impact.status === "Correction Requested") {
       return impactCorrections.some(
-        (correction) => correction.to_user.id === currentUserId
+        (correction) => correction.to_user?.id === currentUserId
       );
     }
     if (impact.status === "Reviewed,Pending for Approval") {
@@ -356,9 +358,7 @@ const QmsListEnvironmentalImpact = () => {
   const filteredEnvironmentalImpacts = environmentalImpacts.filter(
     (impact) =>
       (impact.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
-      (impact.impact_no?.toLowerCase() || "").includes(
-        searchQuery.toLowerCase()
-      ) ||
+      (impact.number?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       (impact.approved_by?.first_name?.toLowerCase() || "").includes(
         searchQuery.toLowerCase()
       ) ||
@@ -387,7 +387,7 @@ const QmsListEnvironmentalImpact = () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="list-manual-head">List Environmental Impact Assessment</h1>
+        <h1 className="list-manual-head">List Environmental Impact Assessments</h1>
         <div className="flex gap-4">
           <div className="relative">
             <input
@@ -431,7 +431,7 @@ const QmsListEnvironmentalImpact = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
-      <DeleteQmsManualsuccessModal
+      <DeleteQmsManualSuccessModal
         showDeleteManualSuccessModal={showDeleteManualSuccessModal}
         onClose={() => setShowDeleteManualSuccessModal(false)}
       />
@@ -456,17 +456,17 @@ const QmsListEnvironmentalImpact = () => {
         ) : (
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
-              <tr thrombosed className="h-[48px]">
+              <tr className="h-[48px]">
                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                 <th className="px-2 text-left add-manual-theads">Title</th>
-                <th className="px-2 text-left add-manual-theads">Impact Assessment No</th>
+                <th className="px-2 text-left add-manual-theads">Impact Assessment No </th>
                 <th className="px-2 text-left add-manual-theads">Approved By</th>
                 <th className="px-2 text-left add-manual-theads">Date</th>
                 <th className="px-2 text-left add-manual-theads">Status</th>
                 <th className="px-2 text-left add-manual-theads">Action</th>
                 <th className="px-2 text-center add-manual-theads">View</th>
                 <th className="px-2 text-center add-manual-theads">Edit</th>
-                <th className="pr-2 text-center add-manual-theads">Delete</th>
+                <th className="px-2 text-center add-manual-theads">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -476,13 +476,13 @@ const QmsListEnvironmentalImpact = () => {
                   return (
                     <tr
                       key={impact.id}
-                      className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
+                      className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px]"
                     >
                       <td className="pl-5 pr-2 add-manual-datas">
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </td>
                       <td className="px-2 add-manual-datas">{impact.title || "N/A"}</td>
-                      <td className="px-2 add-manual-datas">{impact.impact_no || "N/A"}</td>
+                      <td className="px-2 add-manual-datas">{impact.number || "N/A"}</td>
                       <td className="px-2 add-manual-datas">
                         {impact.approved_by
                           ? `${impact.approved_by.first_name} ${impact.approved_by.last_name}`
@@ -506,14 +506,14 @@ const QmsListEnvironmentalImpact = () => {
                             {impact.status === "Pending for Review/Checking"
                               ? "Review"
                               : impact.status === "Correction Requested"
-                              ? "Click to Approve"
-                              : "Click to Approve"}
+                              ? "Correct"
+                              : "Approve"}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">Not Action Required</span>
+                          <span className="text-[#858585]">No Action Required</span>
                         )}
                       </td>
-                      <td className="px-2 add-manual-datas !text-center">
+                      <td className="px-2 add-manual-datas text-center">
                         <button onClick={() => handleQmsViewEnvironmentalImpact(impact.id)}>
                           <img
                             src={viewIcon}
@@ -525,12 +525,12 @@ const QmsListEnvironmentalImpact = () => {
                           />
                         </button>
                       </td>
-                      <td className="px-2 add-manual-datas !text-center">
+                      <td className="px-2 add-manual-datas text-center">
                         <button onClick={() => handleQmsEditEnvironmentalImpact(impact.id)}>
                           <img src={editIcon} alt="Edit Icon" />
                         </button>
                       </td>
-                      <td className="px-2 add-manual-datas !text-center">
+                      <td className="px-2 add-manual-datas text-center">
                         <button onClick={() => handleDeleteEnvironmentalImpact(impact.id)}>
                           <img src={deleteIcon} alt="Delete Icon" />
                         </button>
@@ -541,7 +541,7 @@ const QmsListEnvironmentalImpact = () => {
               ) : (
                 <tr>
                   <td colSpan="10" className="text-center py-4 not-found">
-                    No Environmental Impacts found.
+                    No Environmental Impact Assessments found.
                   </td>
                 </tr>
               )}
@@ -551,14 +551,12 @@ const QmsListEnvironmentalImpact = () => {
       </div>
 
       <div className="flex justify-between items-center mt-6 text-sm">
-        <div className="text-white total-text">Total-{totalItems}</div>
+        <div className="text-white total-text">Total: {totalItems}</div>
         <div className="flex items-center gap-5">
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""}`}
           >
             Previous
           </button>
@@ -610,16 +608,14 @@ const QmsListEnvironmentalImpact = () => {
               <div className="p-6">
                 <div className="flex flex-col justify-center items-center space-y-7">
                   <img src={publish} alt="Publish Icon" className="mt-3" />
-                  <div className="flex gap-[113px] mb-5">
-                    <div className="flex items-center">
-                      <span className="mr-3 add-qms-manual-label">Send Notification?</span>
-                      <input
-                        type="checkbox"
-                        className="qms-manual-form-checkbox"
-                        checked={sendNotification}
-                        onChange={() => setSendNotification(!sendNotification)}
-                      />
-                    </div>
+                  <div className="flex items-center mb-5">
+                    <span className="mr-3 add-qms-manual-label">Send Notification?</span>
+                    <input
+                      type="checkbox"
+                      className="qms-manual-form-checkbox"
+                      checked={sendNotification}
+                      onChange={() => setSendNotification(!sendNotification)}
+                    />
                   </div>
                   <div className="flex gap-5">
                     <button

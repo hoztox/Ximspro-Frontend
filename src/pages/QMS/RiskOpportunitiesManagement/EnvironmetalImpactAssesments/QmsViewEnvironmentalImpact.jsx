@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import edits from "../../../../assets/images/Company Documentation/edit.svg"
-import deletes from "../../../../assets/images/Company Documentation/delete.svg"
-import historys from '../../../../assets/images/Company Documentation/history.svg'
+import edits from "../../../../assets/images/Company Documentation/edit.svg";
+import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import historys from '../../../../assets/images/Company Documentation/history.svg';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -15,7 +15,7 @@ import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
 const QmsViewEnvironmentalImpact = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [manualDetails, setManualDetails] = useState(null);
+  const [impactDetails, setImpactDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [corrections, setCorrections] = useState([]);
@@ -35,10 +35,8 @@ const QmsViewEnvironmentalImpact = () => {
 
   const getCurrentUser = () => {
     const role = localStorage.getItem('role');
-
     try {
       if (role === 'company') {
-        // Retrieve company user data
         const companyData = {};
         Object.keys(localStorage)
           .filter(key => key.startsWith('company_'))
@@ -50,17 +48,12 @@ const QmsViewEnvironmentalImpact = () => {
               companyData[cleanKey] = localStorage.getItem(key);
             }
           });
-
-        // Add additional fields from localStorage
         companyData.role = role;
         companyData.company_id = localStorage.getItem('company_id');
         companyData.company_name = localStorage.getItem('company_name');
         companyData.email_address = localStorage.getItem('email_address');
-
-        console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === 'user') {
-        // Retrieve regular user data
         const userData = {};
         Object.keys(localStorage)
           .filter(key => key.startsWith('user_'))
@@ -72,12 +65,8 @@ const QmsViewEnvironmentalImpact = () => {
               userData[cleanKey] = localStorage.getItem(key);
             }
           });
-
-        // Add additional fields from localStorage
         userData.role = role;
         userData.user_id = localStorage.getItem('user_id');
-
-        console.log("Regular User Data:", userData);
         return userData;
       }
     } catch (error) {
@@ -88,11 +77,9 @@ const QmsViewEnvironmentalImpact = () => {
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
-
     if (role === "company") {
       return localStorage.getItem("company_id");
     } else if (role === "user") {
-      // Try to get company ID for user
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
         return userCompanyId ? JSON.parse(userCompanyId) : null;
@@ -101,25 +88,20 @@ const QmsViewEnvironmentalImpact = () => {
         return null;
       }
     }
-
     return null;
   };
 
-  // Fetch manual details
-  const fetchManualDetails = async () => {
+  const fetchImpactDetails = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
-      setManualDetails(response.data);
-      console.log("Manual Details:", response.data);
+      const response = await axios.get(`${BASE_URL}/qms/impact-detail/${id}/`);
+      setImpactDetails(response.data);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching manual details:", err);
-      // setError("Failed to load record format details");
+      console.error("Error fetching environmental impact details:", err);
+      setError("Failed to load environmental impact details");
       setLoading(false);
     }
   };
-
-
 
   const getViewedCorrections = () => {
     const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
@@ -136,19 +118,14 @@ const QmsViewEnvironmentalImpact = () => {
     }
   };
 
-  const fetchManualCorrections = async () => {
+  const fetchImpactCorrections = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/qms/record/${id}/corrections/`);
+      const response = await axios.get(`${BASE_URL}/qms/impact/${id}/corrections/`);
       const allCorrections = response.data;
-      console.log("Fetched Record Formats Corrections:", allCorrections);
 
-      // Get viewed corrections for the current user
       const viewedCorrections = getViewedCorrections();
-
-      // Store all corrections
       setCorrections(allCorrections);
 
-      // Extract all user IDs from corrections to fetch their details
       const userIds = new Set();
       allCorrections.forEach(correction => {
         if (correction.from_user && typeof correction.from_user === 'number')
@@ -157,73 +134,49 @@ const QmsViewEnvironmentalImpact = () => {
           userIds.add(correction.to_user);
       });
 
-      // Fetch details for all users
-
-      // Sort all corrections by created_at date (newest first)
       const sortedCorrections = [...allCorrections].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      // Always highlight the most recent correction regardless of who it's for
       if (sortedCorrections.length > 0) {
         const mostRecent = sortedCorrections[0];
-
-        // Check if the current user has already viewed this correction
         if (!viewedCorrections.includes(mostRecent.id)) {
-          // Set the most recent as highlighted
           setHighlightedCorrection(mostRecent);
-
-          // Display all other corrections in the history
           setHistoryCorrections(sortedCorrections.slice(1));
         } else {
-          // If the user has already viewed the latest correction
-          // then just show all corrections in history
           setHighlightedCorrection(null);
           setHistoryCorrections(sortedCorrections);
         }
       } else {
-        // No corrections available
         setHighlightedCorrection(null);
         setHistoryCorrections([]);
       }
     } catch (error) {
-      console.error("Error fetching record format corrections:", error);
+      console.error("Error fetching environmental impact corrections:", error);
     }
   };
 
   useEffect(() => {
-    fetchManualDetails();
-    fetchManualCorrections();
+    fetchImpactDetails();
+    fetchImpactCorrections();
   }, [id]);
 
-  // Get user name from ID or object
   const getUserName = (user) => {
     if (!user) return "N/A";
-
-    // If user is an object with first_name and last_name
     if (typeof user === 'object' && user.first_name && user.last_name) {
       return `${user.first_name} ${user.last_name}`;
     }
-
-    // If user is an ID and we have fetched data for it
     if (typeof user === 'number' && usersData[user]) {
       return `${usersData[user].first_name} ${usersData[user].last_name}`;
     }
-
-    // If user is just an email string
     if (typeof user === 'string' && user.includes('@')) {
       return user;
     }
-
-    // Fallback - use email if available in the correction
     if (user === highlightedCorrection?.to_user && highlightedCorrection?.to_user_email) {
       return highlightedCorrection.to_user_email;
     }
-
-    // Ultimate fallback
     return `User ${user}`;
   };
-
 
   const handleCorrectionRequest = () => {
     setCorrectionRequest(prev => ({
@@ -240,67 +193,54 @@ const QmsViewEnvironmentalImpact = () => {
   };
 
   const handleCloseViewPage = () => {
-    navigate('/company/qms/record-format')
-  }
+    navigate('/company/qms/list-environmantal-impact');
+  };
 
   const handleCorrectionSubmit = async () => {
     try {
       const currentUser = getCurrentUser();
       if (!currentUser) {
-        alert('User not authenticated');
+        setError('User not authenticated');
         return;
       }
 
       const requestData = {
-        manual_id: id,
+        impact_id: id,
         correction: correctionRequest.text,
         from_user: currentUser.user_id
       };
 
-      console.log('Submitting correction request:', requestData);
-
-      const response = await axios.post(`${BASE_URL}/qms/record/submit-correction/`, requestData);
-
-      console.log('Correction response:', response.data);
+      const response = await axios.post(`${BASE_URL}/qms/impact/submit-correction/`, requestData);
 
       handleCloseCorrectionRequest();
       setShowSentCorrectionSuccessModal(true);
 
-      // Clear any previously viewed corrections from localStorage to ensure
-      // the new correction appears highlighted for the current user
       const storageKey = `viewed_corrections_${id}_${localStorage.getItem('user_id')}`;
       localStorage.removeItem(storageKey);
 
-      // Refresh data immediately to get the new correction
-      await fetchManualDetails();
-      await fetchManualCorrections();
+      await fetchImpactDetails();
+      await fetchImpactCorrections();
 
       setTimeout(() => {
         setShowSentCorrectionSuccessModal(false);
-        // Don't navigate away - we want to show the highlighted correction
       }, 1500);
-
     } catch (error) {
       console.error('Error submitting correction:', error);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
         setShowSentCorrectionErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
 
   const handleMoveToHistory = () => {
     if (highlightedCorrection) {
-      // Save this correction as viewed in localStorage
       saveViewedCorrection(highlightedCorrection.id);
-
-      // Update state
       setHistoryCorrections(prev => [highlightedCorrection, ...prev]);
       setHighlightedCorrection(null);
     }
   };
 
-  // Format date from ISO to DD-MM-YYYY
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
@@ -311,80 +251,57 @@ const QmsViewEnvironmentalImpact = () => {
     }).replace(/\//g, '-');
   };
 
-  // Format date to display how long ago the correction was made
   const formatCorrectionDate = (dateString) => {
     const date = new Date(dateString);
-
-    // Format date as DD-MM-YYYY
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-
-    // Format time as HH:MM am/pm
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const ampm = hours >= 12 ? 'pm' : 'am';
-
-    // Convert hours to 12-hour format
     hours = hours % 12;
-    hours = hours ? hours : 12; // Convert 0 to 12
+    hours = hours ? hours : 12;
     const formattedHours = String(hours).padStart(2, '0');
-
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  const handleDeleteRecordFormat = async (id) => {
+  const handleDeleteEnvironmentalImpact = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/qms/record-detail/${id}/`);
-      navigate('/company/qms/record-format');
+      await axios.delete(`${BASE_URL}/qms/impact-detail/${id}/`);
+      navigate('/company/qms/list-environmantal-impact');
     } catch (error) {
-      console.error("Error deleting manual:", error);
-      const errorMessage = error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Failed to delete manual';
+      console.error("Error deleting environmental impact:", error);
+      setError(error.response?.data?.message || 'Failed to delete environmental impact');
     }
   };
 
-  // Render loading or error states
   if (loading) return <div className="text-white">Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
-  if (!manualDetails) return <div className="text-white">No manual details found</div>;
+  if (!impactDetails) return <div className="text-white">No environmental impact details found</div>;
 
-  // Check if current user can review
   const currentUserId = Number(localStorage.getItem('user_id'));
-  const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
+  const isCurrentUserWrittenBy = currentUserId === impactDetails.written_by?.id;
 
   const canReview = (() => {
-    // Exclude the written_by user from requesting corrections
     if (isCurrentUserWrittenBy) {
       return true;
     }
-
-    if (manualDetails.status === "Pending for Review/Checking") {
-      return currentUserId === manualDetails.checked_by?.id;
+    if (impactDetails.status === "Pending for Review/Checking") {
+      return currentUserId === impactDetails.checked_by?.id;
     }
-
-    if (manualDetails.status === "Correction Requested") {
-      // Check if there are any pending corrections sent BY the current user
+    if (impactDetails.status === "Correction Requested") {
       const hasSentCorrections = corrections.some(correction =>
         correction.from_user?.id === currentUserId &&
         !correction.is_addressed
       );
-
-      // If current user has sent corrections that aren't addressed yet,
-      // they shouldn't be able to review/submit
       if (hasSentCorrections) {
         return false;
       }
-
-      // Otherwise check if they are allowed to review based on the manual's current state
       return corrections.some(correction => correction.to_user?.id === currentUserId);
     }
-
-    if (manualDetails.status === "Reviewed,Pending for Approval") {
-      return currentUserId === manualDetails.approved_by?.id;
+    if (impactDetails.status === "Reviewed,Pending for Approval") {
+      return currentUserId === impactDetails.approved_by?.id;
     }
-
     return false;
   })();
 
@@ -392,36 +309,33 @@ const QmsViewEnvironmentalImpact = () => {
     try {
       const currentUser = getCurrentUser();
       if (!currentUser) {
-        alert('User not authenticated');
+        setError('User not authenticated');
         return;
       }
 
       const requestData = {
-        record_id: id,
+        impact_id: id,
         current_user_id: currentUser.user_id
       };
 
       const response = await axios.post(
-        `${BASE_URL}/qms/record-review/`,
+        `${BASE_URL}/qms/impact-review/`,
         requestData
       );
 
       setShowSubmitManualSuccessModal(true);
       setTimeout(() => {
         setShowSubmitManualSuccessModal(false);
-        navigate("/company/qms/record-format");
+        navigate("/company/qms/list-environmantal-impact");
       }, 1500);
-      fetchManualDetails();
-      fetchManualCorrections();
+      fetchImpactDetails();
+      fetchImpactCorrections();
     } catch (error) {
       console.error('Error submitting review:', error);
-      const errorMessage = error.response?.data?.error ||
-        error.response?.data?.message ||
-        'Failed to submit review';
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
         setShowSubmitManualErrorModal(false);
-      }, 3000);
+      }, 1500);
     }
   };
 
@@ -429,23 +343,17 @@ const QmsViewEnvironmentalImpact = () => {
     hidden: {
       opacity: 0,
       height: 0,
-      transition: {
-        duration: 0.3
-      }
+      transition: { duration: 0.3 }
     },
     visible: {
       opacity: 1,
       height: 'auto',
-      transition: {
-        duration: 0.3
-      }
+      transition: { duration: 0.3 }
     }
   };
 
-  // Render highlighted correction
   const renderHighlightedCorrection = () => {
     if (!highlightedCorrection) return null;
-
     return (
       <div className="mt-5 bg-[#1F2937] p-4 rounded-md border-l-4 border-[#3B82F6]">
         <div className="flex justify-between items-center mb-2">
@@ -453,7 +361,6 @@ const QmsViewEnvironmentalImpact = () => {
             <AlertCircle size={18} className="text-[#3B82F6]" />
             <h2 className="text-white font-medium">Latest Correction Request</h2>
           </div>
-
         </div>
         <div className="bg-[#24242D] p-5 rounded-md mt-3">
           <div className="flex justify-between items-center mb-2">
@@ -470,10 +377,8 @@ const QmsViewEnvironmentalImpact = () => {
     );
   };
 
-  // Render correction history
   const renderCorrectionHistory = () => {
     if (historyCorrections.length === 0) return null;
-
     return (
       <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
         <div className="sticky -top-0 bg-[#1C1C24] flex items-center text-white mb-5 gap-[6px] pb-2">
@@ -483,7 +388,7 @@ const QmsViewEnvironmentalImpact = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? 'mb-5' : ''}`}
+            className={`bg-[#24242D] p-5 rounded-md ${index < historyCorrections.length - 1 ? 'mb-5' : ''}`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -503,28 +408,23 @@ const QmsViewEnvironmentalImpact = () => {
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg">
       <div className='flex justify-between items-center border-b border-[#383840] pb-[26px]'>
-        <h1 className='viewmanualhead'>Record Formats Information</h1>
-
+        <h1 className='viewmanualhead'>Environmental Impact Assessment Details</h1>
         <ManualCorrectionSuccessModal
           showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
-          onClose={() => { setShowSentCorrectionSuccessModal(false) }}
+          onClose={() => setShowSentCorrectionSuccessModal(false)}
         />
-
         <ManualCorrectionErrorModal
           showSentCorrectionErrorModal={showSentCorrectionErrorModal}
-          onClose={() => { setShowSentCorrectionErrorModal(false) }}
+          onClose={() => setShowSentCorrectionErrorModal(false)}
         />
-
         <ReviewSubmitSuccessModal
           showSubmitManualSuccessModal={showSubmitManualSuccessModal}
-          onClose={() => { setShowSubmitManualSuccessModal(false) }}
+          onClose={() => setShowSubmitManualSuccessModal(false)}
         />
-
         <ReviewSubmitErrorModal
           showSubmitManualErrorModal={showSubmitManualErrorModal}
-          onClose={() => { setShowSubmitManualErrorModal(false) }}
+          onClose={() => setShowSubmitManualErrorModal(false)}
         />
-
         <button
           className="text-white bg-[#24242D] p-1 rounded-md"
           onClick={handleCloseViewPage}
@@ -536,83 +436,81 @@ const QmsViewEnvironmentalImpact = () => {
         <div className="grid grid-cols-2 divide-x divide-[#383840] border-b border-[#383840] pb-5">
           <div className="grid grid-cols-1 gap-[40px]">
             <div>
-              <label className="viewmanuallabels">Environmental Impact Assessment Name/Title</label>
+              <label className="viewmanuallabels">Title</label>
               <div className="flex justify-between items-center">
-                <p className="viewmanuasdata">{manualDetails.title || 'N/A'}</p>
+                <p className="viewmanuasdata">{impactDetails.title || 'N/A'}</p>
               </div>
             </div>
             <div>
-              <label className="viewmanuallabels">Environmental Impact Assessment Number</label>
-              <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
+              <label className="viewmanuallabels">Number</label>
+              <p className="viewmanuasdata">{impactDetails.number || 'N/A'}</p>
             </div>
             <div>
               <label className="viewmanuallabels">Revision</label>
-              <p className="viewmanuasdata">{manualDetails.rivision || 'N/A'}</p>
+              <p className="viewmanuasdata">{impactDetails.rivision || 'N/A'}</p>
             </div>
             <div>
               <label className="viewmanuallabels">Document Type</label>
-              <p className="viewmanuasdata">{manualDetails.document_type || 'N/A'}</p>
+              <p className="viewmanuasdata">{impactDetails.document_type || 'N/A'}</p>
             </div>
             <div>
-              <label className="viewmanuallabels">Attach Document</label>
+              <label className="viewmanuallabels">Attached Document</label>
               <div
                 className='flex items-center cursor-pointer gap-[8px]'
                 onClick={() => {
-                  if (manualDetails.upload_attachment) {
-                    window.open(manualDetails.upload_attachment, '_blank');
+                  if (impactDetails.upload_attachment) {
+                    window.open(impactDetails.upload_attachment, '_blank');
                   }
                 }}
               >
                 <p className="click-view-file-text">
-                  {manualDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
+                  {impactDetails.upload_attachment ? 'Click to view file' : 'No file attached'}
                 </p>
-                {manualDetails.upload_attachment && (
+                {impactDetails.upload_attachment && (
                   <Eye size={20} className='text-[#1E84AF]' />
                 )}
               </div>
             </div>
             <div>
-              <label className="viewmanuallabels">Relate Document/ Document </label>
-              <p className="viewmanuasdata">{manualDetails.relate_document || 'N/A'}</p>
+              <label className="viewmanuallabels">Related Record/Document</label>
+              <p className="viewmanuasdata">{impactDetails.related_record || 'N/A'}</p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 gap-[40px] pl-5">
             <div>
-              <label className="viewmanuallabels">Written/Prepare By</label>
+              <label className="viewmanuallabels">Written/Prepared By</label>
               <p className="viewmanuasdata">
-                {manualDetails.written_by
-                  ? `${manualDetails.written_by.first_name} ${manualDetails.written_by.last_name}`
+                {impactDetails.written_by
+                  ? `${impactDetails.written_by.first_name} ${impactDetails.written_by.last_name}`
                   : 'N/A'}
               </p>
             </div>
             <div>
               <label className="viewmanuallabels">Checked/Reviewed By</label>
               <p className="viewmanuasdata">
-                {manualDetails.checked_by
-                  ? `${manualDetails.checked_by.first_name} ${manualDetails.checked_by.last_name}`
+                {impactDetails.checked_by
+                  ? `${impactDetails.checked_by.first_name} ${impactDetails.checked_by.last_name}`
                   : 'N/A'}
               </p>
             </div>
             <div>
               <label className="viewmanuallabels">Approved By</label>
               <p className="viewmanuasdata">
-                {manualDetails.approved_by
-                  ? `${manualDetails.approved_by.first_name} ${manualDetails.
-                    approved_by.last_name}`
+                {impactDetails.approved_by
+                  ? `${impactDetails.approved_by.first_name} ${impactDetails.approved_by.last_name}`
                   : 'N/A'}
               </p>
             </div>
             <div>
               <label className="viewmanuallabels">Date</label>
-              <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p>
+              <p className="viewmanuasdata">{formatDate(impactDetails.date)}</p>
             </div>
             <div className='flex justify-between items-center'>
               <div>
                 <label className="viewmanuallabels">Review Frequency</label>
                 <p className="viewmanuasdata">
-                  {manualDetails.review_frequency_year
-                    ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0} months`
+                  {impactDetails.review_frequency_year
+                    ? `${impactDetails.review_frequency_year} years, ${impactDetails.review_frequency_month || 0} months`
                     : 'N/A'}
                 </p>
               </div>
@@ -623,7 +521,7 @@ const QmsViewEnvironmentalImpact = () => {
                     <button
                       onClick={() => {
                         handleMoveToHistory();
-                        navigate(`/company/qms/editrecordformat/${id}`);
+                        navigate(`/company/qms/edit-environmantal-impact/${id}`);
                       }}
                     >
                       <img src={edits} alt="Edit Icon" />
@@ -632,9 +530,7 @@ const QmsViewEnvironmentalImpact = () => {
                   <div className='flex flex-col justify-center items-center'>
                     <label className="viewmanuallabels">Delete</label>
                     <button
-                      onClick={() => {
-                        handleDeleteRecordFormat(id);
-                      }}
+                      onClick={() => handleDeleteEnvironmentalImpact(id)}
                     >
                       <img src={deletes} alt="Delete Icon" />
                     </button>
@@ -642,24 +538,15 @@ const QmsViewEnvironmentalImpact = () => {
                 </div>
               )}
             </div>
-
-            <div className='h-[51.5px]'>
-
-            </div>
+            <div className='h-[51.5px]'></div>
           </div>
         </div>
-
-        {/* Render highlighted correction */}
         {renderHighlightedCorrection()}
-
-        {/* Render correction history */}
         {renderCorrectionHistory()}
-
         {canReview && (
           <div className="flex flex-wrap justify-between mt-5">
             {!correctionRequest.isOpen && (
               <>
-                {/* Always show Request For Correction button */}
                 <button
                   onClick={() => {
                     handleMoveToHistory();
@@ -667,11 +554,9 @@ const QmsViewEnvironmentalImpact = () => {
                   }}
                   className="request-correction-btn duration-200"
                 >
-                  Request For Correction
+                  Request Correction
                 </button>
-
-                {/* Show either Approve or Review and Submit based on status */}
-                {manualDetails.status === "Reviewed,Pending for Approval" ? (
+                {impactDetails.status === "Reviewed,Pending for Approval" ? (
                   <button
                     onClick={() => {
                       handleReviewAndSubmit();
@@ -696,7 +581,6 @@ const QmsViewEnvironmentalImpact = () => {
                 )}
               </>
             )}
-
             <AnimatePresence>
               {correctionRequest.isOpen && (
                 <motion.div
@@ -714,14 +598,13 @@ const QmsViewEnvironmentalImpact = () => {
                       <X size={22} />
                     </button>
                   </div>
-
                   <textarea
                     value={correctionRequest.text}
                     onChange={(e) => setCorrectionRequest(prev => ({
                       ...prev,
                       text: e.target.value
                     }))}
-                    placeholder="Enter Correction"
+                    placeholder="Enter correction details"
                     className="w-full h-32 bg-[#24242D] text-white px-5 py-[14px] rounded-md resize-none focus:outline-none correction-inputs"
                   />
                   <div className="mt-5 flex justify-end">
@@ -741,4 +624,5 @@ const QmsViewEnvironmentalImpact = () => {
     </div>
   );
 };
-export default QmsViewEnvironmentalImpact
+
+export default QmsViewEnvironmentalImpact;

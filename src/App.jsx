@@ -687,11 +687,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-environmantal-impact" element={<QmsListEnvironmentalImpact />} />
           <Route path="qms/add-environmantal-impact" element={<QmsAddEnvironmentalImpact />} />
-          <Route path="qms/edit-environmantal-impact" element={<QmsEditEnvironmentalImpact />} />
-          <Route path="qms/view-environmantal-impact" element={<QmsViewEnvironmentalImpact />} />
+          <Route path="qms/edit-environmantal-impact/:id" element={<QmsEditEnvironmentalImpact />} />
+          <Route path="qms/view-environmantal-impact/:id" element={<QmsViewEnvironmentalImpact />} />
           <Route path="qms/draft-environmantal-impact" element={<QmsDraftEnvironmentalImpact />} />
-          <Route path="qms/edit-draft-environmantal-impact" element={<QmsEditDraftEnvironmentalImpact />} />
-          <Route path="qms/view-draft-environmantal-impact" element={<QmsViewDraftEnvironmentalImpact />} />
+          <Route path="qms/edit-draft-environmantal-impact/:id" element={<QmsEditDraftEnvironmentalImpact />} />
+          <Route path="qms/view-draft-environmantal-impact/:id" element={<QmsViewDraftEnvironmentalImpact />} />
 
           <Route path="qms/list-environmantal-incident" element={<QmsListEnvironmentalIncidents />} />
           <Route path="qms/add-environmantal-incident" element={<QmsAddEnvironmentalIncidents />} />

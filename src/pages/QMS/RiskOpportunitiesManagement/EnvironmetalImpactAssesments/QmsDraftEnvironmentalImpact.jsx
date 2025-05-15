@@ -10,44 +10,40 @@ import DeleteQmsManualDraftSucessModal from './Modals/DeleteQmsManualDraftSucess
 import DeleteQmsManualDraftErrorModal from './Modals/DeleteQmsManualDraftErrorModal';
 
 const QmsDraftEnvironmentalImpact = () => {
-    const [manuals, setManuals] = useState([]);
+    const [impacts, setImpacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const manualPerPage = 10;
+    const impactsPerPage = 10;
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [manualToDelete, setManualToDelete] = useState(null);
-    const [showDeleteDraftManualSuccessModal, setShowDeleteDraftManualSuccessModal] = useState(false);
-    const [showDeleteDraftManualErrorModal, setShowDeleteDraftManualErrorModal] = useState(false);
+    const [impactToDelete, setImpactToDelete] = useState(null);
+    const [showDeleteDraftSuccessModal, setShowDeleteDraftSuccessModal] = useState(false);
+    const [showDeleteDraftErrorModal, setShowDeleteDraftErrorModal] = useState(false);
 
     const handleDeleteClick = (id) => {
-        setManualToDelete(id);
+        setImpactToDelete(id);
         setShowDeleteModal(true);
     };
 
-    const handleConfirmDelete = () => {
-        if (manualToDelete) {
-            axios
-                .delete(`${BASE_URL}/qms/record-detail/${manualToDelete}/`)
-                .then((response) => {
-                    // Remove the deleted manual from state
-                    setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
-                    setShowDeleteDraftManualSuccessModal(true);
-                    setTimeout(() => {
-                        setShowDeleteDraftManualSuccessModal(false);
-                    }, 3000);
-                    console.log("Manual deleted successfully:", response.data);
-                })
-                .catch((error) => {
-                    setShowDeleteDraftManualErrorModal(true);
-                    setTimeout(() => {
-                        setShowDeleteDraftManualErrorModal(false);
-                    }, 3000);
-                    console.error("Error deleting manual:", error);
-                });
+    const handleConfirmDelete = async () => {
+        if (impactToDelete) {
+            try {
+                await axios.delete(`${BASE_URL}/qms/impact-detail/${impactToDelete}/`);
+                setImpacts(impacts.filter((impact) => impact.id !== impactToDelete));
+                setShowDeleteDraftSuccessModal(true);
+                setTimeout(() => {
+                    setShowDeleteDraftSuccessModal(false);
+                }, 1500);
+            } catch (error) {
+                console.error("Error deleting environmental impact:", error);
+                setShowDeleteDraftErrorModal(true);
+                setTimeout(() => {
+                    setShowDeleteDraftErrorModal(false);
+                }, 1500);
+            }
         }
         setShowDeleteModal(false);
     };
@@ -65,9 +61,11 @@ const QmsDraftEnvironmentalImpact = () => {
             year: 'numeric'
         }).replace(/\//g, '-');
     };
+
     const handleEditDraft = (id) => {
-        navigate(`/company/qms/edit-draft-environmantal-impact${id}`);
-    }
+        navigate(`/company/qms/edit-draft-environmantal-impact/${id}`); 
+    };
+
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -85,97 +83,102 @@ const QmsDraftEnvironmentalImpact = () => {
         }
         return null;
     };
-    const companyId = getUserCompanyId();
-    console.log("Stored Company ID:", companyId);
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
-
         if (userRole === "user") {
             const userId = localStorage.getItem("user_id");
             if (userId) return userId;
         }
-
         const companyId = localStorage.getItem("company_id");
         if (companyId) return companyId;
-
         return null;
     };
 
-    const fetchManuals = async () => {
+    const fetchImpacts = async () => {
         try {
             setLoading(true);
             const id = getRelevantUserId();
-            const response = await axios.get(`${BASE_URL}/qms/record-draft/${id}/`);
-            setManuals(response.data);
+            if (!id) {
+                throw new Error("No valid user or company ID found");
+            }
+            const response = await axios.get(`${BASE_URL}/qms/impact-draft/${id}/`);
+            setImpacts(response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching procedures:", err);
-            setError("Failed to load record format. Please try again.");
+            console.error("Error fetching environmental impacts:", err);
+            setError("Failed to load draft environmental impacts. Please try again.");
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchManuals();
+        fetchImpacts();
     }, []);
 
-    const filteredManual = manuals.filter(manual =>
-        (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
+    const filteredImpacts = impacts.filter(impact =>
+        (impact.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (impact.number?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (impact.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (impact.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (formatDate(impact.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
     );
-    const totalPages = Math.ceil(filteredManual.length / manualPerPage);
-    const paginatedManual = filteredManual.slice((currentPage - 1) * manualPerPage, currentPage * manualPerPage);
+
+    const totalPages = Math.ceil(filteredImpacts.length / impactsPerPage);
+    const paginatedImpacts = filteredImpacts.slice(
+        (currentPage - 1) * impactsPerPage,
+        currentPage * impactsPerPage
+    );
+
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
         setCurrentPage(1);
     };
+
     const handlePageClick = (pageNumber) => {
         setCurrentPage(pageNumber);
         window.scrollTo(0, 0);
     };
+
     const handlePrevious = () => {
         if (currentPage > 1) {
             setCurrentPage(prev => prev - 1);
             window.scrollTo(0, 0);
         }
     };
+
     const handleNext = () => {
         if (currentPage < totalPages) {
             setCurrentPage(prev => prev + 1);
             window.scrollTo(0, 0);
         }
     };
-    const handleCloseManualDraft = () => {
+
+    const handleCloseDraft = () => {
         navigate('/company/qms/list-environmantal-impact');
     };
+
     const handleView = (id) => {
         navigate(`/company/qms/view-draft-environmantal-impact/${id}`);
     };
+
     return (
         <div className="bg-[#1C1C24] list-manual-main">
-            {/* Header section - kept the same */}
             <div className="flex items-center justify-between px-[14px] pt-[24px]">
-                <h1 className="list-manual-head">Draft Environmental Impact Assessment</h1>
-
+                <h1 className="list-manual-head">Draft Environmental Impact Assessments</h1>
                 <DeleteQmsManualDraftConfirmModal
                     showDeleteModal={showDeleteModal}
                     onConfirm={handleConfirmDelete}
                     onCancel={handleCancelDelete}
                 />
                 <DeleteQmsManualDraftSucessModal
-                    showDeleteDraftManualSuccessModal={showDeleteDraftManualSuccessModal}
-                    onClose={() => setShowDeleteDraftManualSuccessModal(false)}
+                    showDeleteDraftManualSuccessModal={showDeleteDraftSuccessModal}
+                    onClose={() => setShowDeleteDraftSuccessModal(false)}
                 />
                 <DeleteQmsManualDraftErrorModal
-                    showDeleteDraftManualErrorModal={showDeleteDraftManualErrorModal}
-                    onClose={() => setShowDeleteDraftManualErrorModal(false)}
+                    showDeleteDraftManualErrorModal={showDeleteDraftErrorModal}
+                    onClose={() => setShowDeleteDraftErrorModal(false)}
                 />
-
-
                 <div className="flex space-x-5 items-center">
                     <div className="relative">
                         <input
@@ -191,16 +194,15 @@ const QmsDraftEnvironmentalImpact = () => {
                     </div>
                     <button
                         className="text-white bg-[#24242D] p-1 rounded-md"
-                        onClick={handleCloseManualDraft}
+                        onClick={handleCloseDraft}
                     >
                         <X className='text-white' />
                     </button>
                 </div>
             </div>
-            {/* Table section with updated columns */}
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white">Loading manuals...</div>
+                    <div className="text-center py-4 text-white">Loading drafts...</div>
                 ) : error ? (
                     <div className="text-center py-4 text-red-500">{error}</div>
                 ) : (
@@ -209,8 +211,8 @@ const QmsDraftEnvironmentalImpact = () => {
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Title</th>
-                                <th className="px-2 text-left add-manual-theads">Impact Assessment No </th>
-                                <th className="px-2 text-left add-manual-theads">Approved by</th>
+                                <th className="px-2 text-left add-manual-theads">Impact Assessment No</th>
+                                <th className="px-2 text-left add-manual-theads">Approved By</th>
                                 <th className="px-2 text-left add-manual-theads">Revision</th>
                                 <th className="px-2 text-left add-manual-theads">Date</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>
@@ -219,53 +221,54 @@ const QmsDraftEnvironmentalImpact = () => {
                             </tr>
                         </thead>
                         <tbody key={currentPage}>
-                            {paginatedManual.length > 0 ? (
-                                paginatedManual.map((manual, index) => (
-                                    <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
-                                        <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
-                                        <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                            {paginatedImpacts.length > 0 ? (
+                                paginatedImpacts.map((impact, index) => (
+                                    <tr key={impact.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
+                                        <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * impactsPerPage + index + 1}</td>
+                                        <td className="px-2 add-manual-datas">{impact.title || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{impact.number || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">
-                                            {manual.approved_by ?
-                                                `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
-                                                'N/A'}
+                                            {impact.approved_by
+                                                ? `${impact.approved_by.first_name} ${impact.approved_by.last_name}`
+                                                : 'N/A'}
                                         </td>
-                                        <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
+                                        <td className="px-2 add-manual-datas">{impact.rivision || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{formatDate(impact.date)}</td>
                                         <td className='px-2 add-manual-datas'>
-                                            <button className='text-[#1E84AF]'
-
-                                                onClick={() => handleEditDraft(manual.id)}
+                                            <button
+                                                className='text-[#1E84AF]'
+                                                onClick={() => handleEditDraft(impact.id)}
                                             >
                                                 Click to Continue
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas text-center">
                                             <button
-                                                onClick={() => handleView(manual.id)}
+                                                onClick={() => handleView(impact.id)}
                                                 title="View"
                                             >
-                                                <img src={views} alt="" />
+                                                <img src={views} alt="View" />
                                             </button>
                                         </td>
                                         <td className="pl-2 pr-4 add-manual-datas text-center">
                                             <button
-                                                onClick={() => handleDeleteClick(manual.id)}
+                                                onClick={() => handleDeleteClick(impact.id)}
                                                 title="Delete"
                                             >
-                                                <img src={deletes} alt="" />
+                                                <img src={deletes} alt="Delete" />
                                             </button>
                                         </td>
                                     </tr>
                                 ))
                             ) : (
-                                <tr><td colSpan="11" className="text-center py-4 not-found">No Manuals found.</td></tr>
+                                <tr>
+                                    <td colSpan="9" className="text-center py-4 not-found">No draft environmental impacts found.</td>
+                                </tr>
                             )}
-                            {/* Pagination row - kept the same */}
                             <tr>
-                                <td colSpan="11" className="pt-[15px] border-t border-[#383840]">
+                                <td colSpan="9" className="pt-[15px] border-t border-[#383840]">
                                     <div className="flex items-center justify-between w-full">
-                                        <div className="text-white total-text">Total-{filteredManual.length}</div>
+                                        <div className="text-white total-text">Total: {filteredImpacts.length}</div>
                                         <div className="flex items-center gap-5">
                                             <button
                                                 onClick={handlePrevious}
@@ -298,7 +301,8 @@ const QmsDraftEnvironmentalImpact = () => {
                     </table>
                 )}
             </div>
-        </div >
+        </div>
     );
 };
-export default QmsDraftEnvironmentalImpact
+
+export default QmsDraftEnvironmentalImpact;
