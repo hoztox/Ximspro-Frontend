@@ -27,7 +27,10 @@ const EditsQmsDraftTrainingEvaluation = () => {
     year: "",
   });
 
-  const [showEditDraftTrainingEvaluationSuccessModal, setShowEditDraftTrainingEvaluationSuccessModal] = useState(false);
+  const [
+    showEditDraftTrainingEvaluationSuccessModal,
+    setShowEditDraftTrainingEvaluationSuccessModal,
+  ] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [focusedField, setFocusedField] = useState("");
@@ -61,7 +64,24 @@ const EditsQmsDraftTrainingEvaluation = () => {
 
         setError(null);
       } catch (err) {
-        setError("Failed to load employee performance data");
+        let errorMsg = "Failed to fetch training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         console.error("Error fetching employee performance data:", err);
       } finally {
         setLoading(false);
@@ -83,7 +103,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
     if (fieldErrors[name]) {
       setFieldErrors({
         ...fieldErrors,
-        [name]: null
+        [name]: null,
       });
     }
 
@@ -99,7 +119,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
       if (fieldErrors.valid_till) {
         setFieldErrors({
           ...fieldErrors,
-          valid_till: null
+          valid_till: null,
         });
       }
 
@@ -176,7 +196,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
 
     // Prepare submission data
     const submissionData = {
-      ...formData
+      ...formData,
     };
 
     // If all date fields are filled, format the date for submission
@@ -191,10 +211,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
         `${BASE_URL}/qms/training-evaluation/${id}/update/`,
         submissionData
       );
-      console.log(
-        "Performance evaluation updated successfully:",
-        response.data
-      );
+      console.log("Training Evaluation updated successfully:", response.data);
 
       setShowEditDraftTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
@@ -202,20 +219,35 @@ const EditsQmsDraftTrainingEvaluation = () => {
         navigate("/company/qms/drafts-training-evaluation");
       }, 1500);
     } catch (err) {
-      console.error("Error updating performance evaluation:", err);
-      
+      console.error("Error updating training evaluation:", err);
+
       // Check if error contains field validation errors from the server
       if (err.response && err.response.data) {
         // Handle field-specific errors from the server
-        if (typeof err.response.data === 'object') {
+        if (typeof err.response.data === "object") {
           setFieldErrors(err.response.data);
-        } else {
-          setError("Failed to update performance evaluation");
         }
       } else {
-        setError("Failed to update performance evaluation");
+        let errorMsg = "Failed to update training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
       }
-      
+
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);

@@ -11,14 +11,18 @@ import ErrorModal from "../Modals/ErrorModal";
 import DeleteTrainingEvaluationConfirmModal from "../Modals/DeleteTrainingEvaluationConfirmModal";
 import DeleteTrainingEvaluationSuccessModal from "../Modals/DeleteTrainingEvaluationSuccessModal";
 
-const DraftQmsTrainingEvaluation = () => {      
+const DraftQmsTrainingEvaluation = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] = useState(null);
-  const [showDeleteTrainingEvaluationSuccessModal, setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
+  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] =
+    useState(null);
+  const [
+    showDeleteTrainingEvaluationSuccessModal,
+    setShowDeleteTrainingEvaluationSuccessModal,
+  ] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -52,8 +56,25 @@ const DraftQmsTrainingEvaluation = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load draft employee performance data");
-        console.error("Error fetching draft employee performance data:", err);
+        let errorMsg = "Failed to fetch training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        console.error("Error fetching draft training evaluation data:", err);
       } finally {
         setLoading(false);
       }
@@ -111,7 +132,9 @@ const DraftQmsTrainingEvaluation = () => {
 
       // Remove the deleted item from state
       setPerformanceData(
-        performanceData.filter((item) => item.id !== trainingEvaluationToDelete.id)
+        performanceData.filter(
+          (item) => item.id !== trainingEvaluationToDelete.id
+        )
       );
       setShowDeleteModal(false);
       setShowDeleteTrainingEvaluationSuccessModal(true);
@@ -121,9 +144,26 @@ const DraftQmsTrainingEvaluation = () => {
     } catch (err) {
       // Close delete modal and show error modal
       setShowDeleteModal(false);
-      setErrorMessage("Failed to delete performance evaluation");
+      let errorMsg = "Failed to delete training evaluation";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
-      console.error("Error deleting performance evaluation:", err);
+      console.error("Error deleting training evaluation:", err);
     }
   };
 
@@ -154,9 +194,7 @@ const DraftQmsTrainingEvaluation = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       {/* Header and Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center pb-5">
-        <h1 className="employee-performance-head">
-          Draft Training Evaluation
-        </h1>
+        <h1 className="employee-performance-head">Draft Training Evaluation</h1>
 
         <div className="flex w-full md:w-auto gap-4">
           <div className="relative">

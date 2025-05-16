@@ -34,7 +34,8 @@ const EvaluationModal = ({
   const [performances, setPerformances] = useState([]);
   const navigate = useNavigate();
 
-  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   // New state to track changes before submitting
@@ -51,8 +52,7 @@ const EvaluationModal = ({
           `${BASE_URL}/qms/training-evaluation/${companyId}/evaluation/${performanceId}/`
         );
         setUsers(response.data);
-        console.log('uuuuuuuuuuuuuuuuuu', response.data);
-
+        console.log("uuuuuuuuuuuuuuuuuu", response.data);
       } catch (error) {
         console.error("Error fetching unsubmitted users:", error);
       }
@@ -80,7 +80,24 @@ const EvaluationModal = ({
         setPerformances(response.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load employee performance data");
+        let errorMsg = "Failed to fetch training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         console.error("Error fetching employee performance data:", err);
       } finally {
         setLoading(false);
@@ -108,7 +125,24 @@ const EvaluationModal = ({
       console.log("Fetched questions:", response.data);
     } catch (err) {
       console.error("Error fetching questions:", err);
-      setError("Failed to load questions");
+      let errorMsg = "Failed to fetch questions";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -125,7 +159,9 @@ const EvaluationModal = ({
       return;
     }
 
-    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
+    setActiveRatingQuestion(
+      activeRatingQuestion === questionId ? null : questionId
+    );
   };
 
   // Handle when a rating is selected
@@ -144,7 +180,7 @@ const EvaluationModal = ({
     // Store the changes to be submitted later
     setUpdatedAnswers({
       ...updatedAnswers,
-      [questionId]: rating
+      [questionId]: rating,
     });
 
     // Close rating selector after selection
@@ -171,21 +207,23 @@ const EvaluationModal = ({
     setLoading(true);
     try {
       // Submit all updated answers
-      const promises = Object.entries(updatedAnswers).map(([questionId, rating]) => {
-        console.log("Submitting answer with data:", {
-          questionId,
-          answer: rating,
-          user_id: selectedEmployee,
-        });
-
-        return axios.patch(
-          `${BASE_URL}/qms/training-evaluation/question/answer/${questionId}/`,
-          {
+      const promises = Object.entries(updatedAnswers).map(
+        ([questionId, rating]) => {
+          console.log("Submitting answer with data:", {
+            questionId,
             answer: rating,
             user_id: selectedEmployee,
-          }
-        );
-      });
+          });
+
+          return axios.patch(
+            `${BASE_URL}/qms/training-evaluation/question/answer/${questionId}/`,
+            {
+              answer: rating,
+              user_id: selectedEmployee,
+            }
+          );
+        }
+      );
 
       await Promise.all(promises);
 
@@ -200,7 +238,24 @@ const EvaluationModal = ({
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to save answers");
+      let errorMsg = "Failed to update answer";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -292,9 +347,9 @@ const EvaluationModal = ({
                           {item.first_name && item.last_name
                             ? `${item.first_name} ${item.last_name}`
                             : item.first_name ||
-                            item.last_name ||
-                            item.username ||
-                            item.email}
+                              item.last_name ||
+                              item.username ||
+                              item.email}
                         </option>
                       ))}
                     </select>
@@ -302,8 +357,9 @@ const EvaluationModal = ({
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180" : ""
-                          }`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
                       />
                     </div>
                   </div>
@@ -331,9 +387,7 @@ const EvaluationModal = ({
                         {questions.length > 0 ? (
                           questions.map((question, index) => (
                             <React.Fragment key={question.id}>
-                              <tr
-                                className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]"
-                              >
+                              <tr className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
                                 <td className="px-4 whitespace-nowrap employee-evaluate-data">
                                   {index + 1}
                                 </td>
@@ -347,11 +401,16 @@ const EvaluationModal = ({
                                     </div>
                                   ) : (
                                     <button
-                                      onClick={() => toggleRatingSelector(question.id)}
+                                      onClick={() =>
+                                        toggleRatingSelector(question.id)
+                                      }
                                       className="!text-[#1E84AF] employee-evaluate-data"
                                     >
                                       {activeRatingQuestion === question.id ? (
-                                        <X size={18} className="ml-auto text-[#AAAAAA]" />
+                                        <X
+                                          size={18}
+                                          className="ml-auto text-[#AAAAAA]"
+                                        />
                                       ) : (
                                         "Click to Answer"
                                       )}
@@ -363,16 +422,26 @@ const EvaluationModal = ({
                                 <tr className="bg-[#1C1C24] border-b border-[#383840]">
                                   <td colSpan="3" className="px-4 py-3">
                                     <div className="flex justify-between items-center gap-2 bg-[#24242D] px-[20px] h-[58px] rounded-[6px]">
-                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                                        <button
-                                          key={rating}
-                                          onClick={() => handleAnswerChange(question.id, rating)}
-                                          className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${rating === 10 ? "border border-[#1E84AF] !text-[#1E84AF]" : "border border-[#5B5B5B] !text-[#5B5B5B]"
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+                                        (rating) => (
+                                          <button
+                                            key={rating}
+                                            onClick={() =>
+                                              handleAnswerChange(
+                                                question.id,
+                                                rating
+                                              )
+                                            }
+                                            className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${
+                                              rating === 10
+                                                ? "border border-[#1E84AF] !text-[#1E84AF]"
+                                                : "border border-[#5B5B5B] !text-[#5B5B5B]"
                                             } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
-                                        >
-                                          {rating}
-                                        </button>
-                                      ))}
+                                          >
+                                            {rating}
+                                          </button>
+                                        )
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
@@ -395,10 +464,7 @@ const EvaluationModal = ({
                 )}
 
                 <div className="p-4 flex justify-end space-x-4">
-                  <button
-                    className="cancel-btn duration-200"
-                    onClick={onClose}
-                  >
+                  <button className="cancel-btn duration-200" onClick={onClose}>
                     Cancel
                   </button>
                   <button
@@ -445,12 +511,29 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
           const response = await axios.get(
             `${BASE_URL}/qms/training-evaluation/${performanceId}/questions/`
           );
-          console.log('aaaaaaaaaaa', response.data);
+          console.log("aaaaaaaaaaa", response.data);
 
           setQuestions(response.data);
         } catch (err) {
           console.error("Error fetching questions:", err);
-          setError("Failed to load questions");
+          let errorMsg = "Failed to fetch questions";
+
+          if (err.response) {
+            // Check for field-specific errors first
+            if (err.response.data.date) {
+              errorMsg = err.response.data.date[0];
+            }
+            // Check for non-field errors
+            else if (err.response.data.detail) {
+              errorMsg = err.response.data.detail;
+            } else if (err.response.data.message) {
+              errorMsg = err.response.data.message;
+            }
+          } else if (err.message) {
+            errorMsg = err.message;
+          }
+
+          setError(errorMsg);
         } finally {
           setLoading(false);
         }
@@ -497,7 +580,24 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setError("");
     } catch (err) {
       console.error("Error adding question:", err);
-      setError("Failed to add question");
+      let errorMsg = "Failed to add question";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -543,7 +643,24 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     } catch (err) {
       console.error("Error deleting question:", err);
       setShowDeleteModal(false);
-      setError("Failed to delete question");
+      let errorMsg = "Failed to delete question";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -719,8 +836,12 @@ const QmsTrainingEvaluation = () => {
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] = useState(null);
-  const [showDeleteTrainingEvaluationSuccessModal, setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
+  const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] =
+    useState(null);
+  const [
+    showDeleteTrainingEvaluationSuccessModal,
+    setShowDeleteTrainingEvaluationSuccessModal,
+  ] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
@@ -753,7 +874,6 @@ const QmsTrainingEvaluation = () => {
     return null;
   };
 
-
   // Fetch employee performance data
   useEffect(() => {
     const fetchPerformanceData = async () => {
@@ -775,14 +895,30 @@ const QmsTrainingEvaluation = () => {
           `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
         );
         setDraftCount(draftResponse.data.count);
-        console.log('count......', draftResponse);
-        
+        console.log("count......", draftResponse);
 
         setPerformances(response.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load employee performance data");
-        console.error("Error fetching employee performance data:", err);
+        let errorMsg = "Failed to fetch training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        console.error("Error fetching training evaluation data:", err);
       } finally {
         setLoading(false);
       }
@@ -856,7 +992,24 @@ const QmsTrainingEvaluation = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting performance evaluation:", err);
-      setError("Failed to delete the evaluation");
+      let errorMsg = "Failed to delete training evaluation";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDeleteModal(false);
       setShowErrorModal(true);
       setTimeout(() => {
@@ -931,9 +1084,7 @@ const QmsTrainingEvaluation = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       {/* Header and Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center pb-5">
-        <h1 className="employee-performance-head">
-          List Training Evaluation
-        </h1>
+        <h1 className="employee-performance-head">List Training Evaluation</h1>
 
         <div className="flex w-full md:w-auto gap-4">
           <div className="relative">
@@ -1092,8 +1243,9 @@ const QmsTrainingEvaluation = () => {
           </div>
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === 1 ? "opacity-50" : ""
+              }`}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
@@ -1106,17 +1258,18 @@ const QmsTrainingEvaluation = () => {
                 currentPage <= 2
                   ? i + 1
                   : currentPage >= totalPages - 1
-                    ? totalPages - 3 + i
-                    : currentPage - 2 + i;
+                  ? totalPages - 3 + i
+                  : currentPage - 2 + i;
 
               if (pageToShow <= totalPages) {
                 return (
                   <button
                     key={pageToShow}
-                    className={`${currentPage === pageToShow
-                      ? "pagin-active"
-                      : "pagin-inactive"
-                      }`}
+                    className={`${
+                      currentPage === pageToShow
+                        ? "pagin-active"
+                        : "pagin-inactive"
+                    }`}
                     onClick={() => setCurrentPage(pageToShow)}
                   >
                     {pageToShow}
@@ -1127,8 +1280,9 @@ const QmsTrainingEvaluation = () => {
             })}
 
             <button
-              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }

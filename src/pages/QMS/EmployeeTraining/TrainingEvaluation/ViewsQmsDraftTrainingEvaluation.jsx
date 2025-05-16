@@ -22,8 +22,25 @@ const ViewsQmsDraftTrainingEvaluation = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load employee performance data");
-        console.error("Error fetching employee performance data:", err);
+        let errorMsg = "Failed to fetch training evaluation";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        console.error("Error fetching training evaluation data:", err);
       } finally {
         setLoading(false);
       }
@@ -54,9 +71,7 @@ const ViewsQmsDraftTrainingEvaluation = () => {
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
       <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-        <h2 className="view-employee-head">
-          Training Evaluation Information
-        </h2>
+        <h2 className="view-employee-head">Training Evaluation Information</h2>
         <button
           onClick={handleClose}
           className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
