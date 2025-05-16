@@ -16,16 +16,20 @@ const AddQmsProcesses = () => {
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Field validation errors
   const [validationErrors, setValidationErrors] = useState({
-    name: ""
+    name: "",
   });
 
-  const [showAddProcessesSuccessModal, setShowAddProcessesSuccessModal] = useState(false);
-  const [showAddQmsProcessesErrorModal, setShowAddQmsProcessesErrorModal] = useState(false);
-  const [showDraftProcessesSuccessModal, setShowDraftProcessesSuccessModal] = useState(false);
-  const [showDraftProcessesErrorModal, setShowDraftProcessesErrorModal] = useState(false);
+  const [showAddProcessesSuccessModal, setShowAddProcessesSuccessModal] =
+    useState(false);
+  const [showAddQmsProcessesErrorModal, setShowAddQmsProcessesErrorModal] =
+    useState(false);
+  const [showDraftProcessesSuccessModal, setShowDraftProcessesSuccessModal] =
+    useState(false);
+  const [showDraftProcessesErrorModal, setShowDraftProcessesErrorModal] =
+    useState(false);
 
   // Add state for compliance options
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
@@ -127,12 +131,12 @@ const AddQmsProcesses = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
-    
+
     // Clear validation error when user starts typing
     if (name === "name" && value.trim() !== "") {
       setValidationErrors({
         ...validationErrors,
-        name: ""
+        name: "",
       });
     }
   };
@@ -142,7 +146,7 @@ const AddQmsProcesses = () => {
     if (formData.name.trim() === "") {
       setValidationErrors({
         ...validationErrors,
-        name: "Name/Title is Required"
+        name: "Name/Title is Required",
       });
     }
   };
@@ -154,21 +158,23 @@ const AddQmsProcesses = () => {
 
   // Handle checkbox change for procedures
   const handleProcedureCheckboxChange = (procedureTitle) => {
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const updatedProcedures = [...prevData.legal_requirements];
 
       // If already selected, remove it
       if (updatedProcedures.includes(procedureTitle)) {
         return {
           ...prevData,
-          legal_requirements: updatedProcedures.filter(item => item !== procedureTitle)
+          legal_requirements: updatedProcedures.filter(
+            (item) => item !== procedureTitle
+          ),
         };
       }
       // Otherwise add it
       else {
         return {
           ...prevData,
-          legal_requirements: [...updatedProcedures, procedureTitle]
+          legal_requirements: [...updatedProcedures, procedureTitle],
         };
       }
     });
@@ -181,15 +187,15 @@ const AddQmsProcesses = () => {
 
     if (checked) {
       // If N/A is checked, clear all procedure selections
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        legal_requirements: []
+        legal_requirements: [],
       }));
     } else {
       // If N/A is unchecked, clear the custom field
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        custom_legal_requirements: ""
+        custom_legal_requirements: "",
       }));
     }
   };
@@ -207,23 +213,23 @@ const AddQmsProcesses = () => {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = "Name/Title is Required";
     }
-    
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form before submission
     if (!validateForm()) {
       return;
     }
-    
+
     setSubmitting(true);
     setError(null);
     const userId = getRelevantUserId();
@@ -233,7 +239,7 @@ const AddQmsProcesses = () => {
     submitData.append("name", formData.name);
     submitData.append("type", formData.type);
     submitData.append("no", formData.no);
-    submitData.append('user', userId);
+    submitData.append("user", userId);
 
     // Handle legal requirements based on N/A selection
     if (showCustomField) {
@@ -250,7 +256,9 @@ const AddQmsProcesses = () => {
       // Since we're using a FormData object, we need to append each ID separately
       formData.legal_requirements.forEach((procedureTitle, index) => {
         // Find the procedure ID that matches this title
-        const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
+        const procedure = legalRequirementOptions.find(
+          (p) => p.title === procedureTitle
+        );
         if (procedure && procedure.id) {
           submitData.append(`legal_requirements[${index}]`, procedure.id);
         }
@@ -286,7 +294,24 @@ const AddQmsProcesses = () => {
         navigate("/company/qms/processes");
       }, 1500);
     } catch (err) {
-      setError("Failed to save. Please check your inputs and try again.");
+      let errorMsg = "Failed to save process";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowAddQmsProcessesErrorModal(true);
       setTimeout(() => {
         setShowAddQmsProcessesErrorModal(false);
@@ -313,7 +338,7 @@ const AddQmsProcesses = () => {
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
@@ -325,7 +350,7 @@ const AddQmsProcesses = () => {
       }
 
       const submitData = new FormData();
-      console.log('formdata......', formData);
+      console.log("formdata......", formData);
 
       submitData.append("company", companyId);
       submitData.append("user", userId);
@@ -348,9 +373,11 @@ const AddQmsProcesses = () => {
         // The key issue: The backend expects a different format for legal_requirements
         // We need to append each procedure ID with the same key name
         formData.legal_requirements.forEach((procedureTitle) => {
-          const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
+          const procedure = legalRequirementOptions.find(
+            (p) => p.title === procedureTitle
+          );
           if (procedure && procedure.id) {
-            submitData.append('legal_requirements', procedure.id);
+            submitData.append("legal_requirements", procedure.id);
           }
         });
       }
@@ -378,25 +405,40 @@ const AddQmsProcesses = () => {
         setShowDraftProcessesSuccessModal(false);
         navigate("/company/qms/draft-processes");
       }, 1500);
-      console.log('draaaaaft', response);
-
+      console.log("draaaaaft", response);
     } catch (err) {
       setLoading(false);
       setShowDraftProcessesErrorModal(true);
       setTimeout(() => {
         setShowDraftProcessesErrorModal(false);
       }, 3000);
-      const errorMessage = err.response?.data?.detail || "Failed to save Draft";
-      setError(errorMessage);
+      let errorMsg = "Failed to draft process";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       console.error("Error saving Draft:", err.response?.data || err);
     }
   };
   // Filter procedures based on search term
-  const filteredProcedures = legalRequirementOptions
-    .filter(option =>
+  const filteredProcedures = legalRequirementOptions.filter(
+    (option) =>
       !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  );
 
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
@@ -448,10 +490,14 @@ const AddQmsProcesses = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 onBlur={handleNameBlur}
-                className={`w-full add-qms-intertested-inputs ${validationErrors.name ? 'border-red-500' : ''}`}
+                className={`w-full add-qms-intertested-inputs ${
+                  validationErrors.name ? "border-red-500" : ""
+                }`}
               />
               {validationErrors.name && (
-                <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {validationErrors.name}
+                </p>
               )}
             </div>
 
@@ -494,8 +540,9 @@ const AddQmsProcesses = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.type ? "rotate-180" : ""
-                      }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.type ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -514,15 +561,10 @@ const AddQmsProcesses = () => {
                   placeholder="Search procedures..."
                   className="w-full add-qms-intertested-inputs pl-8 "
                 />
-
               </div>
 
-
               <div className="border border-[#383840] rounded-md p-2 max-h-[145px] overflow-y-auto">
-
-
                 {showCustomField ? (
-
                   <div className="mt-2 mb-3">
                     <textarea
                       name="custom_legal_requirements"
@@ -533,7 +575,6 @@ const AddQmsProcesses = () => {
                     />
                   </div>
                 ) : (
-
                   <>
                     {filteredProcedures.length > 0 ? (
                       filteredProcedures.map((option, index) => (
@@ -542,8 +583,12 @@ const AddQmsProcesses = () => {
                             type="checkbox"
                             id={`procedure-${index}`}
                             className="mr-2 form-checkboxes"
-                            checked={formData.legal_requirements.includes(option.title)}
-                            onChange={() => handleProcedureCheckboxChange(option.title)}
+                            checked={formData.legal_requirements.includes(
+                              option.title
+                            )}
+                            onChange={() =>
+                              handleProcedureCheckboxChange(option.title)
+                            }
                           />
                           <label
                             htmlFor={`procedure-${index}`}
@@ -551,12 +596,12 @@ const AddQmsProcesses = () => {
                           >
                             {option.title}
                           </label>
-
                         </div>
-
                       ))
                     ) : (
-                      <p className="text-gray-400 mt-2 mb-2 not-found">No procedures found</p>
+                      <p className="text-gray-400 mt-2 mb-2 not-found">
+                        No procedures found
+                      </p>
                     )}
                   </>
                 )}

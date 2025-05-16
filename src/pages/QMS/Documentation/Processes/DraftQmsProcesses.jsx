@@ -77,7 +77,24 @@ const DraftQmsProcesses = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft processes:", error);
-        setError(error); // Set error state
+        let errorMsg = "Failed to fetch draft processes";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };
@@ -123,7 +140,24 @@ const DraftQmsProcesses = ({ userId }) => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting draft process:", error);
-      setError(error); // Set error state
+      let errorMsg = "Failed to delete draft process.";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
 
       // Close the delete modal and show error modal
       closeDeleteModal();

@@ -86,8 +86,25 @@ const EditQmsDraftProcesses = () => {
         setLegalRequirementOptions(response.data || []);
       })
       .catch((error) => {
-        console.error("Error fetching legal requirements:", error);
-        setError(error);
+        console.error("Error fetching procedure:", error);
+        let errorMsg = "Failed to fetch procedure";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
       });
   };
 
@@ -112,8 +129,13 @@ const EditQmsDraftProcesses = () => {
 
         // Convert the legal_requirements IDs to titles using legal_requirement_details
         let procedureTitles = [];
-        if (data.legal_requirement_details && Array.isArray(data.legal_requirement_details)) {
-          procedureTitles = data.legal_requirement_details.map(item => item.title);
+        if (
+          data.legal_requirement_details &&
+          Array.isArray(data.legal_requirement_details)
+        ) {
+          procedureTitles = data.legal_requirement_details.map(
+            (item) => item.title
+          );
         }
 
         setFormData({
@@ -123,7 +145,10 @@ const EditQmsDraftProcesses = () => {
           file: null,
         });
 
-        if (data.legal_requirements === "N/A" || data.custom_legal_requirements) {
+        if (
+          data.legal_requirements === "N/A" ||
+          data.custom_legal_requirements
+        ) {
           setShowCustomField(true);
         }
 
@@ -134,7 +159,24 @@ const EditQmsDraftProcesses = () => {
       })
       .catch((err) => {
         console.error("Error fetching data:", err);
-        setError(err);
+        let errorMsg = "Failed to fetch data. Please try again";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
       });
   }, [id]);
 
@@ -168,21 +210,23 @@ const EditQmsDraftProcesses = () => {
 
   // Handle checkbox change for procedures
   const handleProcedureCheckboxChange = (procedureTitle) => {
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const updatedProcedures = [...prevData.legal_requirements];
 
       // If already selected, remove it
       if (updatedProcedures.includes(procedureTitle)) {
         return {
           ...prevData,
-          legal_requirements: updatedProcedures.filter(item => item !== procedureTitle)
+          legal_requirements: updatedProcedures.filter(
+            (item) => item !== procedureTitle
+          ),
         };
       }
       // Otherwise add it
       else {
         return {
           ...prevData,
-          legal_requirements: [...updatedProcedures, procedureTitle]
+          legal_requirements: [...updatedProcedures, procedureTitle],
         };
       }
     });
@@ -195,15 +239,15 @@ const EditQmsDraftProcesses = () => {
 
     if (checked) {
       // If N/A is checked, clear all procedure selections
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        legal_requirements: []
+        legal_requirements: [],
       }));
     } else {
       // If N/A is unchecked, clear the custom field
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        custom_legal_requirements: ""
+        custom_legal_requirements: "",
       }));
     }
   };
@@ -260,19 +304,23 @@ const EditQmsDraftProcesses = () => {
         type: formData.type,
         is_draft: formData.is_draft,
         send_notification: formData.send_notification,
-        company: companyId
+        company: companyId,
       };
 
       // Handle file upload first if needed
       if (formData.file instanceof File) {
         const fileFormData = new FormData();
-        fileFormData.append('file', formData.file);
+        fileFormData.append("file", formData.file);
 
-        const fileResponse = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        const fileResponse = await axios.put(
+          `${BASE_URL}/qms/processes/create/${id}/`,
+          data,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
 
         if (fileResponse.data && fileResponse.data.file_url) {
           data.file = fileResponse.data.file_url;
@@ -281,26 +329,33 @@ const EditQmsDraftProcesses = () => {
 
       // Handle legal requirements based on whether custom field is shown
       if (showCustomField) {
-        data.custom_legal_requirements = formData.custom_legal_requirements || "";
+        data.custom_legal_requirements =
+          formData.custom_legal_requirements || "";
         data.legal_requirements = [];
       } else {
         const procedureIds = formData.legal_requirements
-          .map(procedureTitle => {
-            const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
+          .map((procedureTitle) => {
+            const procedure = legalRequirementOptions.find(
+              (p) => p.title === procedureTitle
+            );
             return procedure ? procedure.id : null;
           })
-          .filter(id => id !== null);
+          .filter((id) => id !== null);
 
         data.legal_requirements = procedureIds;
         data.custom_legal_requirements = "";
       }
 
       // Send the update request as JSON instead of FormData
-      const response = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.put(
+        `${BASE_URL}/qms/processes/create/${id}/`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       console.log("Success response:", response.data);
       setShowEditDraftProcessesSuccessModal(true);
@@ -308,10 +363,26 @@ const EditQmsDraftProcesses = () => {
         setShowEditDraftProcessesSuccessModal(false);
         navigate("/company/qms/processes");
       }, 2000);
-
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
-      setError(err); // Set the error state
+      let errorMsg = "Failed to update process";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowEditDraftProcessesErrorModal(true);
       setTimeout(() => {
         setShowEditDraftProcessesErrorModal(false);
@@ -324,10 +395,9 @@ const EditQmsDraftProcesses = () => {
   };
 
   // Filter procedures based on search term
-  const filteredProcedures = legalRequirementOptions
-    .filter(option =>
-      option.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredProcedures = legalRequirementOptions.filter((option) =>
+    option.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
@@ -362,11 +432,15 @@ const EditQmsDraftProcesses = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full add-qms-intertested-inputs ${validationErrors.name ? "border-red-500" : ""}`}
+                className={`w-full add-qms-intertested-inputs ${
+                  validationErrors.name ? "border-red-500" : ""
+                }`}
                 placeholder="Enter Name"
               />
               {validationErrors.name && (
-                <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+                <p className="text-red-500 text-sm mt-1">
+                  {validationErrors.name}
+                </p>
               )}
             </div>
             <div>
@@ -407,8 +481,9 @@ const EditQmsDraftProcesses = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.type ? "rotate-180" : ""
-                      }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.type ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -450,8 +525,12 @@ const EditQmsDraftProcesses = () => {
                             type="checkbox"
                             id={`procedure-${index}`}
                             className="mr-2 form-checkboxes"
-                            checked={formData.legal_requirements.includes(option.title)}
-                            onChange={() => handleProcedureCheckboxChange(option.title)}
+                            checked={formData.legal_requirements.includes(
+                              option.title
+                            )}
+                            onChange={() =>
+                              handleProcedureCheckboxChange(option.title)
+                            }
                           />
                           <label
                             htmlFor={`procedure-${index}`}
