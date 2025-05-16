@@ -26,7 +26,8 @@ const QmsListTraining = () => {
   // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [trainingToDelete, setTrainingToDelete] = useState(null);
-  const [showDeleteTrainingSuccessModal, setShowDeleteTrainingSuccessModal] = useState(false);
+  const [showDeleteTrainingSuccessModal, setShowDeleteTrainingSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
@@ -96,7 +97,24 @@ const QmsListTraining = () => {
         setTrainings(formattedData);
         setError(null);
       } catch (err) {
-        setError("Failed to load training data");
+        let errorMsg = "Failed to fetch training data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         console.error("Error fetching training data:", err);
       } finally {
         setIsLoading(false);
@@ -174,7 +192,24 @@ const QmsListTraining = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting training:", err);
-      setError("Failed to delete training. Please try again later.");
+      let errorMsg = "Failed to delete training data";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -238,7 +273,9 @@ const QmsListTraining = () => {
 
       {/* Loading and Error States */}
       {isLoading && (
-        <div className="text-center not-found py-4">Loading Training Data...</div>
+        <div className="text-center not-found py-4">
+          Loading Training Data...
+        </div>
       )}
 
       {/* Table */}
@@ -280,16 +317,16 @@ const QmsListTraining = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <span
-                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === "Completed"
-                        ? "bg-[#36DDAE11] text-[#36DDAE]"
-                        : training.status === "Cancelled"
+                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
+                        training.status === "Completed"
+                          ? "bg-[#36DDAE11] text-[#36DDAE]"
+                          : training.status === "Cancelled"
                           ? "bg-[#FF000011] text-[#FF0000]" // red background and text
                           : "bg-[#ddd23611] text-[#ddd236]"
-                        }`}
+                      }`}
                     >
                       {training.status}
                     </span>
-
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     {["Requested", "Cancelled"].includes(training.status) ? (
@@ -350,8 +387,9 @@ const QmsListTraining = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === 1 ? "opacity-50" : ""
+              }`}
             >
               Previous
             </button>
@@ -361,8 +399,9 @@ const QmsListTraining = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
-                    }`}
+                  className={`${
+                    currentPage === number ? "pagin-active" : "pagin-inactive"
+                  }`}
                 >
                   {number}
                 </button>
@@ -372,8 +411,9 @@ const QmsListTraining = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
             >
               Next
             </button>

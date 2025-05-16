@@ -52,7 +52,24 @@ const QmsDraftListTraining = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching draft trainings:", error);
-        setError("Failed to load draft trainings");
+        let errorMsg = "Failed to fetch draft trainings";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };
@@ -123,9 +140,24 @@ const QmsDraftListTraining = () => {
       }, 2000);
     } catch (error) {
       console.error("Error deleting draft training:", error);
-      setError(
-        "Failed to delete draft training. Please try again later."
-      );
+      let errorMsg = "Failed to delete draft training";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -338,7 +370,7 @@ const QmsDraftListTraining = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
-        error = {error}
+        error={error}
       />
     </div>
   );

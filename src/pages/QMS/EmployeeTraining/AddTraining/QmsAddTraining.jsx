@@ -21,7 +21,7 @@ const QmsAddTraining = () => {
   const [users, setUsers] = useState([]);
   const [selectedAttendees, setSelectedAttendees] = useState([]);
   const [draftLoading, setDraftLoading] = useState(false);
-  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
+  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState("");
   const [filteredAttendees, setFilteredAttendees] = useState([]);
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -30,21 +30,24 @@ const QmsAddTraining = () => {
     datePlanned: false,
     startTime: false,
     endTime: false,
-    venue: false
+    venue: false,
   });
 
   const validateForm = () => {
     const errors = {
       trainingTitle: !formData.trainingTitle,
       expectedResults: !formData.expectedResults,
-      datePlanned: !formData.datePlanned.day || !formData.datePlanned.month || !formData.datePlanned.year,
+      datePlanned:
+        !formData.datePlanned.day ||
+        !formData.datePlanned.month ||
+        !formData.datePlanned.year,
       startTime: !formData.startTime.hour || !formData.startTime.min,
       endTime: !formData.endTime.hour || !formData.endTime.min,
-      venue: !formData.venue
+      venue: !formData.venue,
     };
 
     setFieldErrors(errors);
-    return !Object.values(errors).some(error => error);
+    return !Object.values(errors).some((error) => error);
   };
 
   const [formData, setFormData] = useState({
@@ -102,16 +105,16 @@ const QmsAddTraining = () => {
     fetchUsers();
   }, []);
 
-
   useEffect(() => {
     if (users.length > 0) {
-      const filtered = users.filter(user =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(attendeeSearchTerm.toLowerCase())
+      const filtered = users.filter((user) =>
+        `${user.first_name} ${user.last_name}`
+          .toLowerCase()
+          .includes(attendeeSearchTerm.toLowerCase())
       );
       setFilteredAttendees(filtered);
     }
   }, [attendeeSearchTerm, users]);
-
 
   const getUserCompanyId = () => {
     // First check if company_id is stored directly
@@ -213,12 +216,14 @@ const QmsAddTraining = () => {
       const datePlanned = `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}`;
 
       // Check if all date conducted fields are filled
-      const hasDateConducted = formData.dateConducted.year &&
+      const hasDateConducted =
+        formData.dateConducted.year &&
         formData.dateConducted.month &&
         formData.dateConducted.day;
 
       // Check if all evaluation date fields are filled
-      const hasEvaluationDate = formData.evaluationDate.year &&
+      const hasEvaluationDate =
+        formData.evaluationDate.year &&
         formData.evaluationDate.month &&
         formData.evaluationDate.day;
 
@@ -284,6 +289,24 @@ const QmsAddTraining = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -323,11 +346,20 @@ const QmsAddTraining = () => {
       }
 
       // Check if date fields are completely filled
-      const hasDatePlanned = formData.datePlanned.day && formData.datePlanned.month && formData.datePlanned.year;
-      const hasDateConducted = formData.dateConducted.day && formData.dateConducted.month && formData.dateConducted.year;
+      const hasDatePlanned =
+        formData.datePlanned.day &&
+        formData.datePlanned.month &&
+        formData.datePlanned.year;
+      const hasDateConducted =
+        formData.dateConducted.day &&
+        formData.dateConducted.month &&
+        formData.dateConducted.year;
       const hasStartTime = formData.startTime.hour && formData.startTime.min;
       const hasEndTime = formData.endTime.hour && formData.endTime.min;
-      const hasEvaluationDate = formData.evaluationDate.day && formData.evaluationDate.month && formData.evaluationDate.year;
+      const hasEvaluationDate =
+        formData.evaluationDate.day &&
+        formData.evaluationDate.month &&
+        formData.evaluationDate.year;
 
       // 1. Prepare the payload to be sent as JSON
       const payload = {
@@ -336,13 +368,13 @@ const QmsAddTraining = () => {
         training_title: formData.trainingTitle,
         expected_results: formData.expectedResults,
         actual_results: formData.actualResults,
-        type_of_training: formData.typeOfTraining || 'Internal',
-        status: formData.status || 'Requested',
+        type_of_training: formData.typeOfTraining || "Internal",
+        status: formData.status || "Requested",
         requested_by: formData.requestedBy,
         venue: formData.venue,
         training_evaluation: formData.trainingEvaluation,
         evaluation_by: formData.evaluationBy,
-        send_notification: formData.send_notification === 'true', // boolean field
+        send_notification: formData.send_notification === "true", // boolean field
         is_draft: true, // draft status
         training_attendees: selectedAttendees, // array of integers like [7, 14]
       };
@@ -374,7 +406,7 @@ const QmsAddTraining = () => {
       }
 
       // 3. Debug: Log the payload being sent
-      console.log('Submitting draft with data:', payload);
+      console.log("Submitting draft with data:", payload);
 
       // 4. Make the POST request
       const response = await axios.post(
@@ -382,7 +414,7 @@ const QmsAddTraining = () => {
         payload, // Send as JSON
         {
           headers: {
-            'Content-Type': 'application/json', // Important: Set content type to JSON
+            "Content-Type": "application/json", // Important: Set content type to JSON
           },
           timeout: 10000, // Timeout in ms
         }
@@ -394,38 +426,27 @@ const QmsAddTraining = () => {
       // 5. Handle success response
       setTimeout(() => {
         setShowDraftTrainingSuccessModal(false);
-        navigate('/company/qms/draft-training');
+        navigate("/company/qms/draft-training");
       }, 1500);
     } catch (err) {
-      // 6. Enhanced error handling
-      let errorDetails = 'Failed to save draft';
+      let errorMsg = "Failed to draft training";
+
       if (err.response) {
-        console.error('Full error response:', err.response);
-        if (err.response.data) {
-          if (typeof err.response.data === 'string') {
-            errorDetails = err.response.data;
-          } else if (err.response.data.detail) {
-            errorDetails = err.response.data.detail;
-          } else if (err.response.data.non_field_errors) {
-            errorDetails = err.response.data.non_field_errors.join(', ');
-          } else {
-            const fieldErrors = [];
-            for (const [field, messages] of Object.entries(err.response.data)) {
-              if (Array.isArray(messages)) {
-                fieldErrors.push(`${field}: ${messages.join(', ')}`);
-              } else {
-                fieldErrors.push(`${field}: ${messages}`);
-              }
-            }
-            errorDetails = fieldErrors.join(' | ');
-          }
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
         }
-      } else if (err.request) {
-        errorDetails = 'No response received from server';
-      } else {
-        errorDetails = err.message || 'Unknown error occurred';
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-      setError(errorDetails);
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -451,7 +472,7 @@ const QmsAddTraining = () => {
           onClose={() => {
             setShowErrorModal(false);
           }}
-          error = {error}
+          error={error}
         />
 
         <AddTrainingDraftSuccessModal
@@ -483,8 +504,9 @@ const QmsAddTraining = () => {
             name="trainingTitle"
             value={formData.trainingTitle}
             onChange={handleChange}
-            className={`add-training-inputs focus:outline-none ${fieldErrors.trainingTitle ? 'border-red-500' : ''}`}
-
+            className={`add-training-inputs focus:outline-none ${
+              fieldErrors.trainingTitle ? "border-red-500" : ""
+            }`}
           />
           {fieldErrors.trainingTitle && (
             <p className="text-red-500 text-sm">Training Title is required</p>
@@ -527,7 +549,9 @@ const QmsAddTraining = () => {
             name="expectedResults"
             value={formData.expectedResults}
             onChange={handleChange}
-            className={`add-training-inputs !h-[109px] focus:outline-none ${fieldErrors.expectedResults ? 'border-red-500' : ''}`}
+            className={`add-training-inputs !h-[109px] focus:outline-none ${
+              fieldErrors.expectedResults ? "border-red-500" : ""
+            }`}
           />
           {fieldErrors.expectedResults && (
             <p className="text-red-500 text-sm">Expected Results is required</p>
@@ -558,18 +582,17 @@ const QmsAddTraining = () => {
                 onChange={(e) => setAttendeeSearchTerm(e.target.value)}
                 className="add-training-inputs !pr-10"
               />
-              <Search
-                className="absolute right-3"
-                size={20}
-                color="#AAAAAA"
-              />
+              <Search className="absolute right-3" size={20} color="#AAAAAA" />
             </div>
           </div>
 
           <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
             {filteredAttendees.length > 0 ? (
-              filteredAttendees.map(user => (
-                <div key={user.id} className="flex items-center py-2 last:border-0">
+              filteredAttendees.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center py-2 last:border-0"
+                >
                   <input
                     type="checkbox"
                     id={`attendee-${user.id}`}
@@ -597,7 +620,9 @@ const QmsAddTraining = () => {
                 </div>
               ))
             ) : (
-              <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+              <div className="text-sm text-[#AAAAAA] p-2">
+                No attendees found
+              </div>
             )}
           </div>
         </div>
@@ -663,8 +688,9 @@ const QmsAddTraining = () => {
                 name="datePlanned.day"
                 value={formData.datePlanned.day}
                 onChange={handleChange}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.datePlanned ? 'border-red-500' : ''}`}
-
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  fieldErrors.datePlanned ? "border-red-500" : ""
+                }`}
               >
                 <option value="" disabled>
                   dd
@@ -688,7 +714,6 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("datePlanned.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   mm
@@ -712,7 +737,6 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("datePlanned.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   yyyy
@@ -734,9 +758,7 @@ const QmsAddTraining = () => {
 
         {/* Date Conducted */}
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Date Conducted
-          </label>
+          <label className="add-training-label">Date Conducted</label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
             <div className="relative">
@@ -821,8 +843,9 @@ const QmsAddTraining = () => {
                 name="startTime.hour"
                 value={formData.startTime.hour}
                 onChange={handleChange}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.startTime ? 'border-red-500' : ''}`}
-
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  fieldErrors.startTime ? "border-red-500" : ""
+                }`}
               >
                 <option value="" disabled>
                   Hour
@@ -846,7 +869,6 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("startTime.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   Min
@@ -880,8 +902,9 @@ const QmsAddTraining = () => {
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("endTime.hour")}
                 onBlur={() => setFocusedDropdown(null)}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.endTime ? 'border-red-500' : ''}`}
-
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  fieldErrors.endTime ? "border-red-500" : ""
+                }`}
               >
                 <option value="" disabled>
                   Hour
@@ -905,7 +928,6 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("endTime.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   Min
@@ -935,7 +957,9 @@ const QmsAddTraining = () => {
             name="venue"
             value={formData.venue}
             onChange={handleChange}
-            className={`add-training-inputs focus:outline-none ${fieldErrors.venue ? 'border-red-500' : ''}`}
+            className={`add-training-inputs focus:outline-none ${
+              fieldErrors.venue ? "border-red-500" : ""
+            }`}
           />
           {fieldErrors.venue && (
             <p className="text-red-500 text-sm">Venue is required</p>
@@ -986,9 +1010,7 @@ const QmsAddTraining = () => {
         {/* Evaluation Date */}
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Evaluation Date
-            </label>
+            <label className="add-training-label">Evaluation Date</label>
             <div className="grid grid-cols-3 gap-5">
               {/* Day */}
               <div className="relative">

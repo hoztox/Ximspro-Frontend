@@ -20,9 +20,8 @@ const QmsEditDraftListTraining = () => {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
+  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState("");
   const [filteredAttendees, setFilteredAttendees] = useState([]);
-
 
   const validateForm = () => {
     const newErrors = {};
@@ -34,7 +33,11 @@ const QmsEditDraftListTraining = () => {
     if (!formData.expected_results.trim()) {
       newErrors.expected_results = "Expected Results is Required";
     }
-    if (!formData.date_planned.day || !formData.date_planned.month || !formData.date_planned.year) {
+    if (
+      !formData.date_planned.day ||
+      !formData.date_planned.month ||
+      !formData.date_planned.year
+    ) {
       newErrors.date_planned = "Date Planned is Required";
     }
     if (!formData.start_time.hour || !formData.start_time.min) {
@@ -50,7 +53,6 @@ const QmsEditDraftListTraining = () => {
     setFieldErrors(newErrors);
     return Object.keys(newErrors).length === 0; // Return true if no errors
   };
-
 
   const [users, setUsers] = useState([]);
 
@@ -113,13 +115,14 @@ const QmsEditDraftListTraining = () => {
 
   useEffect(() => {
     if (users.length > 0) {
-      const filtered = users.filter(user =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(attendeeSearchTerm.toLowerCase())
+      const filtered = users.filter((user) =>
+        `${user.first_name} ${user.last_name}`
+          .toLowerCase()
+          .includes(attendeeSearchTerm.toLowerCase())
       );
       setFilteredAttendees(filtered);
     }
   }, [attendeeSearchTerm, users]);
-
 
   // Get all users for dropdown selections
   useEffect(() => {
@@ -146,8 +149,7 @@ const QmsEditDraftListTraining = () => {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/training-get/${id}/`);
         const data = response.data;
-        console.log('before response', data);
-
+        console.log("before response", data);
 
         // Parse dates
         let plannedDateObj = { day: "", month: "", year: "" };
@@ -215,7 +217,24 @@ const QmsEditDraftListTraining = () => {
         setLoading(false);
         console.log("Training data fetched successfully:", response.data);
       } catch (err) {
-        setError("Failed to load training data");
+        let errorMsg = "Failed to fetch training data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
         console.error("Error fetching training data:", err);
       }
@@ -279,35 +298,33 @@ const QmsEditDraftListTraining = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-     
     if (!validateForm()) {
       return;
     }
 
     // Create FormData object for file upload
     const submitData = new FormData();
-    console.log('formData', formData);
-
+    console.log("formData", formData);
 
     // Format dates correctly (YYYY-MM-DD)
     const formattedDatePlanned =
       formData.date_planned.year &&
-        formData.date_planned.month &&
-        formData.date_planned.day
+      formData.date_planned.month &&
+      formData.date_planned.day
         ? `${formData.date_planned.year}-${formData.date_planned.month}-${formData.date_planned.day}`
         : "";
 
     const formattedDateConducted =
       formData.date_conducted.year &&
-        formData.date_conducted.month &&
-        formData.date_conducted.day
+      formData.date_conducted.month &&
+      formData.date_conducted.day
         ? `${formData.date_conducted.year}-${formData.date_conducted.month}-${formData.date_conducted.day}`
         : "";
 
     const formattedEvaluationDate =
       formData.evaluation_date.year &&
-        formData.evaluation_date.month &&
-        formData.evaluation_date.day
+      formData.evaluation_date.month &&
+      formData.evaluation_date.day
         ? `${formData.evaluation_date.year}-${formData.evaluation_date.month}-${formData.evaluation_date.day}`
         : "";
 
@@ -395,15 +412,24 @@ const QmsEditDraftListTraining = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating training:", err);
-      if (err.response && err.response.data) {
-        // Display specific validation errors
-        console.error("Validation errors:", err.response.data);
-        setError(
-          `Failed to update training: ${JSON.stringify(err.response.data)}`
-        );
-      } else {
-        setError("Failed to update training");
+      let errorMsg = "Failed to update training. Please try again";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -467,7 +493,7 @@ const QmsEditDraftListTraining = () => {
         onClose={() => {
           setShowErrorModal(false);
         }}
-        error = {error}
+        error={error}
       />
 
       <form
@@ -487,7 +513,9 @@ const QmsEditDraftListTraining = () => {
             className="add-training-inputs focus:outline-none"
           />
           {fieldErrors.training_title && (
-            <p className="text-red-500 text-sm mt-1">{fieldErrors.training_title}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {fieldErrors.training_title}
+            </p>
           )}
         </div>
 
@@ -511,10 +539,11 @@ const QmsEditDraftListTraining = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                            ${focusedDropdown === "type_of_training"
-                  ? "rotate-180"
-                  : ""
-                }`}
+                            ${
+                              focusedDropdown === "type_of_training"
+                                ? "rotate-180"
+                                : ""
+                            }`}
               size={20}
               color="#AAAAAA"
             />
@@ -532,8 +561,10 @@ const QmsEditDraftListTraining = () => {
             onChange={handleChange}
             className="add-training-inputs !h-[109px]"
           />
-           {fieldErrors.expected_results && (
-            <p className="text-red-500 text-sm mt-1">{fieldErrors.expected_results}</p>
+          {fieldErrors.expected_results && (
+            <p className="text-red-500 text-sm mt-1">
+              {fieldErrors.expected_results}
+            </p>
           )}
         </div>
 
@@ -561,18 +592,17 @@ const QmsEditDraftListTraining = () => {
                 onChange={(e) => setAttendeeSearchTerm(e.target.value)}
                 className="add-training-inputs !pr-10"
               />
-              <Search
-                className="absolute right-3"
-                size={20}
-                color="#AAAAAA"
-              />
+              <Search className="absolute right-3" size={20} color="#AAAAAA" />
             </div>
           </div>
 
           <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
             {filteredAttendees.length > 0 ? (
-              filteredAttendees.map(user => (
-                <div key={user.id} className="flex items-center py-2 last:border-0">
+              filteredAttendees.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center py-2 last:border-0"
+                >
                   <input
                     type="checkbox"
                     id={`attendee-${user.id}`}
@@ -589,7 +619,7 @@ const QmsEditDraftListTraining = () => {
 
                       setFormData({
                         ...formData,
-                        training_attendees: updatedAttendees
+                        training_attendees: updatedAttendees,
                       });
                     }}
                     className="mr-2 form-checkboxes"
@@ -603,7 +633,9 @@ const QmsEditDraftListTraining = () => {
                 </div>
               ))
             ) : (
-              <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+              <div className="text-sm text-[#AAAAAA] p-2">
+                No attendees found
+              </div>
             )}
           </div>
         </div>
@@ -656,10 +688,11 @@ const QmsEditDraftListTraining = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "requested_by"
-                  ? "rotate-180"
-                  : ""
-                }`}
+                            ${
+                              focusedDropdown === "requested_by"
+                                ? "rotate-180"
+                                : ""
+                            }`}
               size={20}
               color="#AAAAAA"
             />
@@ -689,11 +722,12 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_planned.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_planned.day"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -716,11 +750,12 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_planned.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_planned.month"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -743,26 +778,27 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_planned.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_planned.year"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
           </div>
-           {fieldErrors.date_planned && (
-            <p className="text-red-500 text-sm mt-1">{fieldErrors.date_planned}</p>
+          {fieldErrors.date_planned && (
+            <p className="text-red-500 text-sm mt-1">
+              {fieldErrors.date_planned}
+            </p>
           )}
         </div>
 
         {/* Date Conducted */}
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Date Conducted
-          </label>
+          <label className="add-training-label">Date Conducted</label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
             <div className="relative">
@@ -773,7 +809,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   dd
@@ -782,11 +817,12 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_conducted.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_conducted.day"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -801,7 +837,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   mm
@@ -810,11 +845,12 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_conducted.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_conducted.month"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -829,7 +865,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   yyyy
@@ -838,11 +873,12 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                          ${focusedDropdown ===
-                    "date_conducted.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                          ${
+                                            focusedDropdown ===
+                                            "date_conducted.year"
+                                              ? "rotate-180"
+                                              : ""
+                                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -852,7 +888,9 @@ const QmsEditDraftListTraining = () => {
 
         {/* Start Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">Start <span className="text-red-500">*</span></label>
+          <label className="add-training-label">
+            Start <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -863,7 +901,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   Hour
@@ -879,10 +916,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "start_time.hour"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "start_time.hour"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -897,7 +935,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   Min
@@ -913,23 +950,28 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "start_time.min"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "start_time.min"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
           </div>
           {fieldErrors.start_time && (
-            <p className="text-red-500 text-sm mt-1">{fieldErrors.start_time}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {fieldErrors.start_time}
+            </p>
           )}
         </div>
 
         {/* End Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">End <span className="text-red-500">*</span></label>
+          <label className="add-training-label">
+            End <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -940,7 +982,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
               >
                 <option value="" disabled>
                   Hour
@@ -956,10 +997,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "end_time.hour"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "end_time.hour"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -989,10 +1031,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "end_time.min"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "end_time.min"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -1065,9 +1108,7 @@ const QmsEditDraftListTraining = () => {
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
-              <label className="add-training-label">
-                Evaluation Date
-              </label>
+              <label className="add-training-label">Evaluation Date</label>
               <div className="grid grid-cols-3 gap-5">
                 {/* Day */}
                 <div className="relative">
@@ -1078,7 +1119,6 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.day")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
                   >
                     <option value="" disabled>
                       dd
@@ -1087,11 +1127,12 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${focusedDropdown ===
-                        "evaluation_date.day"
-                        ? "rotate-180"
-                        : ""
-                      }`}
+                                                  ${
+                                                    focusedDropdown ===
+                                                    "evaluation_date.day"
+                                                      ? "rotate-180"
+                                                      : ""
+                                                  }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1106,7 +1147,6 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.month")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
                   >
                     <option value="" disabled>
                       mm
@@ -1115,11 +1155,12 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${focusedDropdown ===
-                        "evaluation_date.month"
-                        ? "rotate-180"
-                        : ""
-                      }`}
+                                                  ${
+                                                    focusedDropdown ===
+                                                    "evaluation_date.month"
+                                                      ? "rotate-180"
+                                                      : ""
+                                                  }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1134,7 +1175,6 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.year")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-
                   >
                     <option value="" disabled>
                       yyyy
@@ -1143,11 +1183,12 @@ const QmsEditDraftListTraining = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                                  ${focusedDropdown ===
-                        "evaluation_date.year"
-                        ? "rotate-180"
-                        : ""
-                      }`}
+                                                  ${
+                                                    focusedDropdown ===
+                                                    "evaluation_date.year"
+                                                      ? "rotate-180"
+                                                      : ""
+                                                  }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -1178,10 +1219,11 @@ const QmsEditDraftListTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "evaluation_by"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "evaluation_by"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />

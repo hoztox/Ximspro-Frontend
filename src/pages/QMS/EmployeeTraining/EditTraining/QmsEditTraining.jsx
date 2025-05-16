@@ -16,10 +16,11 @@ const QmsEditTraining = () => {
   const [users, setUsers] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
 
-  const [showEditTrainingSuccessModal, setShowEditTrainingSuccessModal] = useState(false);
+  const [showEditTrainingSuccessModal, setShowEditTrainingSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
+  const [attendeeSearchTerm, setAttendeeSearchTerm] = useState("");
   const [filteredAttendees, setFilteredAttendees] = useState([]);
 
   // Initial form state structure
@@ -34,12 +35,13 @@ const QmsEditTraining = () => {
     date_planned: {
       day: "",
       month: "",
-      year: ""
+      year: "",
     },
-    date_conducted: {  // Ensure this is an object, not null
+    date_conducted: {
+      // Ensure this is an object, not null
       day: "",
       month: "",
-      year: ""
+      year: "",
     },
     start_time: {
       hour: "",
@@ -52,10 +54,11 @@ const QmsEditTraining = () => {
     venue: "",
     attachment: null,
     training_evaluation: "",
-    evaluation_date: {  // Ensure this is an object, not null
+    evaluation_date: {
+      // Ensure this is an object, not null
       day: "",
       month: "",
-      year: ""
+      year: "",
     },
     evaluation_by: "",
     send_notification: false,
@@ -67,32 +70,36 @@ const QmsEditTraining = () => {
     let isValid = true;
 
     if (!formData.training_title.trim()) {
-      errors.training_title = 'Training Title is required';
+      errors.training_title = "Training Title is required";
       isValid = false;
     }
 
     if (!formData.expected_results.trim()) {
-      errors.expected_results = 'Expected Results are required';
+      errors.expected_results = "Expected Results are required";
       isValid = false;
     }
 
-    if (!formData.date_planned.day || !formData.date_planned.month || !formData.date_planned.year) {
-      errors.date_planned = 'Date Planned is required';
+    if (
+      !formData.date_planned.day ||
+      !formData.date_planned.month ||
+      !formData.date_planned.year
+    ) {
+      errors.date_planned = "Date Planned is required";
       isValid = false;
     }
 
     if (!formData.start_time.hour || !formData.start_time.min) {
-      errors.start_time = 'Start Time is required';
+      errors.start_time = "Start Time is required";
       isValid = false;
     }
 
     if (!formData.end_time.hour || !formData.end_time.min) {
-      errors.end_time = 'End Time is required';
+      errors.end_time = "End Time is required";
       isValid = false;
     }
 
     if (!formData.venue.trim()) {
-      errors.venue = 'Venue is required';
+      errors.venue = "Venue is required";
       isValid = false;
     }
 
@@ -124,8 +131,10 @@ const QmsEditTraining = () => {
 
   useEffect(() => {
     if (users.length > 0) {
-      const filtered = users.filter(user =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(attendeeSearchTerm.toLowerCase())
+      const filtered = users.filter((user) =>
+        `${user.first_name} ${user.last_name}`
+          .toLowerCase()
+          .includes(attendeeSearchTerm.toLowerCase())
       );
       setFilteredAttendees(filtered);
     }
@@ -162,14 +171,14 @@ const QmsEditTraining = () => {
             return {
               day: "",
               month: "",
-              year: ""
+              year: "",
             };
           }
           const date = new Date(dateString);
           return {
-            day: date.getDate().toString().padStart(2, '0'),
-            month: (date.getMonth() + 1).toString().padStart(2, '0'),
-            year: date.getFullYear().toString()
+            day: date.getDate().toString().padStart(2, "0"),
+            month: (date.getMonth() + 1).toString().padStart(2, "0"),
+            year: date.getFullYear().toString(),
           };
         };
 
@@ -201,7 +210,7 @@ const QmsEditTraining = () => {
           date_conducted: dateConducted,
           evaluation_date: evaluationDate,
           start_time: startTime,
-          end_time: endTime
+          end_time: endTime,
         });
 
         if (data.attachment) {
@@ -211,7 +220,24 @@ const QmsEditTraining = () => {
         setLoading(false);
         console.log("Training data fetched successfully:", response.data);
       } catch (err) {
-        setError("Failed to load training data");
+        let errorMsg = "Failed to fetch training data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
         console.error("Error fetching training data:", err);
       }
@@ -263,8 +289,8 @@ const QmsEditTraining = () => {
 
     // Clear error when field is changed
     if (fieldErrors[name]) {
-      setFieldErrors(prev => {
-        const newErrors = {...prev};
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
         delete newErrors[name];
         return newErrors;
       });
@@ -283,29 +309,30 @@ const QmsEditTraining = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (!validateForm()) {
       return;
     }
-  
+
     // Helper function to format date fields
     const formatDate = (dateObj) => {
-      if (!dateObj || !dateObj.year || !dateObj.month || !dateObj.day) return null;
+      if (!dateObj || !dateObj.year || !dateObj.month || !dateObj.day)
+        return null;
       return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
-  
+
     // Create FormData object for file upload
     const submitData = new FormData();
-  
+
     // Format time fields
     const formattedStartTime = `${formData.start_time.hour}:${formData.start_time.min}:00`;
     const formattedEndTime = `${formData.end_time.hour}:${formData.end_time.min}:00`;
-  
+
     // Format date fields
     const formattedDatePlanned = formatDate(formData.date_planned);
     const formattedDateConducted = formatDate(formData.date_conducted);
     const formattedEvaluationDate = formatDate(formData.evaluation_date);
-  
+
     // Add regular fields
     submitData.append("training_title", formData.training_title);
     submitData.append("type_of_training", formData.type_of_training);
@@ -313,32 +340,35 @@ const QmsEditTraining = () => {
     submitData.append("actual_results", formData.actual_results);
     submitData.append("status", formData.status);
     submitData.append("requested_by", formData.requested_by);
-    
+
     // Only append dates if they are valid
-    if (formattedDatePlanned) submitData.append("date_planned", formattedDatePlanned);
-    if (formattedDateConducted) submitData.append("date_conducted", formattedDateConducted);
-    
+    if (formattedDatePlanned)
+      submitData.append("date_planned", formattedDatePlanned);
+    if (formattedDateConducted)
+      submitData.append("date_conducted", formattedDateConducted);
+
     submitData.append("start_time", formattedStartTime);
     submitData.append("end_time", formattedEndTime);
     submitData.append("venue", formData.venue);
     submitData.append("training_evaluation", formData.training_evaluation);
-    
-    if (formattedEvaluationDate) submitData.append("evaluation_date", formattedEvaluationDate);
-    
+
+    if (formattedEvaluationDate)
+      submitData.append("evaluation_date", formattedEvaluationDate);
+
     submitData.append("evaluation_by", formData.evaluation_by);
     submitData.append("send_notification", formData.send_notification);
     submitData.append("is_draft", formData.is_draft);
-  
+
     // Handle attendees (many-to-many field)
     formData.training_attendees.forEach((attendee) => {
       submitData.append("training_attendees", attendee);
     });
-  
+
     // Handle file attachment
     if (formData.attachment && typeof formData.attachment === "object") {
       submitData.append("attachment", formData.attachment);
     }
-  
+
     try {
       const response = await axios.put(
         `${BASE_URL}/qms/training/${id}/edit/`,
@@ -349,7 +379,7 @@ const QmsEditTraining = () => {
           },
         }
       );
-  
+
       console.log("Training updated successfully:", response.data);
       setShowEditTrainingSuccessModal(true);
       setTimeout(() => {
@@ -358,7 +388,24 @@ const QmsEditTraining = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating training:", err);
-      setError("Failed to update training");
+      let errorMsg = "Failed to update training. Please try again";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -421,7 +468,7 @@ const QmsEditTraining = () => {
         onClose={() => {
           setShowErrorModal(false);
         }}
-        error = {error}
+        error={error}
       />
 
       <form
@@ -465,10 +512,11 @@ const QmsEditTraining = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                            ${focusedDropdown === "type_of_training"
-                  ? "rotate-180"
-                  : ""
-                }`}
+                            ${
+                              focusedDropdown === "type_of_training"
+                                ? "rotate-180"
+                                : ""
+                            }`}
               size={20}
               color="#AAAAAA"
             />
@@ -485,10 +533,11 @@ const QmsEditTraining = () => {
             value={formData.expected_results}
             onChange={handleChange}
             className="add-training-inputs !h-[109px]"
-             
           />
           {fieldErrors.expected_results && (
-            <p className="text-red-500 text-sm">{fieldErrors.expected_results}</p>
+            <p className="text-red-500 text-sm">
+              {fieldErrors.expected_results}
+            </p>
           )}
         </div>
 
@@ -516,18 +565,17 @@ const QmsEditTraining = () => {
                 onChange={(e) => setAttendeeSearchTerm(e.target.value)}
                 className="add-training-inputs !pr-10"
               />
-              <Search
-                className="absolute right-3"
-                size={20}
-                color="#AAAAAA"
-              />
+              <Search className="absolute right-3" size={20} color="#AAAAAA" />
             </div>
           </div>
 
           <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
             {filteredAttendees.length > 0 ? (
-              filteredAttendees.map(user => (
-                <div key={user.id} className="flex items-center py-2 last:border-0">
+              filteredAttendees.map((user) => (
+                <div
+                  key={user.id}
+                  className="flex items-center py-2 last:border-0"
+                >
                   <input
                     type="checkbox"
                     id={`attendee-${user.id}`}
@@ -544,7 +592,7 @@ const QmsEditTraining = () => {
 
                       setFormData({
                         ...formData,
-                        training_attendees: updatedAttendees
+                        training_attendees: updatedAttendees,
                       });
                     }}
                     className="mr-2 form-checkboxes"
@@ -558,7 +606,9 @@ const QmsEditTraining = () => {
                 </div>
               ))
             ) : (
-              <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+              <div className="text-sm text-[#AAAAAA] p-2">
+                No attendees found
+              </div>
             )}
           </div>
         </div>
@@ -611,10 +661,11 @@ const QmsEditTraining = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "requested_by"
-                  ? "rotate-180"
-                  : ""
-                }`}
+                            ${
+                              focusedDropdown === "requested_by"
+                                ? "rotate-180"
+                                : ""
+                            }`}
               size={20}
               color="#AAAAAA"
             />
@@ -636,7 +687,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   dd
@@ -645,10 +695,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_planned.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                          ${
+                            focusedDropdown === "date_planned.day"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -663,7 +714,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   mm
@@ -672,10 +722,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_planned.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                          ${
+                            focusedDropdown === "date_planned.month"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -690,7 +741,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   yyyy
@@ -699,10 +749,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                          ${focusedDropdown === "date_planned.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                          ${
+                            focusedDropdown === "date_planned.year"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -715,9 +766,7 @@ const QmsEditTraining = () => {
 
         {/* Date Conducted */}
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Date Conducted
-          </label>
+          <label className="add-training-label">Date Conducted</label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
             <div className="relative">
@@ -736,9 +785,8 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "date_conducted.day"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "date_conducted.day" ? "rotate-180" : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
@@ -762,9 +810,10 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "date_conducted.month"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "date_conducted.month"
+                      ? "rotate-180"
+                      : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
@@ -788,9 +837,10 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "date_conducted.year"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "date_conducted.year"
+                      ? "rotate-180"
+                      : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
@@ -801,7 +851,9 @@ const QmsEditTraining = () => {
 
         {/* Start Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">Start <span className="text-red-500">*</span></label>
+          <label className="add-training-label">
+            Start <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -812,7 +864,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   Hour
@@ -828,10 +879,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "start_time.hour"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "start_time.hour"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -846,7 +898,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   Min
@@ -862,10 +913,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "start_time.min"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "start_time.min"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -878,7 +930,9 @@ const QmsEditTraining = () => {
 
         {/* End Time */}
         <div className="flex flex-col gap-3 w-[65.5%]">
-          <label className="add-training-label">End <span className="text-red-500">*</span></label>
+          <label className="add-training-label">
+            End <span className="text-red-500">*</span>
+          </label>
           <div className="grid grid-cols-2 gap-5">
             {/* Hour */}
             <div className="relative">
@@ -889,7 +943,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   Hour
@@ -905,10 +958,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "end_time.hour"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "end_time.hour"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -923,7 +977,6 @@ const QmsEditTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
               >
                 <option value="" disabled>
                   Min
@@ -939,10 +992,11 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "end_time.min"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "end_time.min"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -964,7 +1018,6 @@ const QmsEditTraining = () => {
             value={formData.venue}
             onChange={handleChange}
             className="add-training-inputs"
-             
           />
           {fieldErrors.venue && (
             <p className="text-red-500 text-sm">{fieldErrors.venue}</p>
@@ -1014,9 +1067,7 @@ const QmsEditTraining = () => {
 
         {/* Evaluation Date */}
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Evaluation Date
-          </label>
+          <label className="add-training-label">Evaluation Date</label>
           <div className="grid grid-cols-3 gap-5">
             {/* Day */}
             <div className="relative">
@@ -1035,9 +1086,10 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "evaluation_date.day"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "evaluation_date.day"
+                      ? "rotate-180"
+                      : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
@@ -1061,9 +1113,10 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "evaluation_date.month"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "evaluation_date.month"
+                      ? "rotate-180"
+                      : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
@@ -1087,9 +1140,10 @@ const QmsEditTraining = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                  ${focusedDropdown === "evaluation_date.year"
-                    ? "rotate-180"
-                    : ""
+                  ${
+                    focusedDropdown === "evaluation_date.year"
+                      ? "rotate-180"
+                      : ""
                   }`}
                 size={20}
                 color="#AAAAAA"
