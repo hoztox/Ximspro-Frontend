@@ -24,6 +24,29 @@ const QmsAddTraining = () => {
   const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
   const [filteredAttendees, setFilteredAttendees] = useState([]);
 
+  const [fieldErrors, setFieldErrors] = useState({
+    trainingTitle: false,
+    expectedResults: false,
+    datePlanned: false,
+    startTime: false,
+    endTime: false,
+    venue: false
+  });
+
+  const validateForm = () => {
+    const errors = {
+      trainingTitle: !formData.trainingTitle,
+      expectedResults: !formData.expectedResults,
+      datePlanned: !formData.datePlanned.day || !formData.datePlanned.month || !formData.datePlanned.year,
+      startTime: !formData.startTime.hour || !formData.startTime.min,
+      endTime: !formData.endTime.hour || !formData.endTime.min,
+      venue: !formData.venue
+    };
+
+    setFieldErrors(errors);
+    return !Object.values(errors).some(error => error);
+  };
+
   const [formData, setFormData] = useState({
     trainingTitle: "",
     typeOfTraining: "Internal",
@@ -170,8 +193,13 @@ const QmsAddTraining = () => {
 
   const handleSubmit = async (e, isDraft = false) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
-  
+
     try {
       const userId = getRelevantUserId();
       const companyId = getUserCompanyId();
@@ -180,25 +208,25 @@ const QmsAddTraining = () => {
         setLoading(false);
         return;
       }
-  
+
       // Format dates and times for submission
       const datePlanned = `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}`;
-      
+
       // Check if all date conducted fields are filled
-      const hasDateConducted = formData.dateConducted.year && 
-                             formData.dateConducted.month && 
-                             formData.dateConducted.day;
-      
+      const hasDateConducted = formData.dateConducted.year &&
+        formData.dateConducted.month &&
+        formData.dateConducted.day;
+
       // Check if all evaluation date fields are filled
-      const hasEvaluationDate = formData.evaluationDate.year && 
-                              formData.evaluationDate.month && 
-                              formData.evaluationDate.day;
-      
+      const hasEvaluationDate = formData.evaluationDate.year &&
+        formData.evaluationDate.month &&
+        formData.evaluationDate.day;
+
       const startTime = `${formData.startTime.hour}:${formData.startTime.min}:00`;
       const endTime = `${formData.endTime.hour}:${formData.endTime.min}:00`;
-  
+
       const submissionData = new FormData();
-      
+
       submissionData.append("company", companyId);
       submissionData.append("user", userId);
       submissionData.append("training_title", formData.trainingTitle);
@@ -208,37 +236,37 @@ const QmsAddTraining = () => {
       submissionData.append("status", formData.status);
       submissionData.append("requested_by", formData.requestedBy);
       submissionData.append("date_planned", datePlanned);
-      
+
       // Only append date_conducted if all fields are filled
       if (hasDateConducted) {
         const dateConducted = `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`;
         submissionData.append("date_conducted", dateConducted);
       }
-      
+
       submissionData.append("start_time", startTime);
       submissionData.append("end_time", endTime);
       submissionData.append("venue", formData.venue);
       submissionData.append("training_evaluation", formData.trainingEvaluation);
-      
+
       // Only append evaluation_date if all fields are filled
       if (hasEvaluationDate) {
         const evaluationDate = `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.day}`;
         submissionData.append("evaluation_date", evaluationDate);
       }
-      
+
       submissionData.append("evaluation_by", formData.evaluationBy);
       submissionData.append("send_notification", formData.send_notification);
       submissionData.append("is_draft", isDraft || formData.is_draft);
-  
+
       // Append selected attendees
       selectedAttendees.forEach((attendeeId) => {
         submissionData.append("training_attendees", attendeeId);
       });
-  
+
       if (formData.attachment) {
         submissionData.append("attachment", formData.attachment);
       }
-  
+
       const response = await axios.post(
         `${BASE_URL}/qms/training/create/`,
         submissionData,
@@ -248,7 +276,7 @@ const QmsAddTraining = () => {
           },
         }
       );
-  
+
       setShowAddTrainingSuccessModal(true);
       setTimeout(() => {
         setShowAddTrainingSuccessModal(false);
@@ -293,14 +321,14 @@ const QmsAddTraining = () => {
       if (!companyId || !userId) {
         throw new Error("Company ID or User ID not found");
       }
-      
+
       // Check if date fields are completely filled
       const hasDatePlanned = formData.datePlanned.day && formData.datePlanned.month && formData.datePlanned.year;
       const hasDateConducted = formData.dateConducted.day && formData.dateConducted.month && formData.dateConducted.year;
       const hasStartTime = formData.startTime.hour && formData.startTime.min;
       const hasEndTime = formData.endTime.hour && formData.endTime.min;
       const hasEvaluationDate = formData.evaluationDate.day && formData.evaluationDate.month && formData.evaluationDate.year;
-      
+
       // 1. Prepare the payload to be sent as JSON
       const payload = {
         company: companyId,
@@ -318,36 +346,36 @@ const QmsAddTraining = () => {
         is_draft: true, // draft status
         training_attendees: selectedAttendees, // array of integers like [7, 14]
       };
-      
+
       // Only add date fields if they are completely filled
       if (hasDatePlanned) {
         payload.date_planned = `${formData.datePlanned.year}-${formData.datePlanned.month}-${formData.datePlanned.day}`;
       }
-      
+
       if (hasDateConducted) {
         payload.date_conducted = `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`;
       }
-      
+
       if (hasStartTime) {
         payload.start_time = `${formData.startTime.hour}:${formData.startTime.min}:00`;
       }
-      
+
       if (hasEndTime) {
         payload.end_time = `${formData.endTime.hour}:${formData.endTime.min}:00`;
       }
-      
+
       if (hasEvaluationDate) {
         payload.evaluation_date = `${formData.evaluationDate.year}-${formData.evaluationDate.month}-${formData.evaluationDate.year}`;
       }
-      
+
       // 2. Optional: If there's an attachment, add it as well (might need additional handling on the backend)
       if (formData.attachment) {
         payload.attachment = formData.attachment;
       }
-      
+
       // 3. Debug: Log the payload being sent
       console.log('Submitting draft with data:', payload);
-      
+
       // 4. Make the POST request
       const response = await axios.post(
         `${BASE_URL}/qms/training/draft-create/`,
@@ -359,10 +387,10 @@ const QmsAddTraining = () => {
           timeout: 10000, // Timeout in ms
         }
       );
-      
+
       // Show success modal
       setShowDraftTrainingSuccessModal(true);
-      
+
       // 5. Handle success response
       setTimeout(() => {
         setShowDraftTrainingSuccessModal(false);
@@ -454,9 +482,12 @@ const QmsAddTraining = () => {
             name="trainingTitle"
             value={formData.trainingTitle}
             onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
+            className={`add-training-inputs focus:outline-none ${fieldErrors.trainingTitle ? 'border-red-500' : ''}`}
+
           />
+          {fieldErrors.trainingTitle && (
+            <p className="text-red-500 text-sm">Training Title is required</p>
+          )}
         </div>
 
         {/* Type of Training */}
@@ -495,9 +526,11 @@ const QmsAddTraining = () => {
             name="expectedResults"
             value={formData.expectedResults}
             onChange={handleChange}
-            className="add-training-inputs !h-[109px]"
-            required
+            className={`add-training-inputs !h-[109px] focus:outline-none ${fieldErrors.expectedResults ? 'border-red-500' : ''}`}
           />
+          {fieldErrors.expectedResults && (
+            <p className="text-red-500 text-sm">Expected Results is required</p>
+          )}
         </div>
 
         {/* Actual Results */}
@@ -629,10 +662,8 @@ const QmsAddTraining = () => {
                 name="datePlanned.day"
                 value={formData.datePlanned.day}
                 onChange={handleChange}
-                onFocus={() => setFocusedDropdown("datePlanned.day")}
-                onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.datePlanned ? 'border-red-500' : ''}`}
+
               >
                 <option value="" disabled>
                   dd
@@ -656,7 +687,7 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("datePlanned.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+
               >
                 <option value="" disabled>
                   mm
@@ -680,7 +711,7 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("datePlanned.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+
               >
                 <option value="" disabled>
                   yyyy
@@ -695,6 +726,9 @@ const QmsAddTraining = () => {
               />
             </div>
           </div>
+          {fieldErrors.datePlanned && (
+            <p className="text-red-500 text-sm">Date Planned is required</p>
+          )}
         </div>
 
         {/* Date Conducted */}
@@ -786,10 +820,8 @@ const QmsAddTraining = () => {
                 name="startTime.hour"
                 value={formData.startTime.hour}
                 onChange={handleChange}
-                onFocus={() => setFocusedDropdown("startTime.hour")}
-                onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.startTime ? 'border-red-500' : ''}`}
+
               >
                 <option value="" disabled>
                   Hour
@@ -813,7 +845,7 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("startTime.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+
               >
                 <option value="" disabled>
                   Min
@@ -828,6 +860,9 @@ const QmsAddTraining = () => {
               />
             </div>
           </div>
+          {fieldErrors.startTime && (
+            <p className="text-red-500 text-sm">Start Time is required</p>
+          )}
         </div>
 
         {/* End Time */}
@@ -844,8 +879,8 @@ const QmsAddTraining = () => {
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("endTime.hour")}
                 onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.endTime ? 'border-red-500' : ''}`}
+
               >
                 <option value="" disabled>
                   Hour
@@ -869,7 +904,7 @@ const QmsAddTraining = () => {
                 onFocus={() => setFocusedDropdown("endTime.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+
               >
                 <option value="" disabled>
                   Min
@@ -884,6 +919,9 @@ const QmsAddTraining = () => {
               />
             </div>
           </div>
+          {fieldErrors.endTime && (
+            <p className="text-red-500 text-sm">End Time is required</p>
+          )}
         </div>
 
         {/* Venue */}
@@ -896,9 +934,11 @@ const QmsAddTraining = () => {
             name="venue"
             value={formData.venue}
             onChange={handleChange}
-            className="add-training-inputs"
-            required
+            className={`add-training-inputs focus:outline-none ${fieldErrors.venue ? 'border-red-500' : ''}`}
           />
+          {fieldErrors.venue && (
+            <p className="text-red-500 text-sm">Venue is required</p>
+          )}
         </div>
 
         {/* Upload Attachments */}

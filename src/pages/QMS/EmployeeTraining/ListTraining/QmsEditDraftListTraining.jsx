@@ -17,10 +17,40 @@ const QmsEditDraftListTraining = () => {
     showEditDraftTrainingSuccessModal,
     setShowEditDraftTrainingSuccessModal,
   ] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
   const [filteredAttendees, setFilteredAttendees] = useState([]);
+
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate mandatory fields
+    if (!formData.training_title.trim()) {
+      newErrors.training_title = "Training Title is Required";
+    }
+    if (!formData.expected_results.trim()) {
+      newErrors.expected_results = "Expected Results is Required";
+    }
+    if (!formData.date_planned.day || !formData.date_planned.month || !formData.date_planned.year) {
+      newErrors.date_planned = "Date Planned is Required";
+    }
+    if (!formData.start_time.hour || !formData.start_time.min) {
+      newErrors.start_time = "Start Time is Required";
+    }
+    if (!formData.end_time.hour || !formData.end_time.min) {
+      newErrors.end_time = "End Time is Required";
+    }
+    if (!formData.venue.trim()) {
+      newErrors.venue = "Venue is Required";
+    }
+
+    setFieldErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
+  };
+
 
   const [users, setUsers] = useState([]);
 
@@ -116,8 +146,8 @@ const QmsEditDraftListTraining = () => {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/training-get/${id}/`);
         const data = response.data;
-        console.log('before response',data );
-        
+        console.log('before response', data);
+
 
         // Parse dates
         let plannedDateObj = { day: "", month: "", year: "" };
@@ -249,10 +279,15 @@ const QmsEditDraftListTraining = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+     
+    if (!validateForm()) {
+      return;
+    }
+
     // Create FormData object for file upload
     const submitData = new FormData();
     console.log('formData', formData);
-    
+
 
     // Format dates correctly (YYYY-MM-DD)
     const formattedDatePlanned =
@@ -449,8 +484,10 @@ const QmsEditDraftListTraining = () => {
             value={formData.training_title}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
-            required
           />
+          {fieldErrors.training_title && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.training_title}</p>
+          )}
         </div>
 
         {/* Type of Training */}
@@ -493,8 +530,10 @@ const QmsEditDraftListTraining = () => {
             value={formData.expected_results}
             onChange={handleChange}
             className="add-training-inputs !h-[109px]"
-            required
           />
+           {fieldErrors.expected_results && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.expected_results}</p>
+          )}
         </div>
 
         {/* Actual Results */}
@@ -641,7 +680,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   dd
@@ -669,7 +707,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   mm
@@ -697,7 +734,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_planned.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   yyyy
@@ -716,6 +752,9 @@ const QmsEditDraftListTraining = () => {
               />
             </div>
           </div>
+           {fieldErrors.date_planned && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.date_planned}</p>
+          )}
         </div>
 
         {/* Date Conducted */}
@@ -733,7 +772,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
+
               >
                 <option value="" disabled>
                   dd
@@ -761,7 +800,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
+
               >
                 <option value="" disabled>
                   mm
@@ -789,7 +828,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("date_conducted.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                 
+
               >
                 <option value="" disabled>
                   yyyy
@@ -823,8 +862,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
-                 
+
               >
                 <option value="" disabled>
                   Hour
@@ -858,8 +896,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("start_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
-                 
+
               >
                 <option value="" disabled>
                   Min
@@ -884,6 +921,9 @@ const QmsEditDraftListTraining = () => {
               />
             </div>
           </div>
+          {fieldErrors.start_time && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.start_time}</p>
+          )}
         </div>
 
         {/* End Time */}
@@ -899,8 +939,7 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.hour")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
-                 
+
               >
                 <option value="" disabled>
                   Hour
@@ -934,7 +973,6 @@ const QmsEditDraftListTraining = () => {
                 onFocus={() => setFocusedDropdown("end_time.min")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   Min
@@ -959,6 +997,9 @@ const QmsEditDraftListTraining = () => {
               />
             </div>
           </div>
+          {fieldErrors.end_time && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.end_time}</p>
+          )}
         </div>
 
         {/* Venue */}
@@ -972,8 +1013,10 @@ const QmsEditDraftListTraining = () => {
             value={formData.venue}
             onChange={handleChange}
             className="add-training-inputs"
-            required
           />
+          {fieldErrors.venue && (
+            <p className="text-red-500 text-sm mt-1">{fieldErrors.venue}</p>
+          )}
         </div>
 
         {/* Upload Attachments */}
@@ -1034,7 +1077,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.day")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                     
+
                   >
                     <option value="" disabled>
                       dd
@@ -1062,7 +1105,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.month")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                     
+
                   >
                     <option value="" disabled>
                       mm
@@ -1090,7 +1133,7 @@ const QmsEditDraftListTraining = () => {
                     onFocus={() => setFocusedDropdown("evaluation_date.year")}
                     onBlur={() => setFocusedDropdown(null)}
                     className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                     
+
                   >
                     <option value="" disabled>
                       yyyy
