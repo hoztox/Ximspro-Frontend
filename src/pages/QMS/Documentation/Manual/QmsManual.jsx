@@ -175,7 +175,24 @@ const QmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      setError("Failed to load manuals. Please try again.");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setLoading(false);
     }
   };
@@ -236,7 +253,24 @@ const QmsManual = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        setError("Failed to load data. Please try again.");
+        let errorMsg = "An error occurred while creating the meeting";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };

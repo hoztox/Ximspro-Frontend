@@ -21,7 +21,6 @@ const EditDraftQmsManual = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [manuals, setManuals] = useState([]);
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const [manualDetails, setManualDetails] = useState(null);
   const { id } = useParams();
@@ -115,7 +114,24 @@ const EditDraftQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      setError("Failed to load manual details");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -191,9 +207,24 @@ const EditDraftQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load manuals. Please check your connection and try again."
-      );
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -454,7 +485,24 @@ const EditDraftQmsManual = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      setError("Failed to update manual");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);

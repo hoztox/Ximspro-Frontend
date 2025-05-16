@@ -128,7 +128,24 @@ const ViewQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      setError("Failed to load manual details");
+     let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setLoading(false);
     }
   };
