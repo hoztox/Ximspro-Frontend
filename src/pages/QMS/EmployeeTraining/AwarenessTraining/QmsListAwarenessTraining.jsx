@@ -16,6 +16,7 @@ const QmsListAwarenessTraining = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [trainingItems, setTrainingItems] = useState([]);
+    const [draftCount, setDraftCount] = useState(0);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -41,14 +42,33 @@ const QmsListAwarenessTraining = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     useEffect(() => {
         const fetchAwarenessTrainingData = async () => {
             setIsLoading(true);
             try {
+                const userId = getRelevantUserId();
                 const companyId = getUserCompanyId();
                 const response = await axios.get(`${BASE_URL}/qms/awareness/${companyId}/`);
                 setTrainingItems(response.data);
                 setError(null);
+                const draftResponse = await axios.get(
+                    `${BASE_URL}/qms/awareness/drafts-count/${userId}/`
+                );
+                setDraftCount(draftResponse.data.count);
             } catch (err) {
                 setError('Failed to load awareness training data');
                 console.error('Error fetching awareness training data:', err);
@@ -183,6 +203,11 @@ const QmsListAwarenessTraining = () => {
                         onClick={handleDraftAwarenessTraining}
                     >
                         <span>Draft</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[114px] right-[268px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -297,7 +322,7 @@ const QmsListAwarenessTraining = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
-                error = {error}
+                error={error}
             />
         </div>
     );
