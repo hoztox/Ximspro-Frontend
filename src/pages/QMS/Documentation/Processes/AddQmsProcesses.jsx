@@ -26,7 +26,7 @@ const AddQmsProcesses = () => {
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
   // Add search state
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   const [formData, setFormData] = useState({
     name: "",
     type: "Strategic",
@@ -37,15 +37,15 @@ const AddQmsProcesses = () => {
     company: null,
     send_notification: false,
   });
-  
+
   const [dropdownRotation, setDropdownRotation] = useState({
     type: false,
     legal_requirements: false,
   });
-  
+
   const [showCustomField, setShowCustomField] = useState(false);
   const [fileName, setFileName] = useState("No file chosen");
-  
+
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
@@ -65,7 +65,7 @@ const AddQmsProcesses = () => {
   };
 
   const companyId = getUserCompanyId();
-  
+
   useEffect(() => {
     if (companyId) {
       setFormData((prev) => ({
@@ -75,7 +75,7 @@ const AddQmsProcesses = () => {
       fetchComplianceData();
     }
   }, [companyId]);
-  
+
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {
@@ -86,7 +86,7 @@ const AddQmsProcesses = () => {
     if (companyId) return companyId;
     return null;
   };
-  
+
   const fetchComplianceData = async () => {
     try {
       if (!companyId) {
@@ -108,7 +108,7 @@ const AddQmsProcesses = () => {
       ]);
     }
   };
-  
+
   const toggleDropdown = (field) => {
     setDropdownRotation((prev) => ({
       ...prev,
@@ -188,13 +188,13 @@ const AddQmsProcesses = () => {
     setError(null);
     const userId = getRelevantUserId();
     const submitData = new FormData();
-    
+
     // Add basic fields
     submitData.append("name", formData.name);
     submitData.append("type", formData.type);
     submitData.append("no", formData.no);
     submitData.append('user', userId);
-  
+
     // Handle legal requirements based on N/A selection
     if (showCustomField) {
       // If N/A is selected, don't append any legal requirements
@@ -216,19 +216,19 @@ const AddQmsProcesses = () => {
         }
       });
     }
-  
+
     // Add file if it exists
     if (formData.file instanceof File) {
       submitData.append("file", formData.file);
     }
-    
+
     // Add company ID
     if (formData.company) {
       submitData.append("company", formData.company);
     }
-  
+
     submitData.append("send_notification", formData.send_notification);
-    
+
     try {
       const response = await axios.post(
         `${BASE_URL}/qms/processes/`,
@@ -267,30 +267,30 @@ const AddQmsProcesses = () => {
       </div>
     );
   }
-  
+
   const handleSaveAsDraft = async () => {
     try {
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
-  
+
       if (!companyId || !userId) {
         setError("Company ID or User ID not found. Please log in again.");
         setLoading(false);
         return;
       }
-  
+
       const submitData = new FormData();
       console.log('formdata......', formData);
-      
+
       submitData.append("company", companyId);
       submitData.append("user", userId);
       submitData.append("is_draft", true);
-  
+
       // Add basic fields
       submitData.append("name", formData.name);
       submitData.append("type", formData.type);
       submitData.append("no", formData.no);
-  
+
       // Handle legal requirements based on N/A selection
       if (showCustomField) {
         if (formData.custom_legal_requirements) {
@@ -309,14 +309,14 @@ const AddQmsProcesses = () => {
           }
         });
       }
-  
+
       // Add file if it exists
       if (formData.file) {
         submitData.append("file", formData.file);
       }
-  
+
       submitData.append("send_notification", formData.send_notification);
-  
+
       const response = await axios.post(
         `${BASE_URL}/qms/processes/draft-create/`,
         submitData,
@@ -326,7 +326,7 @@ const AddQmsProcesses = () => {
           },
         }
       );
-  
+
       setLoading(false);
       setShowDraftProcessesSuccessModal(true);
       setTimeout(() => {
@@ -334,7 +334,7 @@ const AddQmsProcesses = () => {
         navigate("/company/qms/draft-processes");
       }, 1500);
       console.log('draaaaaft', response);
-      
+
     } catch (err) {
       setLoading(false);
       setShowDraftProcessesErrorModal(true);
@@ -348,11 +348,11 @@ const AddQmsProcesses = () => {
   };
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions
-    .filter(option => 
+    .filter(option =>
       !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
@@ -371,6 +371,7 @@ const AddQmsProcesses = () => {
         onClose={() => {
           setShowAddQmsProcessesErrorModal(false);
         }}
+        error={error}
       />
 
       <AddQmsProcessesDraftSucessesModal
@@ -385,13 +386,9 @@ const AddQmsProcesses = () => {
         onClose={() => {
           setShowDraftProcessesErrorModal(false);
         }}
+        error={error}
       />
 
-      {error && (
-        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
-          {error}
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -469,15 +466,15 @@ const AddQmsProcesses = () => {
                   placeholder="Search procedures..."
                   className="w-full add-qms-intertested-inputs pl-8 "
                 />
-              
+
               </div>
 
-          
+
               <div className="border border-[#383840] rounded-md p-2 max-h-[145px] overflow-y-auto">
-        
-             
+
+
                 {showCustomField ? (
-                  
+
                   <div className="mt-2 mb-3">
                     <textarea
                       name="custom_legal_requirements"
@@ -488,7 +485,7 @@ const AddQmsProcesses = () => {
                     />
                   </div>
                 ) : (
-               
+
                   <>
                     {filteredProcedures.length > 0 ? (
                       filteredProcedures.map((option, index) => (
@@ -506,16 +503,16 @@ const AddQmsProcesses = () => {
                           >
                             {option.title}
                           </label>
-                          
+
                         </div>
-                        
+
                       ))
                     ) : (
                       <p className="text-gray-400 mt-2 mb-2 not-found">No procedures found</p>
                     )}
                   </>
                 )}
-                    <div className="flex items-center mb-4 pb-2  ">
+                <div className="flex items-center mb-4 pb-2  ">
                   <input
                     type="checkbox"
                     id="procedure-na"
