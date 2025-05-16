@@ -462,7 +462,7 @@ const EditQmsRecordFormat = () => {
 
   // Render loading state
   if (isInitialLoad) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-center not-found">Loading Record Format Details...</div>;
   }
 
   const renderAttachmentPreview = () => {

@@ -11,6 +11,9 @@ import ManualCorrectionSuccessModal from './Modals/ManualCorrectionSuccessModal'
 import ManualCorrectionErrorModal from './Modals/ManualCorrectionErrorModal';
 import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
 import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
+import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
+import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
+import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
 
 const ViewQmsRecordFormat = () => {
     const navigate = useNavigate();
@@ -27,6 +30,11 @@ const ViewQmsRecordFormat = () => {
     const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
     const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
     const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
+
+    // Add delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+    const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
 
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
@@ -333,21 +341,39 @@ const ViewQmsRecordFormat = () => {
         return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
-    const handleDeleteRecordFormat = async (id) => {
+    // Updated delete function with confirmation flow
+    const handleDeleteRecordFormat = (id) => {
+        setShowDeleteModal(true);
+    };
+
+    // Handle confirmed delete
+    const handleConfirmDelete = async () => {
         try {
             await axios.delete(`${BASE_URL}/qms/record-detail/${id}/`);
-            navigate('/company/qms/record-format');
+            setShowDeleteModal(false);
+            setShowDeleteManualSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteManualSuccessModal(false);
+                navigate('/company/qms/record-format');
+            }, 2000);
         } catch (error) {
             console.error("Error deleting manual:", error);
-            const errorMessage = error.response?.data?.error ||
-                error.response?.data?.message ||
-                'Failed to delete manual';
+            setShowDeleteModal(false);
+            setShowDeleteManualErrorModal(true);
+            setTimeout(() => {
+                setShowDeleteManualErrorModal(false);
+            }, 2000);
         }
     };
 
+    // Handle cancel delete
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
+    };
+
     // Render loading or error states
-    if (loading) return <div className="text-center not-found">Loading...</div>;
-    if (!manualDetails) return <div className="text-center not-found">No Record Format details found</div>;
+    if (loading) return <div className="text-center not-found">Loading Record Format Details...</div>;
+    if (!manualDetails) return <div className="text-center not-found">No Record Format Details Found</div>;
 
     // Check if current user can review
     const currentUserId = Number(localStorage.getItem('user_id'));
@@ -512,7 +538,7 @@ const ViewQmsRecordFormat = () => {
                 <ManualCorrectionErrorModal
                     showSentCorrectionErrorModal={showSentCorrectionErrorModal}
                     onClose={() => { setShowSentCorrectionErrorModal(false) }}
-                    error = {error}
+                    error={error}
                 />
 
                 <ReviewSubmitSuccessModal
@@ -523,7 +549,25 @@ const ViewQmsRecordFormat = () => {
                 <ReviewSubmitErrorModal
                     showSubmitManualErrorModal={showSubmitManualErrorModal}
                     onClose={() => { setShowSubmitManualErrorModal(false) }}
-                    error = {error}
+                    error={error}
+                />
+
+                {/* Add delete modals */}
+                <DeleteQmsManualConfirmModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={handleCancelDelete}
+                />
+
+                <DeleteQmsManualsuccessModal
+                    showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+                    onClose={() => setShowDeleteManualSuccessModal(false)}
+                />
+
+                <DeleteQmsManualErrorModal
+                    showDeleteManualErrorModal={showDeleteManualErrorModal}
+                    onClose={() => setShowDeleteManualErrorModal(false)}
+                    error={error}
                 />
 
                 <button

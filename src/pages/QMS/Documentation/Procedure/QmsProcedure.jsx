@@ -503,7 +503,7 @@ const QmsProcedure = () => {
 
       <div className="p-5 overflow-hidden">
         {loading ? (
-          <div className="text-center py-4 not-found">Loading procedures...</div>
+          <div className="text-center py-4 not-found">Loading Procedures...</div>
         ) : (
           <table className="w-full">
             <thead className='bg-[#24242D]'>

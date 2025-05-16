@@ -28,7 +28,7 @@ const ViewQmsDraftInterestedParties = () => {
         };
         fetchData();
     }, [id]);
-    if (!formData) return <div className="text-white p-4">Loading...</div>;
+    if (!formData) return <div className="text-center not-found p-4">Loading Interested Parties...</div>;
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg w-full">
             <div className="flex justify-between items-center py-5 mx-5 border-b border-[#383840]">

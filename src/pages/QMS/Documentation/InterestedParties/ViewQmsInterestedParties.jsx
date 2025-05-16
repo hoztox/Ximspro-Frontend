@@ -7,13 +7,22 @@ import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsInterestedConfirmModal from "./Modals/DeleteQmsInterestedConfirmModal";
+import DeleteQmsInterestedSuccessModal from "./Modals/DeleteQmsInterestedSuccessModal";
+import DeleteQmsInterestedErrorModal from "./Modals/DeleteQmsInterestedErrorModal";
 
 const ViewQmsInterestedParties = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [formData, setFormData] = useState(null);
-    // Add a reference to access the DOM element
+    const [error, setError] = useState(null);
     const printRef = useRef(null);
+    
+    // State for delete modals
+    const [showDeleteInterestedModal, setShowDeleteInterestedModal] = useState(false);
+    const [interestedToDelete, setInterestedToDelete] = useState(null);
+    const [showDeleteInterestedSuccessModal, setShowDeleteInterestedSuccessModal] = useState(false);
+    const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] = useState(false);
 
     const handleClose = () => {
         navigate('/company/qms/interested-parties');
@@ -23,20 +32,41 @@ const ViewQmsInterestedParties = () => {
         navigate(`/company/qms/edit-interested-parties/${id}`);
     };
 
-    const handleDelete = async () => {
+    const handleDelete = () => {
+        setInterestedToDelete(id);
+        setShowDeleteInterestedModal(true);
+    };
+
+    const confirmDelete = async () => {
         try {
-            const confirmed = window.confirm("Are you sure you want to delete this interested party?");
-            if (confirmed) {
-                await axios.delete(`${BASE_URL}/qms/interested-parties-get/${id}/`);
+            await axios.delete(`${BASE_URL}/qms/interested-parties-get/${interestedToDelete}/`);
+            setShowDeleteInterestedModal(false);
+            setShowDeleteInterestedSuccessModal(true);
+            
+            // Auto-navigate after success
+            setTimeout(() => {
+                setShowDeleteInterestedSuccessModal(false);
                 navigate('/company/qms/interested-parties');
-            }
-        } catch (error) {
-            console.error("Failed to delete interested party", error);
-            alert("Failed to delete interested party. Please try again.");
+            }, 2000);
+        } catch (err) {
+            console.error("Error deleting interested party:", err);
+            setError("Failed to delete interested party. Please try again.");
+            setShowDeleteInterestedModal(false);
+            setShowDeleteInterestedErrorModal(true);
+            
+            // Auto-close error modal after 2 seconds
+            setTimeout(() => {
+                setShowDeleteInterestedErrorModal(false);
+            }, 2000);
         }
     };
 
-    // New function to handle printing to PDF
+    const cancelDelete = () => {
+        setShowDeleteInterestedModal(false);
+        setInterestedToDelete(null);
+    };
+
+    // Function to handle printing to PDF
     const handlePrint = () => {
         // Store the original page title
         const originalTitle = document.title;
@@ -93,15 +123,36 @@ const ViewQmsInterestedParties = () => {
 
             } catch (error) {
                 console.error("Failed to fetch interested party data", error);
+                setError("Failed to fetch interested party data");
             }
         };
         fetchData();
     }, [id]);
 
-    if (!formData) return <div className="text-white p-4">Loading...</div>;
+    if (!formData) return <div className="text-center not-found p-4">Loading Interested Parties...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg w-full">
+            {/* Delete confirmation modal */}
+            <DeleteQmsInterestedConfirmModal
+                showDeleteInterestedModal={showDeleteInterestedModal}
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
+
+            {/* Delete success modal */}
+            <DeleteQmsInterestedSuccessModal
+                showDeleteInterestedSuccessModal={showDeleteInterestedSuccessModal}
+                onClose={() => setShowDeleteInterestedSuccessModal(false)}
+            />
+
+            {/* Delete error modal */}
+            <DeleteQmsInterestedErrorModal
+                showDeleteInterestedErrorModal={showDeleteInterestedErrorModal}
+                onClose={() => setShowDeleteInterestedErrorModal(false)}
+                error={error}
+            />
+
             <div className="flex justify-between items-center py-5 mx-5 border-b border-[#383840] non-printable">
                 <h2 className="view-interested-parties-head">Interested Parties Information</h2>
                 <button onClick={handleClose} className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md">
@@ -195,7 +246,7 @@ const ViewQmsInterestedParties = () => {
                                         <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(id)}
+                                        onClick={handleDelete}
                                         className="flex flex-col items-center view-interested-parties-label gap-[8px]"
                                     >
                                         <span>Delete</span>

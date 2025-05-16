@@ -20,6 +20,7 @@ const EditQmsInterestedParties = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+  const [nameError, setNameError] = useState(false); // Added state for name field error
 
   const [formData, setFormData] = useState({
     name: "",
@@ -181,6 +182,12 @@ const EditQmsInterestedParties = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+    
+    // Clear name error when user types in the name field
+    if (name === "name" && value.trim() !== "") {
+      setNameError(false);
+    }
+    
     if (name === "legal_requirements") {
       setShowCustomField(value === "N/A");
     }
@@ -218,8 +225,27 @@ const EditQmsInterestedParties = () => {
     }
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    
+    if (!formData.name || formData.name.trim() === "") {
+      setNameError(true);
+      isValid = false;
+    } else {
+      setNameError(false);
+    }
+    
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setSubmitting(true);
     setError(null);
 
@@ -297,8 +323,8 @@ const EditQmsInterestedParties = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg text-white flex justify-center items-center h-64">
-        <p>Loading...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center h-64">
+        <p>Loading Interested Parties...</p>
       </div>
     );
   }
@@ -322,28 +348,26 @@ const EditQmsInterestedParties = () => {
       <EditQmsInterestedErrorModal
         showEditQmsInterestedErrorModal={showEditQmsInterestedErrorModal}
         onClose={() => setShowEditQmsInterestedErrorModal(false)}
+        error = {error}
       />
 
-      {error && (
-        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name</label>
+              <label className="block mb-3 add-qms-manual-label">Name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
+                className={`w-full add-qms-intertested-inputs ${nameError ? 'border-red-500' : ''}`}
                 placeholder="Enter Name"
-                required
               />
+              {nameError && (
+                <p className="text-red-500 text-sm mt-1">Name is Required</p>
+              )}
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">Category</label>
@@ -382,7 +406,6 @@ const EditQmsInterestedParties = () => {
                       value={item.needs}
                       onChange={(e) => handleNeedChange(index, "needs", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
-                      required
                     />
                   </div>
                 </div>
@@ -395,7 +418,6 @@ const EditQmsInterestedParties = () => {
                       value={item.expectation}
                       onChange={(e) => handleNeedChange(index, "expectation", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
-                      required
                     />
                     {index > 0 && (
                       <button

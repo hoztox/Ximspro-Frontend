@@ -3,8 +3,8 @@ import "./deleteerrormodal.css"
 import { useTheme } from '../../ThemeContext';
 import { X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion";
-import errors from "../../assets/images/Modal/errorIllustration.svg";
-import errorsdark from "../../assets/images/Modal/errorIllustrationdark.svg"
+import errors from "../../assets/images/Modal/errorIllustration.png";
+import errorsdark from "../../assets/images/Modal/errorIllustrationdark.png"
 
 const DeleteErrorModal = ({ showDeleteErrorModal, onClose }) => {
     const { theme } = useTheme();

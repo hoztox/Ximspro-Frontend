@@ -202,7 +202,7 @@ const DraftQmsProcedure = () => {
             {/* Table section with updated columns */}
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white">Loading manuals...</div>
+                    <div className="text-center py-4 not-found">Loading Draft Procedure...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>

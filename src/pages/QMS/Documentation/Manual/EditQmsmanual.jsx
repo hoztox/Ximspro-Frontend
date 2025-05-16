@@ -469,7 +469,7 @@ const EditQmsmanual = () => {
 
   // Render loading state
   if (isInitialLoad) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-center not-found">Loading Manual Details...</div>;
   }
 
   const renderAttachmentPreview = () => {

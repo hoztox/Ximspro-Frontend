@@ -2,7 +2,7 @@ import React from 'react'
 // import "./subscriberdeletemodal.css";
 import { useTheme } from '../../../ThemeContext';
 import { motion, AnimatePresence } from "framer-motion";
-import deleteIllustrate from "../../../assets/images/Modal/deleteillustration.svg"
+import deleteIllustrate from "../../../assets/images/Modal/deleteillustration.png"
 
 const SubscriberDeleteModal = ({ showDeleteSubscriberModal, onConfirm, onCancel }) => {
   const { theme } = useTheme();

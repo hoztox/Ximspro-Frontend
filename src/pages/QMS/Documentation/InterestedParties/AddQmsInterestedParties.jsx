@@ -19,6 +19,12 @@ const AddQmsInterestedParties = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // Add state for field validation
+  const [nameError, setNameError] = useState('');
+  const [fieldTouched, setFieldTouched] = useState({
+    name: false
+  });
+
   const [showAddManualSuccessModal, setShowAddManualSuccessModal] = useState(false);
   const [showAddQmsInterestedErrorModal, setShowAddQmsInterestedErrorModal] = useState(false);
   const [showDraftInterestedSuccessModal, setShowDraftInterestedSuccessModal] = useState(false);
@@ -42,6 +48,17 @@ const AddQmsInterestedParties = () => {
     send_notification: false,
     type: '', // This will store the CauseParty ID
   });
+
+  // Validate name field
+  const validateName = (name) => {
+    if (!name.trim()) {
+      setNameError('Name is Required');
+      return false;
+    } else {
+      setNameError('');
+      return true;
+    }
+  };
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -180,6 +197,32 @@ const AddQmsInterestedParties = () => {
     if (name === 'legal_requirements') {
       setShowCustomField(value === 'N/A');
     }
+
+    // If the name field is being changed, validate it
+    if (name === 'name') {
+      validateName(value);
+      
+      // Mark the field as touched
+      if (!fieldTouched.name) {
+        setFieldTouched(prev => ({
+          ...prev,
+          name: true
+        }));
+      }
+    }
+  };
+
+  // Add blur handler for validation
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    
+    if (name === 'name') {
+      setFieldTouched(prev => ({
+        ...prev,
+        name: true
+      }));
+      validateName(formData.name);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -195,6 +238,18 @@ const AddQmsInterestedParties = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate the name field before submitting
+    const isNameValid = validateName(formData.name);
+    if (!isNameValid) {
+      // Set the field as touched to show error
+      setFieldTouched(prev => ({
+        ...prev,
+        name: true
+      }));
+      return; // Stop submission if validation fails
+    }
+    
     setSubmitting(true);
     setError(null);
 
@@ -357,8 +412,8 @@ const AddQmsInterestedParties = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg text-white flex justify-center items-center h-64">
-        <p>Loading...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center h-64">
+        <p>Loading Interested Parties...</p>
       </div>
     );
   }
@@ -382,6 +437,7 @@ const AddQmsInterestedParties = () => {
       <AddQmsInterestedErrorModal
         showAddQmsInterestedErrorModal={showAddQmsInterestedErrorModal}
         onClose={() => setShowAddQmsInterestedErrorModal(false)}
+        error={error}
       />
 
       <AddQmsInterestedDraftSuccessModal
@@ -392,28 +448,26 @@ const AddQmsInterestedParties = () => {
       <AddQmsInterestedDraftErrorModal
         showDraftInterestedErrorModal={showDraftInterestedErrorModal}
         onClose={() => setShowDraftInterestedErrorModal(false)}
+        error={error}
       />
-
-      {error && (
-        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className='px-[122px]'>
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name</label>
+              <label className="block mb-3 add-qms-manual-label">Name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="name"
                 placeholder="Enter Name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
-                required
+                onBlur={handleBlur}
+                className={`w-full add-qms-intertested-inputs ${fieldTouched.name && nameError ? 'border-red-500' : ''}`}
               />
+              {fieldTouched.name && nameError && (
+                <p className="text-red-500 text-sm mt-1">{nameError}</p>
+              )}
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">Category</label>

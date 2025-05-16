@@ -5,13 +5,14 @@ import successdark from "../../../../../assets/images/Modal/successIllustrationd
 import { useTheme } from '../../../../../ThemeContext';
 import { X } from "lucide-react";
 
-const DeleteQmsManualsuccessModal = ({ showDeleteManualSuccessModal, onClose }) => {
+
+const DeleteQmsInterestedTypeSuccessModal = ({ showDeleteTypeSuccessModal, onClose }) => {
     const { theme } = useTheme();
 
-    if (!showDeleteManualSuccessModal) return null;
+    if (!showDeleteTypeSuccessModal) return null;
     return (
         <AnimatePresence>
-            {showDeleteManualSuccessModal && (
+            {showDeleteTypeSuccessModal && (
                 <motion.div
                     className="success-modal-overlay"
                     initial={{ opacity: 0 }}
@@ -36,7 +37,7 @@ const DeleteQmsManualsuccessModal = ({ showDeleteManualSuccessModal, onClose }) 
                             <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
                             <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Environmental Impact Deleted Successfully</p>
+                            <p className="success-messege">Type Deleted Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>
@@ -45,4 +46,4 @@ const DeleteQmsManualsuccessModal = ({ showDeleteManualSuccessModal, onClose }) 
     );
 };
 
-export default DeleteQmsManualsuccessModal
+export default DeleteQmsInterestedTypeSuccessModal

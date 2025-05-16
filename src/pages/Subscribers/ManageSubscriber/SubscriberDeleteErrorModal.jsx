@@ -2,8 +2,8 @@ import React from 'react'
 // import "./subscriberdeleteerrormodal.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from '../../../ThemeContext';
-import errors from "../../../assets/images/Modal/errorIllustration.svg";
-import errorsdark from "../../../assets/images/Modal/errorIllustrationdark.svg"
+import errors from "../../../assets/images/Modal/errorIllustration.png";
+import errorsdark from "../../../assets/images/Modal/errorIllustrationdark.png"
 import { X } from "lucide-react"
 
 const SubscriberDeleteErrorModal = ({ showDeleteSubscriberErrorModal, onClose }) => {

@@ -1,8 +1,8 @@
 import React from 'react'
 import "./editsuccessmodal.css"
 import { motion, AnimatePresence } from "framer-motion";
-import success from "../../assets/images/Modal/successIllustration.svg";
-import successdark from "../../assets/images/Modal/successIllustrationdark.svg";
+import success from "../../assets/images/Modal/successIllustration.png";
+import successdark from "../../assets/images/Modal/successIllustrationdark.png";
 import { useTheme } from '../../ThemeContext';
 import { X } from "lucide-react";
 

@@ -14,6 +14,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [showDeleteInterestedDraftModal, setShowDeleteInterestedDraftModal] =
     useState(false);
@@ -77,6 +78,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft interested parties:", error);
+        setError("Failed to load draft interested parties. Please try again later.");
         setLoading(false);
       }
     };
@@ -113,6 +115,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
       }, 3000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
+      setError(err.response?.data?.message || "Failed to delete the interested party.");
       setShowDeleteInterestedDraftModal(false);
       setShowDeleteInterestedDraftErrorModal(true);
 
@@ -191,7 +194,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
   );
 
   if (loading) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-center not-found">Loading Interested Parties...</div>;
   }
 
   return (
@@ -232,12 +235,6 @@ const DraftQmsInterestedParties = ({ userId }) => {
               <th className="px-4 qms-interested-parties-thead text-left">
                 Entered By
               </th>
-              {/* <th className="px-4 qms-interested-parties-thead text-left">
-                Needs
-              </th>
-              <th className="px-4 qms-interested-parties-thead text-left">
-                Expectations
-              </th> */}
               <th className="px-4 qms-interested-parties-thead text-left">
                 Date
               </th>
@@ -271,12 +268,6 @@ const DraftQmsInterestedParties = ({ userId }) => {
                   <td className="px-4 qms-interested-parties-data">
                     {item.user.first_name} {item.user.last_name}
                   </td>
-                  {/* <td className="px-4 qms-interested-parties-data">
-                    {item.needs}
-                  </td>
-                  <td className="px-4 qms-interested-parties-data">
-                    {item.expectations}
-                  </td> */}
                   <td className="px-4 qms-interested-parties-data">
                     {formatDate(item.created_at)}
                   </td>
@@ -375,6 +366,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
           showDeleteInterestedDraftErrorModal
         }
         onClose={() => setShowDeleteInterestedDraftErrorModal(false)}
+        error={error}
       />
     </div>
   );

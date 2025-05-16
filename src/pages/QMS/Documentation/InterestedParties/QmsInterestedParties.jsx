@@ -234,6 +234,7 @@ const QmsInterestedParties = () => {
         <DeleteQmsInterestedErrorModal
           showDeleteInterestedErrorModal={showDeleteInterestedErrorModal}
           onClose={() => setShowDeleteInterestedErrorModal(false)}
+          error = {error} 
         />
 
 
@@ -271,12 +272,10 @@ const QmsInterestedParties = () => {
         </div>
       </div>
       {loading ? (
-        <div className="text-center py-8">Loading interested parties data...</div>
-      ) : error ? (
-        <div className="text-center py-8 text-red-500">{error}</div>
+        <div className="text-center py-8 not-found">Loading Interested Parties...</div>
       ) : filteredData.length === 0 ? (
         <div>
-          <p className="text-center not-found py-5">No interested parties found</p>
+          <p className="text-center not-found py-5">No Interested Parties Found</p>
         </div>
       ) : (
         <>

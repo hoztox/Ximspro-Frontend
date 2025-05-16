@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronDown, Eye, X, Plus } from "lucide-react";
@@ -20,6 +21,7 @@ const EditDraftQmsInterestedParties = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+  const [nameError, setNameError] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -203,6 +205,9 @@ const EditDraftQmsInterestedParties = () => {
     if (name === "legal_requirements") {
       setShowCustomField(value === "N/A");
     }
+    if (name === "name") {
+      setNameError(value.trim() === "");
+    }
   };
 
   const handleFileChange = (e) => {
@@ -239,6 +244,13 @@ const EditDraftQmsInterestedParties = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate name field
+    if (formData.name.trim() === "") {
+      setNameError(true);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -325,8 +337,8 @@ const EditDraftQmsInterestedParties = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg text-white flex justify-center items-center h-64">
-        <p>Loading...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center h-64">
+        <p>Loading Interested Parties...</p>
       </div>
     );
   }
@@ -350,19 +362,15 @@ const EditDraftQmsInterestedParties = () => {
       <EditQmsInterestedDraftErrorModal
         showEditDraftInterestedErrorModal={showEditDraftInterestedErrorModal}
         onClose={() => setShowEditDraftInterestedErrorModal(false)}
+        error={error}
       />
 
-      {error && (
-        <div className="px-[122px] mt-4 text-red-500 bg-red-100 bg-opacity-10 p-3 rounded">
-          {error}
-        </div>
-      )}
 
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name</label>
+              <label className="block mb-3 add-qms-manual-label">Name <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="name"
@@ -372,6 +380,9 @@ const EditDraftQmsInterestedParties = () => {
                 placeholder="Enter Name"
                 required
               />
+              {nameError && (
+                <p className="text-red-500 text-sm mt-1">Name is Required</p>
+              )}
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">Category</label>
@@ -410,7 +421,6 @@ const EditDraftQmsInterestedParties = () => {
                       value={item.needs}
                       onChange={(e) => handleNeedChange(index, "needs", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
-                      required
                     />
                   </div>
                 </div>
@@ -423,7 +433,6 @@ const EditDraftQmsInterestedParties = () => {
                       value={item.expectation}
                       onChange={(e) => handleNeedChange(index, "expectation", e.target.value)}
                       className="w-full add-qms-intertested-inputs"
-                      required
                     />
                     {index > 0 && (
                       <button

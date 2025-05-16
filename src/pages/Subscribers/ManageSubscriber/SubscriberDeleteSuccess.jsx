@@ -2,8 +2,8 @@ import React from 'react'
 // import "./subscriberdeletesucceess.css";
 import { useTheme } from '../../../ThemeContext';
 import { motion, AnimatePresence } from "framer-motion";
-import success from "../../../assets/images/Modal/successIllustration.svg";
-import successdark from "../../../assets/images/Modal/successIllustrationdark.svg";
+import success from "../../../assets/images/Modal/successIllustration.png";
+import successdark from "../../../assets/images/Modal/successIllustrationdark.png";
 import { X } from "lucide-react";
 
 const SubscriberDeleteSuccess = ({ showDeleteSubscriberSuccesssModal, onClose }) => {

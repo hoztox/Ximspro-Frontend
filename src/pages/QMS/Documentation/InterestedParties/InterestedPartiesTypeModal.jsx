@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import AddQmsInterestedTypeSuccessModal from './Modals/AddQmsInterestedTypeSuccessModal';
+import AddQmsInterestedErrorModal from './Modals/AddQmsInterestedErrorModal';
+import DeleteQmsInterestedTypeConfirmModal from './Modals/DeleteQmsInterestedTypeConfirmModal';
+import DeleteQmsInterestedTypeSuccessModal from './Modals/DeleteQmsInterestedTypeSuccessModal'; 
+import DeleteQmsInterestedErrorModal from './Modals/DeleteQmsInterestedErrorModal';
 
 
 const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
@@ -10,8 +15,15 @@ const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
     const [newReviewTitle, setNewReviewTitle] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showAddTypeSuccessModal, setShowAddTypeSuccessModal] = useState(false);
+    const [showAddQmsInterestedErrorModal, setShowAddQmsInterestedErrorModal] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
+
+    // Delete modal states
+    const [showDeleteTypeModal, setShowDeleteTypeModal] = useState(false);
+    const [typeToDelete, setTypeToDelete] = useState(null);
+    const [showDeleteTypeSuccessModal, setShowDeleteTypeSuccessModal] = useState(false);
+    const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] = useState(false);
 
     // Animation effect when modal opens/closes
     useEffect(() => {
@@ -62,18 +74,39 @@ const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
         return null;
     };
 
-    // Handle delete cause
-    const handleDelete = async (id) => {
+    // Handle delete type
+    const handleDelete = (id) => {
+        setTypeToDelete(id);
+        setShowDeleteTypeModal(true);
+    };
+
+    // Confirm delete type
+    const confirmDelete = async () => {
         try {
-            await axios.delete(`${BASE_URL}/qms/agcause-partyenda/${id}/`);
-            setReview(review.filter(item => item.id !== id));
-            setSuccessMessage('Cause deleted successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            await axios.delete(`${BASE_URL}/qms/agcause-partyenda/${typeToDelete}/`);
+            setReview(review.filter(item => item.id !== typeToDelete));
+            setShowDeleteTypeModal(false);
+            setShowDeleteTypeSuccessModal(true);
+
+            setTimeout(() => {
+                setShowDeleteTypeSuccessModal(false);
+                fethReview(); // Refresh the list after deletion
+            }, 2000);
         } catch (error) {
-            console.error('Error deleting cause:', error);
-            setError('Failed to delete cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            console.error('Error deleting type:', error);
+            setShowDeleteTypeModal(false);
+            setShowDeleteInterestedErrorModal(true);
+
+            setTimeout(() => {
+                setShowDeleteInterestedErrorModal(false);
+            }, 2000);
         }
+    };
+
+    // Cancel delete
+    const cancelDelete = () => {
+        setShowDeleteTypeModal(false);
+        setTypeToDelete(null);
     };
 
     // Handle save new cause
@@ -102,12 +135,17 @@ const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
             }
 
             setNewReviewTitle('');
-            setSuccessMessage('Review added successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            setShowAddTypeSuccessModal(true);
+            setTimeout(() => {
+                setShowAddTypeSuccessModal(false);
+            }, 1500);
         } catch (error) {
             console.error('Error adding cause:', error);
             setError('Failed to add cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            setShowAddQmsInterestedErrorModal(true);
+            setTimeout(() => {
+                setShowAddQmsInterestedErrorModal(false);
+            }, 3000);
         } finally {
             setIsAdding(false);
         }
@@ -127,22 +165,40 @@ const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
                 {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
+                <AddQmsInterestedTypeSuccessModal
+                    showAddTypeSuccessModal={showAddTypeSuccessModal}
+                    onClose={() => setShowAddTypeSuccessModal(false)}
+                />
+
+                <AddQmsInterestedErrorModal
+                    showAddQmsInterestedErrorModal={showAddQmsInterestedErrorModal}
+                    onClose={() => setShowAddQmsInterestedErrorModal(false)}
+                    error={error}
+                />
+
+                {/* Delete Modals */}
+                <DeleteQmsInterestedTypeConfirmModal
+                    showDeleteTypeModal={showDeleteTypeModal}
+                    onConfirm={confirmDelete}
+                    onCancel={cancelDelete}
+                />
+
+                <DeleteQmsInterestedTypeSuccessModal
+                    showDeleteTypeSuccessModal={showDeleteTypeSuccessModal}
+                    onClose={() => setShowDeleteTypeSuccessModal(false)}
+                />
+
+                <DeleteQmsInterestedErrorModal
+                    showDeleteInterestedErrorModal={showDeleteInterestedErrorModal}
+                    onClose={() => setShowDeleteInterestedErrorModal(false)}
+                    error={error}
+                />
 
                 {/* Causes List Section */}
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">List</h2>
                     {loading ? (
-                        <div className="text-center py-4">Loading...</div>
+                        <div className="text-center not-found py-4">Loading Types...</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-gray-400">
@@ -220,4 +276,5 @@ const InterestedPartiesTypeModal = ({ isOpen, onClose, onAddReview }) => {
         </div>
     );
 };
-export default InterestedPartiesTypeModal
+
+export default InterestedPartiesTypeModal;

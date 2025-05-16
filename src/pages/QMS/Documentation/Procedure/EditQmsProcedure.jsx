@@ -463,7 +463,7 @@ const EditQmsProcedure = () => {
 
   // Render loading state
   if (isInitialLoad) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-center not-found">Loading Procedure Details...</div>;
   }
 
   const renderAttachmentPreview = () => {

@@ -3,13 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../../../../ThemeContext";
 import deleteIllustrate from "../../../../../assets/images/Modal/deleteillustration.png"
 
-
-const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) => {
+const DeleteQmsInterestedTypeConfirmModal = ({ showDeleteTypeModal, onConfirm, onCancel }) => {
     const { theme } = useTheme();
 
     return (
         <AnimatePresence>
-            {showDeleteModal && (
+            {showDeleteTypeModal && (
                 <motion.div
                     className="modal-overlays"
                     initial={{ opacity: 0 }}
@@ -36,7 +35,7 @@ const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel
                             <h3 className="confirmations">
                                 Are you sure you want to delete
                                 <br />
-                                this Drafted Environmental Aspect?
+                                this Type?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}
@@ -55,4 +54,4 @@ const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel
         </AnimatePresence>
     );
 };
-export default DeleteQmsManualDraftConfirmModal
+export default DeleteQmsInterestedTypeConfirmModal

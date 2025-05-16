@@ -2,7 +2,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./confirmmodal.css"; // External CSS file for the modal styles
 import { useTheme } from "../../ThemeContext";
-import deleteIllustrate from "../../assets/images/Modal/deleteillustration.svg"
+import deleteIllustrate from "../../assets/images/Modal/deleteillustration.png"
 
 const ConfirmationModal = ({ showDeleteModal, onConfirm, onCancel }) => {
   const { theme } = useTheme();

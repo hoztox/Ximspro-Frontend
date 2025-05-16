@@ -1,7 +1,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../../../ThemeContext";
-import deleteIllustrate from "../../../../assets/images/Modal/deleteillustration.svg"
+import deleteIllustrate from "../../../../assets/images/Modal/deleteillustration.png"
 
 const DeleteTrainingConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) => {
    const { theme } = useTheme();

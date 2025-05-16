@@ -5,13 +5,13 @@ import successdark from "../../../../../assets/images/Modal/successIllustrationd
 import { useTheme } from '../../../../../ThemeContext';
 import { X } from "lucide-react";
 
-const QmsAddComplianceSuccessModal = ({ showAddComplianceSuccessModal, onClose }) => {
-  const { theme } = useTheme();
+const AddQmsInterestedTypeSuccessModal = ({ showAddTypeSuccessModal, onClose }) => {
+ const { theme } = useTheme();
  
-     if (!showAddComplianceSuccessModal) return null;
+     if (!showAddTypeSuccessModal) return null;
      return (
          <AnimatePresence>
-             {showAddComplianceSuccessModal && (
+             {showAddTypeSuccessModal && (
                  <motion.div
                      className="success-modal-overlay"
                      initial={{ opacity: 0 }}
@@ -36,7 +36,7 @@ const QmsAddComplianceSuccessModal = ({ showAddComplianceSuccessModal, onClose }
                              <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
                              <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
                              <h1 className="success-messegehead">Success!!</h1>
-                             <p className="success-messege">Compliance Added Successfully</p>
+                             <p className="success-messege">Interested Partiy Type Added Successfully</p>
                          </div>
                      </motion.div>
                  </motion.div>
@@ -44,5 +44,4 @@ const QmsAddComplianceSuccessModal = ({ showAddComplianceSuccessModal, onClose }
          </AnimatePresence>
      );
  };
- 
-export default QmsAddComplianceSuccessModal
+export default AddQmsInterestedTypeSuccessModal
