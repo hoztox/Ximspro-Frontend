@@ -36,7 +36,7 @@ const EditQmsPolicyErrorModal = ({ showEditPolicyErrorModal, onClose }) => {
                             <img src={errors} alt="" className="w-[156px] h-[156px] errors-light" />
                             <img src={errorsdark} alt="" className="w-[156px] h-[156px] errors-dark" />
                             <h1 className="add-cmy-error-messegehead">An error occurred!</h1>
-                            <p className="add-cmy-error-messege">Please try again</p>
+                            <p className="add-cmy-error-messege text-center">Please try again</p>
 
                         </div>
                     </motion.div>

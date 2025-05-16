@@ -57,7 +57,7 @@ const DeleteQmsPolicyErrorModal = ({
                 className="w-[156px] h-[156px] errors-dark"
               />
               <h1 className="add-cmy-error-messegehead">An error occurred!</h1>
-              <p className="add-cmy-error-messege">
+              <p className="add-cmy-error-messege text-center">
                 {errorMessage || "Please try again"}
               </p>
             </div>
