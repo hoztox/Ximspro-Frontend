@@ -451,6 +451,7 @@ const QmsRecordFormat = () => {
         <DeleteQmsManualErrorModal
           showDeleteManualErrorModal={showDeleteManualErrorModal}
           onClose={() => setShowDeleteManualErrorModal(false)}
+          error = {error}
         />
         <PublishSuccessModal
           showPublishSuccessModal={showPublishSuccessModal}
@@ -459,6 +460,7 @@ const QmsRecordFormat = () => {
         <PublishErrorModal
           showPublishErrorModal={showPublishErrorModal}
           onClose={() => { setShowPublishErrorModal(false) }}
+           error = {error}
         />
 
 
@@ -498,9 +500,7 @@ const QmsRecordFormat = () => {
 
       <div className="p-5 overflow-hidden">
         {loading ? (
-          <div className="text-center py-4 text-white">Loading procedures...</div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
+          <div className="text-center py-4 not-found">Loading Record Format...</div>
         ) : (
           <table className="w-full">
             <thead className='bg-[#24242D]'>

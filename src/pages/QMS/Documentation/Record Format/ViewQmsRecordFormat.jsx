@@ -346,9 +346,8 @@ const ViewQmsRecordFormat = () => {
     };
 
     // Render loading or error states
-    if (loading) return <div className="text-white">Loading...</div>;
-    if (error) return <div className="text-red-500">{error}</div>;
-    if (!manualDetails) return <div className="text-white">No manual details found</div>;
+    if (loading) return <div className="text-center not-found">Loading...</div>;
+    if (!manualDetails) return <div className="text-center not-found">No Record Format details found</div>;
 
     // Check if current user can review
     const currentUserId = Number(localStorage.getItem('user_id'));
@@ -513,6 +512,7 @@ const ViewQmsRecordFormat = () => {
                 <ManualCorrectionErrorModal
                     showSentCorrectionErrorModal={showSentCorrectionErrorModal}
                     onClose={() => { setShowSentCorrectionErrorModal(false) }}
+                    error = {error}
                 />
 
                 <ReviewSubmitSuccessModal
@@ -523,6 +523,7 @@ const ViewQmsRecordFormat = () => {
                 <ReviewSubmitErrorModal
                     showSubmitManualErrorModal={showSubmitManualErrorModal}
                     onClose={() => { setShowSubmitManualErrorModal(false) }}
+                    error = {error}
                 />
 
                 <button
