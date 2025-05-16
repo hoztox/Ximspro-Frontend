@@ -27,7 +27,7 @@ const QmsAddAwarenessTraining = () => {
 
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [fieldErrors, setFieldErrors] = useState({});
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [fieldVisible, setFieldVisible] = useState(false);
 
@@ -55,8 +55,8 @@ const QmsAddAwarenessTraining = () => {
             [name]: value
         }));
 
-        if (errors[name]) {
-            setErrors(prevErrors => ({
+        if (fieldErrors[name]) {
+            setFieldErrors(prevErrors => ({
                 ...prevErrors,
                 [name]: ''
             }));
@@ -69,8 +69,8 @@ const QmsAddAwarenessTraining = () => {
             upload_file: e.target.files[0]
         }));
 
-        if (errors.upload_file) {
-            setErrors(prevErrors => ({
+        if (fieldErrors.upload_file) {
+            setFieldErrors(prevErrors => ({
                 ...prevErrors,
                 upload_file: ''
             }));
@@ -135,7 +135,7 @@ const QmsAddAwarenessTraining = () => {
         }
 
         if (Object.keys(newErrors).length > 0) {
-            setErrors(newErrors);
+            setFieldErrors(newErrors);
             return;
         }
 
@@ -295,7 +295,7 @@ const QmsAddAwarenessTraining = () => {
                             placeholder="https://www.youtube.com/watch?v=..."
                             className='w-full employee-performace-inputs'
                         />
-                        {errors.youtube_link && <p className="text-red-500 text-sm mt-1">{errors.youtube_link}</p>}
+                        {fieldErrors.youtube_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.youtube_link}</p>}
                     </div>
                 );
             case 'Presentation':
@@ -323,7 +323,7 @@ const QmsAddAwarenessTraining = () => {
                         {!formData.upload_file && (
                             <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
                         )}
-                        {errors.upload_file && <p className="text-red-500 text-sm mt-1">{errors.upload_file}</p>}
+                        {fieldErrors.upload_file && <p className="text-red-500 text-sm mt-1">{fieldErrors.upload_file}</p>}
                     </div>
                 );
             case 'Web Link':
@@ -340,7 +340,7 @@ const QmsAddAwarenessTraining = () => {
                             placeholder="https://example.com"
                             className='w-full employee-performace-inputs'
                         />
-                        {errors.web_link && <p className="text-red-500 text-sm mt-1">{errors.web_link}</p>}
+                        {fieldErrors.web_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.web_link}</p>}
                     </div>
                 );
             default:
@@ -366,6 +366,7 @@ const QmsAddAwarenessTraining = () => {
                     onClose={() => {
                         setShowErrorModal(false);
                     }}
+                    error = {error}
                 />
 
                 <DraftAwarenessTrainingSuccessModal
@@ -400,7 +401,7 @@ const QmsAddAwarenessTraining = () => {
                             className='w-full employee-performace-inputs'
                             maxLength={100}
                         />
-                        {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+                        {fieldErrors.title && <p className="text-red-500 text-sm mt-1">{fieldErrors.title}</p>}
                     </div>
 
                     <div>
@@ -428,7 +429,7 @@ const QmsAddAwarenessTraining = () => {
                                 <ChevronDown className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${dropdownOpen ? 'rotate-180' : 'rotate-0'}`} />
                             </div>
                         </div>
-                        {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
+                        {fieldErrors.category && <p className="text-red-500 text-sm mt-1">{fieldErrors.category}</p>}
                     </div>
 
                     <div>

@@ -24,7 +24,6 @@ const QmsListAwarenessTraining = () => {
     const [trainingToDelete, setTrainingToDelete] = useState(null);
     const [showDeleteAwarenessTrainingSuccessModal, setShowDeleteAwarenessTrainingSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -108,7 +107,6 @@ const QmsListAwarenessTraining = () => {
         } catch (err) {
             console.error('Error deleting awareness training item:', err);
             setShowDeleteModal(false);
-            setErrorMessage('Failed to delete the training item. Please try again later.');
             setShowErrorModal(true);
         }
     };
@@ -299,6 +297,7 @@ const QmsListAwarenessTraining = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
+                error = {error}
             />
         </div>
     );

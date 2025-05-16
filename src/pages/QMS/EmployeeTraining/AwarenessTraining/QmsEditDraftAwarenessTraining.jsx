@@ -24,7 +24,7 @@ const QmsEditDraftAwarenessTraining = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [errors, setErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const { id } = useParams();
@@ -76,8 +76,8 @@ const QmsEditDraftAwarenessTraining = () => {
     }));
 
     // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors((prevErrors) => ({
+    if (fieldErrors[name]) {
+      setFieldErrors((prevErrors) => ({
         ...prevErrors,
         [name]: "",
       }));
@@ -102,7 +102,7 @@ const QmsEditDraftAwarenessTraining = () => {
       newErrors.title = "Title is required";
     }
 
-    setErrors(newErrors);
+    setFieldErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -159,7 +159,7 @@ const QmsEditDraftAwarenessTraining = () => {
   };
 
   if (loading) {
-    return <div className="text-white text-center p-5">Loading...</div>;
+    return <div className="not-found text-center p-5">Loading...</div>;
   }
 
   return (
@@ -181,6 +181,7 @@ const QmsEditDraftAwarenessTraining = () => {
           onClose={() => {
             setShowErrorModal(false);
           }}
+          error ={error}
         />
 
 
@@ -205,7 +206,7 @@ const QmsEditDraftAwarenessTraining = () => {
               onChange={handleChange}
               className="w-full employee-performace-inputs"
             />
-            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
+            {fieldErrors.title && <p className="text-red-500 text-sm mt-1">{fieldErrors.title}</p>}
           </div>
 
           <div>
@@ -266,7 +267,7 @@ const QmsEditDraftAwarenessTraining = () => {
                 className="w-full employee-performace-inputs"
                 placeholder="https://www.youtube.com/watch?v=..."
               />
-              {errors.youtube_link && <p className="text-red-500 text-sm mt-1">{errors.youtube_link}</p>}
+              {fieldErrors.youtube_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.youtube_link}</p>}
             </div>
           )}
 
@@ -283,7 +284,7 @@ const QmsEditDraftAwarenessTraining = () => {
                 className="w-full employee-performace-inputs"
                 placeholder="https://..."
               />
-              {errors.web_link && <p className="text-red-500 text-sm mt-1">{errors.web_link}</p>}
+              {fieldErrors.web_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.web_link}</p>}
             </div>
           )}
 
@@ -317,7 +318,7 @@ const QmsEditDraftAwarenessTraining = () => {
                   Browse
                 </button>
               </div>
-              {errors.upload_file && <p className="text-red-500 text-sm mt-1">{errors.upload_file}</p>}
+              {fieldErrors.upload_file && <p className="text-red-500 text-sm mt-1">{fieldErrors.upload_file}</p>}
             </div>
           )}
         </div>

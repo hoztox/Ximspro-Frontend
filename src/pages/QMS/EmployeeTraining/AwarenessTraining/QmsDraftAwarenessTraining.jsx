@@ -22,7 +22,6 @@ const QmsDraftAwarenessTraining = () => {
     const [trainingToDelete, setTrainingToDelete] = useState(null);
     const [showDeleteAwarenessTrainingSuccessModal, setShowDeleteAwarenessTrainingSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
 
     const itemsPerPage = 10;
 
@@ -144,7 +143,6 @@ const QmsDraftAwarenessTraining = () => {
         } catch (err) {
             console.error('Error deleting awareness training item:', err);
             setShowDeleteModal(false);
-            setErrorMessage('Failed to delete the training item. Please try again later.');
             setShowErrorModal(true);
         }
     };
@@ -163,7 +161,7 @@ const QmsDraftAwarenessTraining = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
                 <p>Loading...</p>
             </div>
         );
@@ -329,6 +327,7 @@ const QmsDraftAwarenessTraining = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
+                error = {error}
             />
         </div>
     );
