@@ -340,14 +340,9 @@ const QmsAddInternalProblems = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-            {error && (
-                <div className="bg-red-500 text-white p-3 rounded mb-4">
-                    {error}
-                </div>
-            )}
 
             {loading && (
-                <div className="flex justify-center items-center py-4">
+                <div className="flex justify-center items-center py-4 not-found">
                     <p>Loading data...</p>
                 </div>
             )}
