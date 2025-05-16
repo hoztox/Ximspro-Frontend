@@ -19,7 +19,6 @@ const EditDraftQmsRecordFormat = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [manuals, setManuals] = useState([]);
   const [previewAttachment, setPreviewAttachment] = useState(null);
   const [manualDetails, setManualDetails] = useState(null);
   const { id } = useParams();
@@ -110,11 +109,28 @@ const EditDraftQmsRecordFormat = () => {
       const response = await axios.get(`${BASE_URL}/qms/record-detail/${id}/`);
       setManualDetails(response.data);
       setIsInitialLoad(false);
-      console.log("Manual Detailssssssssssss:", response.data);
+      console.log("record format Detailssssssssssss:", response.data);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching procedures details:", err);
-      setError("Failed to load record format details");
+      console.error("Error fetching record format details:", err);
+      let errorMsg = "Failed to fetch record format details";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -191,9 +207,7 @@ const EditDraftQmsRecordFormat = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load record format. Please check your connection and try again."
-      );
+      setError("Failed to load users.");
     }
   };
 
@@ -454,7 +468,24 @@ const EditDraftQmsRecordFormat = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      setError("Failed to update record format");
+      let errorMsg = "Failed to update record format";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
@@ -479,8 +510,8 @@ const EditDraftQmsRecordFormat = () => {
           showDraftManualErrorModal={showDraftManualErrorModal}
           onClose={() => {
             setShowDarftManualErrorModal(false);
-        }}
-        error = {error}
+          }}
+          error={error}
         />
 
         {/* {error && (

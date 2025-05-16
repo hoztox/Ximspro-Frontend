@@ -185,9 +185,24 @@ const EditQmsRecordFormat = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load users. Please check your connection and try again."
-      );
+      let errorMsg = "Failed to load users";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setUsers([]);
     }
   };
@@ -201,7 +216,24 @@ const EditQmsRecordFormat = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching record format details:", err);
-      setError("Failed to load record format details");
+      let errorMsg = "Failed to fetch record format details";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -429,7 +461,24 @@ const EditQmsRecordFormat = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      setError("Failed to update record format");
+      let errorMsg = "Failed to update record format";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
@@ -462,7 +511,11 @@ const EditQmsRecordFormat = () => {
 
   // Render loading state
   if (isInitialLoad) {
-    return <div className="text-center not-found">Loading Record Format Details...</div>;
+    return (
+      <div className="text-center not-found">
+        Loading Record Format Details...
+      </div>
+    );
   }
 
   const renderAttachmentPreview = () => {

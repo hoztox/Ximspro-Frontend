@@ -102,9 +102,24 @@ const AddQmsRecordFormat = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load record formats. Please check your connection and try again."
-      );
+      let errorMsg = "Failed to fetch users";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -262,7 +277,7 @@ const AddQmsRecordFormat = () => {
   const handleSaveClick = async () => {
     if (!validateForm()) {
       // Show the form has validation errors
-      setError("Please correct the errors below");
+      setError("Please fill all required fields");
       return;
     }
     try {
@@ -318,7 +333,24 @@ const AddQmsRecordFormat = () => {
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
       }, 3000);
-      setError("Failed to save record formats");
+      let errorMsg = "Failed to create Record Format";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     }
   };
   const getRelevantUserId = () => {
@@ -449,8 +481,8 @@ const AddQmsRecordFormat = () => {
           showDraftManualErrorModal={showDraftManualErrorModal}
           onClose={() => {
             setShowDarftManualErrorModal(false);
-        }}
-        error = {error}
+          }}
+          error={error}
         />
 
         <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">

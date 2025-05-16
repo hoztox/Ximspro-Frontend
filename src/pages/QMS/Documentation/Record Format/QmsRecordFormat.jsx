@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import views from "../../../../assets/images/Companies/view.svg";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
-import publish from "../../../../assets/images/Modal/publish.svg"
-import { motion, AnimatePresence } from 'framer-motion';
+import publish from "../../../../assets/images/Modal/publish.svg";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
-import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
-import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
-import PublishSuccessModal from './Modals/PublishSuccessModal';
-import PublishErrorModal from './Modals/PublishErrorModal';
+import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
+import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
+import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
+import PublishSuccessModal from "./Modals/PublishSuccessModal";
+import PublishErrorModal from "./Modals/PublishErrorModal";
 
 const QmsRecordFormat = () => {
   const [manuals, setManuals] = useState([]);
@@ -23,7 +23,7 @@ const QmsRecordFormat = () => {
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
   const manualPerPage = 10;
@@ -35,34 +35,37 @@ const QmsRecordFormat = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [manualToDelete, setManualToDelete] = useState(null);
-  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
-  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
+    useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
+    useState(false);
 
   const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
   const [showPublishErrorModal, setShowPublishErrorModal] = useState(false);
 
-
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
   const getCurrentUser = () => {
-    const role = localStorage.getItem('role');
+    const role = localStorage.getItem("role");
 
     try {
-      if (role === 'company') {
+      if (role === "company") {
         // Retrieve company user data
         const companyData = {};
         Object.keys(localStorage)
-          .filter(key => key.startsWith('company_'))
-          .forEach(key => {
-            const cleanKey = key.replace('company_', '');
+          .filter((key) => key.startsWith("company_"))
+          .forEach((key) => {
+            const cleanKey = key.replace("company_", "");
             try {
               companyData[cleanKey] = JSON.parse(localStorage.getItem(key));
             } catch (e) {
@@ -72,19 +75,19 @@ const QmsRecordFormat = () => {
 
         // Add additional fields from localStorage
         companyData.role = role;
-        companyData.company_id = localStorage.getItem('company_id');
-        companyData.company_name = localStorage.getItem('company_name');
-        companyData.email_address = localStorage.getItem('email_address');
+        companyData.company_id = localStorage.getItem("company_id");
+        companyData.company_name = localStorage.getItem("company_name");
+        companyData.email_address = localStorage.getItem("email_address");
 
         console.log("Company User Data:", companyData);
         return companyData;
-      } else if (role === 'user') {
+      } else if (role === "user") {
         // Retrieve regular user data
         const userData = {};
         Object.keys(localStorage)
-          .filter(key => key.startsWith('user_'))
-          .forEach(key => {
-            const cleanKey = key.replace('user_', '');
+          .filter((key) => key.startsWith("user_"))
+          .forEach((key) => {
+            const cleanKey = key.replace("user_", "");
             try {
               userData[cleanKey] = JSON.parse(localStorage.getItem(key));
             } catch (e) {
@@ -94,7 +97,7 @@ const QmsRecordFormat = () => {
 
         // Add additional fields from localStorage
         userData.role = role;
-        userData.user_id = localStorage.getItem('user_id');
+        userData.user_id = localStorage.getItem("user_id");
 
         console.log("Regular User Data:", userData);
         return userData;
@@ -125,7 +128,7 @@ const QmsRecordFormat = () => {
 
   // Centralized function to check if current user is involved with a manual
   const isUserInvolvedWithManual = (manual) => {
-    const currentUserId = Number(localStorage.getItem('user_id'));
+    const currentUserId = Number(localStorage.getItem("user_id"));
 
     // Check if user is the writer, checker, or approver of the manual
     return (
@@ -137,16 +140,16 @@ const QmsRecordFormat = () => {
 
   // Centralized function to filter manuals based on visibility rules
   const filterManualsByVisibility = (manualsData) => {
-    const role = localStorage.getItem('role');
+    const role = localStorage.getItem("role");
 
-    return manualsData.filter(manual => {
+    return manualsData.filter((manual) => {
       // If manual is published, show to everyone
-      if (manual.status === 'Published') {
+      if (manual.status === "Published") {
         return true;
       }
 
       // If user is a company admin, show all
-      if (role === 'company') {
+      if (role === "company") {
         return true;
       }
 
@@ -160,10 +163,10 @@ const QmsRecordFormat = () => {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
-      
+
       // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
-      
+
       // Sort manuals by id in ascending order (oldest first), with fallback to written_at
       const sortedManuals = filteredManuals.sort((a, b) => {
         if (a.id && b.id) {
@@ -174,13 +177,30 @@ const QmsRecordFormat = () => {
         const dateB = new Date(b.written_at || b.date || 0);
         return dateA - dateB;
       });
-      
+
       setManuals(sortedManuals);
       console.log("Filtered and Sorted Manuals Data:", sortedManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      setError("Failed to load record format. Please try again.");
+      let errorMsg = "Failed to fetch Record Format";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setLoading(false);
     }
   };
@@ -189,11 +209,13 @@ const QmsRecordFormat = () => {
     const fetchAllData = async () => {
       try {
         const companyId = getUserCompanyId();
-        const manualsResponse = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
-        
+        const manualsResponse = await axios.get(
+          `${BASE_URL}/qms/record/${companyId}/`
+        );
+
         // Apply visibility filtering
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-        
+
         // Sort manuals by id in ascending order (oldest first), with fallback to written_at
         const sortedManuals = filteredManuals.sort((a, b) => {
           if (a.id && b.id) {
@@ -204,46 +226,73 @@ const QmsRecordFormat = () => {
           const dateB = new Date(b.written_at || b.date || 0);
           return dateA - dateB;
         });
-        
+
         setManuals(sortedManuals);
-        
+
         // Fetch corrections for visible manuals
         const correctionsPromises = sortedManuals.map(async (manual) => {
           try {
-            const correctionResponse = await axios.get(`${BASE_URL}/qms/record/${manual.id}/corrections/`);
-            return { manualId: manual.id, corrections: correctionResponse.data };
+            const correctionResponse = await axios.get(
+              `${BASE_URL}/qms/record/${manual.id}/corrections/`
+            );
+            return {
+              manualId: manual.id,
+              corrections: correctionResponse.data,
+            };
           } catch (correctionError) {
-            console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+            console.error(
+              `Error fetching corrections for manual ${manual.id}:`,
+              correctionError
+            );
             return { manualId: manual.id, corrections: [] };
           }
         });
-        
+
         // Process all corrections
         const correctionResults = await Promise.all(correctionsPromises);
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-        
+
         setCorrections(correctionsByManual);
-        
+
         // Fetch draft count
         const id = getRelevantUserId();
-        const draftResponse = await axios.get(`${BASE_URL}/qms/record/drafts-count/${id}/`);
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/record/drafts-count/${id}/`
+        );
         setDraftCount(draftResponse.data.count);
-        
+
         // Set current user and clear loading state
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        setError("Failed to load data. Please try again.");
+        let errorMsg = "Failed to fetch Record Format Details";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };
-    
+
     fetchAllData();
-  }, [])
+  }, []);
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -294,16 +343,26 @@ const QmsRecordFormat = () => {
     setShowDeleteModal(false);
   };
 
-  const filteredManual = manuals.filter(manual =>
-    (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (manual.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (manual.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-    (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
+  const filteredManual = manuals.filter(
+    (manual) =>
+      (manual.title?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (manual.no?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+      (manual.approved_by?.first_name?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase()
+      ) ||
+      (manual.rivision?.toLowerCase() || "").includes(
+        searchQuery.toLowerCase()
+      ) ||
+      (formatDate(manual.date)?.replace(/^0+/, "") || "").includes(
+        searchQuery.replace(/^0+/, "")
+      )
   );
 
   const totalPages = Math.ceil(filteredManual.length / manualPerPage);
-  const paginatedManual = filteredManual.slice((currentPage - 1) * manualPerPage, currentPage * manualPerPage);
+  const paginatedManual = filteredManual.slice(
+    (currentPage - 1) * manualPerPage,
+    currentPage * manualPerPage
+  );
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -317,20 +376,20 @@ const QmsRecordFormat = () => {
 
   const handlePrevious = () => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
       window.scrollTo(0, 0);
     }
   };
 
   const handleNext = () => {
     if (currentPage < totalPages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
       window.scrollTo(0, 0);
     }
   };
 
   const handleQMSAddManual = () => {
-    navigate('/company/qms/addrecordformat');
+    navigate("/company/qms/addrecordformat");
   };
 
   const handleEdit = (id) => {
@@ -342,8 +401,8 @@ const QmsRecordFormat = () => {
   };
 
   const handleManualDraft = () => {
-    navigate('/company/qms/draftrecordformat')
-  }
+    navigate("/company/qms/draftrecordformat");
+  };
 
   const handlePublish = (manual) => {
     setSelectedManualId(manual.id);
@@ -367,25 +426,28 @@ const QmsRecordFormat = () => {
         alert("No record format selected for publishing");
         return;
       }
-      
+
       // Set publishing loading state to true when starting
       setIsPublishing(true);
-      
-      const userId = localStorage.getItem('user_id');
-      const companyId = localStorage.getItem('company_id');
+
+      const userId = localStorage.getItem("user_id");
+      const companyId = localStorage.getItem("company_id");
       const publisherId = userId || companyId;
       if (!publisherId) {
         alert("User information not found. Please log in again.");
         setIsPublishing(false);
         return;
       }
-      
-      await axios.post(`${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`, {
-        company_id: getUserCompanyId(),
-        published_by: userId,  
-        send_notification: sendNotification
-      });
-      
+
+      await axios.post(
+        `${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`,
+        {
+          company_id: getUserCompanyId(),
+          published_by: userId,
+          send_notification: sendNotification,
+        }
+      );
+
       setShowPublishSuccessModal(true);
       setTimeout(() => {
         setShowPublishSuccessModal(false);
@@ -405,32 +467,32 @@ const QmsRecordFormat = () => {
   };
 
   const canReview = (manual) => {
-    const currentUserId = Number(localStorage.getItem('user_id'));
+    const currentUserId = Number(localStorage.getItem("user_id"));
     const manualCorrections = corrections[manual.id] || [];
-  
-    console.log('Reviewing Conditions Debug:', {
+
+    console.log("Reviewing Conditions Debug:", {
       currentUserId,
       checkedById: manual.checked_by?.id,
       status: manual.status,
       corrections: manualCorrections,
-      toUserValues: manualCorrections.map(correction => correction.to_user)
+      toUserValues: manualCorrections.map((correction) => correction.to_user),
     });
-  
+
     if (manual.status === "Pending for Review/Checking") {
       return currentUserId === manual.checked_by?.id;
     }
-  
+
     if (manual.status === "Correction Requested") {
       // Fix: Compare the to_user.id with currentUserId, not the entire object
-      return manualCorrections.some(correction => 
-        correction.to_user.id === currentUserId
+      return manualCorrections.some(
+        (correction) => correction.to_user.id === currentUserId
       );
     }
-  
+
     if (manual.status === "Reviewed,Pending for Approval") {
       return currentUserId === manual.approved_by?.id;
     }
-  
+
     return false;
   };
 
@@ -451,18 +513,21 @@ const QmsRecordFormat = () => {
         <DeleteQmsManualErrorModal
           showDeleteManualErrorModal={showDeleteManualErrorModal}
           onClose={() => setShowDeleteManualErrorModal(false)}
-          error = {error}
+          error={error}
         />
         <PublishSuccessModal
           showPublishSuccessModal={showPublishSuccessModal}
-          onClose={() => { setShowPublishSuccessModal(false) }}
+          onClose={() => {
+            setShowPublishSuccessModal(false);
+          }}
         />
         <PublishErrorModal
           showPublishErrorModal={showPublishErrorModal}
-          onClose={() => { setShowPublishErrorModal(false) }}
-           error = {error}
+          onClose={() => {
+            setShowPublishErrorModal(false);
+          }}
+          error={error}
         />
-
 
         <div className="flex space-x-5">
           <div className="relative">
@@ -473,7 +538,7 @@ const QmsRecordFormat = () => {
               onChange={handleSearchChange}
               className="serach-input-manual focus:outline-none bg-transparent"
             />
-            <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
+            <div className="absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />
             </div>
           </div>
@@ -493,29 +558,41 @@ const QmsRecordFormat = () => {
             onClick={handleQMSAddManual}
           >
             <span>Add Record Format</span>
-            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+            <img
+              src={plusicon}
+              alt="Add Icon"
+              className="w-[18px] h-[18px] qms-add-plus"
+            />
           </button>
         </div>
       </div>
 
       <div className="p-5 overflow-hidden">
         {loading ? (
-          <div className="text-center py-4 not-found">Loading Record Format...</div>
+          <div className="text-center py-4 not-found">
+            Loading Record Format...
+          </div>
         ) : (
           <table className="w-full">
-            <thead className='bg-[#24242D]'>
+            <thead className="bg-[#24242D]">
               <tr className="h-[48px]">
                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                <th className="px-2 text-left add-manual-theads">Record Title</th>
+                <th className="px-2 text-left add-manual-theads">
+                  Record Title
+                </th>
                 <th className="px-2 text-left add-manual-theads">Record No</th>
-                <th className="px-2 text-left add-manual-theads">Approved by</th>
+                <th className="px-2 text-left add-manual-theads">
+                  Approved by
+                </th>
                 <th className="px-2 text-left add-manual-theads">Revision</th>
                 <th className="px-2 text-left add-manual-theads">Date</th>
                 <th className="px-2 text-left add-manual-theads">Status</th>
                 <th className="px-2 text-left add-manual-theads">Action</th>
                 <th className="px-2 text-center add-manual-theads">View</th>
                 <th className="px-2 text-center add-manual-theads">Edit</th>
-                <th className="pl-2 pr-4 text-center add-manual-theads">Delete</th>
+                <th className="pl-2 pr-4 text-center add-manual-theads">
+                  Delete
+                </th>
               </tr>
             </thead>
             <tbody key={currentPage}>
@@ -524,36 +601,54 @@ const QmsRecordFormat = () => {
                   const canApprove = canReview(manual);
 
                   return (
-                    <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
-                      <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
-                      <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">
-                        {manual.approved_by ?
-                          `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
-                          'N/A'}
+                    <tr
+                      key={manual.id}
+                      className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]"
+                    >
+                      <td className="pl-5 pr-2 add-manual-datas">
+                        {(currentPage - 1) * manualPerPage + index + 1}
                       </td>
-                      <td className="px-2 add-manual-datas">{manual.rivision || 'N/A'}</td>
-                      <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
                       <td className="px-2 add-manual-datas">
-                        {manual.status}
+                        {manual.title || "N/A"}
                       </td>
-                      <td className='px-2 add-manual-datas'>
-                        {manual.status === 'Pending for Publish' ? (
-                          <button className="text-[#36DDAE]" onClick={() => handlePublish(manual)}>Click to Publish</button>
+                      <td className="px-2 add-manual-datas">
+                        {manual.no || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {manual.approved_by
+                          ? `${manual.approved_by.first_name} ${manual.approved_by.last_name}`
+                          : "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {manual.rivision || "N/A"}
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        {formatDate(manual.date)}
+                      </td>
+                      <td className="px-2 add-manual-datas">{manual.status}</td>
+                      <td className="px-2 add-manual-datas">
+                        {manual.status === "Pending for Publish" ? (
+                          <button
+                            className="text-[#36DDAE]"
+                            onClick={() => handlePublish(manual)}
+                          >
+                            Click to Publish
+                          </button>
                         ) : canApprove ? (
                           <button
                             onClick={() => handleClickApprove(manual.id)}
                             className="text-[#1E84AF]"
                           >
-                            {manual.status === 'Pending for Review/Checking'
-                              ? 'Review'
-                              : (manual.status === 'Correction Requested'
-                                ? 'Click to Approve'
-                                : 'Click to Approve')}
+                            {manual.status === "Pending for Review/Checking"
+                              ? "Review"
+                              : manual.status === "Correction Requested"
+                              ? "Click to Approve"
+                              : "Click to Approve"}
                           </button>
                         ) : (
-                          <span className="text-[#858585]">Not Action Required</span>
+                          <span className="text-[#858585]">
+                            Not Action Required
+                          </span>
                         )}
                       </td>
                       <td className="px-2 add-manual-datas text-center">
@@ -585,33 +680,56 @@ const QmsRecordFormat = () => {
                   );
                 })
               ) : (
-                <tr><td colSpan="11" className="text-center py-4 not-found">No Record Formats found.</td></tr>
+                <tr>
+                  <td colSpan="11" className="text-center py-4 not-found">
+                    No Record Formats found.
+                  </td>
+                </tr>
               )}
               <tr>
-                <td colSpan="11" className="pt-[15px] border-t border-[#383840]">
+                <td
+                  colSpan="11"
+                  className="pt-[15px] border-t border-[#383840]"
+                >
                   <div className="flex items-center justify-between w-full">
-                    <div className="text-white total-text">Total-{filteredManual.length}</div>
+                    <div className="text-white total-text">
+                      Total-{filteredManual.length}
+                    </div>
                     <div className="flex items-center gap-5">
                       <button
                         onClick={handlePrevious}
                         disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                        className={`cursor-pointer swipe-text ${
+                          currentPage === 1 ? "opacity-50" : ""
+                        }`}
                       >
                         Previous
                       </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <button
-                          key={page}
-                          onClick={() => handlePageClick(page)}
-                          className={`${currentPage === page ? 'pagin-active' : 'pagin-inactive'}`}
-                        >
-                          {page}
-                        </button>
-                      ))}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <button
+                            key={page}
+                            onClick={() => handlePageClick(page)}
+                            className={`${
+                              currentPage === page
+                                ? "pagin-active"
+                                : "pagin-inactive"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
                       <button
                         onClick={handleNext}
-                        disabled={currentPage === totalPages || totalPages === 0}
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
+                        disabled={
+                          currentPage === totalPages || totalPages === 0
+                        }
+                        className={`cursor-pointer swipe-text ${
+                          currentPage === totalPages || totalPages === 0
+                            ? "opacity-50"
+                            : ""
+                        }`}
                       >
                         Next
                       </button>
@@ -645,15 +763,17 @@ const QmsRecordFormat = () => {
                 duration: 0.3,
                 type: "spring",
                 stiffness: 300,
-                damping: 30
+                damping: 30,
               }}
             >
               <div className="p-6">
-                <div className='flex flex-col justify-center items-center space-y-7'>
-                  <img src={publish} alt="Publish Icon" className='mt-3' />
-                  <div className='flex gap-[113px] mb-5'>
+                <div className="flex flex-col justify-center items-center space-y-7">
+                  <img src={publish} alt="Publish Icon" className="mt-3" />
+                  <div className="flex gap-[113px] mb-5">
                     <div className="flex items-center">
-                      <span className="mr-3 add-qms-manual-label">Send Notification?</span>
+                      <span className="mr-3 add-qms-manual-label">
+                        Send Notification?
+                      </span>
                       <input
                         type="checkbox"
                         className="qms-manual-form-checkbox"
@@ -665,14 +785,19 @@ const QmsRecordFormat = () => {
                   {/* {publishSuccess && (
                     <div className="text-green-500 mb-3">Manual published successfully!</div>
                   )} */}
-                  <div className='flex gap-5'>
-                    <button onClick={closePublishModal} className='cancel-btn duration-200 text-white'>Cancel</button>
+                  <div className="flex gap-5">
+                    <button
+                      onClick={closePublishModal}
+                      className="cancel-btn duration-200 text-white"
+                    >
+                      Cancel
+                    </button>
                     <button
                       onClick={handlePublishSave}
-                      className='save-btn duration-200 text-white'
+                      className="save-btn duration-200 text-white"
                       disabled={isPublishing}
                     >
-                      {isPublishing ? 'Publishing...' : 'Publish'}
+                      {isPublishing ? "Publishing..." : "Publish"}
                     </button>
                   </div>
                 </div>
@@ -684,6 +809,5 @@ const QmsRecordFormat = () => {
     </div>
   );
 };
-
 
 export default QmsRecordFormat;
