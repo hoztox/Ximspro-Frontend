@@ -6,15 +6,16 @@ import fileIcon from "../../../../assets/images/Company Documentation/file-icon.
 import { BASE_URL } from "../../../../Utils/Config";
 import EditQmsProcessesSuccessModal from "./Modals/EditQmsProcessesSuccessModal";
 import EditQmsProcessesErrorModal from "./Modals/EditQmsProcessesErrorModal";
+
 const EditQmsProcesses = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [showEditProcessesSuccessModal, setShowEditProcessesSuccessModal] = useState(false);
   const [showEditQmsProcessesErrorModal, setShowEditQmsProcessesErrorModal] = useState(false);
-  // Define legal requirement options
+  const [error, setError] = useState(null); // Add error state
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
-  // Add search state
   const [searchTerm, setSearchTerm] = useState("");
+  const [nameError, setNameError] = useState(""); // Add state for name field error
   const [formData, setFormData] = useState({
     name: "",
     no: "",
@@ -62,6 +63,7 @@ const EditQmsProcesses = () => {
       })
       .catch(error => {
         console.error("Error fetching legal requirements:", error);
+        setError(error); // Set error state
       });
   };
   useEffect(() => {
@@ -88,7 +90,6 @@ const EditQmsProcesses = () => {
         }
         setFormData({
           ...data,
-          // Use the procedure titles instead of IDs for the checkboxes
           legal_requirements: isNA ? [] : procedureTitles,
           custom_legal_requirements: data.custom_legal_requirements || "",
           file: null,
@@ -101,8 +102,12 @@ const EditQmsProcesses = () => {
           setFileUrl(data.file);
         }
       })
-      .catch((err) => console.error("Error fetching data:", err));
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+        setError(err); // Set error state
+      });
   }, [id]);
+
   const toggleDropdown = (field) => {
     setDropdownRotation((prev) => ({
       ...prev,
@@ -115,6 +120,11 @@ const EditQmsProcesses = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    
+    // Clear name error when user starts typing in the name field
+    if (name === "name" && value.trim() !== "") {
+      setNameError("");
+    }
   };
   // Handle search term change
   const handleSearchChange = (e) => {
@@ -141,26 +151,25 @@ const EditQmsProcesses = () => {
     });
   };
   // Toggle N/A option for custom field
-// Toggle N/A option for custom field
-const handleNAChange = (e) => {
-  const checked = e.target.checked;
-  setShowCustomField(checked);
-  if (checked) {
-    // If N/A is checked, clear all procedure selections
-    setFormData(prev => ({
-      ...prev,
-      legal_requirements: [],
-      // Keep any existing custom text or initialize it
-      custom_legal_requirements: prev.custom_legal_requirements || ""
-    }));
-  } else {
-    // If N/A is unchecked, clear the custom field
-    setFormData(prev => ({
-      ...prev,
-      custom_legal_requirements: ""
-    }));
-  }
-};
+  const handleNAChange = (e) => {
+    const checked = e.target.checked;
+    setShowCustomField(checked);
+    if (checked) {
+      // If N/A is checked, clear all procedure selections
+      setFormData(prev => ({
+        ...prev,
+        legal_requirements: [],
+        // Keep any existing custom text or initialize it
+        custom_legal_requirements: prev.custom_legal_requirements || ""
+      }));
+    } else {
+      // If N/A is unchecked, clear the custom field
+      setFormData(prev => ({
+        ...prev,
+        custom_legal_requirements: ""
+      }));
+    }
+  };
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -183,7 +192,13 @@ const handleNAChange = (e) => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validate name field
+    if (!formData.name.trim()) {
+      setNameError("Name/Title is Required");
+      return;
+    }
+
     try {
       // Create the request data structure
       const data = {
@@ -194,27 +209,25 @@ const handleNAChange = (e) => {
         send_notification: formData.send_notification,
         company: companyId
       };
-      
+
       // Handle file upload first if needed
       if (formData.file instanceof File) {
         const fileFormData = new FormData();
         fileFormData.append('file', formData.file);
-        
+
         const fileResponse = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, data, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-        
+
         if (fileResponse.data && fileResponse.data.file_url) {
           data.file = fileResponse.data.file_url;
         }
       }
-      
+
       if (showCustomField) {
-     
         data.custom_legal_requirements = formData.custom_legal_requirements || "";
-      
         data.legal_requirements = [];
       } else {
         // Convert procedure titles to IDs
@@ -224,35 +237,35 @@ const handleNAChange = (e) => {
             return procedure ? procedure.id : null;
           })
           .filter(id => id !== null);
-        
-        // Add to request data
+
         data.legal_requirements = procedureIds;
-        // Make sure custom field is empty
         data.custom_legal_requirements = "";
       }
-      
+
       // Send the update request
       const response = await axios.put(`${BASE_URL}/qms/processes/${id}/edit/`, data, {
         headers: {
           "Content-Type": "application/json",
         },
       });
-      
+
       console.log("Success response:", response.data);
       setShowEditProcessesSuccessModal(true);
       setTimeout(() => {
         setShowEditProcessesSuccessModal(false);
         navigate("/company/qms/processes");
       }, 2000);
-  
+
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
+      setError(err); // Set error state
       setShowEditQmsProcessesErrorModal(true);
       setTimeout(() => {
         setShowEditQmsProcessesErrorModal(false);
       }, 3000);
     }
   };
+
   const handleCancel = () => {
     navigate("/company/qms/processes");
   };
@@ -274,20 +287,24 @@ const handleNAChange = (e) => {
       <EditQmsProcessesErrorModal
         showEditQmsProcessesErrorModal={showEditQmsProcessesErrorModal}
         onClose={() => { setShowEditQmsProcessesErrorModal(false) }}
+        error={error}
       />
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name</label>
+              <label className="block mb-3 add-qms-manual-label">Name/Title</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
+                className={`w-full add-qms-intertested-inputs ${nameError ? 'border-red-500' : ''}`}
                 placeholder="Enter Name"
               />
+              {nameError && (
+                <p className="text-red-500 text-sm mt-1">{nameError}</p>
+              )}
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">Process No.</label>
@@ -343,7 +360,7 @@ const handleNAChange = (e) => {
               </div>
               <div className="border border-[#383840] rounded-md p-2 max-h-[145px] overflow-y-auto">
                 {showCustomField ? (
-                  <div className="my-2"> 
+                  <div className="my-2">
                     <textarea
                       name="custom_legal_requirements"
                       placeholder="Please specify"
@@ -460,4 +477,4 @@ const handleNAChange = (e) => {
     </div>
   );
 };
-export default EditQmsProcesses; 
+export default EditQmsProcesses;

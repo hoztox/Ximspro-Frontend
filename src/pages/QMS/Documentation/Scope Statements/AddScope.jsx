@@ -29,6 +29,8 @@ import AddQmsPolicyErrorModal from './Modals/AddQmsPolicyErrorModal';
 const AddScope = () => {
   const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
+  const [titleError, setTitleError] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -53,8 +55,8 @@ const AddScope = () => {
     orderedList: false,
     indent: false,
     outdent: false,
-    textColor: '#FFFFFF',  
-    bgColor: 'transparent' 
+    textColor: '#FFFFFF',
+    bgColor: 'transparent'
   });
 
   const colorPalette = [
@@ -613,7 +615,7 @@ const AddScope = () => {
 
     navigate('/company/qms/scope')
   };
-  
+
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
     const role = localStorage.getItem("role");
@@ -655,9 +657,12 @@ const AddScope = () => {
   const handleSave = async () => {
     const editorContent = editorRef.current ? editorRef.current.innerHTML : '';
 
+    // Validate title
     if (!formData.title.trim()) {
-      toast.error('Please enter a policy title');
+      setTitleError(true);
       return;
+    } else {
+      setTitleError(false);
     }
 
     if (!editorContent.trim() || editorContent === '<p><br></p>') {
@@ -666,39 +671,25 @@ const AddScope = () => {
     }
 
     try {
-      // Set the saving state to true
       setIsSaving(true);
+      setError(null); // Reset error state before making the request
 
-      // Get company ID using getUserCompanyId function
       const companyId = getUserCompanyId();
-
       if (!companyId) {
-        toast.error("Company ID not found.");
+        setError("Company ID not found.");
         setIsSaving(false);
+        setShowAddPolicyErrorModal(true);
         return;
       }
 
-   
-      console.log("Debug Info:", { companyId });
-
-  
       const apiFormData = new FormData();
-
- 
       apiFormData.append('title', formData.title);
-      
- 
       apiFormData.append('text', editorContent);
-
- 
       apiFormData.append('company', companyId);
 
- 
       if (formData.energyPolicy) {
         apiFormData.append('energy_policy', formData.energyPolicy);
       }
-
-      console.log("Request data:", Object.fromEntries(apiFormData.entries()));
 
       const response = await axios.post(`${BASE_URL}/qms/scope/`, apiFormData, {
         headers: {
@@ -710,24 +701,21 @@ const AddScope = () => {
         setShowAddPolicySuccessModal(true);
         setTimeout(() => {
           setShowAddPolicySuccessModal(false);
-          navigate('/company/qms/scope');  
+          navigate('/company/qms/scope');
           resetForm();
-          
         }, 1500);
       } else {
+        setError("An unexpected error occurred. Please try again.");
         setShowAddPolicyErrorModal(true);
-        setTimeout(() => {
-          setShowAddPolicyErrorModal(false);
-        }, 3000);
       }
     } catch (error) {
       console.error('Error details:', error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message ||
+        error.message ||
+        "Failed to add scope statement. Please try again.";
+      setError(errorMessage);
       setShowAddPolicyErrorModal(true);
-      setTimeout(() => {
-        setShowAddPolicyErrorModal(false);
-      }, 3000);
     } finally {
-      // Set the saving state back to false regardless of success or failure
       setIsSaving(false);
     }
   };
@@ -828,23 +816,34 @@ const AddScope = () => {
 
       <AddQmsPolicyErrorModal
         showAddPolicyErrorModal={showAddPolicyErrorModal}
-        onClose={() => { setShowAddPolicyErrorModal(false) }}
+        onClose={() => {
+          setShowAddPolicyErrorModal(false);
+          setError(null); // Clear error when modal closes
+        }}
+        error={error}
       />
 
       <div className='border-t border-[#383840] mt-[21px] mb-5'></div>
 
       {/* Title Field */}
       <div className="mb-4">
-        <label htmlFor="policyTitle" className="block text-sm font-medium text-gray-300 mb-2">Scope Statements Title</label>
+        <label htmlFor="policyTitle" className="block add-qms-manual-label">Scope Statement Title</label>
         <input
           type="text"
           id="policyTitle"
           value={formData.title}
-          onChange={handleTitleChange}
-          className="bg-[#24242D] text-white px-4 py-2 w-full rounded-[4px] border border-[#383840] focus:outline-none focus:border-blue-500"
-          placeholder="Enter  title"
+          onChange={(e) => {
+            handleTitleChange(e);
+            // Clear error when user starts typing
+            if (titleError) setTitleError(false);
+          }}
+          className={`add-qms-manual-inputs ${titleError ? 'border-red-500' : ''}`}
+          placeholder="Enter Title"
           maxLength={50}
         />
+        {titleError && (
+          <p className="text-red-500 text-sm mt-1">Title is required</p>
+        )}
       </div>
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
@@ -873,7 +872,7 @@ const AddScope = () => {
 
         {/* Alignment */}
 
-     
+
         <button
           className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === 'left' ? 'bg-gray-700' : ''}`}
           onClick={() => execCommand('justifyLeft')}

@@ -14,6 +14,7 @@ const DraftQmsProcesses = ({ userId }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const recordsPerPage = 10;
 
@@ -76,6 +77,7 @@ const DraftQmsProcesses = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft processes:", error);
+        setError(error); // Set error state
         setLoading(false);
       }
     };
@@ -96,7 +98,6 @@ const DraftQmsProcesses = ({ userId }) => {
     setShowDeleteProcessesDraftModal(false);
     setProcessesDraftToDelete(null);
   };
-
 
   const handleDelete = async () => {
     if (!processesDraftToDelete) return;
@@ -122,6 +123,7 @@ const DraftQmsProcesses = ({ userId }) => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting draft process:", error);
+      setError(error); // Set error state
 
       // Close the delete modal and show error modal
       closeDeleteModal();
@@ -187,7 +189,7 @@ const DraftQmsProcesses = ({ userId }) => {
   );
 
   if (loading) {
-    return <div className="text-white">Loading...</div>;
+    return <div className="text-center not-found">Loading Processes...</div>;
   }
 
   return (
@@ -366,10 +368,9 @@ const DraftQmsProcesses = ({ userId }) => {
 
       {/* Error Modal */}
       <DeleteQmsDraftProcessesErrorModal
-        showDeleteDraftProcessesErrorModal={
-            showDeleteDraftProcessesErrorModal
-        }
+        showDeleteDraftProcessesErrorModal={showDeleteDraftProcessesErrorModal}
         onClose={() => setShowDeleteDraftProcessesErrorModal(false)}
+        error={error}
       />
     </div>
   );

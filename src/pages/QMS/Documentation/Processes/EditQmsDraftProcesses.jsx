@@ -15,6 +15,12 @@ const EditQmsDraftProcesses = () => {
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
   // Add search state
   const [searchTerm, setSearchTerm] = useState("");
+  // Add error state
+  const [error, setError] = useState(null);
+  // Add validation errors state
+  const [validationErrors, setValidationErrors] = useState({
+    name: "",
+  });
 
   const [
     showEditDraftProcessesSuccessModal,
@@ -66,7 +72,7 @@ const EditQmsDraftProcesses = () => {
   };
 
   const companyId = getUserCompanyId();
-  
+
   // Define the fetchComplianceData function
   const fetchComplianceData = () => {
     if (!companyId) {
@@ -81,6 +87,7 @@ const EditQmsDraftProcesses = () => {
       })
       .catch((error) => {
         console.error("Error fetching legal requirements:", error);
+        setError(error);
       });
   };
 
@@ -97,51 +104,61 @@ const EditQmsDraftProcesses = () => {
   useEffect(() => {
     if (!id) return;
     console.log("Fetching data for id:", id);
-  
+
     axios
       .get(`${BASE_URL}/qms/processes-get/${id}/`)
       .then((res) => {
         const data = res.data;
-        
+
         // Convert the legal_requirements IDs to titles using legal_requirement_details
         let procedureTitles = [];
         if (data.legal_requirement_details && Array.isArray(data.legal_requirement_details)) {
           procedureTitles = data.legal_requirement_details.map(item => item.title);
         }
-  
+
         setFormData({
           ...data,
-          legal_requirements: procedureTitles, // Use the titles instead of IDs
+          legal_requirements: procedureTitles,
           custom_legal_requirements: data.custom_legal_requirements || "",
           file: null,
         });
-        
-        // Show custom field if N/A was previously selected
+
         if (data.legal_requirements === "N/A" || data.custom_legal_requirements) {
           setShowCustomField(true);
         }
-        
+
         if (data.file) {
           setFileName(data.file.split("/").pop());
           setFileUrl(data.file);
         }
       })
-      .catch((err) => console.error("Error fetching data:", err));
+      .catch((err) => {
+        console.error("Error fetching data:", err);
+        setError(err);
+      });
   }, [id]);
-  
+
   const toggleDropdown = (field) => {
     setDropdownRotation((prev) => ({
       ...prev,
       [field]: !prev[field],
     }));
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear validation errors when user starts typing
+    if (name === "name" && validationErrors.name) {
+      setValidationErrors({
+        ...validationErrors,
+        name: "",
+      });
+    }
   };
 
   // Handle search term change
@@ -190,7 +207,7 @@ const EditQmsDraftProcesses = () => {
       }));
     }
   };
-  
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -202,7 +219,7 @@ const EditQmsDraftProcesses = () => {
       }));
     }
   };
-  
+
   const handleViewFile = () => {
     if (fileUrl && !selectedFile) {
       window.open(fileUrl, "_blank");
@@ -212,10 +229,29 @@ const EditQmsDraftProcesses = () => {
       window.open(tempUrl, "_blank");
     }
   };
-  
+
+  const validateForm = () => {
+    let isValid = true;
+    const errors = {};
+
+    // Check if name is empty
+    if (!formData.name.trim()) {
+      errors.name = "Name/Title is Required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Validate form before submitting
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       // Create an object for the JSON data
       const data = {
@@ -226,59 +262,56 @@ const EditQmsDraftProcesses = () => {
         send_notification: formData.send_notification,
         company: companyId
       };
-      
+
       // Handle file upload first if needed
       if (formData.file instanceof File) {
         const fileFormData = new FormData();
         fileFormData.append('file', formData.file);
-        
-        const fileResponse =await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
+
+        const fileResponse = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
-        
+
         if (fileResponse.data && fileResponse.data.file_url) {
           data.file = fileResponse.data.file_url;
         }
       }
-      
+
       // Handle legal requirements based on whether custom field is shown
       if (showCustomField) {
-        // If N/A is selected, send the custom text if any
         data.custom_legal_requirements = formData.custom_legal_requirements || "";
-        // Send an empty array for legal_requirements
         data.legal_requirements = [];
       } else {
-        // Convert procedure titles to IDs
         const procedureIds = formData.legal_requirements
           .map(procedureTitle => {
             const procedure = legalRequirementOptions.find(p => p.title === procedureTitle);
             return procedure ? procedure.id : null;
           })
           .filter(id => id !== null);
-        
-        // Add array of IDs to request data
+
         data.legal_requirements = procedureIds;
         data.custom_legal_requirements = "";
       }
-      
+
       // Send the update request as JSON instead of FormData
       const response = await axios.put(`${BASE_URL}/qms/processes/create/${id}/`, data, {
         headers: {
           "Content-Type": "application/json",
         },
       });
-      
+
       console.log("Success response:", response.data);
       setShowEditDraftProcessesSuccessModal(true);
       setTimeout(() => {
         setShowEditDraftProcessesSuccessModal(false);
         navigate("/company/qms/processes");
       }, 2000);
-  
+
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
+      setError(err); // Set the error state
       setShowEditDraftProcessesErrorModal(true);
       setTimeout(() => {
         setShowEditDraftProcessesErrorModal(false);
@@ -292,10 +325,10 @@ const EditQmsDraftProcesses = () => {
 
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions
-    .filter(option => 
+    .filter(option =>
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    
+
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg text-white">
       <h1 className="add-interested-parties-head px-[122px] border-b border-[#383840] pb-5">
@@ -314,6 +347,7 @@ const EditQmsDraftProcesses = () => {
         onClose={() => {
           setShowEditDraftProcessesErrorModal(false);
         }}
+        error={error}
       />
 
       <form onSubmit={handleSubmit} className="px-[122px]">
@@ -328,9 +362,12 @@ const EditQmsDraftProcesses = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
+                className={`w-full add-qms-intertested-inputs ${validationErrors.name ? "border-red-500" : ""}`}
                 placeholder="Enter Name"
               />
+              {validationErrors.name && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+              )}
             </div>
             <div>
               <label className="block mb-3 add-qms-manual-label">
@@ -370,9 +407,8 @@ const EditQmsDraftProcesses = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
-                      dropdownRotation.type ? "rotate-180" : ""
-                    }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.type ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -381,7 +417,7 @@ const EditQmsDraftProcesses = () => {
               <label className="block mb-3 add-qms-manual-label">
                 Related Procedure
               </label>
-              
+
               {/* Search box for procedures */}
               <div className="relative mb-2">
                 <input

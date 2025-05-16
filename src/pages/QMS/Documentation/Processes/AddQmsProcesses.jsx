@@ -16,6 +16,11 @@ const AddQmsProcesses = () => {
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Field validation errors
+  const [validationErrors, setValidationErrors] = useState({
+    name: ""
+  });
 
   const [showAddProcessesSuccessModal, setShowAddProcessesSuccessModal] = useState(false);
   const [showAddQmsProcessesErrorModal, setShowAddQmsProcessesErrorModal] = useState(false);
@@ -122,6 +127,24 @@ const AddQmsProcesses = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+    
+    // Clear validation error when user starts typing
+    if (name === "name" && value.trim() !== "") {
+      setValidationErrors({
+        ...validationErrors,
+        name: ""
+      });
+    }
+  };
+
+  // Focus out validation for name field
+  const handleNameBlur = () => {
+    if (formData.name.trim() === "") {
+      setValidationErrors({
+        ...validationErrors,
+        name: "Name/Title is Required"
+      });
+    }
   };
 
   // Handle search term change
@@ -182,8 +205,25 @@ const AddQmsProcesses = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = "Name/Title is Required";
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
+    
     setSubmitting(true);
     setError(null);
     const userId = getRelevantUserId();
@@ -262,13 +302,18 @@ const AddQmsProcesses = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg text-white flex justify-center items-center h-64">
-        <p>Loading...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center h-64">
+        <p>Loading Processes...</p>
       </div>
     );
   }
 
   const handleSaveAsDraft = async () => {
+    // Validate form before saving as draft
+    if (!validateForm()) {
+      return;
+    }
+    
     try {
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
@@ -402,9 +447,12 @@ const AddQmsProcesses = () => {
                 placeholder="Enter Name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full add-qms-intertested-inputs"
-                required
+                onBlur={handleNameBlur}
+                className={`w-full add-qms-intertested-inputs ${validationErrors.name ? 'border-red-500' : ''}`}
               />
+              {validationErrors.name && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.name}</p>
+              )}
             </div>
 
             <div>

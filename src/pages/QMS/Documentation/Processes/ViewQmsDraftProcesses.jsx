@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -31,7 +29,7 @@ const ViewQmsDraftProcesses = () => {
     };
     fetchData();
   }, [id]);
-  if (!formData) return <div className="text-white p-4">Loading...</div>;
+  if (!formData) return <div className="text-center not-found p-4">Loading Processes...</div>;
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg w-full">
       <div className="flex justify-between items-center py-5 mx-5 border-b border-[#383840]">

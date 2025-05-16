@@ -248,9 +248,7 @@ const QmsProcesses = () => {
         </div>
       </div>
       {loading ? (
-        <div className="text-center py-8">Loading processes data...</div>
-      ) : error ? (
-        <div className="text-center py-8 text-red-500">{error}</div>
+        <div className="text-center py-8 not-found">Loading Processes...</div>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -356,6 +354,7 @@ const QmsProcesses = () => {
       <DeleteQmsProcessesErrorModal
           showDeleteProcessesErrorModal={showDeleteProcessesErrorModal}
           onClose={() => setShowDeleteProcessesErrorModal(false)}
+          error={error}
       />
 
     </div>

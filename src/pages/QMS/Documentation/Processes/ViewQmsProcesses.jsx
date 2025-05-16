@@ -5,10 +5,22 @@ import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteQmsProcessesConfirmModal from "./Modals/DeleteQmsProcessesConfirmModal";
+import DeleteQmsProcessesSuccessModal from "./Modals/DeleteQmsProcessesSuccessModal";
+import DeleteQmsProcessesErrorModal from "./Modals/DeleteQmsProcessesErrorModal";
+
 const ViewQmsProcesses = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [formData, setFormData] = useState(null);
+    
+    // State for delete modals
+    const [showDeleteProcessesModal, setShowDeleteProcessesModal] = useState(false);
+    const [processesToDelete, setProcessesToDelete] = useState(null);
+    const [showDeleteProcessesSuccessModal, setShowDeleteProcessesSuccessModal] = useState(false);
+    const [showDeleteProcessesErrorModal, setShowDeleteProcessesErrorModal] = useState(false);
+    const [error, setError] = useState(null);
+
     const handleClose = () => {
         navigate('/company/qms/processes');
     };
@@ -16,15 +28,50 @@ const ViewQmsProcesses = () => {
     const handleEditProcess = (id) => {
         navigate(`/company/qms/edit-processes/${id}`);
     }
-    const handleDelete = async (id) => {
+
+    const openDeleteModal = (id, name) => {
+        setProcessesToDelete({ id, name });
+        setShowDeleteProcessesModal(true);
+    };
+
+    const closeDeleteModal = () => {
+        setShowDeleteProcessesModal(false);
+        setProcessesToDelete(null);
+    };
+
+    const closeSuccessModal = () => {
+        setShowDeleteProcessesSuccessModal(false);
+        navigate('/company/qms/processes');
+    };
+
+    const closeErrorModal = () => {
+        setShowDeleteProcessesErrorModal(false);
+    };
+
+    const handleDelete = async () => {
+        if (!processesToDelete) return;
+        
         try {
-            await axios.delete(`${BASE_URL}/qms/processes-get/${id}/`);
-            navigate('/company/qms/processes');
-        } catch (error) {
-            console.error("Error deleting manual:", error);
-            const errorMessage = error.response?.data?.error || 
-                error.response?.data?.message || 
-                'Failed to delete manual';
+            await axios.delete(`${BASE_URL}/qms/processes-get/${processesToDelete.id}/`);
+            closeDeleteModal();
+            setShowDeleteProcessesSuccessModal(true);
+            
+            // Close success modal after 3 seconds and navigate back
+            setTimeout(() => {
+                setShowDeleteProcessesSuccessModal(false);
+                navigate('/company/qms/processes');
+            }, 3000);
+            
+        } catch (err) {
+            console.error("Error deleting process:", err);
+            setError(err.response?.data?.message || "Failed to delete process");
+            closeDeleteModal();
+            setShowDeleteProcessesErrorModal(true);
+            
+            // Close error modal after 3 seconds
+            setTimeout(() => {
+                setShowDeleteProcessesErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -40,7 +87,9 @@ const ViewQmsProcesses = () => {
         };
         fetchData();
     }, [id]);
-    if (!formData) return <div className="text-white p-4">Loading...</div>;
+
+    if (!formData) return <div className="text-center not-found p-4">Loading Processes...</div>;
+
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg w-full">
             <div className="flex justify-between items-center py-5 mx-5 border-b border-[#383840]">
@@ -97,14 +146,16 @@ const ViewQmsProcesses = () => {
                         </div>
                         <div className="flex justify-end space-x-10">
                             <button 
-                            onClick={()=> handleEditProcess(id)}
-                            className="flex flex-col items-center view-interested-parties-label gap-[8px]">
+                                onClick={() => handleEditProcess(id)}
+                                className="flex flex-col items-center view-interested-parties-label gap-[8px]"
+                            >
                                 <span>Edit</span>
                                 <img src={edits} alt="Edit Icon" className="w-[18px] h-[18px]" />
                             </button>
                             <button 
-                            className="flex flex-col items-center view-interested-parties-label gap-[8px]" 
-                            onClick={()=> handleDelete(id)}>
+                                className="flex flex-col items-center view-interested-parties-label gap-[8px]" 
+                                onClick={() => openDeleteModal(id, formData.name)}
+                            >
                                 <span>Delete</span>
                                 <img src={deletes} alt="Delete Icon" className="w-[18px] h-[18px]" />
                             </button>
@@ -112,7 +163,29 @@ const ViewQmsProcesses = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteQmsProcessesConfirmModal
+                showDeleteProcessesModal={showDeleteProcessesModal}
+                onConfirm={handleDelete}
+                onCancel={closeDeleteModal}
+                processName={processesToDelete?.name}
+            />
+
+            {/* Success Modal */}
+            <DeleteQmsProcessesSuccessModal
+                showDeleteProcessesSuccessModal={showDeleteProcessesSuccessModal}
+                onClose={closeSuccessModal}
+            />
+
+            {/* Error Modal */}
+            <DeleteQmsProcessesErrorModal
+                showDeleteProcessesErrorModal={showDeleteProcessesErrorModal}
+                onClose={closeErrorModal}
+                error={error}
+            />
         </div>
     );
 };
+
 export default ViewQmsProcesses;
