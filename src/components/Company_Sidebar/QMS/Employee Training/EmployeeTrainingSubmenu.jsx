@@ -30,6 +30,7 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/draft-training",
                 "/company/qms/edit-draft-training",
                 "/company/qms/view-draft-training",
+                "/company/qms/review-training",
             ]
         },
         {

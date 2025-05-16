@@ -296,19 +296,20 @@ const QmsListTraining = () => {
 
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    {training.status === "Requested" ? (
-                      <button
-                        onClick={() => handleMarkAsCompleted(training.id)}
-                        className=" text-[#1E84AF] text-xs py-1 px-2 rounded  "
-                      >
-                        Change Status
-                      </button>
-                    ) : (
-                      <span className="text-xs text-gray-400">
-                        No Action Needed
-                      </span>
-                    )}
-                  </td>
+  {["Requested", "Cancelled"].includes(training.status) ? (
+    <button
+      onClick={() => handleMarkAsCompleted(training.id)}
+      className="text-[#1E84AF] text-xs py-1 px-2 rounded"
+    >
+      Change Status
+    </button>
+  ) : (
+    <span className="text-xs text-gray-400">
+      No Action Needed
+    </span>
+  )}
+</td>
+
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => handleQmsViewTraining(training.id)}>
                       <img
