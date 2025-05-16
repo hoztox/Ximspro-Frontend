@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import EditAwarenessTrainingSuccessModal from "../Modals/EditAwarenessTrainingSuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
@@ -13,7 +13,7 @@ const QmsEditAwarenessTraining = () => {
     description: "",
     youtube_link: "",
     web_link: "",
-    upload_file: null
+    upload_file: null,
   });
 
   const [selectedFile, setSelectedFile] = useState("");
@@ -22,23 +22,24 @@ const QmsEditAwarenessTraining = () => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const [showEditAwarenessTrainingSuccessModal, setShowEditAwarenessTrainingSuccessModal] = useState(false);
+  const [
+    showEditAwarenessTrainingSuccessModal,
+    setShowEditAwarenessTrainingSuccessModal,
+  ] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const categories = [
-    "YouTube video",
-    "Presentation",
-    "Web Link"
-  ];
+  const categories = ["YouTube video", "Presentation", "Web Link"];
 
   useEffect(() => {
     const fetchAwarenessData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${BASE_URL}/qms/awareness-get/${id}/`);
+        const response = await axios.get(
+          `${BASE_URL}/qms/awareness-get/${id}/`
+        );
         const data = response.data;
 
         setFormData({
@@ -50,12 +51,29 @@ const QmsEditAwarenessTraining = () => {
         });
 
         if (data.upload_file) {
-          setSelectedFile(data.upload_file.split('/').pop());
+          setSelectedFile(data.upload_file.split("/").pop());
         }
 
         setLoading(false);
       } catch (err) {
-        setError("Failed to load awareness training data");
+        let errorMsg = "Failed to fetch awareness data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
         console.error("Error fetching awareness training data:", err);
       }
@@ -101,7 +119,10 @@ const QmsEditAwarenessTraining = () => {
     }
 
     // Validate based on category
-    if (formData.category === "YouTube video" && !formData.youtube_link.trim()) {
+    if (
+      formData.category === "YouTube video" &&
+      !formData.youtube_link.trim()
+    ) {
       newErrors.youtube_link = "YouTube link is required";
     }
 
@@ -109,7 +130,11 @@ const QmsEditAwarenessTraining = () => {
       newErrors.web_link = "Web link is required";
     }
 
-    if (formData.category === "Presentation" && !formData.upload_file && !selectedFile) {
+    if (
+      formData.category === "Presentation" &&
+      !formData.upload_file &&
+      !selectedFile
+    ) {
       newErrors.upload_file = "Presentation file is required";
     }
 
@@ -126,9 +151,9 @@ const QmsEditAwarenessTraining = () => {
 
     const submitData = new FormData();
 
-    Object.keys(formData).forEach(key => {
-      if (key === 'upload_file') {
-        if (formData[key] && typeof formData[key] === 'object') {
+    Object.keys(formData).forEach((key) => {
+      if (key === "upload_file") {
+        if (formData[key] && typeof formData[key] === "object") {
           submitData.append(key, formData[key]);
         }
       } else if (formData[key] !== null && formData[key] !== undefined) {
@@ -137,21 +162,41 @@ const QmsEditAwarenessTraining = () => {
     });
 
     try {
-      const response = await axios.put(`${BASE_URL}/qms/awareness/${id}/update/`, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.put(
+        `${BASE_URL}/qms/awareness/${id}/update/`,
+        submitData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       console.log("Awareness training updated successfully:", response.data);
       setShowEditAwarenessTrainingSuccessModal(true);
       setTimeout(() => {
         setShowEditAwarenessTrainingSuccessModal(false);
         navigate("/company/qms/list-awareness-training");
       }, 1500);
-
     } catch (err) {
       console.error("Error updating awareness training:", err);
-      setError("Failed to update awareness training");
+      let errorMsg = "Failed to update awareness training";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -173,10 +218,10 @@ const QmsEditAwarenessTraining = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-
-
       <EditAwarenessTrainingSuccessModal
-        showEditAwarenessTrainingSuccessModal={showEditAwarenessTrainingSuccessModal}
+        showEditAwarenessTrainingSuccessModal={
+          showEditAwarenessTrainingSuccessModal
+        }
         onClose={() => {
           setShowEditAwarenessTrainingSuccessModal(false);
         }}
@@ -187,9 +232,8 @@ const QmsEditAwarenessTraining = () => {
         onClose={() => {
           setShowErrorModal(false);
         }}
-        error = {error}
+        error={error}
       />
-
 
       <div className="flex justify-between items-center px-[104px] pb-5 border-b border-[#383840]">
         <h1 className="add-awareness-training-head">Edit Awareness Training</h1>
@@ -214,7 +258,9 @@ const QmsEditAwarenessTraining = () => {
               onChange={handleChange}
               className="w-full employee-performace-inputs"
             />
-            {fieldErrors.title && <p className="text-red-500 text-sm mt-1">{fieldErrors.title}</p>}
+            {fieldErrors.title && (
+              <p className="text-red-500 text-sm mt-1">{fieldErrors.title}</p>
+            )}
           </div>
 
           <div>
@@ -243,8 +289,9 @@ const QmsEditAwarenessTraining = () => {
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <ChevronDown
-                  className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${dropdownOpen ? "rotate-180" : "rotate-0"
-                    }`}
+                  className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ease-in-out ${
+                    dropdownOpen ? "rotate-180" : "rotate-0"
+                  }`}
                 />
               </div>
             </div>
@@ -275,7 +322,11 @@ const QmsEditAwarenessTraining = () => {
                 className="w-full employee-performace-inputs"
                 placeholder="https://www.youtube.com/watch?v=..."
               />
-              {fieldErrors.youtube_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.youtube_link}</p>}
+              {fieldErrors.youtube_link && (
+                <p className="text-red-500 text-sm mt-1">
+                  {fieldErrors.youtube_link}
+                </p>
+              )}
             </div>
           )}
 
@@ -292,7 +343,11 @@ const QmsEditAwarenessTraining = () => {
                 className="w-full employee-performace-inputs"
                 placeholder="https://..."
               />
-              {fieldErrors.web_link && <p className="text-red-500 text-sm mt-1">{fieldErrors.web_link}</p>}
+              {fieldErrors.web_link && (
+                <p className="text-red-500 text-sm mt-1">
+                  {fieldErrors.web_link}
+                </p>
+              )}
             </div>
           )}
 
@@ -320,13 +375,17 @@ const QmsEditAwarenessTraining = () => {
                 </label>
                 <button
                   type="button"
-                  onClick={() => document.getElementById('upload_file').click()}
+                  onClick={() => document.getElementById("upload_file").click()}
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#2C2C35] px-4 py-1 rounded"
                 >
                   Browse
                 </button>
               </div>
-              {fieldErrors.upload_file && <p className="text-red-500 text-sm mt-1">{fieldErrors.upload_file}</p>}
+              {fieldErrors.upload_file && (
+                <p className="text-red-500 text-sm mt-1">
+                  {fieldErrors.upload_file}
+                </p>
+              )}
             </div>
           )}
         </div>

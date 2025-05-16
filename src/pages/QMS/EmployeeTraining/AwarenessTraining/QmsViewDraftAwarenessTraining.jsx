@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-
 
 const QmsViewDraftAwarenessTraining = () => {
   const [trainingData, setTrainingData] = useState(null);
@@ -16,11 +15,30 @@ const QmsViewDraftAwarenessTraining = () => {
     const fetchTrainingData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${BASE_URL}/qms/awareness-get/${id}/`);
+        const response = await axios.get(
+          `${BASE_URL}/qms/awareness-get/${id}/`
+        );
         setTrainingData(response.data);
         setError(null);
       } catch (err) {
-        setError("Failed to load awareness training data");
+        let errorMsg = "Failed to fetch data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         console.error("Error fetching awareness training data:", err);
       } finally {
         setLoading(false);
@@ -36,14 +54,11 @@ const QmsViewDraftAwarenessTraining = () => {
     navigate("/company/qms/draft-awareness-training");
   };
 
-
-
-
   const renderResourceContent = () => {
     if (!trainingData) return null;
 
     switch (trainingData.category) {
-      case 'YouTube video':
+      case "YouTube video":
         return (
           <div>
             <label className="block view-employee-label mb-[6px]">
@@ -62,7 +77,7 @@ const QmsViewDraftAwarenessTraining = () => {
           </div>
         );
 
-      case 'Presentation':
+      case "Presentation":
         return (
           <div>
             <label className="block view-employee-label mb-[6px]">
@@ -85,7 +100,7 @@ const QmsViewDraftAwarenessTraining = () => {
           </div>
         );
 
-      case 'Web Link':
+      case "Web Link":
         return (
           <div>
             <label className="block view-employee-label mb-[6px]">
@@ -150,9 +165,7 @@ const QmsViewDraftAwarenessTraining = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px]">
           <div>
-            <label className="block view-employee-label mb-[6px]">
-              Title
-            </label>
+            <label className="block view-employee-label mb-[6px]">Title</label>
             <div className="view-employee-data">{trainingData.title}</div>
           </div>
 
@@ -167,16 +180,16 @@ const QmsViewDraftAwarenessTraining = () => {
             <label className="block view-employee-label mb-[6px]">
               Description
             </label>
-            <div className="view-employee-data">{trainingData.description || 'N/A'}</div>
+            <div className="view-employee-data">
+              {trainingData.description || "N/A"}
+            </div>
           </div>
 
-          <div className="flex justify-between">
-            {renderResourceContent()}
-          </div>
+          <div className="flex justify-between">{renderResourceContent()}</div>
         </div>
       </div>
     </div>
   );
 };
 
-export default QmsViewDraftAwarenessTraining
+export default QmsViewDraftAwarenessTraining;
