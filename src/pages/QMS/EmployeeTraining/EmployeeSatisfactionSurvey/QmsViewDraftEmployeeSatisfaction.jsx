@@ -65,14 +65,8 @@ const QmsViewDraftEmployeeSatisfaction = () => {
             </div>
 
             {loading && (
-                <div className="flex justify-center items-center p-10">
+                <div className="flex justify-center items-center not-found p-10">
                     <p>Loading...</p>
-                </div>
-            )}
-
-            {error && (
-                <div className="flex justify-center items-center p-10">
-                    <p className="text-red-500">{error}</p>
                 </div>
             )}
 

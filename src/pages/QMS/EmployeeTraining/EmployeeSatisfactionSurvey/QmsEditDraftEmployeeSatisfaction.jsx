@@ -12,7 +12,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
     const [formData, setFormData] = useState({
         survey_title: '',
         description: '',
@@ -33,7 +33,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
     const [focusedField, setFocusedField] = useState("");
 
     useEffect(() => {
-        const fetchsurveyData = async () => {
+        const fetchSurveyData = async () => {
             try {
                 setLoading(true);
                 const response = await axios.get(`${BASE_URL}/qms/survey-get/${id}/`);
@@ -67,7 +67,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         };
 
         if (id) {
-            fetchsurveyData();
+            fetchSurveyData();
         }
     }, [id]);
 
@@ -77,29 +77,21 @@ const QmsEditDraftEmployeeSatisfaction = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name.includes('.')) {
+        if (name.startsWith('validTill.')) {
             // Handle date fields
-            const [parent, child] = name.split('.');
-            setDateValues({
+            const field = name.split('.')[1];
+            const updatedDateValues = {
                 ...dateValues,
-                [child]: value
-            });
+                [field]: value
+            };
+            setDateValues(updatedDateValues);
 
-            // Update the valid_till in formData if all date fields are filled
-            if (child === 'day' || child === 'month' || child === 'year') {
-                const updatedDateValues = {
-                    ...dateValues,
-                    [child]: value
-                };
-
-                // Only set valid_till if all date parts are present
-                if (updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
-                    const formattedDate = `${updatedDateValues.year}-${updatedDateValues.month}-${updatedDateValues.day}`;
-                    setFormData({
-                        ...formData,
-                        valid_till: formattedDate
-                    });
-                }
+            // Clear date error if all fields are now filled
+            if (fieldErrors.valid_till && updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
+                setFieldErrors({
+                    ...fieldErrors,
+                    valid_till: ''
+                });
             }
         } else {
             // Handle other form fields
@@ -107,15 +99,33 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                 ...formData,
                 [name]: value
             });
+
+            // Clear error for this field if it exists
+            if (fieldErrors[name]) {
+                setFieldErrors({
+                    ...fieldErrors,
+                    [name]: ''
+                });
+            }
         }
     };
 
     const validateForm = () => {
-        if (!formData.survey_title) {
-            setError("Evaluation title is required");
-            return false;
+        const newErrors = {};
+
+        if (!formData.survey_title.trim()) {
+            newErrors.survey_title = 'Survey title is required';
         }
-        return true;
+
+        // Validate date if any part is filled
+        if (dateValues.day || dateValues.month || dateValues.year) {
+            if (!dateValues.day || !dateValues.month || !dateValues.year) {
+                newErrors.valid_till = 'Please complete the date';
+            }
+        }
+
+        setFieldErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
@@ -128,15 +138,21 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         setLoading(true);
         setError(null);
 
+        // Prepare submission data
+        const submissionData = {
+            ...formData
+        };
+
+        // If all date fields are filled, format the date for submission
+        if (dateValues.day && dateValues.month && dateValues.year) {
+            submissionData.valid_till = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
+        } else {
+            submissionData.valid_till = null;
+        }
+
         try {
-            const response = await axios.put(`${BASE_URL}/qms/survey/${id}/update/`, formData);
-            console.log("survey evaluation updated successfully:", response.data);
-            setSuccess("survey evaluation updated successfully");
-
-            // Navigate after a brief delay to show success message
-            setTimeout(() => {
-
-            }, 1500);
+            const response = await axios.put(`${BASE_URL}/qms/survey/${id}/update/`, submissionData);
+            console.log("Survey evaluation updated successfully:", response.data);
 
             setShowEditDraftEmployeeSatisfactionSuccessModal(true);
             setTimeout(() => {
@@ -154,7 +170,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
         }
     };
 
-    const handleListEmployeesurvey = () => {
+    const handleListEmployeeSurvey = () => {
         navigate('/company/qms/draft-satisfaction-survey');
     };
 
@@ -200,7 +216,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                     <h1 className="add-employee-performance-head">Edit Draft Employee Survey Evaluation</h1>
                     <button
                         className="border border-[#858585] text-[#858585] rounded px-[10px] h-[42px] list-training-btn duration-200"
-                        onClick={handleListEmployeesurvey}
+                        onClick={handleListEmployeeSurvey}
                     >
                         List Draft Employee Satisfaction Survey
                     </button>
@@ -218,9 +234,8 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                     onClose={() => {
                         setShowErrorModal(false);
                     }}
+                    error={error}
                 />
-
-
 
                 {!loading && (
                     <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
@@ -234,9 +249,11 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                                     name="survey_title"
                                     value={formData.survey_title}
                                     onChange={handleChange}
-                                    className="w-full employee-performace-inputs"
-                                    required
+                                    className={`w-full employee-performace-inputs ${fieldErrors.survey_title ? 'border-red-500' : ''}`}
                                 />
+                                {fieldErrors.survey_title && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.survey_title}</p>
+                                )}
                             </div>
 
                             <div className="md:row-span-2">
@@ -260,7 +277,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("day")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">dd</option>
                                             {dayOptions}
@@ -280,7 +297,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("month")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">mm</option>
                                             {monthOptions}
@@ -300,7 +317,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("year")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">yyyy</option>
                                             {yearOptions}
@@ -312,6 +329,9 @@ const QmsEditDraftEmployeeSatisfaction = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {fieldErrors.valid_till && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.valid_till}</p>
+                                )}
                             </div>
                         </div>
 
@@ -339,5 +359,4 @@ const QmsEditDraftEmployeeSatisfaction = () => {
     );
 };
 
-
-export default QmsEditDraftEmployeeSatisfaction
+export default QmsEditDraftEmployeeSatisfaction;

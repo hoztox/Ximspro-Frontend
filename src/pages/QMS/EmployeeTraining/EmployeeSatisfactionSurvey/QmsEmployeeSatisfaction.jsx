@@ -378,7 +378,6 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   // Modal states
   const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
@@ -397,7 +396,6 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
         } catch (err) {
           console.error('Error fetching questions:', err);
           setError('Failed to load questions');
-          setErrorMessage('Failed to load questions');
           setShowErrorModal(true);
         } finally {
           setLoading(false);
@@ -422,7 +420,6 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
     console.log('Submitting formData:', formData);
     if (!formData.question.trim()) {
       setError('Question is required');
-      setErrorMessage('Question is required');
       setShowErrorModal(true);
       return;
     }
@@ -444,7 +441,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       setError('');
     } catch (err) {
       console.error('Error adding question:', err);
-      setErrorMessage('Failed to add question');
+      setError('Failed to add question');
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -483,7 +480,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
     } catch (err) {
       console.error('Error deleting question:', err);
       setShowDeleteModal(false);
-      setErrorMessage('Failed to delete question');
+      setError('Failed to delete question');
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -557,7 +554,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
             </form>
 
             {loading && questions.length === 0 ? (
-              <div className="text-center py-4">Loading questions...</div>
+              <div className="text-center py-4 not-found">Loading questions...</div>
             ) : (
               questions.length > 0 && (
                 <div className="mb-4">
@@ -609,7 +606,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
-        errorMessage={errorMessage}
+        error={error}
       />
 
       <DeleteQuestionConfirmModal
@@ -632,6 +629,7 @@ const QmsEmployeeSatisfaction = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [draftCount, setDraftCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
@@ -645,7 +643,6 @@ const QmsEmployeeSatisfaction = () => {
   const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
   const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -663,11 +660,26 @@ const QmsEmployeeSatisfaction = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   // Fetch employee survey data
   useEffect(() => {
     const fetchSurveyData = async () => {
       setLoading(true);
       try {
+        const userId = getRelevantUserId();
         const companyId = getUserCompanyId();
         if (!companyId) {
           setError('Company ID not found');
@@ -677,6 +689,12 @@ const QmsEmployeeSatisfaction = () => {
 
         const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
         setSurveys(response.data);
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/survey/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
         setError(null);
       } catch (err) {
         setError('Failed to load employee survey data');
@@ -738,7 +756,6 @@ const QmsEmployeeSatisfaction = () => {
     } catch (err) {
       console.error('Error deleting survey evaluation:', err);
       setShowDeleteModal(false);
-      setErrorMessage('Failed to delete the evaluation');
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -759,7 +776,6 @@ const QmsEmployeeSatisfaction = () => {
       alert('Email sent successfully');
     } catch (err) {
       console.error('Error sending email:', err);
-      setErrorMessage('Failed to send email');
       setShowErrorModal(true);
     }
   };
@@ -826,6 +842,11 @@ const QmsEmployeeSatisfaction = () => {
             onClick={handleDraftEmployeeSurvey}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[114px] right-[299px]">
+                {draftCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -991,6 +1012,7 @@ const QmsEmployeeSatisfaction = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, X, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, X} from 'lucide-react';
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from 'react-router-dom';
@@ -10,7 +10,6 @@ import DeleteEmployeeSatisfactionSuccessModal from '../Modals/DeleteEmployeeSati
 import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEmployeeSatisfaction = () => {
-    const { id } = useParams();
     const navigate = useNavigate();
 
     // State for modals
@@ -18,7 +17,6 @@ const QmsDraftEmployeeSatisfaction = () => {
     const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
     const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
 
     // State for data management
     const [surveyData, setsurveyData] = useState([]);
@@ -110,7 +108,6 @@ const QmsDraftEmployeeSatisfaction = () => {
         } catch (err) {
             // Close delete modal and show error modal
             setShowDeleteModal(false);
-            setErrorMessage("Failed to delete survey evaluation");
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -165,11 +162,10 @@ const QmsDraftEmployeeSatisfaction = () => {
             </div>
 
             {/* Loading and Error States */}
-            {loading && <div className="text-center py-4">Loading...</div>}
-            {error && <div className="text-red-500 text-center py-4">{error}</div>}
+            {loading && <div className="text-center not-found py-4">Loading...</div>}
 
             {/* Table */}
-            {!loading && !error && (
+            {!loading &&  (
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>
@@ -217,7 +213,7 @@ const QmsDraftEmployeeSatisfaction = () => {
             )}
 
             {/* Pagination */}
-            {!loading && !error && filteredsurveyData.length > 0 && (
+            {!loading &&  filteredsurveyData.length > 0 && (
                 <div className="flex justify-between items-center mt-3">
                     <div className='text-white total-text'>Total-{filteredsurveyData.length}</div>
                     <div className="flex items-center gap-5">
@@ -277,6 +273,7 @@ const QmsDraftEmployeeSatisfaction = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
+                error = {error}
             />
         </div>
     );
