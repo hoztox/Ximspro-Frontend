@@ -15,7 +15,6 @@ const AddMinutesModal = ({
 }) => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [showAddeMinutesSuccessModal, setShowAddeMinutesSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
   const [minutesData, setMinutesData] = useState({
     minutes: '',
     file: null, // Changed to null since we're storing actual file object

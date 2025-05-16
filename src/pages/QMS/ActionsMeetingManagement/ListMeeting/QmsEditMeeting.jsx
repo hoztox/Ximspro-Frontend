@@ -120,7 +120,7 @@ const QmsEditMeeting = () => {
 
             } catch (error) {
                 console.error('Error fetching data:', error);
-                let errorMsg = 'Failed to save draft meeting';
+                let errorMsg = 'Failed to fetch data. Please try again';
 
             if (error.response) {
                 if (error.response.data.date) {
@@ -309,7 +309,7 @@ const QmsEditMeeting = () => {
 
      const updateMeeting = async (data) => {
         try {
-            setError(null); // Reset error state before API call
+            setError(null);
             await axios.put(`${BASE_URL}/qms/meeting/${id}/edit/`, data);
             setShowEditMeetingSuccessModal(true);
             setTimeout(() => {
@@ -522,10 +522,10 @@ const QmsEditMeeting = () => {
                     </div>
                     <button
                         type="button"
-                        className='flex justify-start add-training-label !text-[#1E84F0]'
+                        className='flex justify-start add-training-label !text-[#1E84AF] hover:text-[#29a6db] transition-colors'
                         onClick={handleOpenModal}
                     >
-                        + Add New Agenda
+                        View / Add Agenda
                     </button>
                 </div>
 
@@ -766,7 +766,7 @@ const QmsEditMeeting = () => {
                             type="submit"
                             className="save-btn duration-200"
                         >
-                            Save
+                            Update
                         </button>
                     </div>
                 </div>

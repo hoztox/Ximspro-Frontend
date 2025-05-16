@@ -351,7 +351,7 @@ const QmsAddMeeting = () => {
                 user: userId,
                 is_draft: true,
                 title: formData.title || null,
-                meeting_type: formData.meeting_type || '',
+                meeting_type: formData.meeting_type || null,
                 venue: formData.venue || null,
                 called_by: formData.called_by || null,
                 send_notification: formData.send_notification || false,
