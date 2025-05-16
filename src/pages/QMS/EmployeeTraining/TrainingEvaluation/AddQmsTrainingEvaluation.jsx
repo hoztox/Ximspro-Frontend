@@ -26,7 +26,7 @@ const AddQmsTrainingEvaluation = () => {
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [error, setError] = useState("");
-  const [errors, setErrors] = useState({});
+  const [fieldErrors, setFieldErrors] = useState({});
   const navigate = useNavigate();
 
   const handleFocus = (field) => setFocusedField(field);
@@ -51,9 +51,9 @@ const AddQmsTrainingEvaluation = () => {
     }
 
     // Clear error for this field if it exists
-    if (errors[name]) {
-      setErrors({
-        ...errors,
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
         [name]: "",
       });
     }
@@ -117,7 +117,7 @@ const AddQmsTrainingEvaluation = () => {
       }
     }
 
-    setErrors(newErrors);
+    setFieldErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -182,7 +182,7 @@ const AddQmsTrainingEvaluation = () => {
         },
       });
       console.log('training evaluation:', submissionData);
-      
+
 
       setShowAddTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
@@ -225,7 +225,7 @@ const AddQmsTrainingEvaluation = () => {
         }
       );
       console.log('draft training evaluation:', submissionData);
-      
+
 
       setShowDraftTrainingEvaluationSuccessModal(true);
       setTimeout(() => {
@@ -319,6 +319,7 @@ const AddQmsTrainingEvaluation = () => {
             onClose={() => {
               setShowErrorModal(false);
             }}
+            error={error}
           />
 
           <DraftTrainingEvaluationSuccessModal
@@ -349,13 +350,11 @@ const AddQmsTrainingEvaluation = () => {
                 name="evaluation_title"
                 value={formData.evaluation_title}
                 onChange={handleChange}
-                className={`w-full employee-performace-inputs ${errors.evaluation_title ? "border-red-500" : ""
-                  }`}
-                required
+                className="w-full employee-performace-inputs"
               />
-              {errors.evaluation_title && (
+              {fieldErrors.evaluation_title && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.evaluation_title}
+                  {fieldErrors.evaluation_title}
                 </p>
               )}
             </div>
@@ -385,7 +384,7 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("day")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? "border-red-500" : ""
                       }`}
                   >
                     <option value="">dd</option>
@@ -407,7 +406,7 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("month")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? "border-red-500" : ""
                       }`}
                   >
                     <option value="">mm</option>
@@ -429,7 +428,7 @@ const AddQmsTrainingEvaluation = () => {
                     onChange={handleChange}
                     onFocus={() => handleFocus("year")}
                     onBlur={handleBlur}
-                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${errors.valid_till ? "border-red-500" : ""
+                    className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? "border-red-500" : ""
                       }`}
                   >
                     <option value="">yyyy</option>
@@ -443,8 +442,8 @@ const AddQmsTrainingEvaluation = () => {
                   </div>
                 </div>
               </div>
-              {errors.valid_till && (
-                <p className="text-red-500 text-sm mt-1">{errors.valid_till}</p>
+              {fieldErrors.valid_till && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.valid_till}</p>
               )}
             </div>
           </div>

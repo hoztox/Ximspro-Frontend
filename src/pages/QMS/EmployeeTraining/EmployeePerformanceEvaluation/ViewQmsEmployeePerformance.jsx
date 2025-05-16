@@ -6,6 +6,9 @@ import "./viewqmsemployeeperformance.css";
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteEmployeePerformanceConfirmModal from '../Modals/DeleteEmployeePerformanceConfirmModal';
+import DeleteEmployeePerformanceSuccessModal from '../Modals/DeleteEmployeePerformanceSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const ViewQmsEmployeePerformance = () => {
     const [performanceData, setPerformanceData] = useState(null);
@@ -13,6 +16,11 @@ const ViewQmsEmployeePerformance = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteEmployeePerformanceSuccessModal, setShowDeleteEmployeePerformanceSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         const fetchPerformanceData = async () => {
@@ -42,16 +50,36 @@ const ViewQmsEmployeePerformance = () => {
         navigate(`/company/qms/edit-employee-performance/${id}`);
     };
 
-    const handleDelete = async () => {
-        if (window.confirm("Are you sure you want to delete this performance evaluation?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/performance/${id}/update/`);
-                alert("Performance evaluation deleted successfully");
+    // Open delete confirmation modal
+    const openDeleteModal = () => {
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteEmployeePerformanceSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/performance/${id}/update/`);
+            setShowDeleteModal(false);
+            setShowDeleteEmployeePerformanceSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteEmployeePerformanceSuccessModal(false);
                 navigate('/company/qms/employee-performance');
-            } catch (err) {
-                console.error("Error deleting performance evaluation:", err);
-                alert("Failed to delete performance evaluation");
-            }
+            }, 1500);
+        } catch (err) {
+            console.error("Error deleting performance evaluation:", err);
+            setError("Failed to delete performance evaluation");
+            setShowDeleteModal(false);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -66,14 +94,6 @@ const ViewQmsEmployeePerformance = () => {
         return (
             <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
                 <p className="text-xl">Loading...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
-                <p className="text-xl text-red-500">{error}</p>
             </div>
         );
     }
@@ -121,15 +141,6 @@ const ViewQmsEmployeePerformance = () => {
                         </div>
                     </div>
 
-                    {/* {performanceData.is_draft && (
-                        <div>
-                            <label className="block view-employee-label mb-[6px]">Status</label>
-                            <div className="view-employee-data bg-yellow-800 inline-block px-2 py-1 rounded">
-                                Draft
-                            </div>
-                        </div>
-                    )} */}
-
                     <div className="flex justify-end items-end space-x-10 md:col-start-2">
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
                             Edit
@@ -140,13 +151,33 @@ const ViewQmsEmployeePerformance = () => {
 
                         <div className='flex flex-col justify-center items-center gap-[8px] view-employee-label'>
                             Delete
-                            <button onClick={handleDelete}>
+                            <button onClick={openDeleteModal}>
                                 <img src={deletes} alt="Delete Icon" className='w-[18px] h-[18px]' />
                             </button>
                         </div>
                     </div>
                 </div>
-            </div>       
+            </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteEmployeePerformanceConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteEmployeePerformanceSuccessModal
+                showDeleteEmployeePerformanceSuccessModal={showDeleteEmployeePerformanceSuccessModal}
+                onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

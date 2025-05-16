@@ -12,7 +12,8 @@ const QmsEditDraftEmployeePerformance = () => {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [success , setSuccess ] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
+
     const [formData, setFormData] = useState({
         evaluation_title: '',
         description: '',
@@ -77,45 +78,58 @@ const QmsEditDraftEmployeePerformance = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name.includes('.')) {
-            // Handle date fields
-            const [parent, child] = name.split('.');
+        if (name.startsWith('valid_till.')) {
+            const field = name.split('.')[1];
             setDateValues({
                 ...dateValues,
-                [child]: value
+                [field]: value
             });
 
-            // Update the valid_till in formData if all date fields are filled
-            if (child === 'day' || child === 'month' || child === 'year') {
-                const updatedDateValues = {
-                    ...dateValues,
-                    [child]: value
-                };
-
-                // Only set valid_till if all date parts are present
-                if (updatedDateValues.day && updatedDateValues.month && updatedDateValues.year) {
-                    const formattedDate = `${updatedDateValues.year}-${updatedDateValues.month}-${updatedDateValues.day}`;
-                    setFormData({
-                        ...formData,
-                        valid_till: formattedDate
+            // Clear date error if all fields are being filled
+            if (fieldErrors.valid_till && value) {
+                const hasAllDateFields = (field === 'day' && dateValues.month && dateValues.year) ||
+                                       (field === 'month' && dateValues.day && dateValues.year) ||
+                                       (field === 'year' && dateValues.day && dateValues.month);
+                
+                if (hasAllDateFields) {
+                    setFieldErrors({
+                        ...fieldErrors,
+                        valid_till: ''
                     });
                 }
             }
         } else {
-            // Handle other form fields
             setFormData({
                 ...formData,
                 [name]: value
             });
+
+            // Clear error for this field if it exists
+            if (fieldErrors[name]) {
+                setFieldErrors({
+                    ...fieldErrors,
+                    [name]: ''
+                });
+            }
         }
     };
 
     const validateForm = () => {
-        if (!formData.evaluation_title) {
-            setError("Evaluation title is required");
-            return false;
+        const newErrors = {};
+        
+        if (!formData.evaluation_title.trim()) {
+            newErrors.evaluation_title = 'Evaluation Title is required';
         }
-        return true;
+
+        // Validate date if any part is filled
+        if (dateValues.day || dateValues.month || dateValues.year) {
+            if (!dateValues.day || !dateValues.month || !dateValues.year) {
+                newErrors.valid_till = 'Please complete the date';
+            }
+        }
+
+        setFieldErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = async (e) => {
@@ -125,14 +139,23 @@ const QmsEditDraftEmployeePerformance = () => {
             return;
         }
 
+        // Prepare submission data
+        const submissionData = {
+            ...formData
+        };
+
+        // If all date fields are filled, format the date for submission
+        if (dateValues.day && dateValues.month && dateValues.year) {
+            submissionData.valid_till = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
+        } else {
+            submissionData.valid_till = null;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axios.put(`${BASE_URL}/qms/performance/${id}/update/`, formData);
-            console.log("Performance evaluation updated successfully:", response.data);
-            setSuccess("Performance evaluation updated successfully");
-
+            await axios.put(`${BASE_URL}/qms/performance/${id}/update/`, submissionData);
 
             setShowEditDraftEmployeePerformanceSuccessModal(true);
             setTimeout(() => {
@@ -214,9 +237,8 @@ const QmsEditDraftEmployeePerformance = () => {
                     onClose={() => {
                         setShowErrorModal(false);
                     }}
+                    error={error}
                 />
-
-
 
                 {!loading && (
                     <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
@@ -230,9 +252,12 @@ const QmsEditDraftEmployeePerformance = () => {
                                     name="evaluation_title"
                                     value={formData.evaluation_title}
                                     onChange={handleChange}
-                                    className="w-full employee-performace-inputs"
+                                    className={`w-full employee-performace-inputs ${fieldErrors.evaluation_title ? 'border-red-500' : ''}`}
                                     required
                                 />
+                                {fieldErrors.evaluation_title && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.evaluation_title}</p>
+                                )}
                             </div>
 
                             <div className="md:row-span-2">
@@ -251,12 +276,12 @@ const QmsEditDraftEmployeePerformance = () => {
                                     {/* Day */}
                                     <div className="relative w-1/3">
                                         <select
-                                            name="validTill.day"
+                                            name="valid_till.day"
                                             value={dateValues.day}
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("day")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">dd</option>
                                             {dayOptions}
@@ -271,12 +296,12 @@ const QmsEditDraftEmployeePerformance = () => {
                                     {/* Month */}
                                     <div className="relative w-1/3">
                                         <select
-                                            name="validTill.month"
+                                            name="valid_till.month"
                                             value={dateValues.month}
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("month")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">mm</option>
                                             {monthOptions}
@@ -291,12 +316,12 @@ const QmsEditDraftEmployeePerformance = () => {
                                     {/* Year */}
                                     <div className="relative w-1/3">
                                         <select
-                                            name="validTill.year"
+                                            name="valid_till.year"
                                             value={dateValues.year}
                                             onChange={handleChange}
                                             onFocus={() => handleFocus("year")}
                                             onBlur={handleBlur}
-                                            className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                            className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                         >
                                             <option value="">yyyy</option>
                                             {yearOptions}
@@ -308,6 +333,9 @@ const QmsEditDraftEmployeePerformance = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {fieldErrors.valid_till && (
+                                    <p className="text-red-500 text-sm mt-1">{fieldErrors.valid_till}</p>
+                                )}
                             </div>
                         </div>
 

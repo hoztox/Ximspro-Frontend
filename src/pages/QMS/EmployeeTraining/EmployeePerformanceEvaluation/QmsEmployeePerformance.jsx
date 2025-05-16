@@ -382,7 +382,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
 
   const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   // Delete related states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -442,7 +441,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setError('');
     } catch (err) {
       console.error('Error adding question:', err);
-      setErrorMessage('Failed to add question');
+      setError('Failed to add question');
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -485,7 +484,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     } catch (err) {
       console.error('Error deleting question:', err);
       setShowDeleteModal(false);
-      setErrorMessage('Failed to delete question');
+      setError('Failed to delete question');
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -626,6 +625,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </AnimatePresence>
   );
@@ -637,6 +637,7 @@ const QmsEmployeePerformance = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [draftCount, setDraftCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
@@ -650,7 +651,6 @@ const QmsEmployeePerformance = () => {
   const [performanceToDelete, setPerformanceToDelete] = useState(null);
   const [showDeleteEmployeePerformanceSuccessModal, setShowDeleteEmployeePerformanceSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -668,11 +668,26 @@ const QmsEmployeePerformance = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   // Fetch employee performance data
   useEffect(() => {
     const fetchPerformanceData = async () => {
       setLoading(true);
       try {
+        const userId = getRelevantUserId();
         const companyId = getUserCompanyId();
         if (!companyId) {
           setError('Company ID not found');
@@ -682,6 +697,14 @@ const QmsEmployeePerformance = () => {
 
         const response = await axios.get(`${BASE_URL}/qms/performance/${companyId}/`);
         setPerformances(response.data);
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/performance/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+        console.log('eeeeeeee', draftResponse.data.count);
+
+
         setError(null);
       } catch (err) {
         setError('Failed to load employee performance data');
@@ -751,7 +774,7 @@ const QmsEmployeePerformance = () => {
       }, 2000);
     } catch (err) {
       console.error('Error deleting performance evaluation:', err);
-      setErrorMessage('Failed to delete the evaluation');
+      setError('Failed to delete the evaluation');
       setShowDeleteModal(false);
       setShowErrorModal(true);
       setTimeout(() => {
@@ -833,6 +856,11 @@ const QmsEmployeePerformance = () => {
             onClick={handleDraftEmployeePerformance}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[114px] right-[328px]">
+                {draftCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -1000,6 +1028,7 @@ const QmsEmployeePerformance = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </div>
   );

@@ -12,7 +12,7 @@ const EditQmsTrainingEvaluation = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const [fieldErrors, setFieldErrors] = useState({});
 
     const [formData, setFormData] = useState({
         evaluation_title: '',
@@ -63,6 +63,8 @@ const EditQmsTrainingEvaluation = () => {
                 }
 
                 setError(null);
+                // Clear any field errors when new data is loaded
+                setFieldErrors({});
             } catch (err) {
                 setError("Failed to load employee performance data");
                 console.error("Error fetching employee performance data:", err);
@@ -77,37 +79,46 @@ const EditQmsTrainingEvaluation = () => {
     }, [id]);
 
     const validateForm = () => {
-        if (!formData.evaluation_title) {
-            setError("Evaluation title is required");
-            return false;
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.evaluation_title.trim()) {
+            errors.evaluation_title = "Evaluation title is required";
+            isValid = false;
         }
 
-        // Validate date if all date fields are filled
-        if (dateValues.day && dateValues.month && dateValues.year) {
-            const dateStr = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
-            const date = new Date(dateStr);
-
-            if (isNaN(date.getTime())) {
-                setError("Invalid date");
-                return false;
+        // Validate date if any date fields are filled
+        if (dateValues.day || dateValues.month || dateValues.year) {
+            // Check if all date fields are filled
+            if (!dateValues.day || !dateValues.month || !dateValues.year) {
+                errors.valid_till = "Please complete the date";
+                isValid = false;
+            } else {
+                // Validate the date format and validity
+                const dateStr = `${dateValues.year}-${dateValues.month}-${dateValues.day}`;
+                const date = new Date(dateStr);
+                
+                if (isNaN(date.getTime())) {
+                    errors.valid_till = "Invalid date";
+                    isValid = false;
+                }
             }
-
-            // Update the valid_till field in formData
-            setFormData({
-                ...formData,
-                valid_till: dateStr
-            });
-        } else if (dateValues.day || dateValues.month || dateValues.year) {
-            // If some date fields are filled but not all
-            setError("Please complete the date");
-            return false;
         }
 
-        return true;
+        setFieldErrors(errors);
+        return isValid;
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
+
+        // Clear the specific field error when the field is changed
+        if (fieldErrors[name]) {
+            setFieldErrors({
+                ...fieldErrors,
+                [name]: null
+            });
+        }
 
         if (name.startsWith('valid_till.')) {
             const field = name.split('.')[1];
@@ -115,6 +126,14 @@ const EditQmsTrainingEvaluation = () => {
                 ...dateValues,
                 [field]: value
             });
+            
+            // Clear the valid_till error when any date field is changed
+            if (fieldErrors.valid_till) {
+                setFieldErrors({
+                    ...fieldErrors,
+                    valid_till: null
+                });
+            }
         } else {
             setFormData({
                 ...formData,
@@ -147,7 +166,6 @@ const EditQmsTrainingEvaluation = () => {
 
         try {
             await axios.put(`${BASE_URL}/qms/training-evaluation/${id}/update/`, submissionData);
-            setSuccess("Performance evaluation updated successfully");
 
             setShowEditTrainingEvaluationSuccessModal(true);
             setTimeout(() => {
@@ -156,10 +174,27 @@ const EditQmsTrainingEvaluation = () => {
             }, 1500);
         } catch (err) {
             console.error("Error updating performance evaluation:", err);
-            setShowErrorModal(true);
-            setTimeout(() => {
-                setShowErrorModal(false);
-            }, 3000);
+            
+            // Handle validation errors from the backend
+            if (err.response && err.response.data) {
+                // If the backend returns field-specific errors
+                const backendErrors = err.response.data;
+                const formattedErrors = {};
+                
+                // Format backend errors to match our frontend error structure
+                Object.keys(backendErrors).forEach(key => {
+                    formattedErrors[key] = Array.isArray(backendErrors[key]) 
+                        ? backendErrors[key][0] 
+                        : backendErrors[key];
+                });
+                
+                setFieldErrors(formattedErrors);
+            } else {
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
+            }
 
             setError("Failed to update performance evaluation");
             setLoading(false);
@@ -227,6 +262,7 @@ const EditQmsTrainingEvaluation = () => {
                         onClose={() => {
                             setShowErrorModal(false);
                         }}
+                        error = {error}
                     />
 
                     <button
@@ -236,18 +272,6 @@ const EditQmsTrainingEvaluation = () => {
                         List Training Evaluation
                     </button>
                 </div>
-
-                {/* {error && (
-                    <div className="mx-[104px] mt-4 p-3 bg-red-900/30 border border-red-500 rounded text-red-400">
-                        {error}
-                    </div>
-                )}
-
-                {success && (
-                    <div className="mx-[104px] mt-4 p-3 bg-green-900/30 border border-green-500 rounded text-green-400">
-                        {success}
-                    </div>
-                )} */}
 
                 <form onSubmit={handleSubmit} className='px-[104px] pt-5'>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -260,9 +284,13 @@ const EditQmsTrainingEvaluation = () => {
                                 name="evaluation_title"
                                 value={formData.evaluation_title}
                                 onChange={handleChange}
-                                className="w-full employee-performace-inputs"
-                                required
+                                className={`w-full employee-performace-inputs ${fieldErrors.evaluation_title ? 'border-red-500' : ''}`}
                             />
+                            {fieldErrors.evaluation_title && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {fieldErrors.evaluation_title}
+                                </p>
+                            )}
                         </div>
 
                         <div className="md:row-span-2">
@@ -271,8 +299,13 @@ const EditQmsTrainingEvaluation = () => {
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="w-full h-full min-h-[151px] employee-performace-inputs"
+                                className={`w-full h-full min-h-[151px] employee-performace-inputs ${fieldErrors.description ? 'border-red-500' : ''}`}
                             />
+                            {fieldErrors.description && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {fieldErrors.description}
+                                </p>
+                            )}
                         </div>
 
                         <div>
@@ -286,7 +319,7 @@ const EditQmsTrainingEvaluation = () => {
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("day")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">dd</option>
                                         {dayOptions}
@@ -306,7 +339,7 @@ const EditQmsTrainingEvaluation = () => {
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("month")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">mm</option>
                                         {monthOptions}
@@ -326,7 +359,7 @@ const EditQmsTrainingEvaluation = () => {
                                         onChange={handleChange}
                                         onFocus={() => handleFocus("year")}
                                         onBlur={handleBlur}
-                                        className="appearance-none w-full employee-performace-inputs cursor-pointer"
+                                        className={`appearance-none w-full employee-performace-inputs cursor-pointer ${fieldErrors.valid_till ? 'border-red-500' : ''}`}
                                     >
                                         <option value="">yyyy</option>
                                         {yearOptions}
@@ -338,6 +371,11 @@ const EditQmsTrainingEvaluation = () => {
                                     </div>
                                 </div>
                             </div>
+                            {fieldErrors.valid_till && (
+                                <p className="text-red-500 text-sm mt-1">
+                                    {fieldErrors.valid_till}
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -363,4 +401,5 @@ const EditQmsTrainingEvaluation = () => {
         </div>
     );
 };
-export default EditQmsTrainingEvaluation
+
+export default EditQmsTrainingEvaluation;

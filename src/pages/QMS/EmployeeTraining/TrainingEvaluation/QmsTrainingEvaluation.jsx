@@ -8,8 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import DeleteEmployeePerformanceConfirmModal from "../Modals/DeleteEmployeePerformanceConfirmModal";
-import DeleteEmployeePerformanceSuccessModal from "../Modals/DeleteEmployeePerformanceSuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
 import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
 import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
@@ -53,8 +51,8 @@ const EvaluationModal = ({
           `${BASE_URL}/qms/training-evaluation/${companyId}/evaluation/${performanceId}/`
         );
         setUsers(response.data);
-        console.log('uuuuuuuuuuuuuuuuuu',response.data);
-        
+        console.log('uuuuuuuuuuuuuuuuuu', response.data);
+
       } catch (error) {
         console.error("Error fetching unsubmitted users:", error);
       }
@@ -431,7 +429,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
   const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] =
     useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   // Delete related states
@@ -500,7 +497,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setError("");
     } catch (err) {
       console.error("Error adding question:", err);
-      setErrorMessage("Failed to add question");
+      setError("Failed to add question");
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -546,7 +543,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     } catch (err) {
       console.error("Error deleting question:", err);
       setShowDeleteModal(false);
-      setErrorMessage("Failed to delete question");
+      setError("Failed to delete question");
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -697,6 +694,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </AnimatePresence>
   );
@@ -708,6 +706,7 @@ const QmsTrainingEvaluation = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [draftCount, setDraftCount] = useState(0);
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
 
@@ -721,9 +720,8 @@ const QmsTrainingEvaluation = () => {
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [trainingEvaluationToDelete, setTrainingEvaluationToDelete] = useState(null);
-  const [showDeleteTrainingEvaluationSuccessModal,setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
+  const [showDeleteTrainingEvaluationSuccessModal, setShowDeleteTrainingEvaluationSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -741,11 +739,27 @@ const QmsTrainingEvaluation = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
+
   // Fetch employee performance data
   useEffect(() => {
     const fetchPerformanceData = async () => {
       setLoading(true);
       try {
+        const userId = getRelevantUserId();
         const companyId = getUserCompanyId();
         if (!companyId) {
           setError("Company ID not found");
@@ -756,6 +770,14 @@ const QmsTrainingEvaluation = () => {
         const response = await axios.get(
           `${BASE_URL}/qms/training-evaluation/${companyId}/`
         );
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+        console.log('count......', draftResponse);
+        
+
         setPerformances(response.data);
         setError(null);
       } catch (err) {
@@ -834,7 +856,7 @@ const QmsTrainingEvaluation = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting performance evaluation:", err);
-      setErrorMessage("Failed to delete the evaluation");
+      setError("Failed to delete the evaluation");
       setShowDeleteModal(false);
       setShowErrorModal(true);
       setTimeout(() => {
@@ -932,6 +954,11 @@ const QmsTrainingEvaluation = () => {
             onClick={handleDraftEmployeePerformance}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[114px] right-[242px]">
+                {draftCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -1147,6 +1174,7 @@ const QmsTrainingEvaluation = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </div>
   );

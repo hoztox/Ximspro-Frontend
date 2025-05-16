@@ -18,7 +18,6 @@ const QmsDraftEmployeePerformance = () => {
     const [performanceToDelete, setPerformanceToDelete] = useState(null);
     const [showDeleteEmployeePerformanceSuccessModal, setShowDeleteEmployeePerformanceSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
 
     // State for data management
     const [performanceData, setPerformanceData] = useState([]);
@@ -112,7 +111,7 @@ const QmsDraftEmployeePerformance = () => {
         } catch (err) {
             // Close delete modal and show error modal
             setShowDeleteModal(false);
-            setErrorMessage("Failed to delete performance evaluation");
+            setError("Failed to delete performance evaluation");
             setShowErrorModal(true);
             console.error("Error deleting performance evaluation:", err);
         }
@@ -165,8 +164,7 @@ const QmsDraftEmployeePerformance = () => {
             </div>
 
             {/* Loading and Error States */}
-            {loading && <div className="text-center py-4">Loading...</div>}
-            {error && <div className="text-red-500 text-center py-4">{error}</div>}
+            {loading && <div className="text-center py-4 not-found">Loading...</div>}
 
             {/* Table */}
             {!loading && !error && (
@@ -277,6 +275,7 @@ const QmsDraftEmployeePerformance = () => {
             <ErrorModal
                 showErrorModal={showErrorModal}
                 onClose={() => setShowErrorModal(false)}
+                error = {error}
             />
         </div>
     );
