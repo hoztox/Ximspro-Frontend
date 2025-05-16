@@ -103,9 +103,24 @@ const AddQmsProcedure = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load procedures. Please check your connection and try again."
-      );
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -263,7 +278,7 @@ const AddQmsProcedure = () => {
   const handleSaveClick = async () => {
     if (!validateForm()) {
       // Show the form has validation errors
-      setError("Please correct the errors below");
+      setError("Please fill in all required fields");
       return;
     }
     try {
@@ -315,7 +330,24 @@ const AddQmsProcedure = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      setError("Failed to save procedure");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);

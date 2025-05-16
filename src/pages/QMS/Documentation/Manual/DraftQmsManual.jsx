@@ -117,7 +117,7 @@ const DraftQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to fetch manuals";
 
       if (err.response) {
         // Check for field-specific errors first

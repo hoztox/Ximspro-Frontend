@@ -103,7 +103,7 @@ const AddQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = 'An error occurred while creating the meeting';
+      let errorMsg = 'Failed to load users';
 
       if (error.response) {
         // Check for field-specific errors first
@@ -279,7 +279,7 @@ const AddQmsManual = () => {
   const handleSaveClick = async () => {
     if (!validateForm()) {
       // Show the form has validation errors
-      setError("Please correct the fields");
+      setError("Please fill all required fields");
       return;
     }
     try {
@@ -331,7 +331,7 @@ const AddQmsManual = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      let errorMsg = 'An error occurred while creating the meeting';
+      let errorMsg = 'Please try again';
 
       if (err.response) {
         // Check for field-specific errors first

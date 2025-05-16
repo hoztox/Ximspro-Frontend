@@ -116,7 +116,24 @@ const EditDraftQmsProcedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedures details:", err);
-      setError("Failed to load procedures details");
+      let errorMsg = "Failed to load Procedure details";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -193,9 +210,24 @@ const EditDraftQmsProcedure = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load procedures. Please check your connection and try again."
-      );
+      let errorMsg = "Failed to load users";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -456,7 +488,24 @@ const EditDraftQmsProcedure = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      setError("Failed to update procedures");
+      let errorMsg = "Please try again";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);

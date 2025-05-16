@@ -114,7 +114,7 @@ const EditDraftQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to fetch manual details";
 
       if (err.response) {
         // Check for field-specific errors first
@@ -207,7 +207,7 @@ const EditDraftQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to fetch users";
 
       if (error.response) {
         // Check for field-specific errors first
@@ -485,7 +485,7 @@ const EditDraftQmsManual = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to update manual";
 
       if (err.response) {
         // Check for field-specific errors first

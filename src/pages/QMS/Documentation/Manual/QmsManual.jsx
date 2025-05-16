@@ -175,7 +175,7 @@ const QmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to fetch manuals. Please try again.";
 
       if (err.response) {
         // Check for field-specific errors first
@@ -253,7 +253,7 @@ const QmsManual = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        let errorMsg = "An error occurred while creating the meeting";
+        let errorMsg = "Failed to fetch data";
 
         if (error.response) {
           // Check for field-specific errors first

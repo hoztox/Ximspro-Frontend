@@ -202,7 +202,24 @@ const EditQmsProcedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedure details:", err);
-      setError("Failed to load procedure details");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -430,7 +447,24 @@ const EditQmsProcedure = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      setError("Failed to update procedure");
+      let errorMsg = "An error occurred while creating the meeting";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
@@ -463,7 +497,9 @@ const EditQmsProcedure = () => {
 
   // Render loading state
   if (isInitialLoad) {
-    return <div className="text-center not-found">Loading Procedure Details...</div>;
+    return (
+      <div className="text-center not-found">Loading Procedure Details...</div>
+    );
   }
 
   const renderAttachmentPreview = () => {

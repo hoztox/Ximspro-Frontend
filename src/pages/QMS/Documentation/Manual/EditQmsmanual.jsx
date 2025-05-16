@@ -200,7 +200,7 @@ const EditQmsmanual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = "Failed to load manual details";
 
       if (err.response) {
         // Check for field-specific errors first
@@ -450,7 +450,7 @@ const EditQmsmanual = () => {
       // Make the error message more informative
       if (err.response && err.response.data) {
         console.error("API error details:", err.response.data);
-        let errorMsg = "An error occurred while creating the meeting";
+        let errorMsg = "Failed to update manual. Please try again.";
 
         if (err.response) {
           // Check for field-specific errors first
