@@ -753,19 +753,17 @@ const AddQmsPolicy = () => {
         setShowAddPolicyErrorModal(true);
         setTimeout(() => {
           setShowAddPolicyErrorModal(false);
-          setErrorMessage("");
         }, 3000);
       }
     } catch (error) {
       console.error("Error details:", error.response?.data || error.message);
       const errorMsg =
-        error.response?.data?.message ||
-        "An error occurred while saving the policy.";
+       error.response.data.date[0] || err.response.data.detail || err.response.data.message || "An error occurred while saving the policy.";
       setErrorMessage(errorMsg);
       setShowAddPolicyErrorModal(true);
       setTimeout(() => {
         setShowAddPolicyErrorModal(false);
-        setErrorMessage("");
+          setErrorMessage(errorMsg);
       }, 3000);
     } finally {
       setIsSaving(false);
@@ -880,7 +878,6 @@ const AddQmsPolicy = () => {
         showAddPolicyErrorModal={showAddPolicyErrorModal}
         onClose={() => {
           setShowAddPolicyErrorModal(false);
-          setErrorMessage("");
         }}
         errorMessage={errorMessage}
       />

@@ -6,7 +6,7 @@ import errors from "../../../../assets/images/Modal/errorIllustration.png";
 import errorsdark from "../../../../assets/images/Modal/errorIllustrationdark.png";
 
 
-const ErrorModal = ({ showErrorModal, onClose }) => {
+const ErrorModal = ({ showErrorModal, onClose, error }) => {
     const { theme } = useTheme();
 
     if (!showErrorModal) return null;
@@ -52,7 +52,7 @@ const ErrorModal = ({ showErrorModal, onClose }) => {
                                 className="w-[156px] h-[156px] errors-dark"
                             />
                             <h1 className="add-cmy-error-messegehead">An error occurred!</h1>
-                            <p className="add-cmy-error-messege">Please try again</p>
+                            <p className="add-cmy-error-messege text-center">{error || "Please try again"}</p>
                         </div>
                     </motion.div>
                 </motion.div>

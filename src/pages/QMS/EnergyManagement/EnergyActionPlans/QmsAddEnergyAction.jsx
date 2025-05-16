@@ -214,16 +214,8 @@ const QmsAddEnergyAction = () => {
 
     try {
       setIsLoading(true);
-      const submissionData = prepareSubmissionData(false);
-
+        const submissionData = prepareSubmissionData(false);
       const formDataToSend = new FormData();
-      for (const key in submissionData) {
-        if (key === "programs") {
-          formDataToSend.append(key, JSON.stringify(submissionData[key]));
-        } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
-          formDataToSend.append(key, submissionData[key]);
-        }
-      }
 
       if (formData.upload_attachment) {
         formDataToSend.append("upload_attachment", formData.upload_attachment);
@@ -232,10 +224,9 @@ const QmsAddEnergyAction = () => {
       const response = await axios.post(
         `${BASE_URL}/qms/energy-action/create/`, 
         formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        submissionData,
+         {
+          headers: { "Content-Type": "application/json" },
         }
       );
 

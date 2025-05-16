@@ -9,7 +9,6 @@ import AddMeetingSuccessModal from '../Modals/AddMeetingSuccessModal';
 import ErrorModal from '../Modals/ErrorModal';
 import AddMeetingDraftSuccessModal from '../Modals/AddMeetingDraftSuccessModal';
 
-
 const QmsAddMeeting = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -23,36 +22,37 @@ const QmsAddMeeting = () => {
     const [filteredAttendees, setFilteredAttendees] = useState([]);
     const [draftLoading, setDraftLoading] = useState(false);
     const [error, setError] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
 
     const [showAddMeetingSuccessModal, setShowAddMeetingSuccessModal] = useState(false);
     const [showDraftMeetingSuccessModal, setShowDraftMeetingSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
 
-
-
     const [formData, setFormData] = useState({
         title: '',
+        przemyslaw: '',
         dateConducted: {
             day: '',
             month: '',
             year: ''
         },
         agendas: [],
-        meeting_type: 'Normal',
+        meeting_type: '',
         venue: '',
         startTime: {
-            hour: '',
-            min: ''
+            hour: '00',
+            min: '00'
         },
         endTime: {
-            hour: '',
-            min: ''
+            hour: '00',
+            min: '00'
         },
         attendees: [],
         called_by: '',
         send_notification: false,
         is_draft: false
     });
+
     useEffect(() => {
         if (users.length > 0) {
             const filtered = users.filter(user =>
@@ -61,8 +61,8 @@ const QmsAddMeeting = () => {
             setFilteredAttendees(filtered);
         }
     }, [attendeeSearchTerm, users]);
+
     useEffect(() => {
-        // Fetch users for dropdown selections
         const fetchUsers = async () => {
             try {
                 const companyId = getUserCompanyId();
@@ -73,7 +73,6 @@ const QmsAddMeeting = () => {
             }
         };
 
-        // Fetch agenda items
         const fetchAgendaItems = async () => {
             try {
                 const companyId = getUserCompanyId();
@@ -89,14 +88,11 @@ const QmsAddMeeting = () => {
     }, []);
 
     const getUserCompanyId = () => {
-        // First check if company_id is stored directly
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
 
-        // If user data exists with company_id
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-            // Try to get company_id from user data that was stored during login
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
@@ -125,6 +121,7 @@ const QmsAddMeeting = () => {
     };
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+
     useEffect(() => {
         if (agendaItems.length > 0) {
             const filtered = agendaItems.filter(agenda =>
@@ -133,9 +130,11 @@ const QmsAddMeeting = () => {
             setFilteredAgendaItems(filtered);
         }
     }, [agendaSearchTerm, agendaItems]);
+
     const handleQmsListMeeting = () => {
-        navigate('/company/qms/list-meeting')
-    }
+        navigate('/company/qms/list-meeting');
+    };
+
     const handleAttendeeChange = (userId) => {
         const updatedAttendees = [...formData.attendees];
         const index = updatedAttendees.indexOf(userId);
@@ -151,6 +150,7 @@ const QmsAddMeeting = () => {
             attendees: updatedAttendees
         }));
     };
+
     const handleOpenModal = () => {
         setIsModalOpen(true);
     };
@@ -166,35 +166,27 @@ const QmsAddMeeting = () => {
             agendas: selectedAgendas
         });
     };
-    const handleAgendaChange = (agendaId) => {
-        // Create a new array from selectedAgendas to ensure it's an array
-        const updatedSelectedAgendas = [...selectedAgendas];
 
-        // Check if the agenda is already selected
+    const handleAgendaChange = (agendaId) => {
+        const updatedSelectedAgendas = [...selectedAgendas];
         const index = updatedSelectedAgendas.indexOf(agendaId);
 
-        // Toggle the agenda selection
         if (index > -1) {
-            // Remove if already selected
             updatedSelectedAgendas.splice(index, 1);
         } else {
-            // Add if not selected
             updatedSelectedAgendas.push(agendaId);
         }
 
-        // Update the selectedAgendas state
         setSelectedAgendas(updatedSelectedAgendas);
-
-        // Update formData with the new selection
         setFormData(prev => ({
             ...prev,
             agendas: updatedSelectedAgendas
         }));
     };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        // Handle checkbox specially
         if (e.target.type === 'checkbox') {
             setFormData({
                 ...formData,
@@ -203,7 +195,6 @@ const QmsAddMeeting = () => {
             return;
         }
 
-        // Handle nested objects
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -219,23 +210,44 @@ const QmsAddMeeting = () => {
                 [name]: value
             });
         }
+
+        // Clear validation error for the field when user starts typing
+        setValidationErrors(prev => ({
+            ...prev,
+            [name]: ''
+        }));
     };
 
     const handleMultiSelect = (e, field) => {
-        // Get all selected options
         const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
-
         setFormData({
             ...formData,
             [field]: selectedOptions
         });
     };
 
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.title.trim()) {
+            errors.title = 'Title is required';
+        }
+        if (!formData.meeting_type) {
+            errors.meeting_type = 'Meeting Type is required';
+        }
+        return errors;
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
+        const errors = validateForm();
+
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            return;
+        }
+
         setLoading(true);
 
-        // Format the data for API submission
         const formattedData = {
             title: formData.title,
             date: `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`,
@@ -252,21 +264,38 @@ const QmsAddMeeting = () => {
             user: getRelevantUserId()
         };
 
-        // Submit the meeting data
         submitMeeting(formattedData);
     };
 
     const submitMeeting = async (data) => {
         try {
             await axios.post(`${BASE_URL}/qms/meeting/create/`, data);
-
             setShowAddMeetingSuccessModal(true);
             setTimeout(() => {
                 setShowAddMeetingSuccessModal(false);
                 navigate('/company/qms/list-meeting');
             }, 1500);
-
         } catch (error) {
+            // Extract the first error message from the response
+            let errorMsg = 'An error occurred while creating the meeting';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -278,10 +307,9 @@ const QmsAddMeeting = () => {
     };
 
     const handleCancel = () => {
-        navigate('/company/qms/list-meeting')
+        navigate('/company/qms/list-meeting');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -294,6 +322,7 @@ const QmsAddMeeting = () => {
         }
         return options;
     };
+
     const handleSaveAsDraft = async () => {
         try {
             setDraftLoading(true);
@@ -308,7 +337,6 @@ const QmsAddMeeting = () => {
                 return;
             }
 
-            // Format dates and times properly
             const date = formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day ?
                 `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}` : null;
 
@@ -323,7 +351,7 @@ const QmsAddMeeting = () => {
                 user: userId,
                 is_draft: true,
                 title: formData.title || null,
-                meeting_type: formData.meeting_type || 'Normal',
+                meeting_type: formData.meeting_type || '',
                 venue: formData.venue || null,
                 called_by: formData.called_by || null,
                 send_notification: formData.send_notification || false,
@@ -334,7 +362,6 @@ const QmsAddMeeting = () => {
                 attendees: formData.attendees || []
             };
 
-            // Remove null values from the data
             const payload = Object.fromEntries(
                 Object.entries(draftData).filter(([_, v]) => v !== null)
             );
@@ -347,26 +374,40 @@ const QmsAddMeeting = () => {
             );
 
             setDraftLoading(false);
-
             setShowDraftMeetingSuccessModal(true);
             setTimeout(() => {
                 setShowDraftMeetingSuccessModal(false);
                 navigate('/company/qms/draft-meeting');
             }, 1500);
         } catch (err) {
+            let errorMsg = 'Failed to save draft meeting';
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
             setDraftLoading(false);
-            const errorMessage = err.response?.data?.detail || 'Failed to save draft meeting';
-            setError(errorMessage);
             console.error('Error saving draft meeting:', err.response?.data || err);
         }
     };
+
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-            {/* Modal component */}
             <CausesModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
@@ -377,36 +418,31 @@ const QmsAddMeeting = () => {
 
             <AddMeetingSuccessModal
                 showAddMeetingSuccessModal={showAddMeetingSuccessModal}
-                onClose={() => {
-                    setShowAddMeetingSuccessModal(false);
-                }}
+                onClose={() => setShowAddMeetingSuccessModal(false)}
             />
 
             <AddMeetingDraftSuccessModal
                 showDraftMeetingSuccessModal={showDraftMeetingSuccessModal}
-                onClose={() => {
-                    setShowDraftMeetingSuccessModal(false);
-                }}
+                onClose={() => setShowDraftMeetingSuccessModal(false)}
             />
 
             <ErrorModal
                 showErrorModal={showErrorModal}
-                onClose={() => {
-                    setShowErrorModal(false);
-                }}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
             />
 
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Add Meeting</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
-                    onClick={() => handleQmsListMeeting()}
+                    onClick={handleQmsListMeeting}
                 >
                     List Meeting
                 </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5  ">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 {/* Meeting Title */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
@@ -418,15 +454,16 @@ const QmsAddMeeting = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {validationErrors.title && (
+                        <span className="text-red-500 text-sm mt-1">{validationErrors.title}</span>
+                    )}
                 </div>
 
                 {/* Date */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="dateConducted.day"
@@ -446,8 +483,6 @@ const QmsAddMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="dateConducted.month"
@@ -467,8 +502,6 @@ const QmsAddMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="dateConducted.year"
@@ -512,11 +545,10 @@ const QmsAddMeeting = () => {
                             />
                         </div>
                     </div>
-
                     <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
                         {filteredAgendaItems.length > 0 ? (
                             filteredAgendaItems.map(agenda => (
-                                <div key={agenda.id} className="flex items-center py-2   last:border-0">
+                                <div key={agenda.id} className="flex items-center py-2 last:border-0">
                                     <input
                                         type="checkbox"
                                         id={`agenda-${agenda.id}`}
@@ -547,7 +579,9 @@ const QmsAddMeeting = () => {
 
                 {/* Meeting Type */}
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Meeting Type <span className="text-red-500">*</span></label>
+                    <label className="add-training-label">
+                        Meeting Type <span className="text-red-500">*</span>
+                    </label>
                     <select
                         name="meeting_type"
                         value={formData.meeting_type}
@@ -555,7 +589,6 @@ const QmsAddMeeting = () => {
                         onFocus={() => setFocusedDropdown("meeting_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Normal">Normal</option>
@@ -567,6 +600,9 @@ const QmsAddMeeting = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {validationErrors.meeting_type && (
+                        <span className="text-red-500 text-sm mt-1">{validationErrors.meeting_type}</span>
+                    )}
                 </div>
 
                 <div></div>
@@ -574,9 +610,7 @@ const QmsAddMeeting = () => {
                 {/* Venue */}
                 <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-3">
-                        <label className="add-training-label">
-                            Venue
-                        </label>
+                        <label className="add-training-label">Venue</label>
                         <input
                             type="text"
                             name="venue"
@@ -591,7 +625,6 @@ const QmsAddMeeting = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Start</label>
                     <div className="grid grid-cols-2 gap-5">
-                        {/* Hour */}
                         <div className="relative">
                             <select
                                 name="startTime.hour"
@@ -611,8 +644,6 @@ const QmsAddMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Minute */}
                         <div className="relative">
                             <select
                                 name="startTime.min"
@@ -639,7 +670,6 @@ const QmsAddMeeting = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">End</label>
                     <div className="grid grid-cols-2 gap-5">
-                        {/* Hour */}
                         <div className="relative">
                             <select
                                 name="endTime.hour"
@@ -659,8 +689,6 @@ const QmsAddMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Minute */}
                         <div className="relative">
                             <select
                                 name="endTime.min"
@@ -702,7 +730,6 @@ const QmsAddMeeting = () => {
                             />
                         </div>
                     </div>
-
                     <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
                         {filteredAttendees.length > 0 ? (
                             filteredAttendees.map(user => (
@@ -756,7 +783,6 @@ const QmsAddMeeting = () => {
                             />
                         </div>
                     </div>
-
                     <div className="flex items-end justify-end">
                         <label className="flex items-center">
                             <input
@@ -782,7 +808,7 @@ const QmsAddMeeting = () => {
                             disabled={draftLoading}
                             className='request-correction-btn duration-200'
                         >
-                           {draftLoading ? "Saving..." : "Save as Draft"}
+                            {draftLoading ? "Saving..." : "Save as Draft"}
                         </button>
                     </div>
                     <div className='flex gap-5'>

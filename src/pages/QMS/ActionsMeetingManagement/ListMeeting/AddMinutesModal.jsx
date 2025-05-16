@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import "./addminutesmodal.css"
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
+import MeetingMinutesSuccessModal from '../Modals/MeetingMinutesSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const AddMinutesModal = ({
   isVisible,
@@ -12,6 +14,8 @@ const AddMinutesModal = ({
   isAnimating
 }) => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+  const [showAddeMinutesSuccessModal, setShowAddeMinutesSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [minutesData, setMinutesData] = useState({
     minutes: '',
     file: null, // Changed to null since we're storing actual file object
@@ -102,6 +106,10 @@ const AddMinutesModal = ({
     }
 
     onSave(formData);
+    setShowAddeMinutesSuccessModal(true);
+    setTimeout(() => {
+      setShowAddeMinutesSuccessModal(false);
+    }, 3000);
   };
 
   if (!isVisible) return null;
@@ -121,6 +129,13 @@ const AddMinutesModal = ({
         <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
           <h3 className="list-awareness-training-head">Add Meeting Minutes</h3>
         </div>
+
+        <MeetingMinutesSuccessModal
+          showAddeMinutesSuccessModal={showAddeMinutesSuccessModal}
+          onClose={() => setShowAddeMinutesSuccessModal(false)}
+        />
+
+
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6 py-5 px-[102px]">
           {/* Date - Readonly */}
           <div className="flex flex-col gap-3">
@@ -134,7 +149,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("date.day")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>dd</option>
@@ -156,7 +171,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("date.month")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>mm</option>
@@ -178,7 +193,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("date.year")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>yyyy</option>
@@ -204,7 +219,7 @@ const AddMinutesModal = ({
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("meetingType")}
                 onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                 disabled
               >
                 <option value="">Select type</option>
@@ -228,7 +243,7 @@ const AddMinutesModal = ({
               name="venue"
               value={minutesData.venue}
               onChange={handleChange}
-              className="add-training-inputs"
+              className="add-training-inputs cursor-not-allowed"
               disabled
             />
           </div>
@@ -244,7 +259,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("startTime.hour")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>Hour</option>
@@ -264,7 +279,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("startTime.min")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>Min</option>
@@ -291,7 +306,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("endTime.hour")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>Hour</option>
@@ -311,7 +326,7 @@ const AddMinutesModal = ({
                   onChange={handleChange}
                   onFocus={() => setFocusedDropdown("endTime.min")}
                   onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                  className="add-training-inputs appearance-none pr-10 cursor-not-allowed"
                   disabled
                 >
                   <option value="" disabled>Min</option>

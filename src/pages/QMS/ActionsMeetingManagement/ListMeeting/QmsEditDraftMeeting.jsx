@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
- 
 import CausesModal from '../CausesModal';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
 
 const QmsEditDraftMeeting = () => {
     const navigate = useNavigate();
-    const { id } = useParams(); 
+    const { id } = useParams();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [users, setUsers] = useState([]);
     const [agendaItems, setAgendaItems] = useState([]);
@@ -17,6 +16,9 @@ const QmsEditDraftMeeting = () => {
     const [filteredAgendaItems, setFilteredAgendaItems] = useState([]);
     const [attendeeSearchTerm, setAttendeeSearchTerm] = useState('');
     const [filteredAttendees, setFilteredAttendees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [validationErrors, setValidationErrors] = useState({}); // State for validation errors
+
     const [formData, setFormData] = useState({
         title: '',
         dateConducted: {
@@ -40,9 +42,7 @@ const QmsEditDraftMeeting = () => {
         send_notification: false,
         is_draft: false
     });
-    const [loading, setLoading] = useState(true);
 
-    // Filter attendees based on search term
     useEffect(() => {
         if (users.length > 0) {
             const filtered = users.filter(user =>
@@ -52,7 +52,6 @@ const QmsEditDraftMeeting = () => {
         }
     }, [attendeeSearchTerm, users]);
 
-    // Filter agenda items based on search term
     useEffect(() => {
         if (agendaItems.length > 0) {
             const filtered = agendaItems.filter(agenda =>
@@ -62,27 +61,22 @@ const QmsEditDraftMeeting = () => {
         }
     }, [agendaSearchTerm, agendaItems]);
 
-    // Fetch meeting data, users, and agenda items
     useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
                 const companyId = getUserCompanyId();
                 
-                // Fetch meeting details
                 const meetingResponse = await axios.get(`${BASE_URL}/qms/meeting-get/${id}/`);
                 const meetingData = meetingResponse.data;
                 
-                // Extract just the IDs for agendas and attendees
                 const agendaIds = meetingData.agenda?.map(item => item.id) || [];
                 const attendeeIds = meetingData.attendees?.map(item => item.id) || [];
                 
-                // Safely parse date and time with null checks
                 const dateParts = meetingData.date ? meetingData.date.split('-') : ['', '', ''];
                 const startTimeParts = meetingData.start_time ? meetingData.start_time.split(':') : ['', ''];
                 const endTimeParts = meetingData.end_time ? meetingData.end_time.split(':') : ['', ''];
                 
-                // Format data for the form
                 setFormData({
                     title: meetingData.title || '',
                     dateConducted: {
@@ -107,10 +101,8 @@ const QmsEditDraftMeeting = () => {
                     is_draft: meetingData.is_draft || false
                 });
                 
-                // Set selected agendas as IDs
                 setSelectedAgendas(agendaIds);
                 
-                // Fetch users and agenda items
                 const usersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
                 const agendasResponse = await axios.get(`${BASE_URL}/qms/agenda/company/${companyId}/`);
                 
@@ -129,7 +121,6 @@ const QmsEditDraftMeeting = () => {
         fetchData();
     }, [id]);
 
-    // Helper functions for getting user/company IDs
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -163,10 +154,8 @@ const QmsEditDraftMeeting = () => {
         return null;
     };
 
-    // UI state management
     const [focusedDropdown, setFocusedDropdown] = useState(null);
-    
-    // Event handlers
+
     const handleQmsListMeeting = () => {
         navigate('/company/qms/list-meeting');
     };
@@ -246,12 +235,34 @@ const QmsEditDraftMeeting = () => {
                 [name]: value
             });
         }
+
+        // Clear validation error for the field when user starts typing
+        setValidationErrors(prev => ({
+            ...prev,
+            [name]: ''
+        }));
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.title.trim()) {
+            errors.title = 'Title is required';
+        }
+        if (!formData.meeting_type) {
+            errors.meeting_type = 'Meeting Type is required';
+        }
+        return errors;
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const errors = validateForm();
 
-        // Format the data for API submission
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            return;
+        }
+
         const formattedData = {
             title: formData.title,
             date: `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`,
@@ -268,11 +279,9 @@ const QmsEditDraftMeeting = () => {
             user: getRelevantUserId()
         };
 
-        // Submit the updated meeting data
         updateMeeting(formattedData);
     };
 
-    
     const updateMeeting = async (data) => {
         try {
             await axios.put(`${BASE_URL}/qms/meeting-draft/edit/${id}/`, data);
@@ -286,7 +295,6 @@ const QmsEditDraftMeeting = () => {
         navigate('/company/qms/list-meeting');
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -308,7 +316,6 @@ const QmsEditDraftMeeting = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-            {/* Modal component */}
             <CausesModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
@@ -321,7 +328,7 @@ const QmsEditDraftMeeting = () => {
                 <h1 className="add-training-head">Edit Draft Meeting</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
-                    onClick={() => handleQmsListMeeting()}
+                    onClick={handleQmsListMeeting}
                 >
                     List Meeting
                 </button>
@@ -339,15 +346,16 @@ const QmsEditDraftMeeting = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {validationErrors.title && (
+                        <span className="text-red-500 text-sm mt-1">{validationErrors.title}</span>
+                    )}
                 </div>
 
                 {/* Date */}
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="dateConducted.day"
@@ -367,8 +375,6 @@ const QmsEditDraftMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="dateConducted.month"
@@ -388,8 +394,6 @@ const QmsEditDraftMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="dateConducted.year"
@@ -433,30 +437,28 @@ const QmsEditDraftMeeting = () => {
                             />
                         </div>
                     </div>
-
-                    {/* Agenda Checkboxes */}
                     <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
-                    {filteredAgendaItems.length > 0 ? (
-    filteredAgendaItems.map(agenda => (
-        <div key={agenda.id} className="flex items-center py-2 last:border-0">
-            <input
-                type="checkbox"
-                id={`agenda-${agenda.id}`}
-                checked={selectedAgendas.includes(agenda.id)}
-                onChange={() => handleAgendaChange(agenda.id)}
-                className="mr-2 form-checkboxes"
-            />
-            <label
-                htmlFor={`agenda-${agenda.id}`}
-                className="text-sm text-[#AAAAAA] cursor-pointer"
-            >
-                {agenda.title}
-            </label>
-        </div>
-    ))
-) : (
-    <div className="text-sm text-[#AAAAAA] p-2">No agendas found</div>
-)}
+                        {filteredAgendaItems.length > 0 ? (
+                            filteredAgendaItems.map(agenda => (
+                                <div key={agenda.id} className="flex items-center py-2 last:border-0">
+                                    <input
+                                        type="checkbox"
+                                        id={`agenda-${agenda.id}`}
+                                        checked={selectedAgendas.includes(agenda.id)}
+                                        onChange={() => handleAgendaChange(agenda.id)}
+                                        className="mr-2 form-checkboxes"
+                                    />
+                                    <label
+                                        htmlFor={`agenda-${agenda.id}`}
+                                        className="text-sm text-[#AAAAAA] cursor-pointer"
+                                    >
+                                        {agenda.title}
+                                    </label>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-[#AAAAAA] p-2">No agendas found</div>
+                        )}
                     </div>
                     <button
                         type="button"
@@ -469,7 +471,9 @@ const QmsEditDraftMeeting = () => {
 
                 {/* Meeting Type */}
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Meeting Type <span className="text-red-500">*</span></label>
+                    <label className="add-training-label">
+                        Meeting Type <span className="text-red-500">*</span>
+                    </label>
                     <select
                         name="meeting_type"
                         value={formData.meeting_type}
@@ -477,7 +481,6 @@ const QmsEditDraftMeeting = () => {
                         onFocus={() => setFocusedDropdown("meeting_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Normal">Normal</option>
@@ -489,6 +492,9 @@ const QmsEditDraftMeeting = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {validationErrors.meeting_type && (
+                        <span className="text-red-500 text-sm mt-1">{validationErrors.meeting_type}</span>
+                    )}
                 </div>
 
                 <div></div>
@@ -496,9 +502,7 @@ const QmsEditDraftMeeting = () => {
                 {/* Venue */}
                 <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-3">
-                        <label className="add-training-label">
-                            Venue
-                        </label>
+                        <label className="add-training-label">Venue</label>
                         <input
                             type="text"
                             name="venue"
@@ -513,7 +517,6 @@ const QmsEditDraftMeeting = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Start</label>
                     <div className="grid grid-cols-2 gap-5">
-                        {/* Hour */}
                         <div className="relative">
                             <select
                                 name="startTime.hour"
@@ -533,8 +536,6 @@ const QmsEditDraftMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Minute */}
                         <div className="relative">
                             <select
                                 name="startTime.min"
@@ -561,7 +562,6 @@ const QmsEditDraftMeeting = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">End</label>
                     <div className="grid grid-cols-2 gap-5">
-                        {/* Hour */}
                         <div className="relative">
                             <select
                                 name="endTime.hour"
@@ -581,8 +581,6 @@ const QmsEditDraftMeeting = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Minute */}
                         <div className="relative">
                             <select
                                 name="endTime.min"
@@ -624,30 +622,28 @@ const QmsEditDraftMeeting = () => {
                             />
                         </div>
                     </div>
-
-                    {/* Attendee Checkboxes */}
                     <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
-                    {filteredAttendees.length > 0 ? (
-    filteredAttendees.map(user => (
-        <div key={user.id} className="flex items-center py-2 last:border-0">
-            <input
-                type="checkbox"
-                id={`attendee-${user.id}`}
-                checked={formData.attendees.includes(user.id)}
-                onChange={() => handleAttendeeChange(user.id)}
-                className="mr-2 form-checkboxes"
-            />
-            <label
-                htmlFor={`attendee-${user.id}`}
-                className="text-sm text-[#AAAAAA] cursor-pointer"
-            >
-                {user.first_name} {user.last_name}
-            </label>
-        </div>
-    ))
-) : (
-    <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
-)}
+                        {filteredAttendees.length > 0 ? (
+                            filteredAttendees.map(user => (
+                                <div key={user.id} className="flex items-center py-2 last:border-0">
+                                    <input
+                                        type="checkbox"
+                                        id={`attendee-${user.id}`}
+                                        checked={formData.attendees.includes(user.id)}
+                                        onChange={() => handleAttendeeChange(user.id)}
+                                        className="mr-2 form-checkboxes"
+                                    />
+                                    <label
+                                        htmlFor={`attendee-${user.id}`}
+                                        className="text-sm text-[#AAAAAA] cursor-pointer"
+                                    >
+                                        {user.first_name} {user.last_name}
+                                    </label>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-sm text-[#AAAAAA] p-2">No attendees found</div>
+                        )}
                     </div>
                 </div>
 
@@ -679,7 +675,6 @@ const QmsEditDraftMeeting = () => {
                             />
                         </div>
                     </div>
-
                     <div className="flex items-end justify-end">
                         <label className="flex items-center">
                             <input
@@ -698,9 +693,7 @@ const QmsEditDraftMeeting = () => {
 
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
-                    <div>
-                  
-                    </div>
+                    <div></div>
                     <div className='flex gap-5'>
                         <button
                             type="button"
@@ -722,4 +715,4 @@ const QmsEditDraftMeeting = () => {
     );
 };
 
-export default QmsEditDraftMeeting
+export default QmsEditDraftMeeting;

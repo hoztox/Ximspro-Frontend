@@ -5,6 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteMeetingConfirmModal from '../Modals/DeleteMeetingConfirmModal';
+import DeleteMeetingSuccessModal from '../Modals/DeleteMeetingSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsViewMeeting = () => {
     const [meeting, setMeeting] = useState({
@@ -22,6 +25,10 @@ const QmsViewMeeting = () => {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const { id } = useParams();  
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteMeetingSuccessModal, setShowDeleteMeetingSuccessModal] = useState(false);
 
     useEffect(() => {
         const fetchMeetingData = async () => {
@@ -46,14 +53,11 @@ const QmsViewMeeting = () => {
     }, [id]);
 
     const getUserCompanyId = () => {
-     
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
 
-      
         const userRole = localStorage.getItem("role");
         if (userRole === "user") {
-       
             const userData = localStorage.getItem("user_company_id");
             if (userData) {
                 try {
@@ -75,12 +79,40 @@ const QmsViewMeeting = () => {
         navigate(`/company/qms/edit-meeting/${id}`);
     };
 
-    const handleDelete = async () => {
+    const openDeleteModal = () => {
+        setShowDeleteModal(true);
+    };
+
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteMeetingSuccessModal(false);
+    };
+
+    const confirmDelete = async () => {
         try {
             await axios.delete(`${BASE_URL}/qms/meeting-get/${id}/`);
-            navigate("/company/qms/list-meeting");
+            setShowDeleteModal(false);
+            setShowDeleteMeetingSuccessModal(true);
+            setTimeout(() => {
+                navigate("/company/qms/list-meeting");
+            }, 3000);
         } catch (error) {
             console.error("Error deleting meeting:", error);
+            let errorMsg = 'An error occurred while deleting the meeting';
+
+            if (error.response) {
+                if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -215,7 +247,7 @@ const QmsViewMeeting = () => {
 
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Delete
-                                <button onClick={handleDelete}>
+                                <button onClick={openDeleteModal}>
                                     <img
                                         src={deletes}
                                         alt="Delete Icon"
@@ -227,6 +259,26 @@ const QmsViewMeeting = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteMeetingConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteMeetingSuccessModal
+                showDeleteMeetingSuccessModal={showDeleteMeetingSuccessModal}
+                onClose={() => setShowDeleteMeetingSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={!!error}
+                onClose={() => setError(null)}
+                error={error}
+            />
         </div>
     );
 };

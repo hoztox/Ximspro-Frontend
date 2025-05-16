@@ -10,6 +10,9 @@ import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
 import AddMinutesModal from './AddMinutesModal';
 import ViewMinutesModal from './ViewMinutesModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DeleteMeetingConfirmModal from '../Modals/DeleteMeetingConfirmModal';
+import DeleteMeetingSuccessModal from '../Modals/DeleteMeetingSuccessModal';
 
 const QmsListMeeting = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -26,17 +29,38 @@ const QmsListMeeting = () => {
     const [viewMinutesExiting, setViewMinutesExiting] = useState(false);
     const itemsPerPage = 10;
     const [selectedMeeting, setSelectedMeeting] = useState(null);
+    
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [meetingToDelete, setMeetingToDelete] = useState(null);
+    const [showDeleteMeetingSuccessModal, setShowDeleteMeetingSuccessModal] = useState(false);
+
     useEffect(() => {
         const fetchMeetings = async () => {
             try {
                 const companyId = getCompanyId();
                 const response = await axios.get(`${BASE_URL}/qms/meeting/company/${companyId}/`);
                 setMeetings(response.data);
-                console.log("ssssssssssss", response.data);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching meetings:', error);
-                setError('Failed to load meetings');
+                let errorMsg = 'An error occurred while creating the meeting';
+
+                if (error.response) {
+                    if (error.response.data.date) {
+                        errorMsg = error.response.data.date[0];
+                    }
+                    else if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
                 setLoading(false);
             }
         };
@@ -91,13 +115,47 @@ const QmsListMeeting = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteMeeting = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (meeting) => {
+        setMeetingToDelete(meeting);
+        setShowDeleteModal(true);
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeleteMeetingSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!meetingToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/meeting-get/${id}/`);
-            setMeetings(meetings.filter(meeting => meeting.id !== id));
+            await axios.delete(`${BASE_URL}/qms/meeting-get/${meetingToDelete.id}/`);
+            setMeetings(meetings.filter(item => item.id !== meetingToDelete.id));
+            setShowDeleteModal(false);
+            setShowDeleteMeetingSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteMeetingSuccessModal(false);
+            }, 3000);
         } catch (error) {
             console.error('Error deleting meeting:', error);
-            setError('Failed to delete meeting');
+            let errorMsg = 'An error occurred while deleting the meeting';
+
+            if (error.response) {
+                if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -117,32 +175,13 @@ const QmsListMeeting = () => {
         navigate(`/company/qms/view-meeting/${id}`);
     };
 
-    if (loading) {
-        return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-                <div className="flex justify-center items-center h-64">
-                    <p>Loading meetings...</p>
-                </div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-red-500">{error}</p>
-                </div>
-            </div>
-        );
-    }
     const openAddMinutesModal = (meeting) => {
         setSelectedMeeting(meeting);
         setAddMinutesVisible(true);
         setAddMinutesAnimating(true);
-        // Remove animation class after animation completes
         setTimeout(() => setAddMinutesAnimating(false));
     };
+
     const openViewMinutesModal = (meeting) => {
         setSelectedMeeting(meeting);
         setViewMinutesVisible(true);
@@ -152,11 +191,10 @@ const QmsListMeeting = () => {
 
     const closeAddMinutesModal = () => {
         setAddMinutesExiting(true);
-        // Wait for animation to complete before hiding the modal
         setTimeout(() => {
             setAddMinutesVisible(false);
             setAddMinutesExiting(false);
-        }, 300); // Match this to your CSS transition duration
+        }, 300);
     };
 
     const closeViewMinutesModal = () => {
@@ -166,10 +204,10 @@ const QmsListMeeting = () => {
             setViewMinutesExiting(false);
         }, 300);
     };
+
     const handleSaveMinutes = async (formData) => {
         if (selectedMeeting) {
             try {
-                // Use the formData directly with the appropriate headers
                 await axios.put(
                     `${BASE_URL}/qms/meeting/${selectedMeeting.id}/edit/`, 
                     formData,
@@ -180,7 +218,6 @@ const QmsListMeeting = () => {
                     }
                 );
                 
-                // Update local state
                 const updatedMeetings = meetings.map(meeting => {
                     if (meeting.id === selectedMeeting.id) {
                         return { 
@@ -195,10 +232,34 @@ const QmsListMeeting = () => {
                 closeAddMinutesModal();
             } catch (error) {
                 console.error('Error saving minutes:', error);
-                // Optionally show an error message to the user
+                let errorMsg = 'An error occurred while saving minutes';
+
+                if (error.response) {
+                    if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
             }
         }
     };
+
+    if (loading) {
+        return (
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg">
+                <div className="flex justify-center items-center h-64">
+                    <p>Loading meetings...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center mb-6">
@@ -287,7 +348,7 @@ const QmsListMeeting = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
-                                            <button onClick={() => handleDeleteMeeting(meeting.id)}>
+                                            <button onClick={() => openDeleteModal(meeting)}>
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </div>
@@ -296,8 +357,8 @@ const QmsListMeeting = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="8" className="text-center py-4 text-[#AAAAAA]">
-                                    No meetings found
+                                <td colSpan="8" className="text-center py-4 not-found">
+                                    No Meetings Found
                                 </td>
                             </tr>
                         )}
@@ -337,6 +398,28 @@ const QmsListMeeting = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteMeetingConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success Modal */}
+            <DeleteMeetingSuccessModal
+                showDeleteMeetingSuccessModal={showDeleteMeetingSuccessModal}
+                onClose={() => setShowDeleteMeetingSuccessModal(false)}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={!!error}
+                onClose={() => setError(null)}
+                error={error}
+            />
+
+            {/* Minutes Modals */}
             <AddMinutesModal
                 isVisible={addMinutesVisible}
                 isExiting={addMinutesExiting}
@@ -354,7 +437,6 @@ const QmsListMeeting = () => {
                 onClose={closeViewMinutesModal}
             />
         </div>
-
     );
 };
 
