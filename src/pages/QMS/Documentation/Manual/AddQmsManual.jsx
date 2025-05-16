@@ -103,9 +103,25 @@ const AddQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load manuals. Please check your connection and try again."
-      );
+      let errorMsg = 'An error occurred while creating the meeting';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -263,7 +279,7 @@ const AddQmsManual = () => {
   const handleSaveClick = async () => {
     if (!validateForm()) {
       // Show the form has validation errors
-      setError("Please correct the errors below");
+      setError("Please correct the fields");
       return;
     }
     try {
@@ -315,7 +331,25 @@ const AddQmsManual = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      setError("Failed to save manual");
+      let errorMsg = 'An error occurred while creating the meeting';
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDarftManualErrorModal(true);
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
@@ -493,9 +527,8 @@ const AddQmsManual = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.written_by ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? "rotate-180" : ""
+                    }`}
                 />
               </div>
               <ErrorMessage message={errors.written_by} />
@@ -574,9 +607,8 @@ const AddQmsManual = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.checked_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <ErrorMessage message={errors.checked_by} />
@@ -651,9 +683,8 @@ const AddQmsManual = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.approved_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 {/* <ErrorMessage message={errors.approved_by} /> */}
@@ -683,9 +714,8 @@ const AddQmsManual = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.document_type ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.document_type ? "rotate-180" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -710,9 +740,8 @@ const AddQmsManual = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.day ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -733,9 +762,8 @@ const AddQmsManual = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.month ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -755,9 +783,8 @@ const AddQmsManual = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.year ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
