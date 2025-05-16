@@ -78,7 +78,24 @@ const DraftQmsInterestedParties = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft interested parties:", error);
-        setError("Failed to load draft interested parties. Please try again later.");
+        let errorMsg = "failed to fetch draft interested parties";
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };
@@ -115,7 +132,24 @@ const DraftQmsInterestedParties = ({ userId }) => {
       }, 3000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
-      setError(err.response?.data?.message || "Failed to delete the interested party.");
+      let errorMsg = "Failed to delete interested parties";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDeleteInterestedDraftModal(false);
       setShowDeleteInterestedDraftErrorModal(true);
 
@@ -163,11 +197,13 @@ const DraftQmsInterestedParties = ({ userId }) => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
   const getPageNumbers = () => {
@@ -194,7 +230,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
   );
 
   if (loading) {
-    return <div className="text-center not-found">Loading Interested Parties...</div>;
+    return (
+      <div className="text-center not-found">Loading Interested Parties...</div>
+    );
   }
 
   return (
@@ -309,8 +347,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-              }`}
+            className={`cursor-pointer swipe-text ${
+              currentPage === 1 ? "opacity-50" : ""
+            }`}
           >
             <span>Previous</span>
           </button>
@@ -318,8 +357,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
             <button
               key={page}
               onClick={() => goToPage(page)}
-              className={`${currentPage === page ? "pagin-active" : "pagin-inactive"
-                }`}
+              className={`${
+                currentPage === page ? "pagin-active" : "pagin-inactive"
+              }`}
             >
               {page}
             </button>
@@ -340,8 +380,9 @@ const DraftQmsInterestedParties = ({ userId }) => {
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
-            className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? "opacity-50" : ""
-              }`}
+            className={`cursor-pointer swipe-text ${
+              currentPage === totalPages || totalPages === 0 ? "opacity-50" : ""
+            }`}
           >
             <span>Next</span>
           </button>

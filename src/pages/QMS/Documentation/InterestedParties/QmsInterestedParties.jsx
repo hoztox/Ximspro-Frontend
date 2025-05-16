@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "./qmsinterestedparties.css";
-import plusicon from '../../../../assets/images/Company Documentation/plus icon.svg'
-import edits from "../../../../assets/images/Company Documentation/edit.svg"
-import deletes from '../../../../assets/images/Company Documentation/delete.svg'
-import views from "../../../../assets/images/Company Documentation/view.svg"
+import plusicon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import edits from "../../../../assets/images/Company Documentation/edit.svg";
+import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import views from "../../../../assets/images/Company Documentation/view.svg";
 import { Search } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
@@ -23,11 +23,15 @@ const QmsInterestedParties = () => {
   const { company_id } = useParams();
   const recordsPerPage = 10;
 
-  const [showDeleteInterestedModal, setShowDeleteInterestedModal] = useState(false);
+  const [showDeleteInterestedModal, setShowDeleteInterestedModal] =
+    useState(false);
   const [interestedToDelete, setInterestedToDelete] = useState(null);
-  const [showDeleteInterestedSuccessModal, setShowDeleteInterestedSuccessModal] = useState(false);
-  const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] = useState(false);
-
+  const [
+    showDeleteInterestedSuccessModal,
+    setShowDeleteInterestedSuccessModal,
+  ] = useState(false);
+  const [showDeleteInterestedErrorModal, setShowDeleteInterestedErrorModal] =
+    useState(false);
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -49,9 +53,13 @@ const QmsInterestedParties = () => {
     setLoading(true);
     try {
       const companyId = getUserCompanyId();
-      const response = await axios.get(`${BASE_URL}/qms/interested-parties/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/interested-parties/${companyId}/`
+      );
       console.log("Fetched interested parties data:", response.data);
-      const data = Array.isArray(response.data) ? response.data : [response.data];
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
 
       // Sort data by id in ascending order (oldest first), with fallback to written_at or created_at
       const sortedData = data.sort((a, b) => {
@@ -68,7 +76,24 @@ const QmsInterestedParties = () => {
       setError(null);
     } catch (err) {
       console.error("Error fetching interested parties:", err);
-      setError("Failed to load interested parties data");
+      let errorMsg = "Failed to fetch interested parties";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setFormData([]);
     } finally {
       setLoading(false);
@@ -81,16 +106,20 @@ const QmsInterestedParties = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
-  const filteredData = formData.filter(item =>
+  const filteredData = formData.filter((item) =>
     Object.values(item).some(
-      value => typeof value === 'string' && value.toLowerCase().includes(searchTerm.toLowerCase())
+      (value) =>
+        typeof value === "string" &&
+        value.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
@@ -103,7 +132,7 @@ const QmsInterestedParties = () => {
 
   const handleInterestedPartiesDraft = () => {
     navigate(`/company/qms/draft-interested-parties`);
-  }
+  };
 
   const handleAddInterestedParties = () => {
     navigate(`/company/qms/add-interested-parties/`);
@@ -116,8 +145,12 @@ const QmsInterestedParties = () => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`${BASE_URL}/qms/interested-parties-get/${interestedToDelete}/`);
-      setFormData(prev => prev.filter(item => item.id !== interestedToDelete));
+      await axios.delete(
+        `${BASE_URL}/qms/interested-parties-get/${interestedToDelete}/`
+      );
+      setFormData((prev) =>
+        prev.filter((item) => item.id !== interestedToDelete)
+      );
       setShowDeleteInterestedModal(false);
       setShowDeleteInterestedSuccessModal(true);
       setTimeout(() => {
@@ -143,16 +176,15 @@ const QmsInterestedParties = () => {
 
   const getTypeTitle = (item) => {
     // Check if type exists and has a title property
-    if (item.type && typeof item.type === 'object' && item.type.title) {
+    if (item.type && typeof item.type === "object" && item.type.title) {
       return item.type.title;
-    } else if (typeof item.type === 'string') {
+    } else if (typeof item.type === "string") {
       // If type is a string, return it directly
       return item.type;
     }
     // Fallback
     return "N/A";
   };
-
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -169,7 +201,9 @@ const QmsInterestedParties = () => {
     const fetchDraftCount = async () => {
       try {
         const Id = getRelevantUserId();
-        const draftResponse = await axios.get(`${BASE_URL}/qms/interst/drafts-count/${Id}/`);
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/interst/drafts-count/${Id}/`
+        );
         setDraftCount(draftResponse.data.count);
       } catch (err) {
         console.error("Error fetching draft count:", err);
@@ -179,7 +213,6 @@ const QmsInterestedParties = () => {
 
     fetchDraftCount();
   }, []);
-
 
   const handleEditInterestedParties = (id) => {
     navigate(`/company/qms/edit-interested-parties/${id}`);
@@ -206,7 +239,10 @@ const QmsInterestedParties = () => {
         endPage = totalPages;
         startPage = Math.max(1, endPage - maxPagesToShow + 1);
       }
-      return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+      return Array.from(
+        { length: endPage - startPage + 1 },
+        (_, i) => startPage + i
+      );
     }
   };
 
@@ -234,9 +270,8 @@ const QmsInterestedParties = () => {
         <DeleteQmsInterestedErrorModal
           showDeleteInterestedErrorModal={showDeleteInterestedErrorModal}
           onClose={() => setShowDeleteInterestedErrorModal(false)}
-          error = {error} 
+          error={error}
         />
-
 
         <div className="flex space-x-5">
           <div className="relative">
@@ -247,7 +282,7 @@ const QmsInterestedParties = () => {
               onChange={handleSearch}
               className="serach-input-manual focus:outline-none bg-transparent"
             />
-            <div className='absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
+            <div className="absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />
             </div>
           </div>
@@ -267,15 +302,23 @@ const QmsInterestedParties = () => {
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           >
             <span>Add Interested Parties</span>
-            <img src={plusicon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+            <img
+              src={plusicon}
+              alt="Add Icon"
+              className="w-[18px] h-[18px] qms-add-plus"
+            />
           </button>
         </div>
       </div>
       {loading ? (
-        <div className="text-center py-8 not-found">Loading Interested Parties...</div>
+        <div className="text-center py-8 not-found">
+          Loading Interested Parties...
+        </div>
       ) : filteredData.length === 0 ? (
         <div>
-          <p className="text-center not-found py-5">No Interested Parties Found</p>
+          <p className="text-center not-found py-5">
+            No Interested Parties Found
+          </p>
         </div>
       ) : (
         <>
@@ -283,38 +326,86 @@ const QmsInterestedParties = () => {
             <table className="w-full text-sm">
               <thead className="bg-[#24242D]">
                 <tr className="h-[48px]">
-                  <th className="px-4 qms-interested-parties-thead text-left">No</th>
-                  <th className="px-4 qms-interested-parties-thead text-left">Name</th>
-                  <th className="px-4 qms-interested-parties-thead text-left">Category</th>
-                  <th className="px-4 qms-interested-parties-thead text-left">Type</th>
-                  <th className="px-4 qms-interested-parties-thead text-left">Entered By</th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    No
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    Name
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    Category
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    Type
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    Entered By
+                  </th>
                   {/* <th className="px-4 qms-interested-parties-thead text-left">Needs</th>
                   <th className="px-4 qms-interested-parties-thead text-left">Expectations</th> */}
-                  <th className="px-4 qms-interested-parties-thead text-left">Date</th>
-                  <th className="px-4 qms-interested-parties-thead text-center">View</th>
-                  <th className="px-4 qms-interested-parties-thead text-center">Edit</th>
-                  <th className="px-4 qms-interested-parties-thead text-center">Delete</th>
+                  <th className="px-4 qms-interested-parties-thead text-left">
+                    Date
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-center">
+                    View
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-center">
+                    Edit
+                  </th>
+                  <th className="px-4 qms-interested-parties-thead text-center">
+                    Delete
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {currentRecords.map((item, index) => (
-                  <tr key={item.id} className="border-b border-[#2D2D35] h-[48px]">
-                    <td className="px-4 qms-interested-parties-data">{(currentPage - 1) * recordsPerPage + index + 1}</td>
-                    <td className="px-4 qms-interested-parties-data">{item.name}</td>
-                    <td className="px-4 qms-interested-parties-data">{item.category}</td>
-                    <td className="px-4 qms-interested-parties-data">{getTypeTitle(item)}</td>
-                    <td className="px-4 qms-interested-parties-data">{item.user.first_name} {item.user.last_name}</td>
+                  <tr
+                    key={item.id}
+                    className="border-b border-[#2D2D35] h-[48px]"
+                  >
+                    <td className="px-4 qms-interested-parties-data">
+                      {(currentPage - 1) * recordsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 qms-interested-parties-data">
+                      {item.name}
+                    </td>
+                    <td className="px-4 qms-interested-parties-data">
+                      {item.category}
+                    </td>
+                    <td className="px-4 qms-interested-parties-data">
+                      {getTypeTitle(item)}
+                    </td>
+                    <td className="px-4 qms-interested-parties-data">
+                      {item.user.first_name} {item.user.last_name}
+                    </td>
                     {/* <td className="px-4 qms-interested-parties-data">{item.needs}</td>
                     <td className="px-4 qms-interested-parties-data">{item.expectations}</td> */}
-                    <td className="px-4 qms-interested-parties-data">{formatDate(item.created_at)}</td>
-                    <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={views} alt="View" className="cursor-pointer mx-auto w-[16px] h-[16px]" onClick={() => handleViewInterestedParties(item.id)} />
+                    <td className="px-4 qms-interested-parties-data">
+                      {formatDate(item.created_at)}
                     </td>
                     <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={edits} alt="Edit" className="cursor-pointer mx-auto w-[16px] h-[16px]" onClick={() => handleEditInterestedParties(item.id)} />
+                      <img
+                        src={views}
+                        alt="View"
+                        className="cursor-pointer mx-auto w-[16px] h-[16px]"
+                        onClick={() => handleViewInterestedParties(item.id)}
+                      />
                     </td>
                     <td className="px-4 qms-interested-parties-data text-center">
-                      <img src={deletes} alt="Delete" className="cursor-pointer mx-auto w-[16px] h-[16px]" onClick={() => handleDelete(item.id)} />
+                      <img
+                        src={edits}
+                        alt="Edit"
+                        className="cursor-pointer mx-auto w-[16px] h-[16px]"
+                        onClick={() => handleEditInterestedParties(item.id)}
+                      />
+                    </td>
+                    <td className="px-4 qms-interested-parties-data text-center">
+                      <img
+                        src={deletes}
+                        alt="Delete"
+                        className="cursor-pointer mx-auto w-[16px] h-[16px]"
+                        onClick={() => handleDelete(item.id)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -322,21 +413,27 @@ const QmsInterestedParties = () => {
             </table>
           </div>
           <div className="flex justify-between items-center mt-4 text-sm">
-            <div className="text-white total-text">Total: {filteredData.length}</div>
+            <div className="text-white total-text">
+              Total: {filteredData.length}
+            </div>
             <div className="flex items-center space-x-5">
               <button
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                className={`cursor-pointer swipe-text ${
+                  currentPage === 1 ? "opacity-50" : ""
+                }`}
               >
                 <span>Previous</span>
               </button>
 
-              {getPageNumbers().map(page => (
+              {getPageNumbers().map((page) => (
                 <button
                   key={page}
                   onClick={() => goToPage(page)}
-                  className={`${currentPage === page ? 'pagin-active' : 'pagin-inactive'}`}
+                  className={`${
+                    currentPage === page ? "pagin-active" : "pagin-inactive"
+                  }`}
                 >
                   {page}
                 </button>
@@ -344,7 +441,9 @@ const QmsInterestedParties = () => {
 
               {totalPages > 5 && currentPage < totalPages - 2 && (
                 <>
-                  {currentPage < totalPages - 3 && <span className="px-1">...</span>}
+                  {currentPage < totalPages - 3 && (
+                    <span className="px-1">...</span>
+                  )}
                   <button
                     onClick={() => goToPage(totalPages)}
                     className="px-3 py-1 rounded pagin-inactive"
@@ -357,7 +456,11 @@ const QmsInterestedParties = () => {
               <button
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0 ? 'opacity-50' : ''}`}
+                className={`cursor-pointer swipe-text ${
+                  currentPage === totalPages || totalPages === 0
+                    ? "opacity-50"
+                    : ""
+                }`}
               >
                 <span>Next</span>
               </button>

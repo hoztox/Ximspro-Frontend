@@ -13,8 +13,10 @@ const EditQmsInterestedParties = () => {
   const navigate = useNavigate();
   const [legalRequirementOptions, setLegalRequirementOptions] = useState([]);
   const [causePartyOptions, setCausePartyOptions] = useState([]);
-  const [showEditInterestedSuccessModal, setShowEditInterestedSuccessModal] = useState(false);
-  const [showEditQmsInterestedErrorModal, setShowEditQmsInterestedErrorModal] = useState(false);
+  const [showEditInterestedSuccessModal, setShowEditInterestedSuccessModal] =
+    useState(false);
+  const [showEditQmsInterestedErrorModal, setShowEditQmsInterestedErrorModal] =
+    useState(false);
   const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -47,7 +49,7 @@ const EditQmsInterestedParties = () => {
   const [originalFileData, setOriginalFileData] = useState(null);
 
   const addNeed = () => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       needs: [...prev.needs, { needs: "", expectation: "" }],
     }));
@@ -55,7 +57,7 @@ const EditQmsInterestedParties = () => {
 
   const removeNeed = (index) => {
     if (formData.needs.length > 1) {
-      setFormData(prev => {
+      setFormData((prev) => {
         const updated = [...prev.needs];
         updated.splice(index, 1);
         return { ...prev, needs: updated };
@@ -64,7 +66,7 @@ const EditQmsInterestedParties = () => {
   };
 
   const handleNeedChange = (index, field, value) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const updated = [...prev.needs];
       updated[index] = { ...updated[index], [field]: value };
       return { ...prev, needs: updated };
@@ -99,7 +101,9 @@ const EditQmsInterestedParties = () => {
     }
 
     try {
-      const response = await axios.get(`${BASE_URL}/qms/compliance/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/compliance/${companyId}/`
+      );
       setLegalRequirementOptions(response.data || []);
     } catch (error) {
       console.error("Error fetching legal requirements:", error);
@@ -112,18 +116,39 @@ const EditQmsInterestedParties = () => {
         setError("Company ID not found. Please log in again.");
         return;
       }
-      const response = await axios.get(`${BASE_URL}/qms/cause-party/company/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/cause-party/company/${companyId}/`
+      );
       setCausePartyOptions(response.data || []);
     } catch (error) {
-      console.error("Error fetching CauseParty:", error);
-      setError("Failed to load CauseParty types. Please try again.");
+      console.error("Error fetching Cause Party:", error);
+      let errorMsg = "Failed to fetch Cause Party. Please try again";
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${BASE_URL}/qms/interested-parties-get/${id}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/interested-parties-get/${id}/`
+      );
       const data = response.data;
 
       setOriginalFileData(data.file || null);
@@ -151,7 +176,24 @@ const EditQmsInterestedParties = () => {
       }
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError("Failed to load interested party data. Please try again.");
+      let errorMsg = "Failed to fetch Interested parties";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -159,7 +201,7 @@ const EditQmsInterestedParties = () => {
 
   useEffect(() => {
     if (companyId) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         company: companyId,
       }));
@@ -182,12 +224,12 @@ const EditQmsInterestedParties = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
-    
+
     // Clear name error when user types in the name field
     if (name === "name" && value.trim() !== "") {
       setNameError(false);
     }
-    
+
     if (name === "legal_requirements") {
       setShowCustomField(value === "N/A");
     }
@@ -227,25 +269,25 @@ const EditQmsInterestedParties = () => {
 
   const validateForm = () => {
     let isValid = true;
-    
+
     if (!formData.name || formData.name.trim() === "") {
       setNameError(true);
       isValid = false;
     } else {
       setNameError(false);
     }
-    
+
     return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate form before submission
     if (!validateForm()) {
       return;
     }
-    
+
     setSubmitting(true);
     setError(null);
 
@@ -255,10 +297,22 @@ const EditQmsInterestedParties = () => {
         const formDataWithFile = new FormData();
         formDataWithFile.append("name", formData.name);
         formDataWithFile.append("category", formData.category);
-        formDataWithFile.append("special_requirements", formData.special_requirements || "");
-        formDataWithFile.append("legal_requirements", formData.legal_requirements || "");
-        formDataWithFile.append("custom_legal_requirements", formData.custom_legal_requirements || "");
-        formDataWithFile.append("send_notification", formData.send_notification);
+        formDataWithFile.append(
+          "special_requirements",
+          formData.special_requirements || ""
+        );
+        formDataWithFile.append(
+          "legal_requirements",
+          formData.legal_requirements || ""
+        );
+        formDataWithFile.append(
+          "custom_legal_requirements",
+          formData.custom_legal_requirements || ""
+        );
+        formDataWithFile.append(
+          "send_notification",
+          formData.send_notification
+        );
         formDataWithFile.append("company", formData.company);
         formDataWithFile.append("type", formData.type || "");
         formDataWithFile.append("needs", JSON.stringify(formData.needs));
@@ -307,7 +361,24 @@ const EditQmsInterestedParties = () => {
         response: err.response?.data,
         stack: err.stack,
       });
-      setError(err.response?.data?.detail || "Failed to update interested party. Please try again.");
+      let errorMsg = "Failed to update interested parties";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowEditQmsInterestedErrorModal(true);
       setTimeout(() => {
         setShowEditQmsInterestedErrorModal(false);
@@ -348,21 +419,24 @@ const EditQmsInterestedParties = () => {
       <EditQmsInterestedErrorModal
         showEditQmsInterestedErrorModal={showEditQmsInterestedErrorModal}
         onClose={() => setShowEditQmsInterestedErrorModal(false)}
-        error = {error}
+        error={error}
       />
-
 
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Name <span className="text-red-500">*</span></label>
+              <label className="block mb-3 add-qms-manual-label">
+                Name <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full add-qms-intertested-inputs ${nameError ? 'border-red-500' : ''}`}
+                className={`w-full add-qms-intertested-inputs ${
+                  nameError ? "border-red-500" : ""
+                }`}
                 placeholder="Enter Name"
               />
               {nameError && (
@@ -370,7 +444,9 @@ const EditQmsInterestedParties = () => {
               )}
             </div>
             <div>
-              <label className="block mb-3 add-qms-manual-label">Category</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Category
+              </label>
               <div className="relative">
                 <select
                   name="category"
@@ -386,8 +462,9 @@ const EditQmsInterestedParties = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.category ? "rotate-180" : ""
-                      }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.category ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -396,27 +473,38 @@ const EditQmsInterestedParties = () => {
 
           <div className="grid grid-cols-1 gap-6 mb-6">
             {formData.needs.map((item, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div
+                key={index}
+                className="grid grid-cols-1 md:grid-cols-2 gap-5"
+              >
                 <div>
-                  <label className="block mb-3 add-qms-manual-label">Needs</label>
+                  <label className="block mb-3 add-qms-manual-label">
+                    Needs
+                  </label>
                   <div className="flex">
                     <input
                       type="text"
                       placeholder="Enter Needs"
                       value={item.needs}
-                      onChange={(e) => handleNeedChange(index, "needs", e.target.value)}
+                      onChange={(e) =>
+                        handleNeedChange(index, "needs", e.target.value)
+                      }
                       className="w-full add-qms-intertested-inputs"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block mb-3 add-qms-manual-label">Expectation</label>
+                  <label className="block mb-3 add-qms-manual-label">
+                    Expectation
+                  </label>
                   <div className="flex">
                     <input
                       type="text"
                       placeholder="Enter Expectation"
                       value={item.expectation}
-                      onChange={(e) => handleNeedChange(index, "expectation", e.target.value)}
+                      onChange={(e) =>
+                        handleNeedChange(index, "expectation", e.target.value)
+                      }
                       className="w-full add-qms-intertested-inputs"
                     />
                     {index > 0 && (
@@ -447,7 +535,9 @@ const EditQmsInterestedParties = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block mb-3 add-qms-manual-label">Special Requirements</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Special Requirements
+              </label>
               <input
                 type="text"
                 name="special_requirements"
@@ -483,8 +573,9 @@ const EditQmsInterestedParties = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? "rotate-180" : ""
-                      }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
+                      dropdownRotation.legal_requirements ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -501,7 +592,9 @@ const EditQmsInterestedParties = () => {
               )}
             </div>
             <div>
-              <label className="block mb-3 add-qms-manual-label">Browse / Upload File</label>
+              <label className="block mb-3 add-qms-manual-label">
+                Browse / Upload File
+              </label>
               <div className="relative">
                 <input
                   type="file"
@@ -524,7 +617,9 @@ const EditQmsInterestedParties = () => {
                       onClick={handleViewFile}
                       className="flex items-center mt-[10.65px] gap-[8px]"
                     >
-                      <p className="click-view-file-btn text-[#1E84AF]">Click to view file</p>
+                      <p className="click-view-file-btn text-[#1E84AF]">
+                        Click to view file
+                      </p>
                       <Eye size={16} className="text-[#1E84AF]" />
                     </button>
                   )}
@@ -553,8 +648,9 @@ const EditQmsInterestedParties = () => {
                 ))}
               </select>
               <ChevronDown
-                className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${focusedDropdown === "type" ? "rotate-180" : ""
-                  }`}
+                className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${
+                  focusedDropdown === "type" ? "rotate-180" : ""
+                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -576,7 +672,9 @@ const EditQmsInterestedParties = () => {
                   checked={formData.send_notification}
                   onChange={handleInputChange}
                 />
-                <span className="permissions-texts cursor-pointer">Send Notification</span>
+                <span className="permissions-texts cursor-pointer">
+                  Send Notification
+                </span>
               </label>
             </div>
             <div></div>
