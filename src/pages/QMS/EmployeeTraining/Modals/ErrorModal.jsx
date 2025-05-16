@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import errors from "../../../../assets/images/Modal/errorIllustration.png";
 import errorsdark from "../../../../assets/images/Modal/errorIllustrationdark.png";
 
-const ErrorModal = ({ showErrorModal, onClose, errorMessege }) => {
+const ErrorModal = ({ showErrorModal, onClose, errorMessege, error }) => {
   const { theme } = useTheme();
 
   if (!showErrorModal) return null;
@@ -51,7 +51,7 @@ const ErrorModal = ({ showErrorModal, onClose, errorMessege }) => {
                 className="w-[156px] h-[156px] errors-dark"
               />
               <h1 className="add-cmy-error-messegehead">An error occurred!</h1>
-              <p className="add-cmy-error-messege">{errorMessege || 'Please try again'}</p>
+              <p className="add-cmy-error-messege">{errorMessege || error || 'Please try again'}</p>
 
             </div>
           </motion.div>

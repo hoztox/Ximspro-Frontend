@@ -439,7 +439,7 @@ const QmsEditDraftListTraining = () => {
   };
 
   if (loading)
-    return <div className="text-white text-center py-10">Loading...</div>;
+    return <div className="not-found text-center py-10">Loading...</div>;
   // if (error)
   //   return <div className="text-red-500 text-center py-10">{error}</div>;
 
@@ -467,6 +467,7 @@ const QmsEditDraftListTraining = () => {
         onClose={() => {
           setShowErrorModal(false);
         }}
+        error = {error}
       />
 
       <form

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -26,7 +25,6 @@ const QmsDraftListTraining = () => {
   const [showDeleteTrainingSuccessModal, setShowDeleteTrainingSuccessModal] =
     useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -125,7 +123,7 @@ const QmsDraftListTraining = () => {
       }, 2000);
     } catch (error) {
       console.error("Error deleting draft training:", error);
-      setErrorMessage(
+      setError(
         "Failed to delete draft training. Please try again later."
       );
       setShowErrorModal(true);
@@ -147,7 +145,7 @@ const QmsDraftListTraining = () => {
 
   const closeErrorModal = () => {
     setShowErrorModal(false);
-    setErrorMessage("");
+    setError("");
   };
 
   // Change page
@@ -169,16 +167,8 @@ const QmsDraftListTraining = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
         <p>Loading draft trainings...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
-        <p className="text-red-500">{error}</p>
       </div>
     );
   }
@@ -348,6 +338,7 @@ const QmsDraftListTraining = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error = {error}
       />
     </div>
   );

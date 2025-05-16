@@ -16,6 +16,7 @@ const QmsListTraining = () => {
   // State
   const [trainings, setTrainings] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [draftCount, setDraftCount] = useState(0);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,7 +28,6 @@ const QmsListTraining = () => {
   const [trainingToDelete, setTrainingToDelete] = useState(null);
   const [showDeleteTrainingSuccessModal, setShowDeleteTrainingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -42,6 +42,20 @@ const QmsListTraining = () => {
         return null;
       }
     }
+    return null;
+  };
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
     return null;
   };
 
@@ -62,6 +76,7 @@ const QmsListTraining = () => {
       setIsLoading(true);
       try {
         const companyId = getUserCompanyId();
+        const userId = getRelevantUserId();
         const response = await axios.get(
           `${BASE_URL}/qms/training/${companyId}/`
         );
@@ -74,38 +89,15 @@ const QmsListTraining = () => {
           status: item.status,
           isDraft: item.is_draft,
         }));
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/training/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
         setTrainings(formattedData);
         setError(null);
       } catch (err) {
         setError("Failed to load training data");
         console.error("Error fetching training data:", err);
-        // Fallback to sample data if fetch fails
-        setTrainings([
-          {
-            id: 1,
-            title: "Cloud Computing",
-            type: "Webinar",
-            venue: "Online Platform",
-            datePlanned: "03-12-2024",
-            status: "Completed",
-          },
-          {
-            id: 2,
-            title: "Agile Methodology",
-            type: "Workshop",
-            venue: "Meeting Room B",
-            datePlanned: "03-12-2024",
-            status: "Requested",
-          },
-          {
-            id: 3,
-            title: "Cybersecurity Basics",
-            type: "Online",
-            venue: "Virtual Class",
-            datePlanned: "03-12-2024",
-            status: "Completed",
-          },
-        ]);
       } finally {
         setIsLoading(false);
       }
@@ -182,7 +174,7 @@ const QmsListTraining = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting training:", err);
-      setErrorMessage("Failed to delete training. Please try again later.");
+      setError("Failed to delete training. Please try again later.");
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -224,6 +216,11 @@ const QmsListTraining = () => {
             onClick={handleDraftTraining}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[120px] right-[184px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[140px]"
@@ -241,12 +238,11 @@ const QmsListTraining = () => {
 
       {/* Loading and Error States */}
       {isLoading && (
-        <div className="text-center py-4">Loading training data...</div>
+        <div className="text-center not-found py-4">Loading Training Data...</div>
       )}
-      {error && <div className="text-red-500 text-center py-4">{error}</div>}
 
       {/* Table */}
-      {!isLoading && !error && (
+      {!isLoading && (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
@@ -285,10 +281,10 @@ const QmsListTraining = () => {
                   <td className="px-2 add-manual-datas !text-center">
                     <span
                       className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === "Completed"
-                          ? "bg-[#36DDAE11] text-[#36DDAE]"
-                          : training.status === "Cancelled"
-                            ? "bg-[#FF000011] text-[#FF0000]" // red background and text
-                            : "bg-[#ddd23611] text-[#ddd236]"
+                        ? "bg-[#36DDAE11] text-[#36DDAE]"
+                        : training.status === "Cancelled"
+                          ? "bg-[#FF000011] text-[#FF0000]" // red background and text
+                          : "bg-[#ddd23611] text-[#ddd236]"
                         }`}
                     >
                       {training.status}
@@ -296,19 +292,19 @@ const QmsListTraining = () => {
 
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-  {["Requested", "Cancelled"].includes(training.status) ? (
-    <button
-      onClick={() => handleMarkAsCompleted(training.id)}
-      className="text-[#1E84AF] text-xs py-1 px-2 rounded"
-    >
-      Change Status
-    </button>
-  ) : (
-    <span className="text-xs text-gray-400">
-      No Action Needed
-    </span>
-  )}
-</td>
+                    {["Requested", "Cancelled"].includes(training.status) ? (
+                      <button
+                        onClick={() => handleMarkAsCompleted(training.id)}
+                        className="text-[#1E84AF] text-xs py-1 px-2 rounded"
+                      >
+                        Change Status
+                      </button>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        No Action Needed
+                      </span>
+                    )}
+                  </td>
 
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => handleQmsViewTraining(training.id)}>
@@ -347,7 +343,7 @@ const QmsListTraining = () => {
       )}
 
       {/* Pagination */}
-      {!isLoading && !error && trainings.length > 0 && (
+      {!isLoading && trainings.length > 0 && (
         <div className="flex justify-between items-center mt-6 text-sm">
           <div className="text-white total-text">Total-{totalItems}</div>
           <div className="flex items-center gap-5">
@@ -402,6 +398,7 @@ const QmsListTraining = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </div>
   );

@@ -451,6 +451,7 @@ const QmsAddTraining = () => {
           onClose={() => {
             setShowErrorModal(false);
           }}
+          error = {error}
         />
 
         <AddTrainingDraftSuccessModal

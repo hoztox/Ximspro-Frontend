@@ -421,6 +421,7 @@ const QmsEditTraining = () => {
         onClose={() => {
           setShowErrorModal(false);
         }}
+        error = {error}
       />
 
       <form
