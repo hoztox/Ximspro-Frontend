@@ -27,6 +27,7 @@ const QmsListComplaints = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [draftCount, setDraftCount] = useState(0);
 
   // Get company ID from localStorage
   const getUserCompanyId = () => {
@@ -46,6 +47,20 @@ const QmsListComplaints = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   const companyId = getUserCompanyId();
 
   // Fetch complaints data
@@ -60,6 +75,13 @@ const QmsListComplaints = () => {
       try {
         const response = await axios.get(`${BASE_URL}/qms/complaints/company/${companyId}/`);
         setComplaints(response.data);
+
+        const userId = getRelevantUserId();
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching complaints:", error);
@@ -216,6 +238,11 @@ const QmsListComplaints = () => {
             onClick={handleDraftComplaints}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[312px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
