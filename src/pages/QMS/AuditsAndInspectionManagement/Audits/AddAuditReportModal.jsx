@@ -72,7 +72,25 @@ const AddAuditReportModal = ({
       }, 1500);
     } catch (error) {
       console.error('Error updating audit:', error);
-      setError('Failed to update audit. Please try again.');
+      let errorMsg = 'Failed to upload files';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
