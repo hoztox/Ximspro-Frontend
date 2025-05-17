@@ -5,21 +5,23 @@ import { countries } from 'countries-list';
 import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import axios from 'axios';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddCustomer = () => {
     const navigate = useNavigate();
-    
+
     // Convert countries object to a sorted array of country names
     const countryList = Object.values(countries)
         .map(country => country.name)
         .sort((a, b) => a.localeCompare(b));
-    
+
     const [formData, setFormData] = useState({
         name: '',
         city: '',
-        address: '', 
+        address: '',
         state: '',
-        zipcode: '', 
+        zipcode: '',
         country: '',
         email: '',
         contact_person: '',
@@ -35,8 +37,10 @@ const QmsAddCustomer = () => {
     const [draftLoading, setDraftLoading] = useState(false);
     const [users, setUsers] = useState([]);
     const [errors, setErrors] = useState({});
+
+    const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [showDraftSuccessModal, setShowDraftSuccessModal] = useState(false);
+
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [error, setError] = useState('');
 
@@ -191,6 +195,10 @@ const QmsAddCustomer = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -225,6 +233,7 @@ const QmsAddCustomer = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/list-customer');
             }, 1500);
+            setSuccessMessage("Customer Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
             setError(error.response?.data?.message || 'Failed to save customer. Please try again.');
@@ -254,12 +263,12 @@ const QmsAddCustomer = () => {
                 },
             });
 
-            setShowDraftSuccessModal(true);
+            setShowSuccessModal(true);
             setTimeout(() => {
-                setShowDraftSuccessModal(false);
+                setShowSuccessModal(false);
                 navigate('/company/qms/draft-customer');
             }, 1500);
-
+            setSuccessMessage("Customer Drafted Successfully")
         } catch (err) {
             setDraftLoading(false);
             const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
@@ -288,32 +297,18 @@ const QmsAddCustomer = () => {
                 </button>
             </div>
 
-            {/* Success Modal */}
-            {showSuccessModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-green-500 text-lg">Customer added successfully!</p>
-                    </div>
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
 
-            {/* Draft Success Modal */}
-            {showDraftSuccessModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-green-500 text-lg">Customer draft saved successfully!</p>
-                    </div>
-                </div>
-            )}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-red-500 text-lg">{error || 'An error occurred'}</p>
-                    </div>
-                </div>
-            )}
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -517,7 +512,7 @@ const QmsAddCustomer = () => {
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
-                        <button 
+                        <button
                             type="button"
                             onClick={handleSaveAsDraft}
                             disabled={draftLoading}
