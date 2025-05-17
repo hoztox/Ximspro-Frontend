@@ -102,7 +102,25 @@ const QmsAddInternalProblems = () => {
       setCauses(response.data);
     } catch (error) {
       console.error("Error fetching causes:", error);
-      setError("Failed to load causes. Please try again.");
+      let errorMsg = 'An error occurred while creating the meeting';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -123,7 +141,25 @@ const QmsAddInternalProblems = () => {
       setCarNumbers(response.data);
     } catch (error) {
       console.error("Error fetching car numbers:", error);
-      setError("Failed to load CAR numbers. Please try again.");
+      let errorMsg = 'An error occurred while creating the meeting';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -150,9 +186,25 @@ const QmsAddInternalProblems = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load users. Please check your connection and try again."
-      );
+      let errorMsg = 'An error occurred while creating the meeting';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -306,10 +358,25 @@ const QmsAddInternalProblems = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
-      setError(
-        error.response?.data?.message ||
-          "Failed to save internal problem. Please check your inputs and try again."
-      );
+      let errorMsg = 'Failed to submit form. Please try again';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -377,11 +444,25 @@ const QmsAddInternalProblems = () => {
       }, 1500);
     } catch (error) {
       console.error("Error saving draft:", error);
-      const errorMessage =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "Failed to save draft internal problem";
-      setError(errorMessage);
+      let errorMsg = 'Failed to save draft. Please try again';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -556,9 +637,8 @@ const QmsAddInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "executor" ? "rotate-180" : ""
-                            }`}
+                            ${focusedDropdown === "executor" ? "rotate-180" : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -579,11 +659,10 @@ const QmsAddInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "solve_after_action"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "solve_after_action"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -610,11 +689,10 @@ const QmsAddInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "dateProblem.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "dateProblem.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -637,11 +715,10 @@ const QmsAddInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "dateProblem.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "dateProblem.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -664,11 +741,10 @@ const QmsAddInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "dateProblem.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "dateProblem.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -695,11 +771,10 @@ const QmsAddInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${
-                              focusedDropdown === "corrective_action"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "corrective_action"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -747,11 +822,10 @@ const QmsAddInternalProblems = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                    ${
-                                      focusedDropdown === "car_no"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
+                                    ${focusedDropdown === "car_no"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />

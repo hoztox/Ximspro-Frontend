@@ -22,6 +22,7 @@ const QmsListInternalProblems = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
+  const [draftCount, setDraftCount] = useState(0);
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -50,6 +51,20 @@ const QmsListInternalProblems = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   // Format date function
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -67,6 +82,7 @@ const QmsListInternalProblems = () => {
     setError(null);
     try {
       const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
       if (!companyId) {
         setError("Company ID not found. Please log in again.");
         setLoading(false);
@@ -85,6 +101,11 @@ const QmsListInternalProblems = () => {
         }
       );
 
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
       // Process the response data
       if (response.data.results) {
         // If API returns paginated response
@@ -99,7 +120,29 @@ const QmsListInternalProblems = () => {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching internal problems:", error);
-      setError("Failed to load internal problems. Please try again.");
+      let errorMsg = 'Failed to fetch internal problems';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 2000);
       setLoading(false);
     }
   };
@@ -231,6 +274,11 @@ const QmsListInternalProblems = () => {
             onClick={handleDraftProblems}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[307px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -280,7 +328,7 @@ const QmsListInternalProblems = () => {
                     <td className="px-2 add-manual-datas">
                       {problem.problem
                         ? problem.problem.substring(0, 30) +
-                          (problem.problem.length > 30 ? "..." : "")
+                        (problem.problem.length > 30 ? "..." : "")
                         : "N/A"}
                     </td>
                     <td className="px-2 add-manual-datas">
@@ -295,11 +343,10 @@ const QmsListInternalProblems = () => {
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
                       <span
-                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                          problem.solve_after_action === "Yes"
-                            ? "bg-[#36DDAE11] text-[#36DDAE]"
-                            : "bg-[#dd363611] text-[#dd3636]"
-                        }`}
+                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${problem.solve_after_action === "Yes"
+                          ? "bg-[#36DDAE11] text-[#36DDAE]"
+                          : "bg-[#dd363611] text-[#dd3636]"
+                          }`}
                       >
                         {problem.solve_after_action === "Yes"
                           ? "Solved"
@@ -350,9 +397,8 @@ const QmsListInternalProblems = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -383,9 +429,8 @@ const QmsListInternalProblems = () => {
                 <button
                   key={pageNum}
                   onClick={() => paginate(pageNum)}
-                  className={`${
-                    currentPage === pageNum ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === pageNum ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {pageNum}
                 </button>
@@ -395,9 +440,8 @@ const QmsListInternalProblems = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>

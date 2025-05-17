@@ -5,6 +5,9 @@ import viewIcon from "../../../../assets/images/Companies/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import ErrorModal from "../Modals/ErrorModal";
+import DeleteInternalConfirmModal from "../Modals/DeleteInternalConfirmModal";
+import DeleteInternalSuccessModal from "../Modals/DeleteInternalSuccessModal";
 
 const QmsDraftInternalProblems = () => {
     // State management
@@ -16,6 +19,12 @@ const QmsDraftInternalProblems = () => {
     const [itemsPerPage] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
     const navigate = useNavigate();
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [showDeletetInternalSuccessModal, setShowDeletetInternalSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     // Format date function
     const formatDate = (dateString) => {
@@ -73,7 +82,29 @@ const QmsDraftInternalProblems = () => {
             setLoading(false);
         } catch (error) {
             console.error('Error fetching internal problems:', error);
-            setError('Failed to load internal problems. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 2000);
+            let errorMsg = 'failed to fetch internal problems';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setLoading(false);
         }
     };
@@ -84,7 +115,6 @@ const QmsDraftInternalProblems = () => {
         setCurrentPage(1); // Reset to first page on new search
     };
 
-   
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             fetchInternalProblems();
@@ -106,17 +136,56 @@ const QmsDraftInternalProblems = () => {
         navigate(`/company/qms/edit-draft-internal-problem/${id}`);
     };
 
-    const handleDeleteProblem = async (id) => {
-        if (window.confirm('Are you sure you want to delete this draft?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/internal-problems/${id}/`);
-                // No need to filter here as we're refetching anyway
-                fetchInternalProblems();  
-            } catch (error) {
-                console.error('Error deleting internal problem:', error);
-                setError('Failed to delete internal problem. Please try again.');
+    // Delete handlers
+    const openDeleteModal = (id) => {
+        setItemToDelete(id);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeleteProblem = async () => {
+        if (!itemToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/internal-problems/${itemToDelete}/`);
+            setShowDeleteModal(false);
+            setShowDeletetInternalSuccessModal(true);
+            fetchInternalProblems();
+            setTimeout(() => {
+                setShowDeletetInternalSuccessModal(false);
+            }, 3000);
+        } catch (error) {
+            console.error('Error deleting internal problem:', error);
+            let errorMsg = 'Failed to delete internal problem';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 2000);
+            setShowDeleteModal(false);
         }
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowDeletetInternalSuccessModal(false);
     };
 
     // Pagination
@@ -131,12 +200,25 @@ const QmsDraftInternalProblems = () => {
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-            {/* Error notification */}
-            {error && (
-                <div className="bg-red-500 text-white p-3 rounded mb-4">
-                    {error}
-                </div>
-            )}
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
+            {/* Delete confirmation modal */}
+            <DeleteInternalConfirmModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleDeleteProblem}
+                onCancel={closeAllModals}
+            />
+
+            {/* Success modal */}
+            <DeleteInternalSuccessModal
+                showDeletetInternalSuccessModal={showDeletetInternalSuccessModal}
+                onClose={() => setShowDeletetInternalSuccessModal(false)}
+            />
 
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
@@ -186,7 +268,7 @@ const QmsDraftInternalProblems = () => {
                                         <td className="px-2 add-manual-datas">{problem.corrective_action_need || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{problem.solve_after_action || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleEditProblem(problem.id);
@@ -196,20 +278,20 @@ const QmsDraftInternalProblems = () => {
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleViewProblem(problem.id);
                                                 }}
                                             >
-                                           <img src={viewIcon} alt="" />
+                                                <img src={viewIcon} alt="" />
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button 
+                                            <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleDeleteProblem(problem.id);
+                                                    openDeleteModal(problem.id);
                                                 }}
                                             >
                                                 <img src={deleteIcon} alt="" />
@@ -219,7 +301,7 @@ const QmsDraftInternalProblems = () => {
                                 ))
                             ) : (
                                 <tr className="border-b border-[#383840]">
-                                    <td colSpan="8" className="py-4 text-center text-gray-400">
+                                    <td colSpan="8" className="py-4 text-center not-found">
                                         No draft internal problems found
                                     </td>
                                 </tr>

@@ -3,6 +3,10 @@ import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from 'axios';
 import "./causesmodal.css"
+import AddRootCauseSuccessModal from './Modals/AddRootCauseSuccessModal';
+import ErrorModal from './Modals/ErrorModal';
+import DeleteRootCauseConfirmModal from './Modals/DeleteRootCauseConfirmModal';
+import DeleteRootCauseSuccessModal from './Modals/DeleteRootCauseSuccessModal';
 
 const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [animateClass, setAnimateClass] = useState('');
@@ -11,7 +15,12 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
+
+    const [showRootCauseSuccessModal, setShowRootCauseSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+    const [showDeleteSuccessModal, setShowDeleteSuccessModal] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
     // Animation effect when modal opens/closes
     useEffect(() => {
@@ -31,12 +40,34 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 setError('Company ID not found. Please log in again.');
                 return;
             }
-            
+
             const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
             setCauses(response.data);
         } catch (error) {
             console.error('Error fetching causes:', error);
-            setError('Failed to load causes. Please try again.');
+            let errorMsg = 'Failed to fetch root causes. Please try again later. ';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -63,27 +94,65 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     };
 
     // Handle delete cause
-    const handleDelete = async (id) => {
+    const handleDelete = (id) => {
+        setItemToDelete(id);
+        setShowDeleteConfirmModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
-            setCauses(causes.filter(item => item.id !== id));
-            setSuccessMessage('Cause deleted successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            await axios.delete(`${BASE_URL}/qms/root-cause/${itemToDelete}/`);
+            setCauses(causes.filter(item => item.id !== itemToDelete));
+            setShowDeleteConfirmModal(false);
+            setShowDeleteSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteSuccessModal(false);
+            }, 3000);
         } catch (error) {
-            console.error('Error deleting cause:', error);
-            setError('Failed to delete cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            console.error('Error deleting root cause:', error);
+            let errorMsg = 'failed to delete root cause';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteConfirmModal(false);
         }
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteConfirmModal(false);
+        setShowDeleteSuccessModal(false);
     };
 
     // Handle save new cause
     const handleSave = async () => {
         if (!newCauseTitle.trim()) return;
-        
+
         setIsAdding(true);
         try {
             const companyId = getUserCompanyId();
-            
+
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
                 setIsAdding(false);
@@ -96,28 +165,43 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             });
 
             setCauses([...causes, response.data]);
-            
+
             if (onAddCause && typeof onAddCause === 'function') {
                 onAddCause(response.data);
             }
-            
+
             setNewCauseTitle('');
-            setSuccessMessage('Cause added successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            setShowRootCauseSuccessModal(true);
+            setTimeout(() => {
+                setShowRootCauseSuccessModal(false);
+            }, 1500);
         } catch (error) {
             console.error('Error adding cause:', error);
-            setError('Failed to add cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            let errorMsg = 'Failed to add root cause. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsAdding(false);
-        }
-    };
-
-    // Handle selecting a cause
-    const handleSelectCause = (cause) => {
-        if (onAddCause && typeof onAddCause === 'function') {
-            onAddCause(cause);
-            onClose();
         }
     };
 
@@ -126,17 +210,31 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
+                <AddRootCauseSuccessModal
+                    showRootCauseSuccessModal={showRootCauseSuccessModal}
+                    onClose={() => {
+                        setShowRootCauseSuccessModal(false);
+                    }}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => {
+                        setShowErrorModal(false);
+                    }}
+                    error={error}
+                />
+
+                <DeleteRootCauseConfirmModal
+                    showDeleteModal={showDeleteConfirmModal}
+                    onConfirm={confirmDelete}
+                    onCancel={closeAllModals}
+                />
+
+                <DeleteRootCauseSuccessModal
+                    showDeleteSuccessModal={showDeleteSuccessModal}
+                    onClose={() => setShowDeleteSuccessModal(false)}
+                />
 
                 {/* Causes List Section */}
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
@@ -189,7 +287,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
 
                     <div className="mb-4 px-5">
                         <label className="block mb-3 agenda-list-label">
-                            Cause Title <span className="text-[#F9291F]">*</span>
+                            Cause Title <span className="text-[#F9291F">*</span>
                         </label>
                         <input
                             type="text"

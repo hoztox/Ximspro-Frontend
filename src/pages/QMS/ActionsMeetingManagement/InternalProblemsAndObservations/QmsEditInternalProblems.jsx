@@ -5,6 +5,8 @@ import axios from 'axios';
 import InternalProblemsModal from '../InternalProblemsModal';
 import AddCarNumberModal from '../AddCarNumberModal';
 import { BASE_URL } from "../../../../Utils/Config";
+import EditInternalSuccessModal from '../Modals/EditInternalSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditInternalProblems = () => {
     const navigate = useNavigate();
@@ -17,6 +19,10 @@ const QmsEditInternalProblems = () => {
     const [executors, setExecutors] = useState([]);
     const [carNumbers, setCarNumbers] = useState([]);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+
+    const [showEditInternalSuccessModal, setShowEditInternalSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     // Add new state for field errors
     const [fieldErrors, setFieldErrors] = useState({});
 
@@ -128,8 +134,30 @@ const QmsEditInternalProblems = () => {
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching data:', err);
-                setError(err.message || 'Failed to load data. Please try again.');
+                let errorMsg = 'PFailed to fetch data. Please try again later.';
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    }
+                    else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
                 setLoading(false);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
             }
         };
 
@@ -220,15 +248,38 @@ const QmsEditInternalProblems = () => {
 
         try {
             await axios.put(`${BASE_URL}/qms/internal-problems/${id}/`, formData);
-            navigate('/company/qms/list-internal-problem');
+
+            setShowEditInternalSuccessModal(true);
+            setTimeout(() => {
+                setShowEditInternalSuccessModal(false);
+                navigate('/company/qms/list-internal-problem');
+            }, 1500);
         } catch (err) {
             console.error('Error updating internal problem:', err);
+            let errorMsg = 'Failed to Update Internal Problem';
 
-            if (err.response?.data?.non_field_errors) {
-                setError(err.response.data.non_field_errors[0]);
-            } else {
-                setError('Failed to update internal problem. Please try again.');
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+
 
             setLoading(false);
         }
@@ -264,6 +315,21 @@ const QmsEditInternalProblems = () => {
                 isOpen={isCarModalOpen}
                 onClose={handleCloseCarModal}
                 onAddCause={handleAddCar}
+            />
+
+            <EditInternalSuccessModal
+                showEditInternalSuccessModal={showEditInternalSuccessModal}
+                onClose={() => {
+                    setShowEditInternalSuccessModal(false);
+                }}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => {
+                    setShowErrorModal(false);
+                }}
+                error={error}
             />
 
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">

@@ -34,7 +34,29 @@ const QmsViewInternalProblems = () => {
         console.log("Data loaded:", response.data);
       } catch (err) {
         console.error("Error fetching internal problem:", err);
-        setError("Failed to load internal problem data. Please try again.");
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 2000);
+        let errorMsg = 'Failed to fetch internal problem data.';
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          }
+          else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
       }
     };
@@ -107,8 +129,8 @@ const QmsViewInternalProblems = () => {
 
   if (!problem) {
     return (
-      <div className="bg-[#1C1C24] text-white rounded-lg p-5 min-h-[300px] flex justify-center items-center">
-        <div className="text-white">
+      <div className="bg-[#1C1C24] rounded-lg p-5 min-h-[300px] flex justify-center items-center">
+        <div className="not-found">
           No data found for this internal problem.
         </div>
       </div>

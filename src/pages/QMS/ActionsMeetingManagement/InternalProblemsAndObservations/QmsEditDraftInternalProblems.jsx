@@ -5,6 +5,8 @@ import axios from "axios";
 import InternalProblemsModal from "../InternalProblemsModal";
 import AddCarNumberModal from "../AddCarNumberModal";
 import { BASE_URL } from "../../../../Utils/Config";
+import EditInternalSuccessModal from "../Modals/EditInternalSuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsEditDraftInternalProblems = () => {
   const navigate = useNavigate();
@@ -19,6 +21,9 @@ const QmsEditDraftInternalProblems = () => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   // Add new state for field errors
   const [fieldErrors, setFieldErrors] = useState({});
+
+  const [showEditInternalSuccessModal, setShowEditInternalSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [dateObj, setDateObj] = useState({
     day: "",
@@ -138,7 +143,29 @@ const QmsEditDraftInternalProblems = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
-        setError(err.message || "Failed to load data. Please try again.");
+        let errorMsg = 'Failed to fetch data. Please try again.';
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          }
+          else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setLoading(false);
       }
     };
@@ -230,16 +257,37 @@ const QmsEditDraftInternalProblems = () => {
 
     try {
       await axios.put(`${BASE_URL}/qms/internal-problems/${id}/`, formData);
-      navigate("/company/qms/draft-internal-problem");
+
+      setShowEditInternalSuccessModal(true);
+      setTimeout(() => {
+        setShowEditInternalSuccessModal(false);
+        navigate("/company/qms/draft-internal-problem");
+      }, 1500);
     } catch (err) {
       console.error("Error updating internal problem:", err);
+      let errorMsg = 'Failed to update internal problem';
 
-      if (err.response?.data?.non_field_errors) {
-        setError(err.response.data.non_field_errors[0]);
-      } else {
-        setError("Failed to update internal problem. Please try again.");
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
 
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setLoading(false);
     }
   };
@@ -264,11 +312,6 @@ const QmsEditDraftInternalProblems = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-      {error && (
-        <div className="bg-red-900/30 border border-red-500 text-white p-3 rounded mb-4 flex items-start gap-2">
-          <span>{error}</span>
-        </div>
-      )}
 
       <InternalProblemsModal
         isOpen={isCauseModalOpen}
@@ -282,9 +325,24 @@ const QmsEditDraftInternalProblems = () => {
         onAddCause={handleAddCar}
       />
 
+      <EditInternalSuccessModal
+        showEditInternalSuccessModal={showEditInternalSuccessModal}
+        onClose={() => {
+          setShowEditInternalSuccessModal(false);
+        }}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => {
+          setShowErrorModal(false);
+        }}
+        error={error}
+      />
+
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
         <h1 className="add-training-head">
-          Edit Internal Problems and Observations
+          Edit Draft Internal Problems and Observations
         </h1>
         <button
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
@@ -347,9 +405,8 @@ const QmsEditDraftInternalProblems = () => {
             name="problem"
             value={formData.problem}
             onChange={handleChange}
-            className={`add-training-inputs !h-[152px] ${
-              fieldErrors.problem ? "border-red-500" : ""
-            }`}
+            className={`add-training-inputs !h-[152px] ${fieldErrors.problem ? "border-red-500" : ""
+              }`}
             required
           />
           {fieldErrors.problem && (
@@ -389,9 +446,8 @@ const QmsEditDraftInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "executor" ? "rotate-180" : ""
-                            }`}
+                            ${focusedDropdown === "executor" ? "rotate-180" : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -415,11 +471,10 @@ const QmsEditDraftInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "solve_after_action"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "solve_after_action"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -445,11 +500,10 @@ const QmsEditDraftInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -471,11 +525,10 @@ const QmsEditDraftInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -497,11 +550,10 @@ const QmsEditDraftInternalProblems = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -530,11 +582,10 @@ const QmsEditDraftInternalProblems = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${
-                              focusedDropdown === "corrective_action"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "corrective_action"
+                  ? "rotate-180"
+                  : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -576,11 +627,10 @@ const QmsEditDraftInternalProblems = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                    ${
-                                      focusedDropdown === "car_no"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
+                                    ${focusedDropdown === "car_no"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />

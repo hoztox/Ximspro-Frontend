@@ -5,6 +5,9 @@ import "./causesmodal.css"
 import RootCauseModal from './RootCauseModal';
 import { BASE_URL } from "../../../Utils/Config";
 import axios from 'axios';
+import AddCarNoSuccessModal from './Modals/AddCarNoSuccessModal';
+import ErrorModal from './Modals/ErrorModal';
+import DraftCarNoSuccessModal from './Modals/DraftCarNoSuccessModal';
 
 const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
     // Define the getUserCompanyId function first
@@ -27,6 +30,17 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+        return null;
+    };
+
     // Now you can safely use the function
     const companyId = getUserCompanyId();
 
@@ -35,10 +49,14 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
     const [animateClass, setAnimateClass] = useState('');
     const [rootCauses, setRootCauses] = useState([]);
     const [users, setUsers] = useState([]);
-    const [suppliers, setSuppliers] = useState([]); // State for suppliers
+    const [suppliers, setSuppliers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [nextActionNo, setNextActionNo] = useState("1"); // Initialize with "1" as default
+    const [nextActionNo, setNextActionNo] = useState("1");
     const [error, setError] = useState('');
+
+    const [showCarSuccessModal, setShowCarSuccessModal] = useState(false);
+    const [showDraftCarSuccessModal, setShowDraftCarSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -46,7 +64,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             fetchRootCauses();
             fetchUsers();
             fetchNextActionNumber();
-            fetchSuppliers(); // Fetch suppliers when modal opens
+            fetchSuppliers();
         } else {
             setAnimateClass('opacity-0 scale-95');
         }
@@ -66,7 +84,29 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             setSuppliers(activeSuppliers);
         } catch (err) {
             console.error('Error fetching suppliers:', err);
-            setError('Failed to fetch suppliers data');
+            let errorMsg = 'Failed to fetch suppliers. Please try again later.';
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -152,6 +192,10 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                 ...prevData,
                 next_action_no: "1"
             }));
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -164,6 +208,10 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching root causes:', error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setIsLoading(false);
         }
     };
@@ -183,7 +231,29 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            let errorMsg = 'failed to fetch users';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -286,11 +356,38 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
 
             // After successful submission, fetch the next action number for next time
             fetchNextActionNumber();
+            setShowCarSuccessModal(true);
+            setTimeout(() => {
+                setShowCarSuccessModal(false);
+            }, 3000);
 
         } catch (error) {
             console.error('Error submitting form:', error);
             setIsLoading(false);
-            setError('Failed to save. Please check your inputs and try again.');
+            let errorMsg = 'Failed to submit form. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+
         }
     };
 
@@ -310,9 +407,80 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
 
     if (!isOpen) return null;
 
-    const handleDraftsave = async (e) => {
+    const handleDraftSave = async (e) => {
         e.preventDefault();
-        await handleSubmit(e, true);
+
+        try {
+            setIsLoading(true);
+            setError('');
+            const companyId = getUserCompanyId();
+            const userId = getRelevantUserId(); // Get the user ID
+
+            // Format the dates
+            const dateRaised = formatDate(formData.date_raised);
+            const dateCompleted = formatDate(formData.date_completed);
+
+            // Prepare submission data
+            const submissionData = {
+                company: companyId,
+                title: formData.title,
+                source: formData.source,
+                root_cause: formData.root_cause,
+                description: formData.description,
+                date_raised: dateRaised,
+                date_completed: dateCompleted,
+                status: formData.status,
+                executor: formData.executor,
+                next_action_no: formData.next_action_no,
+                action_or_corrections: formData.action_or_corrections,
+                send_notification: formData.send_notification,
+                is_draft: true,
+                user: userId  // Add the user ID to the submission data
+            };
+
+            // Add supplier only if source is 'Supplier'
+            if (formData.source === 'Supplier') {
+                submissionData.supplier = formData.supplier;
+            }
+
+            // Submit to draft-specific API endpoint
+            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
+
+            console.log('Saved CAR Draft:', response.data);
+
+            setIsLoading(false);
+            setShowDraftCarSuccessModal(true);
+            setTimeout(() => {
+                setShowDraftCarSuccessModal(false);
+            }, 3000);
+
+        } catch (error) {
+            console.error('Error saving draft:', error);
+            setIsLoading(false);
+            let errorMsg = 'failed to draft car';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+        }
     };
 
     return (
@@ -325,14 +493,30 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         isOpen={isRootCauseModalOpen}
                         onClose={handleCloseRootCauseModal}
                     />
+
+                    <AddCarNoSuccessModal
+                        showCarSuccessModal={showCarSuccessModal}
+                        onClose={() => {
+                            setShowCarSuccessModal(false);
+                        }}
+                    />
+
+                    <DraftCarNoSuccessModal
+                        showDraftCarSuccessModal={showDraftCarSuccessModal}
+                        onClose={() => {
+                            setShowDraftCarSuccessModal(false);
+                        }}
+                    />
+
+                    <ErrorModal
+                        showErrorModal={showErrorModal}
+                        onClose={() => {
+                            setShowErrorModal(false);
+                        }}
+                        error={error}
+                    />
+
                 </div>
-
-                {error && (
-                    <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                        {error}
-                    </div>
-                )}
-
                 <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                     <div className="flex flex-col gap-3 relative">
                         <label className="add-training-label">Source <span className="text-red-500">*</span></label>
@@ -695,7 +879,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
                         <div>
                             <button
                                 type="button"
-                                onClick={handleDraftsave}
+                                onClick={handleDraftSave}
                                 className='request-correction-btn duration-200'>
                                 Save as Draft
                             </button>

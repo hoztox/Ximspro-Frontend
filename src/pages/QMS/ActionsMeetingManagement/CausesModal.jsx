@@ -46,7 +46,25 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       setAgendaItems(response.data);
     } catch (error) {
       console.error('Error fetching agenda items:', error);
-      setError('Failed to load agenda items. Please try again.');
+      let errorMsg = 'Failed to fetch agenda items. Please try again later.';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -112,7 +130,25 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       }, 1500);
     } catch (error) {
       console.error('Error deleting agenda item:', error);
-      setError('Failed to delete agenda item. Please try again.');
+      let errorMsg = 'Failed to delete agenda item. Please try again. ';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -165,7 +201,25 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       }, 1500);
     } catch (error) {
       console.error('Error adding agenda item:', error);
-      setError('Failed to add agenda item. Please try again.');
+      let errorMsg = 'Failed to add agenda item. Please try again.';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -214,6 +268,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
           onClose={() => {
             setShowErrorModal(false);
           }}
+          error={error}
         />
 
         {/* Agenda List Section */}

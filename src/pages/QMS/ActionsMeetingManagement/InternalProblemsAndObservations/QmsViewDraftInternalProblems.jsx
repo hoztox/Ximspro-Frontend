@@ -8,7 +8,6 @@ const QmsViewDraftInternalProblems = () => {
     const [problem, setProblem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const navigate = useNavigate();
     const { id } = useParams();
 
@@ -48,79 +47,26 @@ const QmsViewDraftInternalProblems = () => {
         navigate("/company/qms/draft-internal-problem");
     };
 
-   
-  
-    const handleDelete = async () => {
-        try {
-            await axios.delete(`${BASE_URL}/qms/internal-problems/${id}/`);
-            navigate("/company/qms/list-internal-problem");
-        } catch (err) {
-            console.error("Error deleting internal problem:", err);
-            setError("Failed to delete internal problem. Please try again.");
-        } finally {
-            setDeleteModalOpen(false);
-        }
-    };
-
-    // Delete confirmation modal component
-    const DeleteConfirmationModal = () => {
-        if (!deleteModalOpen) return null;
-        
-        return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-[#1C1C24] p-6 rounded-lg max-w-md w-full">
-                    <div className="flex items-center mb-4 text-red-500">
-                      
-                        <h2 className="text-lg font-medium">Confirm Deletion</h2>
-                    </div>
-                    <p className="mb-6">Are you sure you want to delete this internal problem? This action cannot be undone.</p>
-                    <div className="flex justify-end gap-4">
-                        <button 
-                            className="px-4 py-2 border border-gray-600 rounded hover:bg-gray-700 transition"
-                            onClick={() => setDeleteModalOpen(false)}
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700 transition"
-                            onClick={handleDelete}
-                        >
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     if (loading) {
         return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 min-h-[300px] flex justify-center items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 min-h-[300px] flex justify-center items-center">
-                <div className="text-red-500">{error}</div>
+            <div className="bg-[#1C1C24] py-2 text-center not-found">
+              Loading...
             </div>
         );
     }
 
     if (!problem) {
         return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 min-h-[300px] flex justify-center items-center">
-                <div className="text-gray-400">No problem data found.</div>
+            <div className="bg-[#1C1C24] rounded-lg p-5 min-h-[300px] flex justify-center items-center">
+                <div className="not-found">No problem data found.</div>
             </div>
         );
     }
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
-            {/* Delete confirmation modal */}
-            <DeleteConfirmationModal />
+            
 
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
                 <h2 className="view-employee-head">Internal Problems and Observations Information</h2>
