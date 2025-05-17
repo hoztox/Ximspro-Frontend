@@ -3,6 +3,8 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftInspections = () => {
     const navigate = useNavigate();
@@ -10,6 +12,16 @@ const QmsEditDraftInspections = () => {
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [fieldErrors, setFieldErrors] = useState({
+        title: false,
+        inspection_type: false
+    });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [procedureOptions, setProcedureOptions] = useState([]);
     const [userOptions, setUserOptions] = useState([]);
@@ -105,7 +117,29 @@ const QmsEditDraftInspections = () => {
             setError(null);
         } catch (error) {
             console.error("Failed to fetch inspection data", error);
-            setError("Failed to load inspection data");
+            let errorMsg = 'Failed to fetch inspection data';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setFetchLoading(false);
         }
@@ -122,6 +156,28 @@ const QmsEditDraftInspections = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
+            let errorMsg = "Failed to fetch procedures";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             // Fallback procedure options
             setProcedureOptions([
                 { id: 1, title: "Null" },
@@ -140,6 +196,28 @@ const QmsEditDraftInspections = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
+            let errorMsg = "Failed to fetch users";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -319,6 +397,19 @@ const QmsEditDraftInspections = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const errors = {
+            title: !formData.title,
+            inspection_type: !formData.inspection_type
+        };
+
+        setFieldErrors(errors);
+
+        // If there are errors, don't submit
+        if (errors.title || errors.inspection_type) {
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -402,12 +493,37 @@ const QmsEditDraftInspections = () => {
             });
 
             console.log('Draft inspection updated successfully:', response.data);
+            setShowSuccessModal(true);
             setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate('/company/qms/draft-inspection');
             }, 1500);
+            setSuccessMessage("Inspection updated successfully")
         } catch (error) {
             console.error('Error updating draft inspection:', error);
-            setError('Failed to update draft inspection. Please try again.');
+            let errorMsg = 'Failed to update inspection. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -444,7 +560,7 @@ const QmsEditDraftInspections = () => {
     // Show loading while fetching data
     if (fetchLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
                 <p>Loading draft inspection data...</p>
             </div>
         );
@@ -462,11 +578,17 @@ const QmsEditDraftInspections = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-200 p-3 rounded-md mx-[104px] my-4">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -479,8 +601,10 @@ const QmsEditDraftInspections = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <p className="text-red-500 text-sm">Inspection Title is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -577,7 +701,7 @@ const QmsEditDraftInspections = () => {
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-gray-400 mt-2">No inspectors found</p>
+                                        <p className="not-found mt-2">No Inspectors Found</p>
                                     )}
                                 </div>
                             )}
@@ -594,7 +718,6 @@ const QmsEditDraftInspections = () => {
                         onFocus={() => setFocusedDropdown("inspection_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="Internal">Internal</option>
                         <option value="External">External</option>
@@ -605,6 +728,9 @@ const QmsEditDraftInspections = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {fieldErrors.inspection_type && (
+                        <p className="text-red-500 text-sm">Inspection Type is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -668,7 +794,7 @@ const QmsEditDraftInspections = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-gray-400 mt-2">No procedures found</p>
+                                    <p className="not-found mt-2">No Procedures Found</p>
                                 )}
                             </div>
                         </>
@@ -810,7 +936,7 @@ const QmsEditDraftInspections = () => {
                         </div>
                     </div>
                 </div>
- 
+
 
                 <div className="flex flex-col gap-5">
                     <div className="flex flex-col gap-3">

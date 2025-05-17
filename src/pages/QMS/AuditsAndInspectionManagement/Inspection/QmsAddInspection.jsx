@@ -3,12 +3,23 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddInspection = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [draftLoading, setDraftLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    const [fieldErrors, setFieldErrors] = useState({
+        title: false,
+        inspection_type: false
+    });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [companyId, setCompanyId] = useState(null);
     const [procedureOptions, setProcedureOptions] = useState([]);
@@ -70,6 +81,28 @@ const QmsAddInspection = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
+            let errorMsg = "Failed to fetch manuals. Please try again.";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             // Fallback procedure options
             setProcedureOptions([
                 { id: 1, title: "Null" },
@@ -88,6 +121,28 @@ const QmsAddInspection = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
+            let errorMsg = "Failed to fetch users. Please try again.";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -104,8 +159,30 @@ const QmsAddInspection = () => {
             if (userData) {
                 try {
                     return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
+                } catch (err) {
+                    console.error("Error parsing user company ID:", err);
+                    let errorMsg = "Failed to fetch company ID. Please try again.";
+
+                    if (err.response) {
+                        // Check for field-specific errors first
+                        if (err.response.data.date) {
+                            errorMsg = err.response.data.date[0];
+                        }
+                        // Check for non-field errors
+                        else if (err.response.data.detail) {
+                            errorMsg = err.response.data.detail;
+                        } else if (err.response.data.message) {
+                            errorMsg = err.response.data.message;
+                        }
+                    } else if (err.message) {
+                        errorMsg = err.message;
+                    }
+
+                    setError(errorMsg);
+                    setShowErrorModal(true);
+                    setTimeout(() => {
+                        setShowErrorModal(false);
+                    }, 3000);
                     return null;
                 }
             }
@@ -131,6 +208,18 @@ const QmsAddInspection = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const errors = {
+            title: !formData.title,
+            inspection_type: !formData.inspection_type
+        };
+
+        setFieldErrors(errors);
+
+        // If there are errors, don't submit
+        if (errors.title || errors.inspection_type) {
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -170,7 +259,7 @@ const QmsAddInspection = () => {
                 submissionData.append('date_conducted', dateConducted);
             }
 
-         
+
             if (showCustomProcedureField && formData.custom_procedures) {
                 submissionData.append('custom_procedures', formData.custom_procedures);
             } else if (formData.procedures && formData.procedures.length > 0) {
@@ -195,13 +284,36 @@ const QmsAddInspection = () => {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-
+            setShowSuccessModal(true);
             setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate('/company/qms/list-inspection');
             }, 1500);
+            setSuccessMessage("Inspection Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
+            let errorMsg = 'An error occurred while creating the meeting';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
             setTimeout(() => {
+                setShowErrorModal(false);
             }, 3000);
         } finally {
             setLoading(false);
@@ -367,16 +479,37 @@ const QmsAddInspection = () => {
 
             setDraftLoading(false);
 
+            setShowSuccessModal(true);
             setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate('/company/qms/draft-inspection');
             }, 1500);
+            setSuccessMessage("Inspection Drafted Successfully")
 
         } catch (err) {
             setDraftLoading(false);
+            setShowErrorModal(true);
             setTimeout(() => {
+                setShowErrorModal(false);
             }, 3000);
-            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
-            setError(errorMessage);
+            let errorMsg = "Failed to fetch manuals. Please try again.";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             console.error('Error saving Draft:', err.response?.data || err);
         }
     };
@@ -455,6 +588,18 @@ const QmsAddInspection = () => {
                 </button>
             </div>
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
@@ -466,8 +611,10 @@ const QmsAddInspection = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <p className="text-red-500 text-sm">Inspection Title is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -479,25 +626,25 @@ const QmsAddInspection = () => {
                         name="certification_body"
                         value={formData.certification_body}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className="add-training-inputs focus:outline-none" 
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                {!formData.check_inspector && (
-                    <>
-                    <label className="add-training-label">
-                        Inspector From
-                    </label>
-                    <input
-                        type="text"
-                        name="inspector_from"
-                        value={formData.inspector_from}
-                        onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
-                    />
-                    </>
-                )}
+                    {!formData.check_inspector && (
+                        <>
+                            <label className="add-training-label">
+                                Inspector From
+                            </label>
+                            <input
+                                type="text"
+                                name="inspector_from"
+                                value={formData.inspector_from}
+                                onChange={handleChange}
+                                className="add-training-inputs focus:outline-none"
+                            />
+                        </>
+                    )}
                     <div className="flex items-end justify-start">
                         <label className="flex items-center">
                             <input
@@ -546,7 +693,7 @@ const QmsAddInspection = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-gray-400 mt-2">No inspectors found</p>
+                                    <p className="text-gray-400 mt-2 not-found">No Inspectors Found</p>
                                 )}
                             </div>
                         </div>
@@ -562,7 +709,6 @@ const QmsAddInspection = () => {
                         onFocus={() => setFocusedDropdown("inspection_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Internal">Internal</option>
@@ -574,6 +720,9 @@ const QmsAddInspection = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {fieldErrors.inspection_type && (
+                        <p className="text-red-500 text-sm">Inspection Type is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -623,7 +772,7 @@ const QmsAddInspection = () => {
                                 </div>
                             ))
                         ) : (
-                            <p className="text-gray-400 mt-2">No procedures found</p>
+                            <p className="not-found mt-2">No Procedures Found</p>
                         )}
                     </div>
                 </div>

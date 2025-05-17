@@ -192,7 +192,7 @@ const QmsDraftAudit = () => {
   };
 
   if (loading) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
+    return <div className="bg-[#1C1C24] not-found p-5 rounded-lg text-center">Loading...</div>;
   }
 
   return (

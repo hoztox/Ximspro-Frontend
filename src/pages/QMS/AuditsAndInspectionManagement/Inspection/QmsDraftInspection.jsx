@@ -5,6 +5,9 @@ import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftInspection = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -13,6 +16,14 @@ const QmsDraftInspection = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [inspectionToDelete, setInspectionToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -44,7 +55,6 @@ const QmsDraftInspection = () => {
         return null;
     };
 
-
     const fetchInspections = async () => {
         setLoading(true);
         try {
@@ -56,7 +66,25 @@ const QmsDraftInspection = () => {
             setError(null);
         } catch (err) {
             console.error("Error fetching inspections:", err);
-            setError("Failed to load inspections");
+            let errorMsg = "Failed to load inspections";
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                } else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setInspections([]);
         } finally {
             setLoading(false);
@@ -73,13 +101,54 @@ const QmsDraftInspection = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    const deleteInspection = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (inspection) => {
+        setInspectionToDelete(inspection);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Inspection');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!inspectionToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/inspection-get/${id}/`);
-            fetchInspections(); // Refresh the list
-        } catch (err) {
-            console.error("Error deleting inspection:", err);
-            alert("Failed to delete inspection");
+            await axios.delete(`${BASE_URL}/qms/inspection-get/${inspectionToDelete.id}/`);
+            setInspections(inspections.filter(item => item.id !== inspectionToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Draft Inspection Deleted Successfully");
+        } catch (error) {
+            console.error("Error deleting draft inspection:", error);
+            let errorMsg = 'Failed to delete draft inspection. Please try again.';
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                } else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                } else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteModal(false);
         }
     };
 
@@ -115,11 +184,7 @@ const QmsDraftInspection = () => {
     };
 
     if (loading) {
-        return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">{error}</div>;
+        return <div className="bg-[#1C1C24] not-found p-5 rounded-lg text-center">Loading...</div>;
     }
 
     return (
@@ -185,7 +250,7 @@ const QmsDraftInspection = () => {
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
                                             <button
-                                                onClick={() => deleteInspection(item.id)}
+                                                onClick={() => openDeleteModal(item)}
                                             >
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
@@ -195,7 +260,7 @@ const QmsDraftInspection = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="7" className="text-center py-4">No draft inspections found</td>
+                                <td colSpan="7" className="text-center py-4 not-found">No draft inspections found</td>
                             </tr>
                         )}
                     </tbody>
@@ -234,6 +299,28 @@ const QmsDraftInspection = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

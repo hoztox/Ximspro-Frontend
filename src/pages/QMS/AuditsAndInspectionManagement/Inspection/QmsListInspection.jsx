@@ -9,7 +9,9 @@ import AddInspectionReportModal from './AddInspectionReportModal';
 import ViewInspectionReportModal from './ViewInspectionReportModal';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListInspection = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -18,11 +20,20 @@ const QmsListInspection = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+    const [draftCount, setDraftCount] = useState(0);
 
     // Modal states
     const [addInspectionReport, setAddInspectionReport] = useState(false);
     const [viewInspectionReport, setViewInspectionReport] = useState(false);
     const [selectedInspection, setSelectedInspection] = useState(null);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [inspectionToDelete, setInspectionToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const itemsPerPage = 10;
 
@@ -34,11 +45,47 @@ const QmsListInspection = () => {
             try {
                 const userCompanyId = localStorage.getItem("user_company_id");
                 return userCompanyId ? JSON.parse(userCompanyId) : null;
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
+            } catch (err) {
+                console.error("Error parsing user company ID:", err);
+                let errorMsg = "Failed to fetch company ID";
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    } else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 return null;
             }
         }
+        return null;
+    };
+
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
         return null;
     };
 
@@ -46,12 +93,38 @@ const QmsListInspection = () => {
         setLoading(true);
         try {
             const companyId = getUserCompanyId();
+            const userId = getRelevantUserId();
             const response = await axios.get(`${BASE_URL}/qms/inspection/company/${companyId}/`);
             setInspections(response.data);
+
+            const draftResponse = await axios.get(
+                `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+            );
+            setDraftCount(draftResponse.data.count);
+
             setError(null);
         } catch (err) {
             console.error("Error fetching inspections:", err);
-            setError("Failed to load inspections");
+            let errorMsg = "Failed to load inspections";
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setInspections([]);
         } finally {
             setLoading(false);
@@ -64,12 +137,56 @@ const QmsListInspection = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    const deleteInspection = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (inspection) => {
+        setInspectionToDelete(inspection);
+        setShowDeleteModal(true);
+        setDeleteMessage('Inspection');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!inspectionToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/inspection-get/${id}/`);
-            fetchInspections(); // Refresh the list
-        } catch (err) {
-            console.error("Error deleting inspection:", err);
+            await axios.delete(`${BASE_URL}/qms/inspection-get/${inspectionToDelete.id}/`);
+            setInspections(inspections.filter(item => item.id !== inspectionToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Inspection Deleted Successfully");
+        } catch (error) {
+            console.error("Error deleting inspection:", error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = 'Failed to delete inspection. Please try again.';
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -78,11 +195,10 @@ const QmsListInspection = () => {
     }, []);
 
     const filteredItems = inspections.filter(inspection =>
-        (inspection.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inspection.inspection_type?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (inspection.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inspection.inspection_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         inspection.area?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-    
 
     // Pagination
     const totalItems = filteredItems.length;
@@ -131,11 +247,7 @@ const QmsListInspection = () => {
     };
 
     if (loading) {
-        return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading inspections...</div>;
-    }
-
-    if (error) {
-        return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">{error}</div>;
+        return <div className="bg-[#1C1C24] not-found p-5 rounded-lg text-center">Loading inspections...</div>;
     }
 
     return (
@@ -160,6 +272,11 @@ const QmsListInspection = () => {
                         onClick={handleDraftInspection}
                     >
                         <span>Draft</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[207px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -226,7 +343,7 @@ const QmsListInspection = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
-                                            <button onClick={() => deleteInspection(inspection.id)}>
+                                            <button onClick={() => openDeleteModal(inspection)}>
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </div>
@@ -235,7 +352,7 @@ const QmsListInspection = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="10" className="py-4 text-center text-gray-400">
+                                <td colSpan="10" className="py-4 text-center not-found">
                                     No inspections found
                                 </td>
                             </tr>
@@ -277,10 +394,33 @@ const QmsListInspection = () => {
                 </div>
             )}
 
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
             <AddInspectionReportModal
                 isVisible={addInspectionReport}
                 selectedInspection={selectedInspection}
                 onClose={closeAddInspectionReportModal}
+                onSave={fetchInspections}
             />
 
             <ViewInspectionReportModal

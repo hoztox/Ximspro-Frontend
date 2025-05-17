@@ -3,6 +3,8 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditInspection = () => {
     const navigate = useNavigate();
@@ -13,7 +15,17 @@ const QmsEditInspection = () => {
 
     const [procedureOptions, setProcedureOptions] = useState([]);
     const [userOptions, setUserOptions] = useState([]);
-    
+
+    const [fieldErrors, setFieldErrors] = useState({
+        title: false,
+        inspection_type: false
+    });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     // Search states
     const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
     const [userSearchTerm, setUserSearchTerm] = useState("");
@@ -21,7 +33,7 @@ const QmsEditInspection = () => {
     // Custom field states
     const [showCustomProcedureField, setShowCustomProcedureField] = useState(false);
     const [showCustomUserField, setShowCustomUserField] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         title: '',
         certification_body: '',
@@ -62,14 +74,14 @@ const QmsEditInspection = () => {
             setFetchLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/inspection-get/${id}/`);
             const inspectionData = response.data;
-            
+
             // Format dates for form data
             const proposedDate = inspectionData.proposed_date ? new Date(inspectionData.proposed_date) : null;
             const dateConducted = inspectionData.date_conducted ? new Date(inspectionData.date_conducted) : null;
-            
+
             // Check if this is an internal or external inspection
             const hasInternalInspectors = inspectionData.inspector_from_internal && inspectionData.inspector_from_internal.length > 0;
-            
+
             setFormData({
                 title: inspectionData.title || '',
                 certification_body: inspectionData.certification_body || '',
@@ -94,15 +106,38 @@ const QmsEditInspection = () => {
                 custom_procedures: inspectionData.custom_procedures || '',
                 custom_internal_inspectors: inspectionData.custom_internal_inspectors || ''
             });
-            
+
             // Set custom field flags if they exist
             setShowCustomProcedureField(!!inspectionData.custom_procedures);
             setShowCustomUserField(!!inspectionData.custom_internal_inspectors);
-            
+
             setError(null);
         } catch (error) {
             console.error("Failed to fetch inspection data", error);
             setError("Failed to load inspection data");
+            let errorMsg = 'Faile to fetch inspection data';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setFetchLoading(false);
         }
@@ -119,6 +154,28 @@ const QmsEditInspection = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
+            let errorMsg = "Failed to fetch procedures";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             // Fallback procedure options
             setProcedureOptions([
                 { id: 1, title: "Null" },
@@ -137,6 +194,28 @@ const QmsEditInspection = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
+            let errorMsg = "Failed to fetch users";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -260,7 +339,7 @@ const QmsEditInspection = () => {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-    
+
         // Handle checkbox specifically - especially for the inspector toggle
         if (type === 'checkbox') {
             if (name === 'check_inspector') {
@@ -271,12 +350,12 @@ const QmsEditInspection = () => {
                     [name]: checked,
                     ...(checked ? { inspector_from: '' } : { inspector_from_internal: [], custom_internal_inspectors: '' })
                 }));
-                
+
                 // Also reset the custom field display when switching
                 if (!checked) {
                     setShowCustomUserField(false);
                 }
-                
+
                 return;
             } else {
                 setFormData({
@@ -286,7 +365,7 @@ const QmsEditInspection = () => {
                 return;
             }
         }
-    
+
         // Handle nested objects
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
@@ -306,27 +385,41 @@ const QmsEditInspection = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const errors = {
+            title: !formData.title,
+            inspection_type: !formData.inspection_type
+        };
+
+        setFieldErrors(errors);
+
+        // If there are errors, don't submit
+        if (errors.title || errors.inspection_type) {
+            return;
+        }
+
+
         setLoading(true);
-    
+
         try {
             const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
-            
+
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
                 setLoading(false);
                 return;
             }
-    
+
             // Format dates properly
             const proposedDate = formData.proposedDate.year && formData.proposedDate.month && formData.proposedDate.day
                 ? `${formData.proposedDate.year}-${formData.proposedDate.month}-${formData.proposedDate.day}`
                 : null;
-    
+
             const dateConducted = formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day
                 ? `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`
                 : null;
-    
+
             const submissionData = new FormData();
             submissionData.append('company', companyId);
             submissionData.append('user', userId);
@@ -335,12 +428,12 @@ const QmsEditInspection = () => {
             submissionData.append('inspection_type', formData.inspection_type);
             submissionData.append('area', formData.area);
             submissionData.append('notes', formData.notes);
-    
+
             // Exclusive handling of inspector_from vs inspector_from_internal
             if (formData.check_inspector) {
                 // Using internal inspectors
                 submissionData.append('inspector_from', ''); // Clear external inspector
-                
+
                 // Handle internal inspectors
                 if (showCustomUserField && formData.custom_internal_inspectors) {
                     submissionData.append('custom_internal_inspectors', formData.custom_internal_inspectors);
@@ -354,15 +447,15 @@ const QmsEditInspection = () => {
                 submissionData.append('inspector_from', formData.inspector_from);
                 // Don't include inspector_from_internal at all to ensure it's cleared
             }
-    
+
             if (proposedDate) {
                 submissionData.append('proposed_date', proposedDate);
             }
-    
+
             if (dateConducted) {
                 submissionData.append('date_conducted', dateConducted);
             }
-    
+
             // Handle multi-select procedures
             if (showCustomProcedureField && formData.custom_procedures) {
                 submissionData.append('custom_procedures', formData.custom_procedures);
@@ -371,29 +464,54 @@ const QmsEditInspection = () => {
                     submissionData.append('procedures', procedureId);
                 });
             }
-    
+
             // If there are files, add them to the form data
             if (formData.upload_inspection_report instanceof File) {
                 submissionData.append('upload_inspection_report', formData.upload_inspection_report);
             }
-            
+
             if (formData.upload_non_coformities_report instanceof File) {
                 submissionData.append('upload_non_coformities_report', formData.upload_non_coformities_report);
             }
-    
+
             const response = await axios.put(`${BASE_URL}/qms/inspection-get/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-    
+
             console.log('Inspection updated successfully:', response.data);
+            setShowSuccessModal(true);
             setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate('/company/qms/list-inspection');
             }, 1500);
+            setSuccessMessage("Inspection updated successfully")
         } catch (error) {
             console.error('Error updating inspection:', error);
-            setError('Failed to update inspection. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = 'Failed to update inspection. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -434,7 +552,7 @@ const QmsEditInspection = () => {
     // Show loading while fetching data
     if (fetchLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
                 <p>Loading inspection data...</p>
             </div>
         );
@@ -452,11 +570,17 @@ const QmsEditInspection = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-200 p-3 rounded-md mx-[104px] my-4">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -469,8 +593,10 @@ const QmsEditInspection = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <p className="text-red-500 text-sm">Inspection Title is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -576,7 +702,6 @@ const QmsEditInspection = () => {
                         onFocus={() => setFocusedDropdown("inspection_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Internal">Internal</option>
@@ -588,6 +713,9 @@ const QmsEditInspection = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {fieldErrors.inspection_type && (
+                        <p className="text-red-500 text-sm">Inspection Type is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -605,7 +733,7 @@ const QmsEditInspection = () => {
 
                 <div className="flex flex-col gap-3">
                     <label className="block mb-3 add-qms-manual-label">
-                        Procedure
+                        Procedures
                     </label>
 
                     {showCustomProcedureField ? (
@@ -649,7 +777,7 @@ const QmsEditInspection = () => {
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-gray-400 mt-2">No procedures found</p>
+                                    <p className="not-found mt-2">No Procedures Found</p>
                                 )}
                             </div>
                         </>
@@ -816,13 +944,13 @@ const QmsEditInspection = () => {
                     >
                         Cancel
                     </button>
-                        <button
-                            type="submit"
-                            className="save-btn duration-200 !w-full"
-                        >
-                            Save
-                        </button>
-                    </div>
+                    <button
+                        type="submit"
+                        className="save-btn duration-200 !w-full"
+                    >
+                        Save
+                    </button>
+                </div>
             </form>
         </div>
     );

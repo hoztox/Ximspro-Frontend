@@ -238,7 +238,7 @@ const QmsListAudit = () => {
     };
 
     if (loading) {
-        return <div className="bg-[#1C1C24] not-found p-5 rounded-lg">Loading audits...</div>;
+        return <div className="bg-[#1C1C24] not-found p-5 rounded-lg text-center">Loading audits...</div>;
     }
 
     return (

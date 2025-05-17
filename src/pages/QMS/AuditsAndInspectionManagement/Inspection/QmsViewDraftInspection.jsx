@@ -108,27 +108,8 @@ const QmsViewDraftInspection = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
+            <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-64">
                 <p>Loading inspection data...</p>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5">
-                <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                    <h2 className="view-employee-head">Error</h2>
-                    <button
-                        onClick={handleClose}
-                        className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
-                    >
-                        <X className="text-white" />
-                    </button>
-                </div>
-                <div className="p-5">
-                    <p className="text-red-400">{error}</p>
-                </div>
             </div>
         );
     }
