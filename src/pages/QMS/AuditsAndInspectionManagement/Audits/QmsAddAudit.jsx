@@ -52,6 +52,11 @@ const QmsAddAudit = () => {
         },
     });
 
+    const [fieldErrors, setFieldErrors] = useState({
+        title: false,
+        audit_type: false
+    });
+
     useEffect(() => {
         const fetchedCompanyId = getUserCompanyId();
         setCompanyId(fetchedCompanyId);
@@ -75,7 +80,7 @@ const QmsAddAudit = () => {
             // Fallback procedure options
             setProcedureOptions([
                 { id: 1, title: "Null" },
-                
+
             ]);
         }
     };
@@ -91,7 +96,7 @@ const QmsAddAudit = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
-            
+
         }
     };
 
@@ -135,11 +140,33 @@ const QmsAddAudit = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        let isValid = true;
+        const newErrors = {
+            title: false,
+            audit_type: false
+        };
+
+        if (!formData.title.trim()) {
+            newErrors.title = true;
+            isValid = false;
+        }
+
+        if (!formData.audit_type) {
+            newErrors.audit_type = true;
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+
+        if (!isValid) {
+            return; // Don't proceed with submission if validation fails
+        }
+
         setLoading(true);
 
         try {
-            console.log('audit',formData);
-            
+            console.log('audit', formData);
+
             const userId = getRelevantUserId();
             const companyId = getUserCompanyId();
             console.log('Form Data State:', formData);
@@ -353,7 +380,7 @@ const QmsAddAudit = () => {
                 });
             }
 
-         
+
             if (formData.check_auditor) {
                 if (showCustomUserField && formData.custom_internal_auditors) {
                     submitData.append('custom_internal_auditors', formData.custom_internal_auditors);
@@ -478,10 +505,21 @@ const QmsAddAudit = () => {
                         type="text"
                         name="title"
                         value={formData.title}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            handleChange(e);
+                            // Clear error when user starts typing
+                            if (fieldErrors.title) {
+                                setFieldErrors(prev => ({
+                                    ...prev,
+                                    title: false
+                                }));
+                            }
+                        }}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <p className="text-red-500 text-sm mt-1">Audit Title is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -498,19 +536,19 @@ const QmsAddAudit = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                {!formData.check_auditor && (
-                    <>
-                    <label className="add-training-label">
-                        Audit From
-                    </label>
-                 
-                        <input
-                            type="text"
-                            name="audit_from"
-                            value={formData.audit_from}
-                            onChange={handleChange}
-                            className="add-training-inputs focus:outline-none"
-                        />
+                    {!formData.check_auditor && (
+                        <>
+                            <label className="add-training-label">
+                                Audit From
+                            </label>
+
+                            <input
+                                type="text"
+                                name="audit_from"
+                                value={formData.audit_from}
+                                onChange={handleChange}
+                                className="add-training-inputs focus:outline-none"
+                            />
                         </>
                     )}
                     <div className="flex items-end justify-start">
@@ -573,11 +611,19 @@ const QmsAddAudit = () => {
                     <select
                         name="audit_type"
                         value={formData.audit_type}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            handleChange(e);
+                            // Clear error when user selects an option
+                            if (fieldErrors.audit_type) {
+                                setFieldErrors(prev => ({
+                                    ...prev,
+                                    audit_type: false
+                                }));
+                            }
+                        }}
                         onFocus={() => setFocusedDropdown("audit_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Internal">Internal</option>
@@ -589,6 +635,9 @@ const QmsAddAudit = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {fieldErrors.audit_type && (
+                        <p className="text-red-500 text-sm mt-1">Audit Type is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -640,7 +689,7 @@ const QmsAddAudit = () => {
                                 </div>
                             ))
                         ) : (
-                            <p className="text-gray-400 mt-2">No procedures found</p>
+                            <p className="not-found mt-2">No Procedures Found</p>
                         )}
                     </div>
                 </div>

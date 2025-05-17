@@ -11,6 +11,11 @@ const QmsEditAudit = () => {
     const [fetchLoading, setFetchLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [fieldErrors, setFieldErrors] = useState({
+        title: false,
+        audit_type: false
+    });
+
     const [procedureOptions, setProcedureOptions] = useState([]);
     const [userOptions, setUserOptions] = useState([]);
 
@@ -305,6 +310,28 @@ const QmsEditAudit = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
+        let isValid = true;
+        const newErrors = {
+            title: false,
+            audit_type: false
+        };
+
+        if (!formData.title.trim()) {
+            newErrors.title = true;
+            isValid = false;
+        }
+
+        if (!formData.audit_type) {
+            newErrors.audit_type = true;
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+
+        if (!isValid) {
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -466,10 +493,21 @@ const QmsEditAudit = () => {
                         type="text"
                         name="title"
                         value={formData.title}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            handleChange(e);
+                            // Clear error when user starts typing
+                            if (fieldErrors.title) {
+                                setFieldErrors(prev => ({
+                                    ...prev,
+                                    title: false
+                                }));
+                            }
+                        }}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <p className="text-red-500 text-sm mt-1">Audit Title is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -574,11 +612,19 @@ const QmsEditAudit = () => {
                     <select
                         name="audit_type"
                         value={formData.audit_type}
-                        onChange={handleChange}
+                        onChange={(e) => {
+                            handleChange(e);
+                            // Clear error when user selects an option
+                            if (fieldErrors.audit_type) {
+                                setFieldErrors(prev => ({
+                                    ...prev,
+                                    audit_type: false
+                                }));
+                            }
+                        }}
                         onFocus={() => setFocusedDropdown("audit_type")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select</option>
                         <option value="Internal">Internal</option>
@@ -590,6 +636,9 @@ const QmsEditAudit = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {fieldErrors.audit_type && (
+                        <p className="text-red-500 text-sm mt-1">Audit Type is required</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -808,7 +857,6 @@ const QmsEditAudit = () => {
                             value={formData.notes}
                             onChange={handleChange}
                             className="add-training-inputs"
-                            required
                         />
                     </div>
                 </div>
