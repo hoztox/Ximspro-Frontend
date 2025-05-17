@@ -17,16 +17,16 @@ const QmsAddCustomer = () => {
     const [formData, setFormData] = useState({
         name: '',
         city: '',
-        address: '', // Updated to match model field
+        address: '', 
         state: '',
-        zipcode: '', // Updated field name to match model
+        zipcode: '', 
         country: '',
         email: '',
         contact_person: '',
         phone: '',
         alternate_phone: '',
         notes: '',
-        upload_attachment: null, // Updated field name to match model
+        upload_attachment: null,
         fax: '',
     });
 
@@ -125,10 +125,6 @@ const QmsAddCustomer = () => {
             newErrors.email = 'Email is required';
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Email is invalid';
-        }
-
-        if (!formData.contact_person) {
-            newErrors.contact_person = 'Contact person is required';
         }
 
         setErrors(newErrors);
@@ -329,8 +325,7 @@ const QmsAddCustomer = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className={`add-training-inputs focus:outline-none ${errors.name ? 'border-red-500' : ''}`}
-                        required
+                        className="add-training-inputs focus:outline-none"
                     />
                     {errors.name && (
                         <p className="text-red-500 text-sm">{errors.name}</p>
@@ -422,7 +417,6 @@ const QmsAddCustomer = () => {
                         value={formData.email}
                         onChange={handleChange}
                         className={`add-training-inputs focus:outline-none ${errors.email ? 'border-red-500' : ''}`}
-                        required
                     />
                     {errors.email && (
                         <p className="text-red-500 text-sm">{errors.email}</p>
@@ -431,7 +425,7 @@ const QmsAddCustomer = () => {
 
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">
-                        Contact Person <span className="text-red-500">*</span>
+                        Contact Person
                     </label>
                     <input
                         type="text"

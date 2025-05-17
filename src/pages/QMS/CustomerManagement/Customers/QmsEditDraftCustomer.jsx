@@ -310,7 +310,6 @@ const QmsEditDraftCustomer = () => {
                         value={formData.name}
                         onChange={handleChange}
                         className={`add-training-inputs ${errors.name ? 'border-red-500' : ''}`}
-                        required
                     />
                     {errors.name && (
                         <p className="text-red-500 text-sm">{errors.name}</p>
@@ -402,8 +401,7 @@ const QmsEditDraftCustomer = () => {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`add-training-inputs ${errors.email ? 'border-red-500' : ''}`}
-                        required
+                        className="add-training-inputs"
                     />
                     {errors.email && (
                         <p className="text-red-500 text-sm">{errors.email}</p>
