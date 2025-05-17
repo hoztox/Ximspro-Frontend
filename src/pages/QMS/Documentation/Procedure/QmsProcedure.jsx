@@ -689,7 +689,7 @@ const QmsProcedure = () => {
               ) : (
                 <tr>
                   <td colSpan="11" className="text-center py-4 not-found">
-                    No Record Formats found.
+                    No Procedures found.
                   </td>
                 </tr>
               )}

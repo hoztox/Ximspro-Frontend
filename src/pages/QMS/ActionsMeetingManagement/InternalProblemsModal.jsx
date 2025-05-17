@@ -156,7 +156,7 @@ const InternalProblemsModal = ({ isOpen, onClose, onAddCause }) => {
           <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
             <h2 className="agenda-list-head pb-5">Causes List</h2>
             {loading ? (
-              <div className="text-center py-4">Loading...</div>
+              <div className="text-center py-4 not-found">Loading...</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-gray-400">

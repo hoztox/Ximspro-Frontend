@@ -5,6 +5,7 @@ import axios from 'axios';
 import InternalProblemsModal from '../InternalProblemsModal';
 import AddCarNumberModal from '../AddCarNumberModal';
 import { BASE_URL } from "../../../../Utils/Config";
+
 const QmsEditInternalProblems = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -16,8 +17,9 @@ const QmsEditInternalProblems = () => {
     const [executors, setExecutors] = useState([]);
     const [carNumbers, setCarNumbers] = useState([]);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+    // Add new state for field errors
+    const [fieldErrors, setFieldErrors] = useState({});
 
-    // Separate state for date parts for easier handling
     const [dateObj, setDateObj] = useState({
         day: '',
         month: '',
@@ -49,7 +51,6 @@ const QmsEditInternalProblems = () => {
         };
     };
 
-    // Format day, month, year into ISO date string
     const formatDateForSubmission = (day, month, year) => {
         if (!day || !month || !year) return null;
         return `${year}-${month}-${day}`;
@@ -88,42 +89,30 @@ const QmsEditInternalProblems = () => {
         return null;
     };
 
-    // Fetch problem data and related dropdowns
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             setError(null);
             try {
-                // Get company ID from local storage
                 const companyId = getUserCompanyId();
                 if (!companyId) {
                     setError('Company ID not found. Please log in again.');
                     return;
                 }
 
-                // Fetch problem data
                 const problemResponse = await axios.get(`${BASE_URL}/qms/internal-problems/${id}/`);
-
-                // Fetch causes
                 const causesResponse = await axios.get(`${BASE_URL}/qms/cause/company/${companyId}/`);
-
-                // Fetch executors (users)
                 const executorsResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
-                // Fetch CAR numbers if needed
                 const carNumbersResponse = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
 
-                // Set fetched data to state
                 const problem = problemResponse.data;
                 setCauses(causesResponse.data.results || causesResponse.data);
                 setExecutors(executorsResponse.data.results || executorsResponse.data);
                 setCarNumbers(carNumbersResponse.data.results || carNumbersResponse.data);
 
-                // Parse date and set to dateObj state
                 const parsedDate = parseDateString(problem.date);
                 setDateObj(parsedDate);
 
-                // Set form data based on fetched problem
                 setFormData({
                     cause: problem.cause ? problem.cause.id : '',
                     problem: problem.problem || '',
@@ -170,13 +159,15 @@ const QmsEditInternalProblems = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
+        // Clear error for the field being changed
+        setFieldErrors(prev => ({ ...prev, [name]: '' }));
+
         // Handle date inputs
         if (name.startsWith('date.')) {
             const datePart = name.split('.')[1];
             const newDateObj = { ...dateObj, [datePart]: value };
             setDateObj(newDateObj);
 
-            // Update the ISO date string if all parts are filled
             if (newDateObj.day && newDateObj.month && newDateObj.year) {
                 const formattedDate = formatDateForSubmission(
                     newDateObj.day,
@@ -205,8 +196,25 @@ const QmsEditInternalProblems = () => {
         setCarNumbers([...carNumbers, ...newCars]);
     };
 
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.problem.trim()) {
+            errors.problem = 'Problem/Observation Description is required';
+        }
+        return errors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate form
+        const errors = validateForm();
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -243,22 +251,8 @@ const QmsEditInternalProblems = () => {
         return options;
     };
 
-    // if (loading) {
-    //     return (
-    //         <div className="bg-[#1C1C24] text-white p-5 rounded-lg min-h-[300px] flex justify-center items-center">
-    //             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-    //         </div>
-    //     );
-    // }
-
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-            {error && (
-                <div className="bg-red-900/30 border border-red-500 text-white p-3 rounded mb-4 flex items-start gap-2">
-                 
-                    <span>{error}</span>
-                </div>
-            )}
 
             <InternalProblemsModal
                 isOpen={isCauseModalOpen}
@@ -305,7 +299,7 @@ const QmsEditInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300 
-                        ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "cause" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -321,15 +315,18 @@ const QmsEditInternalProblems = () => {
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Problem/ Observation Description <span className="text-red-500">*</span>
+                        Problem/Observation Description <span className="text-red-500">*</span>
                     </label>
                     <textarea
                         name="problem"
                         value={formData.problem}
                         onChange={handleChange}
-                        className="add-training-inputs !h-[152px]"
+                        className={`add-training-inputs !h-[152px] ${fieldErrors.problem ? 'border-red-500' : ''}`}
                         required
                     />
+                    {fieldErrors.problem && (
+                        <p className="text-red-500 text-sm mt-1">{fieldErrors.problem}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -339,11 +336,9 @@ const QmsEditInternalProblems = () => {
                         value={formData.immediate_action}
                         onChange={handleChange}
                         className="add-training-inputs !h-[151px]"
-                    >
-                    </textarea>
+                    />
                 </div>
 
-                {/* Status */}
                 <div className="flex flex-col gap-5">
                     <div className='flex flex-col gap-3 relative'>
                         <label className="add-training-label">
@@ -355,8 +350,7 @@ const QmsEditInternalProblems = () => {
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("executor")}
                             onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
+                            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${fieldErrors.executor ? 'border-red-500' : ''}`}
                         >
                             <option value="" disabled>Select User</option>
                             {executors.map(user => (
@@ -367,7 +361,7 @@ const QmsEditInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -389,7 +383,7 @@ const QmsEditInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${focusedDropdown === "solve_after_action" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "solve_after_action" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -399,7 +393,6 @@ const QmsEditInternalProblems = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date Problem</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date.day"
@@ -414,13 +407,12 @@ const QmsEditInternalProblems = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
 
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date.month"
@@ -435,13 +427,12 @@ const QmsEditInternalProblems = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
 
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date.year"
@@ -456,7 +447,7 @@ const QmsEditInternalProblems = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                            ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
+                                ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -481,14 +472,13 @@ const QmsEditInternalProblems = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                        ${focusedDropdown === "corrective_action" ? "rotate-180" : ""}`}
+                            ${focusedDropdown === "corrective_action" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
                     </div>
                 </div>
 
-                {/* Conditionally render Corrections and Number CAR fields */}
                 {formData.corrective_action === 'Yes' && (
                     <>
                         <div className="flex flex-col gap-3">
@@ -522,7 +512,7 @@ const QmsEditInternalProblems = () => {
                                 </select>
                                 <ChevronDown
                                     className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "car_no" ? "rotate-180" : ""}`}
+                                    ${focusedDropdown === "car_no" ? "rotate-180" : ""}`}
                                     size={20}
                                     color="#AAAAAA"
                                 />
@@ -538,7 +528,6 @@ const QmsEditInternalProblems = () => {
                     </>
                 )}
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
                     <div className='flex gap-5'>
                         <button
@@ -553,7 +542,7 @@ const QmsEditInternalProblems = () => {
                             className="save-btn duration-200"
                             disabled={loading}
                         >
-                            {loading ? 'Saving...' : 'Save'}
+                            {loading ? 'Updating...' : 'Update'}
                         </button>
                     </div>
                 </div>
@@ -562,4 +551,4 @@ const QmsEditInternalProblems = () => {
     );
 };
 
-export default QmsEditInternalProblems
+export default QmsEditInternalProblems;
