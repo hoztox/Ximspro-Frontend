@@ -6,6 +6,8 @@ import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import CategoryModal from '../CategoryModal';
 import AddCarNumberModal from '../AddCarNumberModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddComplaints = () => {
   const navigate = useNavigate();
@@ -20,6 +22,25 @@ const QmsAddComplaints = () => {
   const [error, setError] = useState(null);
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
   const [filteredCategories, setFilteredCategories] = useState([]);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const [fieldErrors, setFieldErrors] = useState({
+    customer: false,
+    // add other fields if needed
+  });
+
+  const validateForm = () => {
+    const errors = {
+      customer: !formData.customer,
+      // add validation for other required fields
+    };
+    setFieldErrors(errors);
+    return !Object.values(errors).some(error => error);
+  };
 
   const [formData, setFormData] = useState({
     customer: '',
@@ -104,7 +125,28 @@ const QmsAddComplaints = () => {
       console.log('categories:', response);
     } catch (err) {
       console.error("Error fetching categories:", err);
-      setError("Failed to load categories. Please try again.");
+      let errorMsg = "Failed to fetch categories";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -119,7 +161,28 @@ const QmsAddComplaints = () => {
         );
         setCustomers(response.data);
       } catch (err) {
-        setError("Failed to fetch customers data");
+        let errorMsg = "Failed to fetch customers";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         console.error("Error fetching customers:", err);
       } finally {
         setLoading(false);
@@ -143,7 +206,28 @@ const QmsAddComplaints = () => {
         setCarNumbers(response.data);
       } catch (err) {
         console.error("Error fetching CAR numbers:", err);
-        setError("Failed to load CAR numbers. Please check your connection and try again.");
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
+        let errorMsg = "Failed to fetch CAR numbers";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
       }
     };
 
@@ -172,7 +256,29 @@ const QmsAddComplaints = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError("Failed to load users. Please check your connection and try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = 'Failed to fetch users.';
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -279,9 +385,7 @@ const QmsAddComplaints = () => {
       const formDataToSend = new FormData();
       console.log('qqqqqqqqqqqqqqqqqqqqqqqq:', formData);
       setDraftLoading(true);
-  
-      // We need to send the categories as JSON instead of FormData for ManyToMany fields
-      // Create a JSON object with all the data
+
       const jsonData = {
         customer: formData.customer,
         details: formData.details || '',
@@ -297,18 +401,18 @@ const QmsAddComplaints = () => {
         user: userId,
         category: formData.category // Send category as an array instead of individual elements
       };
-  
+
       console.log('Sending data:', jsonData);
-  
+
       // If there's a file to upload, we need to use FormData
       if (formData.upload_attachment) {
-        
+
         // Append the JSON data as a string
         formDataToSend.append('data', JSON.stringify(jsonData));
-        
+
         // Append the file
         formDataToSend.append('upload_attachment', formData.upload_attachment);
-        
+
         const response = await axios.post(
           `${BASE_URL}/qms/complaints/draft-create/`,
           formDataToSend,
@@ -318,7 +422,7 @@ const QmsAddComplaints = () => {
             }
           }
         );
-        
+
         console.log('Draft saved successfully:', response.data);
         navigate('/company/qms/draft-complaints');
       } else {
@@ -332,18 +436,40 @@ const QmsAddComplaints = () => {
             }
           }
         );
-        
+
         console.log('Draft saved successfully:', response.data);
-        navigate('/company/qms/draft-complaints');
+
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate('/company/qms/draft-complaints');
+        }, 1500);
+        setSuccessMessage("Compliants Drafted Successfully")
       }
     } catch (err) {
       console.error('Error saving draft:', err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = "Failed to draft compliants";
+
       if (err.response) {
-        console.error('Response data:', err.response.data);
-        console.error('Response status:', err.response.status);
-        console.error('Response headers:', err.response.headers);
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-      setError('Failed to save draft. Please check your inputs and try again.');
+
+      setError(errorMsg);
     } finally {
       setDraftLoading(false);
     }
@@ -351,6 +477,9 @@ const QmsAddComplaints = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     try {
       setLoading(true);
 
@@ -391,10 +520,37 @@ const QmsAddComplaints = () => {
       );
 
       console.log('Complaint submitted successfully:', response.data);
-      navigate('/company/qms/list-complaints');
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate('/company/qms/list-complaints');
+      }, 1500);
+      setSuccessMessage("Compliants Added Successfully")
     } catch (err) {
       console.error('Error submitting complaint:', err);
-      setError('Failed to submit complaint. Please check your inputs and try again.');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = "Failed to add compliants";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -431,6 +587,18 @@ const QmsAddComplaints = () => {
           onAddCause={(cars) => console.log("CAR numbers added:", cars)}
         />
 
+        <SuccessModal
+          showSuccessModal={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          successMessage={successMessage}
+        />
+
+        <ErrorModal
+          showErrorModal={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          error={error}
+        />
+
         <h1 className="add-training-head">Add Complaints and Feedbacks</h1>
         <button
           type="button"
@@ -452,9 +620,14 @@ const QmsAddComplaints = () => {
               value={formData.customer}
               onChange={handleChange}
               onFocus={() => setFocusedDropdown("customer")}
-              onBlur={() => setFocusedDropdown(null)}
+              onBlur={() => {
+                setFocusedDropdown(null);
+                setFieldErrors(prev => ({
+                  ...prev,
+                  customer: !formData.customer
+                }));
+              }}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
             >
               <option value="" disabled>Select</option>
               {customers.map(customer => (
@@ -462,16 +635,16 @@ const QmsAddComplaints = () => {
                   {customer.name}
                 </option>
               ))}
-              {customers.length === 0 && !loading && (
-                <option value="" disabled>No customers available</option>
-              )}
             </select>
             <ChevronDown
-              className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
+              className={`absolute right-3 top-[52px] transform transition-transform duration-300
+      ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
+            {fieldErrors.customer && (
+              <p className="text-red-500 text-sm mt-1">Customer is required</p>
+            )}
           </div>
         </div>
 
@@ -479,7 +652,7 @@ const QmsAddComplaints = () => {
         <div className="flex flex-col gap-3 relative">
           <div className="flex items-center justify-between">
             <label className="add-training-label">
-              Categories <span className="text-red-500">*</span>
+              Categories
             </label>
           </div>
           <div className="relative">

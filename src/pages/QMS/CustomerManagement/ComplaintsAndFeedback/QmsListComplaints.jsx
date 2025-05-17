@@ -7,6 +7,9 @@ import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListComplaints = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -16,6 +19,14 @@ const QmsListComplaints = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [complaintToDelete, setComplaintToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Get company ID from localStorage
   const getUserCompanyId = () => {
@@ -48,14 +59,33 @@ const QmsListComplaints = () => {
 
       try {
         const response = await axios.get(`${BASE_URL}/qms/complaints/company/${companyId}/`);
-        console.log('complaints:', response.data);
-
         setComplaints(response.data);
         setLoading(false);
-        console.log('complaintssssssssssssssssssssssssss:', response.data);
       } catch (error) {
         console.error("Error fetching complaints:", error);
-        setError("Failed to fetch complaints data");
+        let errorMsg = 'Failed to fetch complaints. Please try again later.';
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setLoading(false);
       }
     };
@@ -63,70 +93,54 @@ const QmsListComplaints = () => {
     fetchComplaints();
   }, [companyId]);
 
-  const fetchUserData = async () => {
-    try {
-      if (!storedUserId) {
-        console.error("User ID not found");
-        return;
-      }
-
-      const response = await axios.get(`${BASE_URL}/company/user/${storedUserId}/`);
-
-      console.log("User API Response:", response.data);
-
-      if (response.status === 200) {
-        // Set user data
-        if (response.data) {
-          setEntityData(response.data);
-
-          // Update user information from API response
-          if (response.data.email) {
-            setUserEmail(response.data.email);
-          }
-
-          if (response.data.first_name && response.data.last_name) {
-            setUserName(`${response.data.first_name} ${response.data.last_name}`);
-          } else if (response.data.first_name) {
-            setUserName(response.data.first_name);
-          }
-
-
-          if (response.data.user_logo) {
-            const logoUrl = response.data.user_logo;
-            setEntityLogo(logoUrl);
-            setProfileImage(logoUrl); // Use user logo as profile image
-          }
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching user data:", err);
-      fallbackToLocalStorage('user');
-    }
+  // Open delete confirmation modal
+  const openDeleteModal = (complaint) => {
+    setComplaintToDelete(complaint);
+    setShowDeleteModal(true);
+    setDeleteMessage('Complaint');
   };
 
-  const getRelevantUserId = () => {
-    const userRole = localStorage.getItem("role");
-
-    if (userRole === "user") {
-      const userId = localStorage.getItem("user_id");
-      if (userId) return userId;
-    }
-
-    const companyId = localStorage.getItem("company_id");
-    if (companyId) return companyId;
-
-    return null;
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
   };
 
-  const userId = getRelevantUserId();
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!complaintToDelete) return;
 
-  // Handle delete
-  const handleDeleteItem = async (id) => {
     try {
-      await axios.delete(`${BASE_URL}/qms/complaints/${id}/`);
-      setComplaints(complaints.filter(item => item.id !== id));
+      await axios.delete(`${BASE_URL}/qms/complaints/${complaintToDelete.id}/`);
+      setComplaints(complaints.filter(item => item.id !== complaintToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Complaint Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (error) {
       console.error("Error deleting complaint:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = "Failed to delete complaint";
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        } else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowDeleteModal(false);
     }
   };
 
@@ -262,7 +276,7 @@ const QmsListComplaints = () => {
                   </td>
                   <td className="list-awareness-training-datas text-center">
                     <div className='flex justify-center items-center h-[50px]'>
-                      <button onClick={() => handleDeleteItem(item.id)}>
+                      <button onClick={() => openDeleteModal(item)}>
                         <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                       </button>
                     </div>
@@ -312,6 +326,28 @@ const QmsListComplaints = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

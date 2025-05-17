@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import axios from 'axios';
 import { BASE_URL } from "../../../Utils/Config";
+import SuccessModal from './Modals/SuccessModal';
+import ErrorModal from './Modals/ErrorModal';
+import DeleteConfimModal from './Modals/DeleteConfimModal';
 
 const CategoryModal = ({ isOpen, onClose }) => {
     const [animateClass, setAnimateClass] = useState('');
@@ -9,6 +12,14 @@ const CategoryModal = ({ isOpen, onClose }) => {
     const [newCategoryTitle, setNewCategoryTitle] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Modal states
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [categoryToDelete, setCategoryToDelete] = useState(null);
+    const [deleteMessage, setDeleteMessage] = useState("");
 
     // Animation effect for modal
     useEffect(() => {
@@ -29,8 +40,12 @@ const CategoryModal = ({ isOpen, onClose }) => {
             try {
                 const userCompanyId = localStorage.getItem("user_company_id");
                 return userCompanyId ? JSON.parse(userCompanyId) : null;
-            } catch (e) {
-                console.error("Error parsing user company ID:", e);
+            } catch (err) {
+                console.error("Error parsing user company ID:", err);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 return null;
             }
         }
@@ -55,21 +70,50 @@ const CategoryModal = ({ isOpen, onClose }) => {
             setCategoryItems(response.data);
         } catch (err) {
             console.error("Error fetching categories:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setError("Failed to load categories. Please try again.");
         } finally {
             setIsLoading(false);
         }
     };
 
+    // Open delete confirmation modal
+    const openDeleteModal = (category) => {
+        setCategoryToDelete(category);
+        setShowDeleteModal(true);
+        setDeleteMessage('Category');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
     // Handle category deletion
-    const handleDelete = async (id) => {
+    const confirmDelete = async () => {
+        if (!categoryToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/category/${id}/`);
-            // Update local state after successful deletion
-            setCategoryItems(categoryItems.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/category/${categoryToDelete.id}/`);
+            setCategoryItems(categoryItems.filter(item => item.id !== categoryToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Category Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (err) {
             console.error("Error deleting category:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setError("Failed to delete category. Please try again.");
+            setShowDeleteModal(false);
         }
     };
 
@@ -81,12 +125,20 @@ const CategoryModal = ({ isOpen, onClose }) => {
                     title: newCategoryTitle,
                     company: companyId
                 });
-                
-                // Add the new category to the list
+
+                setShowSuccessModal(true);
+                setTimeout(() => {
+                    setShowSuccessModal(false);
+                }, 1500);
+                setSuccessMessage("Category Added Successfully")
                 setCategoryItems([...categoryItems, response.data]);
                 setNewCategoryTitle("");
             } catch (err) {
                 console.error("Error adding category:", err);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 setError("Failed to add category. Please try again.");
             }
         }
@@ -99,15 +151,28 @@ const CategoryModal = ({ isOpen, onClose }) => {
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Category List</h2>
-                    
-                    {error && (
-                        <div className="text-red-500 mb-4 p-2 bg-red-100 bg-opacity-10 rounded">
-                            {error}
-                        </div>
-                    )}
-                    
+
+                    <SuccessModal
+                        showSuccessModal={showSuccessModal}
+                        onClose={() => setShowSuccessModal(false)}
+                        successMessage={successMessage}
+                    />
+
+                    <ErrorModal
+                        showErrorModal={showErrorModal}
+                        onClose={() => setShowErrorModal(false)}
+                        error={error}
+                    />
+
+                    <DeleteConfimModal
+                        showDeleteModal={showDeleteModal}
+                        onConfirm={confirmDelete}
+                        onCancel={closeAllModals}
+                        deleteMessage={deleteMessage}
+                    />
+
                     {isLoading ? (
-                        <div className="text-center py-4">Loading categories...</div>
+                        <div className="text-center py-4 not-found">Loading categories...</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-gray-400">
@@ -129,7 +194,7 @@ const CategoryModal = ({ isOpen, onClose }) => {
                                                     <td className="px-3 agenda-data w-[70%]">{item.title}</td>
                                                     <td className="px-3 agenda-data text-center w-[20%]">
                                                         <div className="flex items-center justify-center h-[42px]">
-                                                            <button onClick={() => handleDelete(item.id)}>
+                                                            <button onClick={() => openDeleteModal(item)}>
                                                                 <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
                                                             </button>
                                                         </div>

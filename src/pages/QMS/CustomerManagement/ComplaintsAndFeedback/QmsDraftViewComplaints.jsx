@@ -53,8 +53,7 @@ const QmsDraftViewComplaints = () => {
         }
     };
 
-    if (loading) return <div className="text-white text-center p-5">Loading...</div>;
-    if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
+    if (loading) return <div className="not-found text-center p-5">Loading...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">

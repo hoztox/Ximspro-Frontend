@@ -5,6 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../../../../Utils/Config';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftComplaints = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -15,6 +18,14 @@ const QmsDraftComplaints = () => {
 
     // State for complaints data
     const [complaints, setComplaints] = useState([]);
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [complaintToDelete, setComplaintToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     // Get user ID from localStorage
     const getRelevantUserId = () => {
@@ -49,7 +60,28 @@ const QmsDraftComplaints = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching complaints:", err);
-                setError("Failed to fetch complaints data");
+                let errorMsg = "Failed to fetch complaints";
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    } else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 setLoading(false);
             }
         };
@@ -78,13 +110,57 @@ const QmsDraftComplaints = () => {
         setCurrentPage(pageNumber);
     };
 
-    const handleDeleteItem = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (complaint) => {
+        setComplaintToDelete(complaint);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Complaint');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!complaintToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/complaints/${id}/`);
-            setComplaints(complaints.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/complaints/${complaintToDelete.id}/`);
+            setComplaints(complaints.filter(item => item.id !== complaintToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Draft Complaint Deleted Successfully");
         } catch (err) {
             console.error("Error deleting complaint:", err);
-            alert("Failed to delete complaint");
+            let errorMsg = "Failed to delete draft complaint";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteModal(false);
         }
     };
 
@@ -112,7 +188,7 @@ const QmsDraftComplaints = () => {
     };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
-    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
+    if (error && !showErrorModal) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -180,7 +256,7 @@ const QmsDraftComplaints = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
-                                            <button onClick={() => handleDeleteItem(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </div>
@@ -228,6 +304,28 @@ const QmsDraftComplaints = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

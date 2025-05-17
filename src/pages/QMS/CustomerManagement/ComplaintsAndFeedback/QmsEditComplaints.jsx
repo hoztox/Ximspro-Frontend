@@ -6,6 +6,8 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import CategoryModal from '../CategoryModal';
 import AddCarNumberModal from '../AddCarNumberModal';
 import { BASE_URL } from '../../../../Utils/Config';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditComplaints = () => {
     const navigate = useNavigate();
@@ -22,6 +24,23 @@ const QmsEditComplaints = () => {
     const [error, setError] = useState(null);
     const [categorySearchTerm, setCategorySearchTerm] = useState('');
     const [filteredCategories, setFilteredCategories] = useState([]);
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
+    const [fieldErrors, setFieldErrors] = useState({
+        customer: false,
+    });
+
+    const validateForm = () => {
+        const errors = {
+            customer: !formData.customer,
+        };
+        setFieldErrors(errors);
+        return !Object.values(errors).some(error => error);
+    };
 
     const getUserCompanyId = () => {
         const role = localStorage.getItem("role");
@@ -141,7 +160,28 @@ const QmsEditComplaints = () => {
 
         } catch (err) {
             console.error("Error fetching complaint data:", err);
-            setError("Failed to load complaint data. Please try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = "Failed to fetch complaint data. Please try again.";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -153,7 +193,28 @@ const QmsEditComplaints = () => {
             const response = await axios.get(`${BASE_URL}/qms/customer/company/${companyId}/`);
             setCustomers(response.data);
         } catch (err) {
-            setError("Failed to fetch customers data");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = "Failed to fetch customers";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             console.error("Error fetching customers:", err);
         } finally {
             setLoading(false);
@@ -174,7 +235,29 @@ const QmsEditComplaints = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = 'Failed to fetch users';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
         }
     };
 
@@ -189,7 +272,28 @@ const QmsEditComplaints = () => {
             setCarNumbers(response.data);
         } catch (err) {
             console.error("Error fetching CAR numbers:", err);
-            setError("Failed to load CAR numbers. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = "Failed to fetch CAR numbers";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
         }
     };
 
@@ -202,7 +306,28 @@ const QmsEditComplaints = () => {
             setFilteredCategories(response.data);
         } catch (err) {
             console.error("Error fetching categories:", err);
-            setError("Failed to load categories. Please try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = "Failed to fetch categories";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -334,17 +459,18 @@ const QmsEditComplaints = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+        if (!validateForm()) return;
+
         try {
             setLoading(true);
-            
+
             // Create a regular object first (not FormData)
             const submitData = {
                 ...formData,
                 user: userId,
                 company: companyId
             };
-    
+
             // Convert to FormData only if we have a file to upload
             let payload;
             if (formData.upload_attachment) {
@@ -369,15 +495,15 @@ const QmsEditComplaints = () => {
                 // No file upload - send as JSON
                 payload = submitData;
             }
-    
+
             console.log('Submitting data:', payload);
-    
+
             const config = formData.upload_attachment ? {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             } : {};
-    
+
             let response;
             if (id) {
                 response = await axios.put(
@@ -392,15 +518,36 @@ const QmsEditComplaints = () => {
                     config
                 );
             }
-    
-            navigate('/company/qms/list-complaints');
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-complaints');
+            }, 1500);
+            setSuccessMessage("Compliants updated successfully")
         } catch (err) {
             console.error("Error submitting form:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = "Failed to update complaint";
+
             if (err.response) {
-                console.error("Response data:", err.response.data);
-                console.error("Response status:", err.response.status);
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
-            setError("Failed to save complaint. Please check your inputs and try again.");
+
+            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -446,6 +593,18 @@ const QmsEditComplaints = () => {
                     onAddCause={handleAddCar}
                 />
 
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
                 <h1 className="add-training-head">
                     {id ? "Edit" : "Add"} Complaints and Feedbacks
                 </h1>
@@ -470,9 +629,14 @@ const QmsEditComplaints = () => {
                             value={formData.customer}
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("customer")}
-                            onBlur={() => setFocusedDropdown(null)}
+                            onBlur={() => {
+                                setFocusedDropdown(null);
+                                setFieldErrors(prev => ({
+                                    ...prev,
+                                    customer: !formData.customer
+                                }));
+                            }}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
                         >
                             <option value="" disabled>Select Customer</option>
                             {customers.map(customer => (
@@ -483,10 +647,13 @@ const QmsEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
+      ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
+                        {fieldErrors.customer && (
+                            <p className="text-red-500 text-sm mt-1">Customer is required</p>
+                        )}
                     </div>
                 </div>
 
