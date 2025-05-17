@@ -3,6 +3,8 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddAudit = () => {
     const navigate = useNavigate();
@@ -17,6 +19,10 @@ const QmsAddAudit = () => {
     // Add search states
     const [procedureSearchTerm, setProcedureSearchTerm] = useState("");
     const [userSearchTerm, setUserSearchTerm] = useState("");
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     // Add custom field states
     const [showCustomProcedureField, setShowCustomProcedureField] = useState(false);
@@ -82,6 +88,10 @@ const QmsAddAudit = () => {
                 { id: 1, title: "Null" },
 
             ]);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -96,6 +106,10 @@ const QmsAddAudit = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
 
         }
     };
@@ -113,8 +127,12 @@ const QmsAddAudit = () => {
             if (userData) {
                 try {
                     return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
+                } catch (err) {
+                    console.error("Error parsing user company ID:", err);
+                    setShowErrorModal(true);
+                    setTimeout(() => {
+                        setShowErrorModal(false);
+                    }, 3000);
                     return null;
                 }
             }
@@ -229,16 +247,36 @@ const QmsAddAudit = () => {
                 },
             });
 
-
+            setShowSuccessModal(true);
             setTimeout(() => {
-
+                setShowSuccessModal(false);
                 navigate('/company/qms/list-audit');
             }, 1500);
+            setSuccessMessage("Audit Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
+            let errorMsg = 'failed to Add Audit';
 
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
             setTimeout(() => {
-
+                setShowErrorModal(false);
             }, 3000);
         } finally {
             setLoading(false);
@@ -405,20 +443,37 @@ const QmsAddAudit = () => {
 
             setDraftLoading(false);
 
+            setShowSuccessModal(true);
             setTimeout(() => {
-
+                setShowSuccessModal(false);
                 navigate('/company/qms/draft-audit');
             }, 1500);
-
+            setSuccessMessage("Audit Drafted Successfully")
         } catch (err) {
             setDraftLoading(false);
-
+            setShowErrorModal(true);
             setTimeout(() => {
-
+                setShowErrorModal(false);
             }, 3000);
-            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
-            setError(errorMessage);
-            console.error('Error saving Draft:', err.response?.data || err);
+            let errorMsg = "Failed to Draft Audit";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            console.error('Error saving Draft:', err);
         }
     };
 
@@ -488,6 +543,19 @@ const QmsAddAudit = () => {
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
                 <h1 className="add-training-head">Add Audit</h1>
+
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
                 <button
                     className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
                     onClick={() => handleListAudit()}
@@ -877,10 +945,6 @@ const QmsAddAudit = () => {
                     </div>
                 </div>
             </form>
-
-
-
-
         </div>
     );
 };

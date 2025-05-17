@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { X, Eye } from 'lucide-react';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import ErrorModal from '../Modals/ErrorModal';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ViewAuditReportModal = ({
     isVisible,
     onClose,
-    selectedAudit,
-    isExiting,
-    isAnimating
+    selectedAudit
 }) => {
     const [reportData, setReportData] = useState({
         audit_report: null,
@@ -16,6 +16,7 @@ const ViewAuditReportModal = ({
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         if (isVisible && selectedAudit && selectedAudit.id) {
@@ -24,7 +25,6 @@ const ViewAuditReportModal = ({
     }, [isVisible, selectedAudit]);
 
     const fetchAuditReports = async () => {
-        setLoading(true);
         try {
             const response = await axios.get(`${BASE_URL}/qms/audit/${selectedAudit.id}/report/`);
             setReportData({
@@ -35,6 +35,10 @@ const ViewAuditReportModal = ({
         } catch (err) {
             console.error("Error fetching audit reports:", err);
             setError("Failed to load audit reports");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -46,72 +50,107 @@ const ViewAuditReportModal = ({
         }
     };
 
-    if (!isVisible) return null;
-
     return (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-            <div
-                className={`absolute inset-0 bg-black transition-opacity ${isExiting ? 'bg-opacity-0' : 'bg-opacity-50'}`}
-                onClick={onClose}
-            ></div>
-            <div className={`bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-6 transform transition-all duration-300 ease-in-out ${isAnimating ? 'modal-enter' : ''} ${isExiting ? 'modal-exit' : ''}`}>
-                <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                    <h2 className="view-employee-head">Audit Report Information</h2>
-                    <button
+        <AnimatePresence>
+            {isVisible && (
+                <motion.div
+                    className="fixed inset-0 flex items-center justify-center z-50"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <motion.div
+                        className="absolute inset-0 bg-black bg-opacity-50"
                         onClick={onClose}
-                        className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
-                    >
-                        <X className="text-white" />
-                    </button>
-                </div>
-                
-                {loading ? (
-                    <div className="flex justify-center items-center py-12">
-                        <p className="text-white">Loading audit reports...</p>
-                    </div>
-                ) : error ? (
-                    <div className="flex justify-center items-center py-12">
-                        <p className="text-red-500">{error}</p>
-                    </div>
-                ) : (
-                    <div>
-                        <div className="grid grid-cols-2">
-                            <div className='border-r border-[#383840] mt-5'>
-                                <label className="block view-employee-label mb-[6px]">
-                                    Audit Report
-                                </label>
-                                {reportData.audit_report ? (
-                                    <button 
-                                        className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
-                                        onClick={() => handleViewFile(reportData.audit_report)}
-                                    >
-                                        Click to view file <Eye size={18} />
-                                    </button>
-                                ) : (
-                                    <p className="text-gray-400">No audit report available</p>
-                                )}
-                            </div>
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    />
 
-                            <div className='mt-5 ml-5'>
-                                <label className="block view-employee-label mb-[6px]">
-                                    Non Conformities Report
-                                </label>
-                                {reportData.non_conformities_report ? (
-                                    <button 
-                                        className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
-                                        onClick={() => handleViewFile(reportData.non_conformities_report)}
-                                    >
-                                        Click to view file <Eye size={18} />
-                                    </button>
-                                ) : (
-                                    <p className="text-gray-400">No non-conformities report available</p>
-                                )}
-                            </div>
+                    <motion.div
+                        className="bg-[#1C1C24] rounded-lg shadow-xl relative w-[1014px] p-6"
+                        initial={{ scale: 0.95, y: 20, opacity: 0 }}
+                        animate={{ scale: 1, y: 0, opacity: 1 }}
+                        exit={{ scale: 0.95, y: 20, opacity: 0 }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                    >
+                        <div className="flex justify-between items-center border-b border-[#383840] pb-5">
+                            <h2 className="view-employee-head">Audit Report Information</h2>
+
+                            <ErrorModal
+                                showErrorModal={showErrorModal}
+                                onClose={() => setShowErrorModal(false)}
+                                error={error}
+                            />
+
+                            <button
+                                onClick={onClose}
+                                className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <X className="text-white" />
+                            </button>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
+
+                        {loading ? (
+                            <motion.div
+                                className="flex justify-center items-center py-12"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                            >
+                                <p className="not-found">Loading audit reports...</p>
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.2 }}
+                            >
+                                <div className="grid grid-cols-2">
+                                    <div className='border-r border-[#383840] mt-5'>
+                                        <label className="block view-employee-label mb-[6px]">
+                                            Audit Report
+                                        </label>
+                                        {reportData.audit_report ? (
+                                            <motion.button
+                                                className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                                                onClick={() => handleViewFile(reportData.audit_report)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                Click to view file <Eye size={18} />
+                                            </motion.button>
+                                        ) : (
+                                            <p className="text-gray-400">No audit report available</p>
+                                        )}
+                                    </div>
+
+                                    <div className='mt-5 ml-5'>
+                                        <label className="block view-employee-label mb-[6px]">
+                                            Non Conformities Report
+                                        </label>
+                                        {reportData.non_conformities_report ? (
+                                            <motion.button
+                                                className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
+                                                onClick={() => handleViewFile(reportData.non_conformities_report)}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                Click to view file <Eye size={18} />
+                                            </motion.button>
+                                        ) : (
+                                            <p className="text-gray-400">No non-conformities report available</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
     );
 };
 

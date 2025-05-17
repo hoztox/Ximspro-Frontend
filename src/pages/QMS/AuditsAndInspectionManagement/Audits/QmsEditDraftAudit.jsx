@@ -3,6 +3,8 @@ import { ChevronDown, Search } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftAudit = () => {
     const navigate = useNavigate();
@@ -15,6 +17,11 @@ const QmsEditDraftAudit = () => {
         title: false,
         audit_type: false
     });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
 
     const [procedureOptions, setProcedureOptions] = useState([]);
@@ -111,7 +118,29 @@ const QmsEditDraftAudit = () => {
             setError(null);
         } catch (error) {
             console.error("Failed to fetch audit data", error);
-            setError("Failed to load audit data");
+            let errorMsg = 'Failed to fetch audit data';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setFetchLoading(false);
         }
@@ -128,6 +157,10 @@ const QmsEditDraftAudit = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             // Fallback procedure options
             setProcedureOptions([
                 { id: 1, title: "Null" },
@@ -146,6 +179,10 @@ const QmsEditDraftAudit = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -429,12 +466,37 @@ const QmsEditDraftAudit = () => {
             });
 
             console.log('Draft audit updated successfully:', response.data);
+            setShowSuccessModal(true);
             setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate('/company/qms/draft-audit');
             }, 1500);
+            setSuccessMessage("Audit updated successfully")
         } catch (error) {
             console.error('Error updating draft audit:', error);
-            setError('Failed to update draft audit. Please try again.');
+            let errorMsg = 'Failed to update draft audit. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -471,7 +533,7 @@ const QmsEditDraftAudit = () => {
     // Show loading while fetching data
     if (fetchLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
                 <p>Loading draft audit data...</p>
             </div>
         );
@@ -489,11 +551,17 @@ const QmsEditDraftAudit = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-200 p-3 rounded-md mx-[104px] my-4">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -651,7 +719,7 @@ const QmsEditDraftAudit = () => {
                         color="#AAAAAA"
                     />
                     {fieldErrors.audit_type && (
-                        <p className="text-red-500 text-sm mt-1">Audit Type is required</p> 
+                        <p className="text-red-500 text-sm mt-1">Audit Type is required</p>
                     )}
                 </div>
 
