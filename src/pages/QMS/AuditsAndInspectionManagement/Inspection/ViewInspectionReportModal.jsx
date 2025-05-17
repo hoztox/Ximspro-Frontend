@@ -75,8 +75,6 @@ const ViewInspectionReportModal = ({
                             <motion.button
                                 onClick={onClose}
                                 className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
                             >
                                 <X className="text-white" />
                             </motion.button>
@@ -113,13 +111,11 @@ const ViewInspectionReportModal = ({
                                             <motion.button
                                                 className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
                                                 onClick={() => handleViewFile(reportData.inspection_report)}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
                                             >
                                                 Click to view file <Eye size={18} />
                                             </motion.button>
                                         ) : (
-                                            <p className="text-gray-400">No inspection report available</p>
+                                            <p className="text-center not-found">No inspection report available</p>
                                         )}
                                     </div>
 
@@ -131,13 +127,11 @@ const ViewInspectionReportModal = ({
                                             <motion.button
                                                 className="flex items-center gap-2 !text-[18px] text-[#1E84AF] click-view-file-btn"
                                                 onClick={() => handleViewFile(reportData.non_conformities_report)}
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
                                             >
                                                 Click to view file <Eye size={18} />
                                             </motion.button>
                                         ) : (
-                                            <p className="text-gray-400">No non-conformities report available</p>
+                                            <p className="text-center not-found">No non-conformities report available</p>
                                         )}
                                     </div>
                                 </div>

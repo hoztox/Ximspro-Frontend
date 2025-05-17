@@ -139,14 +139,12 @@ const AddInspectionReportModal = ({
             exit={{ scale: 0.95, y: 20, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           >
-            <div className="flex justify-between items-center px-[102px] border-b border-[#383840] pt-5">
+            <div className="flex justify-between items-center px-[102px] border-b border-[#383840]">
               <h3 className="list-awareness-training-head">Add Inspection Report</h3>
 
               <motion.button
                 onClick={onClose}
-                className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md mb-[25px]"
               >
                 <X className="text-white" />
               </motion.button>
@@ -171,8 +169,6 @@ const AddInspectionReportModal = ({
                     <motion.label
                       htmlFor="inspection-report-upload"
                       className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
                     >
                       <span className="text-[#AAAAAA] choose-file">Choose File</span>
                       <img src={file} alt="" />
@@ -184,8 +180,6 @@ const AddInspectionReportModal = ({
                       onClick={(e) => handleViewFile('inspection_report', e)}
                       disabled={!fileURLs.inspection_report}
                       className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       Click to view file <Eye size={17} />
                     </motion.button>
@@ -212,8 +206,6 @@ const AddInspectionReportModal = ({
                     <motion.label
                       htmlFor="non-conformities-upload"
                       className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
                     >
                       <span className="text-[#AAAAAA] choose-file">Choose File</span>
                       <img src={file} alt="" />
@@ -225,8 +217,6 @@ const AddInspectionReportModal = ({
                       onClick={(e) => handleViewFile('non_conformities_report', e)}
                       disabled={!fileURLs.non_conformities_report}
                       className='flex items-center gap-2 click-view-file-btn text-[#1E84AF] cursor-pointer'
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
                     >
                       Click to view file <Eye size={17} />
                     </motion.button>
@@ -263,8 +253,6 @@ const AddInspectionReportModal = ({
                   onClick={onClose}
                   className="cancel-btn duration-200"
                   disabled={loading}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
                 >
                   Cancel
                 </motion.button>
@@ -272,8 +260,6 @@ const AddInspectionReportModal = ({
                   type="submit"
                   className="save-btn duration-200"
                   disabled={loading}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
                 >
                   {loading ? 'Saving...' : 'Save'}
                 </motion.button>
