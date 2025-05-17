@@ -82,7 +82,7 @@ const QmsListAudit = () => {
             setAudits(response.data);
 
             const draftResponse = await axios.get(
-                `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+                `${BASE_URL}/qms/audit/drafts-count/${userId}/`
             );
             setDraftCount(draftResponse.data.count);
 

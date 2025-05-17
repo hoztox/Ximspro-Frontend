@@ -9,17 +9,24 @@ import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import "./viewpage.css";
 import { motion, AnimatePresence } from 'framer-motion';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListOutboxSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [outboxMessages, setOutboxMessages] = useState([]);
-    const [replyMessages, setReplyMessages] = useState([]);
-    const [forwardMessages, setForwardMessages] = useState([]);
+    const [allMessages, setAllMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const navigate = useNavigate();
 
     // Get the relevant user ID for API calls
@@ -37,38 +44,53 @@ const QmsListOutboxSystemMessaging = () => {
         return null;
     };
 
+    // Fetch all sent messages (outbox)
     useEffect(() => {
-        const fetchAllMessages = async () => {
-            try {
-                const userId = getRelevantUserId();
+        const fetchMessages = async () => {
+            setLoading(true);
+            const userId = getRelevantUserId();
 
-                if (!userId) {
-                    throw new Error("User ID not found");
-                }
-
-                // Fetch outbox, reply, and forward messages
-                const [outboxResponse, replyResponse, forwardResponse] = await Promise.all([
-                    axios.get(`${BASE_URL}/qms/messages/outbox/${userId}/`),
-                    axios.get(`${BASE_URL}/qms/messages-replay/outbox/${userId}/`),
-                    axios.get(`${BASE_URL}/qms/messages-forward/outbox/${userId}/`)
-                ]);
-
-                setOutboxMessages(outboxResponse.data);
-                setReplyMessages(replyResponse.data);
-                setForwardMessages(forwardResponse.data);
+            if (!userId) {
+                setError("User ID or Company ID not found");
+                setShowErrorModal(true);
                 setLoading(false);
-                console.log('Fetched outbox messages:', outboxResponse.data);
-                console.log('Fetched reply messages:', replyResponse.data);
-                console.log('Fetched forward messages:', forwardResponse.data);
+                return;
+            }
 
+            try {
+                const response = await axios.get(`${BASE_URL}/qms/messages/outbox/${userId}/`);
+
+                if (response.data && Array.isArray(response.data)) {
+                    // Process messages to determine their type (original, reply, forward)
+                    const processedMessages = response.data.map(msg => {
+                        let messageType = 'original';
+
+                        // Check if message is a reply or forward based on parent and thread_root
+                        if (msg.parent) {
+                            // If it has both parent and is in a thread, it's likely a reply
+                            messageType = 'reply';
+                        }
+
+                        return {
+                            ...msg,
+                            messageType
+                        };
+                    });
+
+                    setAllMessages(processedMessages);
+                } else {
+                    setAllMessages([]);
+                }
             } catch (err) {
-                console.error("Error fetching messages:", err);
-                setError(err.message || "Failed to fetch messages");
+                console.error("Error fetching outbox messages:", err);
+                setError("Failed to load messages. Please try again.");
+                setShowErrorModal(true);
+            } finally {
                 setLoading(false);
             }
         };
 
-        fetchAllMessages();
+        fetchMessages();
     }, []);
 
     // Format date from created_at
@@ -92,12 +114,50 @@ const QmsListOutboxSystemMessaging = () => {
         return `${hours}:${minutes}:${seconds}${ampm}`;
     };
 
-    // Combine messages with type indicator
-    const allMessages = [
-        ...outboxMessages.map(msg => ({ ...msg, messageType: 'outbox' })),
-        ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
-        ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    // Open delete confirmation modal
+    const openDeleteModal = (message) => {
+        setMessageToDelete(message);
+        setShowDeleteModal(true);
+        setDeleteMessage('Message');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!messageToDelete) return;
+
+        try {
+            const userId = getRelevantUserId();
+            if (!userId) {
+                throw new Error("User ID not found");
+            }
+
+            await axios.patch(`${BASE_URL}/qms/messages/trash/${messageToDelete.id}/`, {
+                user_id: userId,
+            });
+
+            setAllMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Message moved to trash successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Error moving message to trash:", error);
+            setShowErrorModal(true);
+            setError(error.message || "Failed to move message to trash");
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+        }
+    };
 
     const itemsPerPage = 10;
     const totalItems = allMessages.length;
@@ -105,8 +165,9 @@ const QmsListOutboxSystemMessaging = () => {
 
     // Filter items based on search query
     const filteredItems = allMessages.filter(item =>
-        item.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.to_user && item.to_user.some(user => 
+        item.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.to_user && Array.isArray(item.to_user) && item.to_user.some(user =>
+            user.first_name && user.last_name &&
             `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchQuery.toLowerCase())))
     );
 
@@ -127,9 +188,9 @@ const QmsListOutboxSystemMessaging = () => {
         navigate(`/company/qms/outbox-replay/${id}`, { state: { messageType } });
     };
 
-    const handleOutboxForward =  (id, messageType) => {
+    const handleOutboxForward = (id, messageType) => {
         navigate(`/company/qms/outbox-forward/${id}`, { state: { messageType } });
-    }; 
+    };
 
     const handleView = (item) => {
         setSelectedMessage(item);
@@ -139,47 +200,6 @@ const QmsListOutboxSystemMessaging = () => {
     const closeModal = () => {
         setIsModalOpen(false);
         setTimeout(() => setSelectedMessage(null), 300);
-    };
-
-    const handleDelete = async (id, messageType) => {
-        try {
-            const userId = getRelevantUserId();
-            if (!userId) {
-                throw new Error("User ID not found");
-            }
-
-            let deleteUrl;
-            switch (messageType) {
-                case 'outbox':
-                    deleteUrl = `${BASE_URL}/qms/messages/${id}/trash/`;
-                    break;
-                case 'reply':
-                    deleteUrl = `${BASE_URL}/qms/messages-replay/${id}/trash/`;
-                    break;
-                case 'forward':
-                    deleteUrl = `${BASE_URL}/qms/messages-forward/${id}/trash/`;
-                    break;
-                default:
-                    throw new Error("Invalid message type");
-            }
-
-            await axios.put(deleteUrl, {
-                is_trash: true,
-                trash_user: userId
-            });
-
-            // Update local state
-            if (messageType === 'outbox') {
-                setOutboxMessages(outboxMessages.filter(msg => msg.id !== id));
-            } else if (messageType === 'reply') {
-                setReplyMessages(replyMessages.filter(msg => msg.id !== id));
-            } else if (messageType === 'forward') {
-                setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
-            }
-        } catch (err) {
-            console.error("Error deleting message:", err);
-            setError(err.message || "Failed to delete message");
-        }
     };
 
     // Determine message type for display
@@ -195,11 +215,10 @@ const QmsListOutboxSystemMessaging = () => {
     };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
-    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg relative">
-            {/* Modal Backdrop */}
+            {/* Message View Modal */}
             <AnimatePresence>
                 {isModalOpen && (
                     <motion.div
@@ -210,13 +229,12 @@ const QmsListOutboxSystemMessaging = () => {
                         className="fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4"
                         onClick={closeModal}
                     >
-                        {/* Modal Content */}
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.9, opacity: 0 }}
                             transition={{ duration: 0.3 }}
-                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-auto"
+                            className="bg-[#1C1C24] rounded p-5 w-[528px] h-auto max-h-[80vh] overflow-y-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {selectedMessage && (
@@ -251,7 +269,7 @@ const QmsListOutboxSystemMessaging = () => {
 
                                         <div>
                                             <label className='view-page-label pb-[6px]'>Subject</label>
-                                            <p className='view-page-data'>{selectedMessage.subject}</p>
+                                            <p className='view-page-data'>{selectedMessage.subject || 'No Subject'}</p>
                                         </div>
 
                                         {selectedMessage.file && (
@@ -270,26 +288,8 @@ const QmsListOutboxSystemMessaging = () => {
 
                                         <div>
                                             <label className='view-page-label pb-[6px]'>Message</label>
-                                            <p className='view-page-data'>{selectedMessage.message}</p>
+                                            <p className='view-page-data'>{selectedMessage.message || 'No message content'}</p>
                                         </div>
-
-                                        {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
-                                            <div className="mt-4 pt-4 border-t border-[#383840]">
-                                                <label className='view-page-label pb-[6px]'>In Response To</label>
-                                                <p className='view-page-data text-gray-400'>
-                                                    {selectedMessage.original_message.subject}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
-                                            <div className="mt-4 pt-4 border-t border-[#383840]">
-                                                <label className='view-page-label pb-[6px]'>Forwarded From</label>
-                                                <p className='view-page-data text-gray-400'>
-                                                    {selectedMessage.original_message.subject}
-                                                </p>
-                                            </div>
-                                        )}
                                     </div>
                                 </>
                             )}
@@ -313,7 +313,7 @@ const QmsListOutboxSystemMessaging = () => {
                             <Search size={18} />
                         </div>
                     </div>
-                    
+
                     <button
                         className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
                         onClick={handleInbox}
@@ -331,7 +331,7 @@ const QmsListOutboxSystemMessaging = () => {
                             <th className="px-3 text-left list-awareness-training-thead w-[15%]">Date</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[10%]">Time</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Replay</th>
+                            <th className="px-3 text-center list-awareness-training-thead">Reply</th>
                             <th className="px-3 text-center list-awareness-training-thead">Forward</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
@@ -341,7 +341,7 @@ const QmsListOutboxSystemMessaging = () => {
                             currentItems.map((item, index) => (
                                 <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.subject || 'No Subject'}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatTime(item.created_at)}</td>
                                     <td className="list-awareness-training-datas text-center">
@@ -351,7 +351,7 @@ const QmsListOutboxSystemMessaging = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <button onClick={() => handleOutboxReplay(item.id, item.messageType)}>
-                                            <img src={replay} alt="Replay Icon" className='w-[16px] h-[16px]' />
+                                            <img src={replay} alt="Reply Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
@@ -360,7 +360,7 @@ const QmsListOutboxSystemMessaging = () => {
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleDelete(item.id, item.messageType)}>
+                                        <button onClick={() => openDeleteModal(item)}>
                                             <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
@@ -375,36 +375,61 @@ const QmsListOutboxSystemMessaging = () => {
                 </table>
             </div>
 
-            <div className="flex justify-between items-center mt-3">
-                <div className='text-white total-text'>Total: {totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                        disabled={currentPage === 1}
-                        onClick={() => handlePageChange(currentPage - 1)}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+            {/* Pagination */}
+            {totalPages > 0 && (
+                <div className="flex justify-between items-center mt-3">
+                    <div className='text-white total-text'>Total: {totalItems}</div>
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
-                            onClick={() => handlePageChange(number)}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                        disabled={currentPage === totalPages}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                    >
-                        Next
-                    </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                            <button
+                                key={number}
+                                className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                                onClick={() => handlePageChange(number)}
+                            >
+                                {number}
+                            </button>
+                        ))}
+
+                        <button
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Next
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

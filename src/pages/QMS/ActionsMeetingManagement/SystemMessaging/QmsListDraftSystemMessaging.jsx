@@ -6,6 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListDraftSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -14,8 +17,17 @@ const QmsListDraftSystemMessaging = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [messages, setMessages] = useState([]);
     const [totalItems, setTotalItems] = useState(0);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
     const itemsPerPage = 10;
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -36,13 +48,14 @@ const QmsListDraftSystemMessaging = () => {
                     console.error('No user or company ID found');
                     return;
                 }
-                const response = await axios.get(`${BASE_URL}/qms/messages/draft/${userId}/`);
+                const response = await axios.get(`${BASE_URL}/qms/messages/drafts/${userId}/`);
                 const drafts = Array.isArray(response.data) ? response.data : [];
                 setMessages(drafts);
                 setTotalItems(drafts.length);
-                console.log('DRAAAAAFTS:', drafts);
             } catch (error) {
                 console.error('Error fetching drafts:', error);
+                setError(error.message || "Failed to fetch drafts");
+                setShowErrorModal(true);
             }
         };
         fetchDrafts();
@@ -110,14 +123,41 @@ const QmsListDraftSystemMessaging = () => {
         setTimeout(() => setSelectedMessage(null), 300);
     };
 
-    // Handle delete draft
-    const handleDelete = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (message) => {
+        setMessageToDelete(message);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Message');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!messageToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/messages/${id}/delete/`);
-            setMessages(messages.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/messages/delete/${messageToDelete.id}/`);
+            setMessages(messages.filter(item => item.id !== messageToDelete.id));
             setTotalItems(totalItems - 1);
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Draft deleted successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (error) {
             console.error('Error deleting draft:', error);
+            setShowErrorModal(true);
+            setError(error.message || "Failed to delete draft");
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -258,7 +298,7 @@ const QmsListDraftSystemMessaging = () => {
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleDelete(item.id)}>
+                                        <button onClick={() => openDeleteModal(item)}>
                                             <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
@@ -299,6 +339,28 @@ const QmsListDraftSystemMessaging = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

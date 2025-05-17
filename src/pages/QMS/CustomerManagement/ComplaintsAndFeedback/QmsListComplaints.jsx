@@ -79,7 +79,7 @@ const QmsListComplaints = () => {
         const userId = getRelevantUserId();
 
         const draftResponse = await axios.get(
-          `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+          `${BASE_URL}/qms/complaints/drafts-count/${userId}/`
         );
         setDraftCount(draftResponse.data.count);
         setLoading(false);

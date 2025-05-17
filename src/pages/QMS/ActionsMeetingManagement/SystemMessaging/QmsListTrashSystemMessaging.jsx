@@ -8,17 +8,28 @@ import "./viewpage.css";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import { motion, AnimatePresence } from 'framer-motion';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import RestoreConfirmModal from "../Modals/RestoreConfirmModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListTrashSystemMessaging = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [replyMessages, setReplyMessages] = useState([]);
-  const [forwardMessages, setForwardMessages] = useState([]);
+  const [trashedMessages, setTrashedMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [messageToRestore, setMessageToRestore] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [restoreMessage, setRestoreMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const navigate = useNavigate();
 
   // Get the relevant user ID for API calls
@@ -33,36 +44,103 @@ const QmsListTrashSystemMessaging = () => {
     return null;
   };
 
-  useEffect(() => {
-    const fetchAllMessages = async () => {
-      try {
-        const userId = getRelevantUserId();
-        if (!userId) {
-          throw new Error("User ID not found");
-        }
-
-        // Fetch trashed messages, replies, and forwards
-        const [messageResponse, replyResponse, forwardResponse] = await Promise.all([
-          axios.get(`${BASE_URL}/qms/messages/trash/${userId}/`),
-          axios.get(`${BASE_URL}/qms/messages/replay-trash/${userId}/`),
-          axios.get(`${BASE_URL}/qms/messages/forward-trash/${userId}/`)
-        ]);
-
-        setMessages(messageResponse.data);
-        setReplyMessages(replyResponse.data);
-        setForwardMessages(forwardResponse.data);
-        setLoading(false);
-        console.log('Fetched trashed messages:', messageResponse.data);
-        console.log('Fetched trashed reply messages:', replyResponse.data);
-        console.log('Fetched trashed forward messages:', forwardResponse.data);
-      } catch (err) {
-        console.error("Error fetching messages:", err);
-        setError(err.message || "Failed to fetch messages");
-        setLoading(false);
+  // Fetch trashed messages
+  const fetchTrashedMessages = async () => {
+    try {
+      setLoading(true);
+      const userId = getRelevantUserId();
+      if (!userId) {
+        throw new Error("User or company ID not found");
       }
-    };
+      const response = await axios.get(`${BASE_URL}/qms/messages/trash/user/${userId}/`);
+      setTrashedMessages(response.data);
+      setError(null);
+    } catch (error) {
+      console.error("Failed to fetch trashed messages:", error);
+      setError("Failed to load trashed messages");
+      setShowErrorModal(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchAllMessages();
+  // Open restore confirmation modal
+  const openRestoreModal = (message) => {
+    setMessageToRestore(message);
+    setShowRestoreModal(true);
+    setRestoreMessage('Message');
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = (message) => {
+    setMessageToDelete(message);
+    setShowDeleteModal(true);
+    setDeleteMessage('Message');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowRestoreModal(false);
+    setShowSuccessModal(false);
+    setShowErrorModal(false);
+    setMessageToDelete(null);
+    setMessageToRestore(null);
+  };
+
+  // Handle restore confirmation
+  const confirmRestore = async () => {
+    if (!messageToRestore) return;
+
+    try {
+      await axios.patch(`${BASE_URL}/qms/messages/untrash/${messageToRestore.id}/`);
+      setTrashedMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== messageToRestore.id)
+      );
+      setShowRestoreModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Message restored successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to untrash message:", error);
+      setShowErrorModal(true);
+      setError(error.message || "Failed to restore message from trash");
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    }
+  };
+
+  // Handle permanent delete confirmation
+  const confirmDelete = async () => {
+    if (!messageToDelete) return;
+
+    try {
+      await axios.delete(`${BASE_URL}/qms/messages/delete/${messageToDelete.id}/`);
+      setTrashedMessages((prevMessages) =>
+        prevMessages.filter((msg) => msg.id !== messageToDelete.id)
+      );
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Message deleted permanently");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Failed to delete message:", error);
+      setShowErrorModal(true);
+      setError(error.message || "Failed to delete message");
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    }
+  };
+
+  // Fetch messages on component mount
+  useEffect(() => {
+    fetchTrashedMessages();
   }, []);
 
   // Format date from created_at
@@ -86,19 +164,23 @@ const QmsListTrashSystemMessaging = () => {
     return `${hours}:${minutes}:${seconds}${ampm}`;
   };
 
-  // Combine messages with type indicator
-  const allMessages = [
-    ...messages.map(msg => ({ ...msg, messageType: 'message' })),
-    ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
-    ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
-  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  // Get message type label for modal
+  const getMessageTypeLabel = (message) => {
+    if (message.parent && message.thread_root) {
+      return 'Reply Message';
+    } else if (message.parent) {
+      return 'Forwarded Message';
+    }
+    return 'Message';
+  };
 
+  // Pagination
   const itemsPerPage = 10;
-  const totalItems = allMessages.length;
+  const totalItems = trashedMessages.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   // Filter items based on search query
-  const filteredItems = allMessages.filter(item =>
+  const filteredItems = trashedMessages.filter(item =>
     (item.subject || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
     (item.from_user && item.from_user.name && item.from_user.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
@@ -126,99 +208,7 @@ const QmsListTrashSystemMessaging = () => {
     setTimeout(() => setSelectedMessage(null), 300);
   };
 
-  const handleRestore = async (id, messageType) => {
-    try {
-      const userId = getRelevantUserId();
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
-      let restoreUrl;
-      switch (messageType) {
-        case 'message':
-          restoreUrl = `${BASE_URL}/qms/messages/${id}/restore/`;
-          break;
-        case 'reply':
-          restoreUrl = `${BASE_URL}/qms/messages-replay/${id}/restore/`;
-          break;
-        case 'forward':
-          restoreUrl = `${BASE_URL}/qms/messages-forward/${id}/restore/`;
-          break;
-        default:
-          throw new Error("Invalid message type");
-      }
-
-      await axios.put(restoreUrl, {
-        is_trash: false,
-        trash_user: null
-      });
-
-      // Update local state
-      if (messageType === 'message') {
-        setMessages(messages.filter(msg => msg.id !== id));
-      } else if (messageType === 'reply') {
-        setReplyMessages(replyMessages.filter(msg => msg.id !== id));
-      } else if (messageType === 'forward') {
-        setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
-      }
-    } catch (err) {
-      console.error("Error restoring message:", err);
-      setError(err.message || "Failed to restore message");
-    }
-  };
-
-  const handleDelete = async (id, messageType) => {
-    try {
-      const userId = getRelevantUserId();
-      if (!userId) {
-        throw new Error("User ID not found");
-      }
-
-      let deleteUrl;
-      switch (messageType) {
-        case 'message':
-          deleteUrl = `${BASE_URL}/qms/messages/${id}/delete/`;
-          break;
-        case 'reply':
-          deleteUrl = `${BASE_URL}/qms/replay/${id}/delete/`;
-          break;
-        case 'forward':
-          deleteUrl = `${BASE_URL}/qms/forward/${id}/delete/`;
-          break;
-        default:
-          throw new Error("Invalid message type");
-      }
-
-      await axios.delete(deleteUrl);
-
-      // Update local state
-      if (messageType === 'message') {
-        setMessages(messages.filter(msg => msg.id !== id));
-      } else if (messageType === 'reply') {
-        setReplyMessages(replyMessages.filter(msg => msg.id !== id));
-      } else if (messageType === 'forward') {
-        setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
-      }
-    } catch (err) {
-      console.error("Error deleting message:", err);
-      setError(err.message || "Failed to delete message");
-    }
-  };
-
-  // Determine message type for display
-  const getMessageTypeLabel = (message) => {
-    switch (message.messageType) {
-      case 'reply':
-        return "Reply Message";
-      case 'forward':
-        return "Forwarded Message";
-      default:
-        return "Message";
-    }
-  };
-
   if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
-  if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg relative">
@@ -277,7 +267,7 @@ const QmsListTrashSystemMessaging = () => {
 
                     <div>
                       <label className='view-page-label pb-[6px]'>Subject</label>
-                      <p className='view-page-data'>{selectedMessage.subject}</p>
+                      <p className='view-page-data'>{selectedMessage.subject || 'No Subject'}</p>
                     </div>
 
                     {selectedMessage.file && (
@@ -296,23 +286,23 @@ const QmsListTrashSystemMessaging = () => {
 
                     <div>
                       <label className='view-page-label pb-[6px]'>Message</label>
-                      <p className='view-page-data'>{selectedMessage.message}</p>
+                      <p className='view-page-data'>{selectedMessage.message || 'No message content'}</p>
                     </div>
 
-                    {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
+                    {selectedMessage.parent && selectedMessage.thread_root && (
                       <div className="mt-4 pt-4 border-t border-[#383840]">
                         <label className='view-page-label pb-[6px]'>In Response To</label>
                         <p className='view-page-data text-gray-400'>
-                          {selectedMessage.original_message.subject}
+                          {selectedMessage.thread_root.subject}
                         </p>
                       </div>
                     )}
 
-                    {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
+                    {selectedMessage.parent && !selectedMessage.thread_root && (
                       <div className="mt-4 pt-4 border-t border-[#383840]">
                         <label className='view-page-label pb-[6px]'>Forwarded From</label>
                         <p className='view-page-data text-gray-400'>
-                          {selectedMessage.original_message.subject}
+                          {selectedMessage.parent.subject}
                         </p>
                       </div>
                     )}
@@ -363,9 +353,9 @@ const QmsListTrashSystemMessaging = () => {
           <tbody>
             {currentItems.length > 0 ? (
               currentItems.map((item, index) => (
-                <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                   <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                  <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
+                  <td className="px-3 list-awareness-training-datas">{item.subject || 'No Subject'}</td>
                   <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
                   <td className="px-3 list-awareness-training-datas">{formatTime(item.created_at)}</td>
                   <td className="list-awareness-training-datas text-center">
@@ -374,12 +364,12 @@ const QmsListTrashSystemMessaging = () => {
                     </button>
                   </td>
                   <td className="list-awareness-training-datas text-center">
-                    <button onClick={() => handleRestore(item.id, item.messageType)}>
+                    <button onClick={() => openRestoreModal(item)}>
                       <img src={restore} alt="Restore Icon" className='w-[16px] h-[16px]' />
                     </button>
                   </td>
                   <td className="list-awareness-training-datas text-center">
-                    <button onClick={() => handleDelete(item.id, item.messageType)}>
+                    <button onClick={() => openDeleteModal(item)}>
                       <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                     </button>
                   </td>
@@ -396,34 +386,70 @@ const QmsListTrashSystemMessaging = () => {
 
       <div className="flex justify-between items-center mt-3">
         <div className='text-white total-text'>Total: {totalItems}</div>
-        <div className="flex items-center gap-5">
-          <button
-            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-            disabled={currentPage === 1}
-            onClick={() => handlePageChange(currentPage - 1)}
-          >
-            Previous
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+        {totalPages > 1 && (
+          <div className="flex items-center gap-5">
             <button
-              key={number}
-              className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
-              onClick={() => handlePageChange(number)}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
             >
-              {number}
+              Previous
             </button>
-          ))}
 
-          <button
-            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-            disabled={currentPage === totalPages}
-            onClick={() => handlePageChange(currentPage + 1)}
-          >
-            Next
-          </button>
-        </div>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+              <button
+                key={number}
+                className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                onClick={() => handlePageChange(number)}
+              >
+                {number}
+              </button>
+            ))}
+
+            <button
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmModal
+       showRestoreModal={showRestoreModal}
+        onConfirm={confirmRestore}
+        onCancel={closeAllModals}
+        deleteMessage={restoreMessage}
+        title="Confirm Restore"
+        message="Are you sure you want to restore this message?"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+        title="Confirm Delete"
+        message="Are you sure you want to permanently delete this message?"
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

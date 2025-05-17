@@ -4,28 +4,35 @@ import { Eye, Search, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsInboxForward = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  // Add this function to get current user ID
   const getCurrentUserId = () => {
     return localStorage.getItem("user_id");
   };
 
   const [formData, setFormData] = useState({
-    message_related: null,
+    message_related: id, // Maps to parent in Message model
     to_users: [],
     subject: "",
     file: null,
     message: "",
   });
+  const [originalMessage, setOriginalMessage] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -66,46 +73,47 @@ const QmsInboxForward = () => {
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError("Failed to fetch users");
     }
   };
 
-  const fetchForwardMessage = async () => {
-    if (!id) {
-      setError("Message ID not provided in URL");
-      return;
-    }
-
+  const fetchOriginalMessage = async () => {
     try {
-      setLoading(true);
       const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
-      const messageData = response.data;
+      setOriginalMessage(response.data);
+      setFormData((prev) => ({
+        ...prev,
+        subject: `Re: ${response.data.subject || "No Subject"}`,
+        message: `${response.data.message || "No Message"}`
+      }));
 
-      if (messageData.from_user && messageData.from_user.id) {
-        setFormData({
-          message_related: id,
-          to_users: [messageData.from_user.id],
-          subject: `Fwd: ${messageData.subject || ""}`,
-          file: null,
-          message: `\n\n--- Forwarded Message ---\nFrom: ${messageData.from_user.first_name} ${messageData.from_user.last_name}\nSubject: ${messageData.subject}\n\n${messageData.message}`,
-        });
-
-        setSelectedUserNames({
-          [messageData.from_user.id]: `${messageData.from_user.first_name} ${messageData.from_user.last_name}`,
-        });
+      // Auto-tick the from_user
+      if (response.data.from_user?.id) {
+        const fromUserId = response.data.from_user.id;
+        const fromUserName = `${response.data.from_user.first_name} ${response.data.from_user.last_name}`;
+        setFormData((prev) => ({
+          ...prev,
+          to_users: [fromUserId],
+        }));
+        setSelectedUserNames({ [fromUserId]: fromUserName });
       }
-
-      await fetchUsers();
     } catch (error) {
-      console.error("Error fetching forward message:", error);
-      setError("Failed to fetch message details");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching original message:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to fetch original message");
     }
   };
 
   useEffect(() => {
-    fetchForwardMessage();
+    fetchUsers();
+    fetchOriginalMessage();
   }, []);
 
   const handleInbox = () => {
@@ -190,11 +198,16 @@ const QmsInboxForward = () => {
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
       if (formData.message_related) {
-        formDataToSend.append("message_related", formData.message_related);
+        formDataToSend.append("message_related", formData.message_related); // Maps to parent
+        if (originalMessage?.thread_root?.id) {
+          formDataToSend.append("thread_root", originalMessage.thread_root.id);
+        } else {
+          formDataToSend.append("thread_root", id); // Original message is the thread root
+        }
       }
 
       formData.to_users.forEach((userId) => {
-        formDataToSend.append("to_users", userId);
+        formDataToSend.append("to_user", userId); // Maps to to_user ManyToMany
       });
 
       formDataToSend.append("subject", formData.subject);
@@ -204,7 +217,7 @@ const QmsInboxForward = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/forward-message/send/`,
+        `${BASE_URL}/qms/messages/forward/${id}/`,
         formDataToSend,
         {
           headers: {
@@ -213,9 +226,19 @@ const QmsInboxForward = () => {
         }
       );
 
-      navigate("/company/qms/list-inbox");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-outbox");
+      }, 1500);
+      setSuccessMessage("Message Forwarded Successfully")
     } catch (error) {
       console.error("Error submitting forward message:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setError(error.response?.data?.message || "Failed to send message");
     } finally {
       setLoading(false);
@@ -226,7 +249,6 @@ const QmsInboxForward = () => {
     navigate("/company/qms/list-inbox");
   };
 
-  // Filter out the current user from the list
   const filteredUsers = users.filter((user) => {
     const currentUserId = getCurrentUserId();
     return (
@@ -258,9 +280,20 @@ const QmsInboxForward = () => {
         </button>
       </div>
 
-      {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
 
-      {loading && <div className="px-[104px] py-2 text-gray-400">Loading...</div>}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
+
+      {loading && <div className="px-[104px] py-2 text-center not-found">Loading...</div>}
 
       <form
         onSubmit={handleSubmit}
@@ -421,6 +454,8 @@ const QmsInboxForward = () => {
           </button>
         </div>
       </form>
+
+
     </div>
   );
 };

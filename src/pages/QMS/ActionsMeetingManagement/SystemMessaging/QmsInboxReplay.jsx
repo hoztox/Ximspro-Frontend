@@ -4,23 +4,31 @@ import { Eye, Search, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsInboxReplay = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
   const [formData, setFormData] = useState({
-    message_related: null,
+    message_related: id,
     to_users: [],
     subject: "",
     file: null,
     message: "",
   });
   const [users, setUsers] = useState([]);
+  const [originalMessage, setOriginalMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -43,67 +51,70 @@ const QmsInboxReplay = () => {
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-    const userId = localStorage.getItem("user_id");
-    if (userRole === "user" && userId) return userId;
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
     return null;
   };
 
-  useEffect(() => {
-    const fetchReplyMessage = async () => {
-      if (!id) {
-        setError("Message ID not provided in URL");
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found");
         return;
       }
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to fetch users");
+    }
+  };
 
-      try {
-        setLoading(true);
-        const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
-        const messageData = response.data;
-        
-        if (messageData.from_user && messageData.from_user.id) {
-          setFormData({
-            message_related: id,
-            to_users: [messageData.from_user.id],
-            subject: "",
-            file: null, 
-            message: "",
-          });
-          
-          setSelectedUserNames({
-            [messageData.from_user.id]: `${messageData.from_user.first_name} ${messageData.from_user.last_name}`
-          });
-        }
-        
-        fetchUsers();
-      } catch (error) {
-        console.error("Error fetching reply message:", error);
-        setError("Failed to fetch reply message details");
-        setLoading(false);
+  const fetchOriginalMessage = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
+      setOriginalMessage(response.data);
+      setFormData((prev) => ({
+        ...prev,
+        subject: `Re: ${response.data.subject || "No Subject"}`,
+      }));
+
+      // Auto-tick the from_user
+      if (response.data.from_user?.id) {
+        const fromUserId = response.data.from_user.id;
+        const fromUserName = `${response.data.from_user.first_name} ${response.data.from_user.last_name}`;
+        setFormData((prev) => ({
+          ...prev,
+          to_users: [fromUserId],
+        }));
+        setSelectedUserNames({ [fromUserId]: fromUserName });
       }
-    };
+    } catch (error) {
+      console.error("Error fetching original message:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to fetch original message");
+    }
+  };
 
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/company/users-active/${companyId}/`
-        );
-        setUsers(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setError("Failed to fetch users");
-        setLoading(false);
-      }
-    };
-
-    fetchReplyMessage();
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchUsers(), fetchOriginalMessage()]).finally(() =>
+      setLoading(false)
+    );
   }, [id]);
 
   const handleInbox = () => {
@@ -112,22 +123,24 @@ const QmsInboxReplay = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       file: e.target.files[0],
-    });
+    }));
   };
 
   const toggleUserSelection = (userId) => {
     const user = users.find((u) => u.id === userId);
-    const userName = user ? `${user.first_name} ${user.last_name}` : "";
+    const userName = user
+      ? `${user.first_name} ${user.last_name}`
+      : "Unknown User";
 
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
@@ -144,16 +157,14 @@ const QmsInboxReplay = () => {
         return { ...prev, to_users: [...prev.to_users, userId] };
       }
     });
-
     setSearchTerm("");
   };
 
   const removeSelectedUser = (userId) => {
-    setFormData((prev) => ({
-      ...prev,
-      to_users: prev.to_users.filter((id) => id !== userId),
-    }));
-
+    setFormData((prev) => {
+      const updatedUsers = prev.to_users.filter((id) => id !== userId);
+      return { ...prev, to_users: updatedUsers };
+    });
     const newSelectedNames = { ...selectedUserNames };
     delete newSelectedNames[userId];
     setSelectedUserNames(newSelectedNames);
@@ -170,8 +181,9 @@ const QmsInboxReplay = () => {
       return;
     }
 
-    if (!formData.message_related) {
-      setError("Original message ID is missing");
+    const messageRelatedId = formData.message_related || id;
+    if (!messageRelatedId) {
+      setError("Original message ID is missing.");
       setLoading(false);
       return;
     }
@@ -185,7 +197,7 @@ const QmsInboxReplay = () => {
       }
 
       const formDataToSend = new FormData();
-      formDataToSend.append("message_related", formData.message_related);
+      formDataToSend.append("message_related", messageRelatedId);
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
       formData.to_users.forEach((userId) => {
@@ -198,7 +210,7 @@ const QmsInboxReplay = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/replay-message/send/`,
+        `${BASE_URL}/qms/messages/reply/${messageRelatedId}/`,
         formDataToSend,
         {
           headers: {
@@ -207,12 +219,21 @@ const QmsInboxReplay = () => {
         }
       );
 
-      navigate("/company/qms/list-inbox");
-      console.log("Replay sent successfully:", response.data);
-      
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-outbox");
+      }, 1500);
+      setSuccessMessage("Replay Sent Successfully")
+      console.log("Reply sent successfully:", response.data);
     } catch (error) {
       console.error("Error submitting message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to send message");
     } finally {
       setLoading(false);
     }
@@ -222,7 +243,6 @@ const QmsInboxReplay = () => {
     navigate("/company/qms/list-inbox");
   };
 
-  // Filter out the current user from the list
   const filteredUsers = users.filter((user) => {
     const currentUserId = getRelevantUserId();
     return (
@@ -252,9 +272,21 @@ const QmsInboxReplay = () => {
         </button>
       </div>
 
-      {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
 
-      {loading && <div className="px-[104px] py-2">Loading...</div>}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
+      {loading && <div className="px-[104px] py-2 text-center not-found">Loading...</div>}
+
+
 
       <form
         onSubmit={handleSubmit}
@@ -362,7 +394,10 @@ const QmsInboxReplay = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+              <button
+                className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
+                disabled={!formData.file}
+              >
                 Click to view file <Eye size={17} />
               </button>
             </div>

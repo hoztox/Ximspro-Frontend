@@ -1,6 +1,4 @@
-  const handleInbox = () => {
-    navigate("/company/qms/list-inbox");
-  };import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -42,6 +40,10 @@ const QmsEditDraftSystemMessaging = () => {
     return null;
   };
 
+  const handleInbox = () => {
+    navigate("/company/qms/list-inbox");
+  };
+
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
@@ -73,23 +75,23 @@ const QmsEditDraftSystemMessaging = () => {
           setError("Company ID not found");
           return;
         }
-        
+
         const userId = getRelevantUserId();
         const currentUserIdStr = userId ? userId.toString() : null;
-        
+
         const response = await axios.get(
           `${BASE_URL}/company/users-active/${companyId}/`
         );
-        
+
         // Filter out the current user from the users list
         const filteredUsers = response.data.filter(user => {
           const userIdStr = user.id ? user.id.toString() : null;
           return userIdStr !== currentUserIdStr;
         });
-        
+
         console.log("Current User ID:", currentUserIdStr);
         console.log("Filtered users count:", filteredUsers.length);
-        
+
         setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
@@ -108,22 +110,22 @@ const QmsEditDraftSystemMessaging = () => {
           const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
           const message = response.data;
           console.log('Response from API:', message);
-          
+
           if (message.is_draft) {
             // Handle to_user as array of objects with id property
-            const toUserIds = Array.isArray(message.to_user) 
-              ? message.to_user.map(user => user.id) 
+            const toUserIds = Array.isArray(message.to_user)
+              ? message.to_user.map(user => user.id)
               : [];
-            
+
             // Get current user ID for filtering
             const currentId = getRelevantUserId();
             const currentIdStr = currentId ? currentId.toString() : null;
-            
+
             // Filter out current user from recipients
-            const filteredUserIds = toUserIds.filter(id => 
+            const filteredUserIds = toUserIds.filter(id =>
               id.toString() !== currentIdStr
             );
-            
+
             // Create mapping of usernames
             const userNames = {};
             if (Array.isArray(message.to_user)) {
@@ -134,7 +136,7 @@ const QmsEditDraftSystemMessaging = () => {
                 }
               });
             }
-            
+
             setFormData({
               to_users: filteredUserIds,
               subject: message.subject || "",
@@ -232,7 +234,7 @@ const QmsEditDraftSystemMessaging = () => {
       const formDataToSend = new FormData();
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
-      
+
       // Make sure we're not including the current user in to_user
       const currentUserIdStr = fromUserId.toString();
       formData.to_users.forEach((userId) => {
@@ -240,21 +242,21 @@ const QmsEditDraftSystemMessaging = () => {
           formDataToSend.append("to_user", userId);
         }
       });
-      
+
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
       if (formData.file instanceof File) {
         formDataToSend.append("file", formData.file);
       }
       if (id) {
-        formDataToSend.append("id", id); // Include ID to update draft to sent
+        formDataToSend.append("id", id);
       }
-      
-      console.log("Sending message to users:", formData.to_users.filter(id => 
+
+      console.log("Sending message to users:", formData.to_users.filter(id =>
         id.toString() !== currentUserIdStr));
-      
-      const response = await axios.post(
-        `${BASE_URL}/qms/message-draft/edit/${id}`,
+
+      const response = await axios.put(
+        `${BASE_URL}/qms/messages/draft/${id}/send/`,
         formDataToSend,
         {
           headers: {
@@ -284,7 +286,7 @@ const QmsEditDraftSystemMessaging = () => {
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
-      if (inputElement) { 
+      if (inputElement) {
         inputElement.focus();
       }
     }

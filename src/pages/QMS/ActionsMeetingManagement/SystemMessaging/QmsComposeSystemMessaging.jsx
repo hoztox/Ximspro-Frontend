@@ -4,6 +4,8 @@ import { Eye, Search, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsComposeSystemMessaging = () => {
   const navigate = useNavigate();
@@ -20,6 +22,11 @@ const QmsComposeSystemMessaging = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
   const [currentUserId, setCurrentUserId] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -76,6 +83,10 @@ const QmsComposeSystemMessaging = () => {
         setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setError("Failed to fetch users");
       }
     };
@@ -194,10 +205,20 @@ const QmsComposeSystemMessaging = () => {
         }
       );
 
-      navigate("/company/qms/list-inbox");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-inbox");
+      }, 1500);
+      setSuccessMessage("Message Sent Successfully")
     } catch (error) {
       console.error("Error submitting message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setError("Failed to send message");
     } finally {
       setLoading(false);
     }
@@ -216,75 +237,56 @@ const QmsComposeSystemMessaging = () => {
         throw new Error("Missing required user information");
       }
 
-      // Prepare the data as a JSON object
-      const dataToSend = {
-        company: companyId,
-        from_user: fromUserId,
-        to_user: formData.to_user, // This is already an array of integers
-        subject: formData.subject || "(No Subject)",
-        message: formData.message || "",
-        is_draft: true,
-      };
+      const formDataToSend = new FormData();
 
-      // If there's a file, we'll need to handle it differently
+      formDataToSend.append("company", companyId);
+      formDataToSend.append("from_user", fromUserId);
+
+      // Append each user ID individually for to_user
+      formData.to_user.forEach((userId) => {
+        formDataToSend.append("to_user", userId);
+      });
+
+      formDataToSend.append("subject", formData.subject || "(No Subject)");
+      formDataToSend.append("message", formData.message || "");
+      formDataToSend.append("is_draft", "true");
+
       if (formData.file) {
-        const formDataToSend = new FormData();
-        console.log('Form data to send:', formData); 
-        
-        formDataToSend.append("company", companyId);
-        formDataToSend.append("from_user", fromUserId);
-        formDataToSend.append("to_user", JSON.stringify(formData.to_user)); // Stringify the array
-        formDataToSend.append("subject", formData.subject || "(No Subject)");
-        formDataToSend.append("message", formData.message || "");
-        formDataToSend.append("is_draft", "true");
         formDataToSend.append("file", formData.file);
+      }
 
-        const response = await axios.post(
-          `${BASE_URL}/qms/message/draft-create/`,
-          formDataToSend,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        if (response.data?.message === "Message saved as draft") {
-          navigate("/company/qms/list-draft");
-        } else {
-          throw new Error("Unexpected response from server");
+      const response = await axios.post(
+        `${BASE_URL}/qms/messages/draft/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
+      );
+
+      if (response.data?.message === "Draft saved successfully.") {
+
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate("/company/qms/list-draft");
+        }, 1500);
+        setSuccessMessage("Message Drafted Successfully")
       } else {
-        // Send as JSON if no file
-        const response = await axios.post(
-          `${BASE_URL}/qms/message/draft-create/`,
-          dataToSend,
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (response.data?.message === "Message saved as draft") {
-          navigate("/company/qms/list-draft");
-        } else {
-          throw new Error("Unexpected response from server");
-        }
+        throw new Error("Unexpected response from server");
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      setError(error.response?.data?.message || "Failed to save draft");
-
-      if (error.response) {
-        console.log("Backend response data:", error.response.data);
-        console.log("Backend response status:", error.response.status);
-      }
+      setError("Failed to save draft");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setDraftLoading(false);
     }
   };
-
 
   const handleCancel = () => {
     navigate("/company/qms/list-inbox");
@@ -317,7 +319,17 @@ const QmsComposeSystemMessaging = () => {
         </button>
       </div>
 
-      {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
       <form
         onSubmit={handleSubmit}

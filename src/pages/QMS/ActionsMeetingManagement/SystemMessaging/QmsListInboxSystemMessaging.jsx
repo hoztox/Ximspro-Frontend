@@ -9,18 +9,28 @@ import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import "./viewpage.css"
 import { motion, AnimatePresence } from 'framer-motion';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListInboxSystemMessaging = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedMessage, setSelectedMessage] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [inboxMessages, setInboxMessages] = useState([]);
-    const [replyMessages, setReplyMessages] = useState([]);
-    const [forwardMessages, setForwardMessages] = useState([]);
+    const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    // const [draftCount, setDraftCount] = useState(0);
 
     // Get the relevant user ID for API calls
     const getRelevantUserId = () => {
@@ -38,38 +48,34 @@ const QmsListInboxSystemMessaging = () => {
     };
 
     useEffect(() => {
-        const fetchAllMessages = async () => {
+        const fetchMessages = async () => {
+            setLoading(true);
             try {
                 const userId = getRelevantUserId();
-
                 if (!userId) {
                     throw new Error("User ID not found");
                 }
+                const response = await axios.get(`${BASE_URL}/qms/messages/received/${userId}`);
 
-                // Fetch inbox, reply, and forward messages
-                const [inboxResponse, replyResponse, forwardResponse] = await Promise.all([
-                    axios.get(`${BASE_URL}/qms/messages/inbox/${userId}/`),
-                    axios.get(`${BASE_URL}/qms/messages-replay/inbox/${userId}/`),
-                    axios.get(`${BASE_URL}/qms/messages-forward/inbox/${userId}/`)
-                ]);
+                // const draftResponse = await axios.get(
+                //     `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+                // );
+                // setDraftCount(draftResponse.data.count);
 
-                setInboxMessages(inboxResponse.data);
-                setReplyMessages(replyResponse.data);
-                setForwardMessages(forwardResponse.data);
-                setLoading(false);
-                console.log('Fetched inbox messages:', inboxResponse.data);
-                console.log('Fetched reply messages:', replyResponse.data);
-                console.log('Fetched forward messages:', forwardResponse.data);
-
+                setMessages(response.data);
+                console.log("sssssssssssss", response.data)
+                setError(null);
             } catch (err) {
-                console.error("Error fetching messages:", err);
+                console.error('Error fetching messages:', err);
                 setError(err.message || "Failed to fetch messages");
+                setShowErrorModal(true);
+            } finally {
                 setLoading(false);
             }
         };
 
-        fetchAllMessages();
-    }, []);
+        fetchMessages();
+    }, [currentPage]);
 
     // Format date from created_at
     const formatDate = (dateString) => {
@@ -92,21 +98,62 @@ const QmsListInboxSystemMessaging = () => {
         return `${hours}:${minutes}:${seconds}${ampm}`;
     };
 
-    // Combine messages with type indicator
-    const allMessages = [
-        ...inboxMessages.map(msg => ({ ...msg, messageType: 'inbox' })),
-        ...replyMessages.map(msg => ({ ...msg, messageType: 'reply' })),
-        ...forwardMessages.map(msg => ({ ...msg, messageType: 'forward' }))
-    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    // Open delete confirmation modal
+    const openDeleteModal = (message) => {
+        setMessageToDelete(message);
+        setShowDeleteModal(true);
+        setDeleteMessage('Message');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!messageToDelete) return;
+
+        try {
+            const userId = getRelevantUserId();
+            if (!userId) {
+                throw new Error("User ID not found");
+            }
+
+            await axios.patch(`${BASE_URL}/qms/messages/trash/${messageToDelete.id}/`, {
+                user_id: userId,
+            });
+
+            setMessages(prevMessages => prevMessages.filter(msg => msg.id !== messageToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Message moved to trash successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (error) {
+            console.error("Error moving message to trash:", error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setError(error.message || "Failed to move message to trash");
+        }
+    };
 
     const itemsPerPage = 10;
-    const totalItems = allMessages.length;
+    const totalItems = messages.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Filter items based on search query
-    const filteredItems = allMessages.filter(item =>
-        item.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.from_user && item.from_user.name && item.from_user.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    const filteredItems = messages.filter(item =>
+        (item.subject && item.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.from_user && (
+            (item.from_user.first_name && item.from_user.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (item.from_user.last_name && item.from_user.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+        ))
     );
 
     // Get current page items
@@ -134,12 +181,12 @@ const QmsListInboxSystemMessaging = () => {
         navigate('/company/qms/compose');
     };
 
-    const handleInboxReplay = (id, messageType) => {
-        navigate(`/company/qms/inbox-replay/${id}`, { state: { messageType } });
+    const handleInboxReplay = (id) => {
+        navigate(`/company/qms/inbox-replay/${id}`);
     };
 
-    const handleInboxForward = (id, messageType) => {
-        navigate(`/company/qms/inbox-forward/${id}`, { state: { messageType } });
+    const handleInboxForward = (id) => {
+        navigate(`/company/qms/inbox-forward/${id}`);
     };
 
     const handleView = (item) => {
@@ -152,48 +199,6 @@ const QmsListInboxSystemMessaging = () => {
         setTimeout(() => setSelectedMessage(null), 300);
     };
 
-    const handleDelete = async (id, messageType) => {
-        try {
-            const userId = getRelevantUserId();
-            if (!userId) {
-                throw new Error("User ID not found");
-            }
-
-            let deleteUrl;
-            switch (messageType) {
-                case 'inbox':
-                    deleteUrl = `${BASE_URL}/qms/messages/${id}/trash/`;
-                    break;
-                case 'reply':
-                    deleteUrl = `${BASE_URL}/qms/messages-replay/${id}/trash/`;
-                    break;
-                case 'forward':
-                    deleteUrl = `${BASE_URL}/qms/messages-forward/${id}/trash/`;
-                    break;
-                default:
-                    throw new Error("Invalid message type");
-            }
-
-            await axios.put(deleteUrl, {
-                is_trash: true,
-                trash_user: userId
-            });
-
-            // Update local state
-            if (messageType === 'inbox') {
-                setInboxMessages(inboxMessages.filter(msg => msg.id !== id));
-            } else if (messageType === 'reply') {
-                setReplyMessages(replyMessages.filter(msg => msg.id !== id));
-            } else if (messageType === 'forward') {
-                setForwardMessages(forwardMessages.filter(msg => msg.id !== id));
-            }
-        } catch (err) {
-            console.error("Error deleting message:", err);
-            setError(err.message || "Failed to delete message");
-        }
-    };
-
-    // Determine message type for display
     const getMessageTypeLabel = (message) => {
         switch (message.messageType) {
             case 'reply':
@@ -205,8 +210,7 @@ const QmsListInboxSystemMessaging = () => {
         }
     };
 
-    if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
-    if (error) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
+    if (loading) return <div className="bg-[#1C1C24] text-center not-found p-5 rounded-lg">Loading...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg relative">
@@ -246,23 +250,17 @@ const QmsListInboxSystemMessaging = () => {
 
                                     <div className='space-y-[40px] pt-5'>
                                         <div>
-                                            <label className='view-page-label pb-[6px]'>To</label>
-                                            <ul className='view-page-data list-disc list-inside space-y-1'>
-                                                {selectedMessage.to_user?.length > 0 ? (
-                                                    selectedMessage.to_user.map(user => (
-                                                        <li key={user.id}>
-                                                            {user.first_name} {user.last_name}
-                                                        </li>
-                                                    ))
-                                                ) : (
-                                                    <li>Anonymous</li>
-                                                )}
-                                            </ul>
+                                            <label className='view-page-label pb-[6px]'>From</label>
+                                            <p className='view-page-data'>
+                                                {selectedMessage.from_user ?
+                                                    `${selectedMessage.from_user.first_name || ''} ${selectedMessage.from_user.last_name || ''}`.trim() || 'Anonymous'
+                                                    : 'Anonymous'}
+                                            </p>
                                         </div>
 
                                         <div>
                                             <label className='view-page-label pb-[6px]'>Subject</label>
-                                            <p className='view-page-data'>{selectedMessage.subject}</p>
+                                            <p className='view-page-data'>{selectedMessage.subject || 'No Subject'}</p>
                                         </div>
 
                                         {selectedMessage.file && (
@@ -281,26 +279,8 @@ const QmsListInboxSystemMessaging = () => {
 
                                         <div>
                                             <label className='view-page-label pb-[6px]'>Message</label>
-                                            <p className='view-page-data'>{selectedMessage.message}</p>
+                                            <p className='view-page-data'>{selectedMessage.message || 'No message content'}</p>
                                         </div>
-
-                                        {selectedMessage.messageType === 'reply' && selectedMessage.original_message && (
-                                            <div className="mt-4 pt-4 border-t border-[#383840]">
-                                                <label className='view-page-label pb-[6px]'>In Response To</label>
-                                                <p className='view-page-data text-gray-400'>
-                                                    {selectedMessage.original_message.subject}
-                                                </p>
-                                            </div>
-                                        )}
-
-                                        {selectedMessage.messageType === 'forward' && selectedMessage.original_message && (
-                                            <div className="mt-4 pt-4 border-t border-[#383840]">
-                                                <label className='view-page-label pb-[6px]'>Forwarded From</label>
-                                                <p className='view-page-data text-gray-400'>
-                                                    {selectedMessage.original_message.subject}
-                                                </p>
-                                            </div>
-                                        )}
                                     </div>
                                 </>
                             )}
@@ -341,6 +321,11 @@ const QmsListInboxSystemMessaging = () => {
                         onClick={handleDraft}
                     >
                         <span>Draft</span>
+                        {/* {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[10px] right-[130px]">
+                                {draftCount}
+                            </span>
+                        )} */}
                     </button>
                     <button
                         className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -354,12 +339,13 @@ const QmsListInboxSystemMessaging = () => {
                 <table className="w-full">
                     <thead className='bg-[#24242D]'>
                         <tr className='h-[48px]'>
-                            <th className="px-3 text-left list-awareness-training-thead w-[10%]">No</th>
-                            <th className="px-3 text-left list-awareness-training-thead w-[20%]">Title</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[5%]">No</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[15%]">From</th>
+                            <th className="px-3 text-left list-awareness-training-thead w-[30%]">Subject</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[15%]">Date</th>
                             <th className="px-3 text-left list-awareness-training-thead w-[10%]">Time</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
-                            <th className="px-3 text-center list-awareness-training-thead">Replay</th>
+                            <th className="px-3 text-center list-awareness-training-thead">Reply</th>
                             <th className="px-3 text-center list-awareness-training-thead">Forward</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
                         </tr>
@@ -367,9 +353,20 @@ const QmsListInboxSystemMessaging = () => {
                     <tbody>
                         {currentItems.length > 0 ? (
                             currentItems.map((item, index) => (
-                                <tr key={`${item.id}-${item.messageType}`} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
+                                <tr key={item.id} className="border-b border-[#383840] hover:bg-[#131318] cursor-pointer h-[50px]">
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.subject || 'N/A'}</td>
+                                    <td className="px-3 list-awareness-training-datas">
+                                        {item.from_user ?
+                                            `${item.from_user.first_name || ''} ${item.from_user.last_name || ''}`.trim() || 'Anonymous'
+                                            : 'Anonymous'}
+                                    </td>
+                                    <td className="px-3 list-awareness-training-datas">
+                                        <div className="flex items-center">
+                                            {item.parent && <span className="text-blue-400 mr-2">↩</span>}
+                                            {item.thread_root && item.thread_root.id !== item.id && <span className="text-green-400 mr-2">↳</span>}
+                                            {item.subject || 'No Subject'}
+                                        </div>
+                                    </td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.created_at)}</td>
                                     <td className="px-3 list-awareness-training-datas">{formatTime(item.created_at)}</td>
                                     <td className="list-awareness-training-datas text-center">
@@ -378,18 +375,18 @@ const QmsListInboxSystemMessaging = () => {
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleInboxReplay(item.id, item.messageType)}>
-                                            <img src={replay} alt="replay Icon" className='w-[16px] h-[16px]' />
+                                        <button onClick={() => handleInboxReplay(item.id)}>
+                                            <img src={replay} alt="Reply Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleInboxForward(item.id, item.messageType)}>
-                                            <img src={forward} alt="forward Icon" className='w-[16px] h-[16px]' />
+                                        <button onClick={() => handleInboxForward(item.id)}>
+                                            <img src={forward} alt="Forward Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
-                                        <button onClick={() => handleDelete(item.id, item.messageType)}>
-                                            <img src={deletes} alt="delete Icon" className='w-[16px] h-[16px]' />
+                                        <button onClick={() => openDeleteModal(item)}>
+                                            <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                         </button>
                                     </td>
                                 </tr>
@@ -405,34 +402,58 @@ const QmsListInboxSystemMessaging = () => {
 
             <div className="flex justify-between items-center mt-3">
                 <div className='text-white total-text'>Total: {totalItems}</div>
-                <div className="flex items-center gap-5">
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-                        disabled={currentPage === 1}
-                        onClick={() => handlePageChange(currentPage - 1)}
-                    >
-                        Previous
-                    </button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                {totalPages > 1 && (
+                    <div className="flex items-center gap-5">
                         <button
-                            key={number}
-                            className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
-                            onClick={() => handlePageChange(number)}
+                            className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
+                            disabled={currentPage === 1}
+                            onClick={() => handlePageChange(currentPage - 1)}
                         >
-                            {number}
+                            Previous
                         </button>
-                    ))}
 
-                    <button
-                        className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-                        disabled={currentPage === totalPages}
-                        onClick={() => handlePageChange(currentPage + 1)}
-                    >
-                        Next
-                    </button>
-                </div>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                            <button
+                                key={number}
+                                className={`w-8 h-8 rounded-md ${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
+                                onClick={() => handlePageChange(number)}
+                            >
+                                {number}
+                            </button>
+                        ))}
+
+                        <button
+                            className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
+                            disabled={currentPage === totalPages}
+                            onClick={() => handlePageChange(currentPage + 1)}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

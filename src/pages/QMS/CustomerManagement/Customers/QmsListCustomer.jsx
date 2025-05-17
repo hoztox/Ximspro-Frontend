@@ -95,7 +95,7 @@ const QmsListCustomer = () => {
         const userId = getRelevantUserId();
 
         const draftResponse = await axios.get(
-          `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+          `${BASE_URL}/qms/customer/drafts-count/${userId}/`
         );
         setDraftCount(draftResponse.data.count);
 
