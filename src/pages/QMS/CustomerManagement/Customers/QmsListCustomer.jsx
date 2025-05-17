@@ -7,6 +7,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListCustomer = () => {
   // State
@@ -16,6 +19,15 @@ const QmsListCustomer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [draftCount, setDraftCount] = useState(0);
 
   // Get company ID function (reused from supplier component)
   const getUserCompanyId = () => {
@@ -32,6 +44,21 @@ const QmsListCustomer = () => {
         return null;
       }
     }
+
+    return null;
+  };
+
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
 
     return null;
   };
@@ -64,11 +91,40 @@ const QmsListCustomer = () => {
             : formatDate(new Date()),
         }));
         setCustomers(formattedData);
+
+        const userId = getRelevantUserId();
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
         setError(null);
         console.log("customers", response);
       } catch (err) {
-        setError("Failed to fetch customers data");
+        let errorMsg = "Failed to fetch customers data";
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         console.error("Error fetching customers:", err);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setLoading(false);
       }
@@ -83,6 +139,60 @@ const QmsListCustomer = () => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = (customer) => {
+    setCustomerToDelete(customer);
+    setShowDeleteModal(true);
+    setDeleteMessage('Customer');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
+
+    try {
+      await axios.delete(`${BASE_URL}/qms/customer/${customerToDelete.customer_id}/`);
+      setCustomers(customers.filter(item => item.customer_id !== customerToDelete.customer_id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Customer Deleted Successfully");
+    } catch (err) {
+      console.error("Error deleting customer:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = "Failed to delete customer";
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowDeleteModal(false);
+    }
   };
 
   const itemsPerPage = 10;
@@ -111,20 +221,6 @@ const QmsListCustomer = () => {
     setCurrentPage(pageNumber);
   };
 
-  const handleDeleteItem = async (customerId) => {
-    if (window.confirm("Are you sure you want to delete this customer?")) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/customer/${customerId}/`);
-        setCustomers(
-          customers.filter((item) => item.customer_id !== customerId)
-        );
-      } catch (err) {
-        console.error("Error deleting customer:", err);
-        alert("Failed to delete customer");
-      }
-    }
-  };
-
   const handleAddCustomer = () => {
     navigate("/company/qms/add-customer");
   };
@@ -143,14 +239,8 @@ const QmsListCustomer = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-64 text-white">
+      <div className="flex justify-center items-center h-64 not-found">
         Loading customers...
-      </div>
-    );
-  if (error && customers.length === 0)
-    return (
-      <div className="flex justify-center items-center h-64 text-red-500">
-        {error}
       </div>
     );
 
@@ -176,6 +266,11 @@ const QmsListCustomer = () => {
             onClick={handleDraftCustomer}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[203px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -273,7 +368,7 @@ const QmsListCustomer = () => {
                   <td className="list-awareness-training-datas text-center">
                     <div className="flex justify-center items-center h-[50px]">
                       <button
-                        onClick={() => handleDeleteItem(item.customer_id)}
+                        onClick={() => openDeleteModal(item)}
                       >
                         <img
                           src={deletes}
@@ -300,9 +395,8 @@ const QmsListCustomer = () => {
         <div className="text-white total-text">Total: {totalItems}</div>
         <div className="flex items-center gap-5">
           <button
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
             disabled={currentPage === 1}
             onClick={() => handlePageChange(currentPage - 1)}
           >
@@ -312,9 +406,8 @@ const QmsListCustomer = () => {
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
             <button
               key={number}
-              className={`w-8 h-8 rounded-md ${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`w-8 h-8 rounded-md ${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
               onClick={() => handlePageChange(number)}
             >
               {number}
@@ -322,9 +415,8 @@ const QmsListCustomer = () => {
           ))}
 
           <button
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
             disabled={currentPage === totalPages}
             onClick={() => handlePageChange(currentPage + 1)}
           >
@@ -332,8 +424,30 @@ const QmsListCustomer = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
 
-export default QmsListCustomer;
+export default QmsListCustomer; 

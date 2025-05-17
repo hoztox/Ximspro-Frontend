@@ -5,11 +5,13 @@ import { countries } from 'countries-list';
 import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import axios from 'axios';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditCustomer = () => {
     const { id } = useParams(); // Get ID from URL parameters
     const navigate = useNavigate();
-    
+
     // Convert countries object to a sorted array of country names
     const countryList = Object.values(countries)
         .map(country => country.name)
@@ -38,7 +40,10 @@ const QmsEditCustomer = () => {
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [errors, setErrors] = useState({});
+
+    const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [error, setError] = useState('');
 
@@ -57,8 +62,30 @@ const QmsEditCustomer = () => {
             if (userData) {
                 try {
                     return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
+                } catch (err) {
+                    console.error("Error parsing user company ID:", err);
+                    let errorMsg = "Failed to fetch company ID";
+
+                    if (err.response) {
+                        // Check for field-specific errors first
+                        if (err.response.data.date) {
+                            errorMsg = err.response.data.date[0];
+                        }
+                        // Check for non-field errors
+                        else if (err.response.data.detail) {
+                            errorMsg = err.response.data.detail;
+                        } else if (err.response.data.message) {
+                            errorMsg = err.response.data.message;
+                        }
+                    } else if (err.message) {
+                        errorMsg = err.message;
+                    }
+
+                    setError(errorMsg);
+                    setShowErrorModal(true);
+                    setTimeout(() => {
+                        setShowErrorModal(false);
+                    }, 3000);
                     return null;
                 }
             }
@@ -123,8 +150,29 @@ const QmsEditCustomer = () => {
 
         } catch (error) {
             console.error('Error fetching customer data:', error);
-            setError('Failed to load customer data. Please try again.');
+            let errorMsg = 'Failed to fetch customer data.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setFetchLoading(false);
         }
@@ -242,9 +290,28 @@ const QmsEditCustomer = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/list-customer');
             }, 1500);
+            setSuccessMessage("Customer updated successfully")
         } catch (error) {
             console.error('Error updating customer:', error);
-            setError(error.response?.data?.message || 'Failed to update customer. Please try again.');
+            let errorMsg = 'Failed to update customer. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -267,7 +334,7 @@ const QmsEditCustomer = () => {
 
     if (fetchLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex items-center justify-center h-96">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex items-center justify-center h-96">
                 <p>Loading customer data...</p>
             </div>
         );
@@ -285,23 +352,17 @@ const QmsEditCustomer = () => {
                 </button>
             </div>
 
-            {/* Success Modal */}
-            {showSuccessModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-green-500 text-lg">Customer updated successfully!</p>
-                    </div>
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
 
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-red-500 text-lg">{error || 'An error occurred'}</p>
-                    </div>
-                </div>
-            )}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -332,7 +393,7 @@ const QmsEditCustomer = () => {
                         className="add-training-inputs"
                     />
                 </div>
-                
+
                 {/* Address field added to match the model */}
                 <div className="flex flex-col gap-3 col-span-2">
                     <label className="add-training-label">
@@ -434,7 +495,7 @@ const QmsEditCustomer = () => {
                         name="contact_person"
                         value={formData.contact_person}
                         onChange={handleChange}
-                        className="add-training-inputs" 
+                        className="add-training-inputs"
                     />
                 </div>
 
@@ -515,7 +576,7 @@ const QmsEditCustomer = () => {
                                 onClick={() => handleViewFile(attachmentFile.url)}
                                 className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'
                             >
-                                Click to view file <Eye size={17}/>
+                                Click to view file <Eye size={17} />
                             </button>
                         )}
                         <div>
@@ -542,7 +603,7 @@ const QmsEditCustomer = () => {
                             className="save-btn duration-200"
                             disabled={loading}
                         >
-                            {loading ? 'Saving...' : 'Save'}
+                            {loading ? 'Updating...' : 'Update'}
                         </button>
                     </div>
                 </div>

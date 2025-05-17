@@ -5,13 +5,15 @@ import { countries } from 'countries-list';
 import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import axios from 'axios';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftCustomer = () => {
     const { id } = useParams();
-    console.log('aaaa:',id);
-    
+    console.log('aaaa:', id);
+
     const navigate = useNavigate();
-    
+
     // Convert countries object to a sorted array of country names
     const countryList = Object.values(countries)
         .map(country => country.name)
@@ -38,8 +40,12 @@ const QmsEditDraftCustomer = () => {
     const [loading, setLoading] = useState(false);
     const [fetchLoading, setFetchLoading] = useState(true);
     const [errors, setErrors] = useState({});
+
+    const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     const [showErrorModal, setShowErrorModal] = useState(false);
+
     const [error, setError] = useState('');
 
     const handleListDraftCustomer = () => {
@@ -121,8 +127,29 @@ const QmsEditDraftCustomer = () => {
 
         } catch (error) {
             console.error('Error fetching draft customer data:', error);
-            setError('Failed to load draft customer data. Please try again.');
+            let errorMsg = 'Failed to fetch draft customer data. Please try again. ';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setFetchLoading(false);
         }
@@ -238,9 +265,28 @@ const QmsEditDraftCustomer = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/draft-customer');
             }, 1500);
+            setSuccessMessage("Customer updated successfully")
         } catch (error) {
             console.error('Error updating draft customer:', error);
-            setError(error.response?.data?.message || 'Failed to update draft customer. Please try again.');
+            let errorMsg = 'Failed to update draft customer.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -263,7 +309,7 @@ const QmsEditDraftCustomer = () => {
 
     if (fetchLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex items-center justify-center h-96">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex items-center justify-center h-96">
                 <p>Loading draft customer data...</p>
             </div>
         );
@@ -281,23 +327,18 @@ const QmsEditDraftCustomer = () => {
                 </button>
             </div>
 
-            {/* Success Modal */}
-            {showSuccessModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-green-500 text-lg">Draft customer updated successfully!</p>
-                    </div>
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
 
-            {/* Error Modal */}
-            {showErrorModal && (
-                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-                    <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-                        <p className="text-red-500 text-lg">{error || 'An error occurred'}</p>
-                    </div>
-                </div>
-            )}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -498,7 +539,7 @@ const QmsEditDraftCustomer = () => {
                                 onClick={() => handleViewFile(attachmentFile.url)}
                                 className='flex items-center gap-2 click-view-file-btn text-[#1E84AF]'
                             >
-                                Click to view file <Eye size={17}/>
+                                Click to view file <Eye size={17} />
                             </button>
                         )}
                         <div>

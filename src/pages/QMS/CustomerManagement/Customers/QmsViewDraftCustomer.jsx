@@ -43,20 +43,8 @@ const QmsViewDraftCustomer = () => {
     };
 
     if (loading) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
+        <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-96">
             Loading draft customer data...
-        </div>
-    );
-
-    if (error) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-            {error}
-        </div>
-    );
-
-    if (!customer) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-            Draft customer not found
         </div>
     );
 

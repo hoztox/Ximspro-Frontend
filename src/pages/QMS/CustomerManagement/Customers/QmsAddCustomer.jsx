@@ -194,7 +194,25 @@ const QmsAddCustomer = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            let errorMsg = 'Failed to fetch users';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -236,7 +254,25 @@ const QmsAddCustomer = () => {
             setSuccessMessage("Customer Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError(error.response?.data?.message || 'Failed to save customer. Please try again.');
+            let errorMsg = 'Failed to add customer. Please try again.';
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
@@ -271,12 +307,28 @@ const QmsAddCustomer = () => {
             setSuccessMessage("Customer Drafted Successfully")
         } catch (err) {
             setDraftLoading(false);
-            const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            setError(errorMessage);
+            let errorMsg = "Failed to draft customer";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             console.error('Error saving Draft:', err.response?.data || err);
         }
     };

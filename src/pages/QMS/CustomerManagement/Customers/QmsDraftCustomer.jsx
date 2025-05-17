@@ -5,6 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from '../../../../Utils/Config';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftCustomer = () => {
     const [customers, setCustomers] = useState([]);
@@ -13,6 +16,14 @@ const QmsDraftCustomer = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [customerToDelete, setCustomerToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -53,8 +64,29 @@ const QmsDraftCustomer = () => {
                 setError(null);
                 console.log('customers', response);
             } catch (err) {
-                setError('Failed to fetch draft customers data');
+                let errorMsg = "Failed to fetch customers";
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    } else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
                 console.error('Error fetching draft customers:', err);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
             } finally {
                 setLoading(false);
             }
@@ -71,16 +103,57 @@ const QmsDraftCustomer = () => {
         setCurrentPage(1);
     };
 
-    // Handle delete customer
-    const handleDeleteCustomer = async (customerId) => {
-        if (window.confirm('Are you sure you want to delete this draft customer?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/customer/${customerId}/`);
-                setCustomers(customers.filter(customer => customer.id !== customerId));
-            } catch (err) {
-                console.error('Error deleting draft customer:', err);
-                alert('Failed to delete draft customer');
+    // Open delete confirmation modal
+    const openDeleteModal = (customer) => {
+        setCustomerToDelete(customer);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Customer');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!customerToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/customer/${customerToDelete.id}/`);
+            setCustomers(customers.filter(customer => customer.id !== customerToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Draft Customer Deleted Successfully");
+        } catch (err) {
+            console.error('Error deleting draft customer:', err);
+            let errorMsg = "Failed to delete draft customer";
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteModal(false);
         }
     };
 
@@ -122,8 +195,7 @@ const QmsDraftCustomer = () => {
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-    if (loading) return <div className="flex justify-center items-center h-64 text-white">Loading draft customers...</div>;
-    if (error) return <div className="flex justify-center items-center h-64 text-red-500">{error}</div>;
+    if (loading) return <div className="flex justify-center items-center h-64 not-found">Loading draft customers...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -168,7 +240,7 @@ const QmsDraftCustomer = () => {
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.name}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.email}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.address}</td> 
+                                    <td className="px-3 list-awareness-training-datas">{item.address}</td>
                                     <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
                                         <button onClick={() => handleEditDraftCustomer(item.id)}>
                                             Click to Continue
@@ -183,7 +255,7 @@ const QmsDraftCustomer = () => {
                                     </td>
                                     <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
-                                            <button onClick={() => handleDeleteCustomer(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deletes} alt="Delete Icon" className='w-[16px] h-[16px]' />
                                             </button>
                                         </div>
@@ -231,6 +303,28 @@ const QmsDraftCustomer = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };
