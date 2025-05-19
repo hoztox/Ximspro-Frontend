@@ -5,6 +5,9 @@ import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "./Modals/DeleteConfimModal";
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
 
 const QmsViewNonConformityReport = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +30,13 @@ const QmsViewNonConformityReport = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -38,9 +48,30 @@ const QmsViewNonConformityReport = () => {
         setFormData(response.data);
         setLoading(false);
       } catch (err) {
-        setError("Failed to load data");
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
         console.error("Error fetching conformity report data:", err);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       }
     };
 
@@ -57,15 +88,53 @@ const QmsViewNonConformityReport = () => {
     navigate(`/company/qms/edit-nonconformity/${id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/conformity/${id}/`);
+  // Open delete confirmation modal
+  const openDeleteModal = () => {
+    setShowDeleteModal(true);
+    setDeleteMessage('Nonconformity Report');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/conformity/${id}/`);
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Nonconformity Report Deleted Successfully");
+      setTimeout(() => {
         navigate("/company/qms/list-nonconformity");
-      } catch (err) {
-        console.error("Error deleting conformity report:", err);
-        alert("Failed to delete item");
+      }, 2000);
+    } catch (err) {
+      console.error("Error deleting conformity report:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setShowDeleteModal(false);
     }
   };
 
@@ -78,7 +147,7 @@ const QmsViewNonConformityReport = () => {
 
   // Format dates for display
   const formatDate = (dateString) => {
-   if (!dateString) return "-";
+    if (!dateString) return "-";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
@@ -128,17 +197,6 @@ const QmsViewNonConformityReport = () => {
               {formData.root_cause?.title || "N/A"}
             </div>
           </div>
-
-          {/* {formData.supplier && (
-            <div>
-              <label className="block view-employee-label mb-[6px]">
-                Supplier
-              </label>
-              <div className="view-employee-data">
-                {formData.supplier.company_name || "N/A"}
-              </div>
-            </div>
-          )} */}
 
           <div>
             <label className="block view-employee-label mb-[6px]">
@@ -208,7 +266,7 @@ const QmsViewNonConformityReport = () => {
 
                 <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                   Delete
-                  <button onClick={() => handleDelete(id)}>
+                  <button onClick={openDeleteModal}>
                     <img src={deletes} alt="Delete Icon" />
                   </button>
                 </div>
@@ -217,6 +275,28 @@ const QmsViewNonConformityReport = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

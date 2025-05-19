@@ -5,6 +5,9 @@ import deleteIcon from "../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "./Modals/DeleteConfimModal";
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
 
 const QmsDraftNonConformityReport = () => {
   const getRelevantUserId = () => {
@@ -28,28 +31,61 @@ const QmsDraftNonConformityReport = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [reportToDelete, setReportToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   // Fetch draft non-conformity reports from API
   useEffect(() => {
     const fetchDraftNonConformity = async () => {
       if (!id) {
         setError("User/Company ID not found");
         setLoading(false);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         return;
       }
 
       try {
+        setLoading(true);
         const response = await axios.get(
           `${BASE_URL}/qms/conformity/draft/${id}/`
         );
-        console.log("Draft Non Conformity:", response.data);
         // Filter for draft reports only
         const draftReports = response.data.filter((report) => report.is_draft);
         setNonConformity(draftReports);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching draft Non Conformity:", err);
-        setError("Failed to load draft Non Conformity");
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setLoading(false);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       }
     };
 
@@ -105,22 +141,57 @@ const QmsDraftNonConformityReport = () => {
     navigate(`/company/qms/edit-draft-nonconformity/${id}`);
   };
 
-  // Delete draft non-conformity report
-  const handleDeleteDraftNonConformity = async (id) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this draft Non Conformity Report?"
-      )
-    ) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/conformity/${id}/`);
-        setNonConformity(
-          nonConformity.filter((nonConformities) => nonConformities.id !== id)
-        );
-      } catch (err) {
-        console.error("Error deleting draft Non Conformity:", err);
-        alert("Failed to delete draft Non Conformity");
+  // Open delete confirmation modal
+  const openDeleteModal = (report) => {
+    setReportToDelete(report);
+    setShowDeleteModal(true);
+    setDeleteMessage('Draft Nonconformity Report');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!reportToDelete) return;
+
+    try {
+      await axios.delete(`${BASE_URL}/qms/conformity/${reportToDelete.id}/`);
+      setNonConformity(nonConformity.filter(report => report.id !== reportToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Draft Nonconformity Report Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+    } catch (err) {
+      console.error("Error deleting draft Non Conformity:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setShowDeleteModal(false);
     }
   };
 
@@ -228,9 +299,7 @@ const QmsDraftNonConformityReport = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button
-                      onClick={() =>
-                        handleDeleteDraftNonConformity(nonConformities.id)
-                      }
+                      onClick={() => openDeleteModal(nonConformities)}
                     >
                       <img src={deleteIcon} alt="Delete Icon" />
                     </button>
@@ -256,9 +325,8 @@ const QmsDraftNonConformityReport = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -268,9 +336,8 @@ const QmsDraftNonConformityReport = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {number}
                 </button>
@@ -280,15 +347,36 @@ const QmsDraftNonConformityReport = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

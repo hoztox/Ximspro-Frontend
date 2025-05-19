@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../Utils/Config";
 import RootCauseModalNonConformity from "./RootCauseModalNonConformity";
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
 
 const QmsEditNonConformityReport = () => {
   const { id } = useParams();
@@ -41,6 +43,11 @@ const QmsEditNonConformityReport = () => {
     source: "",
     title: "",
   });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState({
     source: "",
@@ -108,7 +115,29 @@ const QmsEditNonConformityReport = () => {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching non conformity reports:", error);
-      setError("Failed to load non conformity data. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   };
@@ -122,9 +151,29 @@ const QmsEditNonConformityReport = () => {
       setRootCauses(response.data);
     } catch (error) {
       console.error("Error fetching root causes:", error);
-      setError(
-        "Failed to load root causes. Please check your connection and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -145,9 +194,29 @@ const QmsEditNonConformityReport = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load users. Please check your connection and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -175,7 +244,28 @@ const QmsEditNonConformityReport = () => {
       }
     } catch (err) {
       console.error("Error fetching suppliers:", err);
-      setError("Failed to fetch suppliers data");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -278,11 +368,39 @@ const QmsEditNonConformityReport = () => {
 
       console.log("Updated NCR:", response.data);
       setIsLoading(false);
-      navigate("/company/qms/list-nonconformity");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-nonconformity");
+      }, 1500);
+      setSuccessMessage("Non Conformity Updated Successfully");
     } catch (error) {
       console.error("Error updating form:", error);
       setIsLoading(false);
-      setError("Failed to update. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -323,6 +441,18 @@ const QmsEditNonConformityReport = () => {
             onClose={handleCloseRootCauseModal}
           />
 
+          <SuccessModal
+            showSuccessModal={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            successMessage={successMessage}
+          />
+
+          <ErrorModal
+            showErrorModal={showErrorModal}
+            onClose={() => setShowErrorModal(false)}
+            error={error}
+          />
+
           <form
             onSubmit={handleSubmit}
             className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
@@ -349,11 +479,10 @@ const QmsEditNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[55px] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "source"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "source"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -414,11 +543,10 @@ const QmsEditNonConformityReport = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                                    ${
-                                      focusedDropdown === "supplier"
-                                        ? "rotate-180"
-                                        : ""
-                                    }`}
+                                    ${focusedDropdown === "supplier"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -448,11 +576,10 @@ const QmsEditNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[42%] transform transition-transform duration-300 
-                                ${
-                                  focusedDropdown === "root_cause"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "root_cause"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -486,11 +613,10 @@ const QmsEditNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[42%] transform transition-transform duration-300 
-                                ${
-                                  focusedDropdown === "executor"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "executor"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -537,11 +663,10 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown === "date_raised.day"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown === "date_raised.day"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -562,12 +687,11 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown ===
-                                          "date_raised.month"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown ===
+                        "date_raised.month"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -588,11 +712,10 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown === "date_raised.year"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown === "date_raised.year"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -619,12 +742,11 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown ===
-                                          "date_completed.day"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown ===
+                        "date_completed.day"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -645,12 +767,11 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown ===
-                                          "date_completed.month"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown ===
+                        "date_completed.month"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -671,12 +792,11 @@ const QmsEditNonConformityReport = () => {
                   </select>
                   <ChevronDown
                     className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${
-                                          focusedDropdown ===
-                                          "date_completed.year"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
+                                        ${focusedDropdown ===
+                        "date_completed.year"
+                        ? "rotate-180"
+                        : ""
+                      }`}
                     size={20}
                     color="#AAAAAA"
                   />
@@ -700,11 +820,10 @@ const QmsEditNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[58%] transform transition-transform duration-300 
-                                ${
-                                  focusedDropdown === "status"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "status"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

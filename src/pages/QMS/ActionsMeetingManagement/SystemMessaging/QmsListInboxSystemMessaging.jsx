@@ -30,7 +30,7 @@ const QmsListInboxSystemMessaging = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  // const [draftCount, setDraftCount] = useState(0);
+  const [draftCount, setDraftCount] = useState(0);
 
   // Get the relevant user ID for API calls
   const getRelevantUserId = () => {
@@ -59,10 +59,10 @@ const QmsListInboxSystemMessaging = () => {
           `${BASE_URL}/qms/messages/received/${userId}`
         );
 
-        // const draftResponse = await axios.get(
-        //     `${BASE_URL}/qms/manuals/drafts-count/${userId}/`
-        // );
-        // setDraftCount(draftResponse.data.count);
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/messages/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
 
         setMessages(response.data);
         console.log("sssssssssssss", response.data);
@@ -72,7 +72,7 @@ const QmsListInboxSystemMessaging = () => {
         let errorMsg = err.message;
 
         if (err.response) {
-          // Check for field-specific errors first
+          // Check for field-specific errors first 
           if (err.response.data.date) {
             errorMsg = err.response.data.date[0];
           }
@@ -309,8 +309,7 @@ const QmsListInboxSystemMessaging = () => {
                       <label className="view-page-label pb-[6px]">From</label>
                       <p className="view-page-data">
                         {selectedMessage.from_user
-                          ? `${selectedMessage.from_user.first_name || ""} ${
-                              selectedMessage.from_user.last_name || ""
+                          ? `${selectedMessage.from_user.first_name || ""} ${selectedMessage.from_user.last_name || ""
                             }`.trim() || "Anonymous"
                           : "Anonymous"}
                       </p>
@@ -389,11 +388,11 @@ const QmsListInboxSystemMessaging = () => {
             onClick={handleDraft}
           >
             <span>Draft</span>
-            {/* {draftCount > 0 && (
-                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[10px] right-[130px]">
-                                {draftCount}
-                            </span>
-                        )} */}
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[10px] right-[130px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center !px-[20px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -448,19 +447,18 @@ const QmsListInboxSystemMessaging = () => {
                   </td>
                   <td className="px-3 list-awareness-training-datas">
                     {item.from_user
-                      ? `${item.from_user.first_name || ""} ${
-                          item.from_user.last_name || ""
+                      ? `${item.from_user.first_name || ""} ${item.from_user.last_name || ""
                         }`.trim() || "Anonymous"
                       : "Anonymous"}
                   </td>
                   <td className="px-3 list-awareness-training-datas">
                     <div className="flex items-center">
-                      {item.parent && (
+                      {/* {item.parent && (
                         <span className="text-blue-400 mr-2">↩</span>
-                      )}
-                      {item.thread_root && item.thread_root.id !== item.id && (
+                      )} */}
+                      {/* {item.thread_root && item.thread_root.id !== item.id && (
                         <span className="text-green-400 mr-2">↳</span>
-                      )}
+                      )} */}
                       {item.subject || "No Subject"}
                     </div>
                   </td>
@@ -524,9 +522,8 @@ const QmsListInboxSystemMessaging = () => {
         {totalPages > 1 && (
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
@@ -537,9 +534,8 @@ const QmsListInboxSystemMessaging = () => {
               (number) => (
                 <button
                   key={number}
-                  className={`w-8 h-8 rounded-md ${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`w-8 h-8 rounded-md ${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                   onClick={() => handlePageChange(number)}
                 >
                   {number}
@@ -548,9 +544,8 @@ const QmsListInboxSystemMessaging = () => {
             )}
 
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             >

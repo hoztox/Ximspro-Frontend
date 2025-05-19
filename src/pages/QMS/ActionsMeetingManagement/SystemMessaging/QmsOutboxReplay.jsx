@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { Eye, Search, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 import SuccessModal from "../Modals/SuccessModal";
@@ -9,13 +9,17 @@ import ErrorModal from "../Modals/ErrorModal";
 
 const QmsOutboxReplay = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+
   const [formData, setFormData] = useState({
+    message_related: id,
     to_users: [],
     subject: "",
     file: null,
     message: "",
   });
   const [users, setUsers] = useState([]);
+  const [originalMessage, setOriginalMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,7 +27,6 @@ const QmsOutboxReplay = () => {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
@@ -47,35 +50,99 @@ const QmsOutboxReplay = () => {
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-    const userId = localStorage.getItem("user_id");
-
-    if (userRole === "user" && userId) {
-      return userId;
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
     }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
     return null;
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/company/users-active/${companyId}/`
-        );
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-        setError("Failed to fetch users");
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found");
+        return;
       }
-    };
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
 
-    fetchUsers();
-  }, []);
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        } else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+    }
+  };
+
+  const fetchOriginalMessage = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
+      setOriginalMessage(response.data);
+      setFormData((prev) => ({
+        ...prev,
+        subject: `Re: ${response.data.subject || "No Subject"}`,
+      }));
+
+      // Auto-tick the from_user
+      if (response.data.from_user?.id) {
+        const fromUserId = response.data.from_user.id;
+        const fromUserName = `${response.data.from_user.first_name} ${response.data.from_user.last_name}`;
+        setFormData((prev) => ({
+          ...prev,
+          to_users: [fromUserId],
+        }));
+        setSelectedUserNames({ [fromUserId]: fromUserName });
+      }
+    } catch (error) {
+      console.error("Error fetching original message:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        } else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+    }
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([fetchUsers(), fetchOriginalMessage()]).finally(() =>
+      setLoading(false)
+    );
+  }, [id]);
 
   const handleInbox = () => {
     navigate("/company/qms/list-inbox");
@@ -83,61 +150,48 @@ const QmsOutboxReplay = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       file: e.target.files[0],
-    });
+    }));
   };
 
   const toggleUserSelection = (userId) => {
     const user = users.find((u) => u.id === userId);
-    const userName = user ? `${user.first_name} ${user.last_name}` : "";
+    const userName = user
+      ? `${user.first_name} ${user.last_name}`
+      : "Unknown User";
 
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
-        // Remove user
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
-
-        // Update selected user names
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
-
-        return {
-          ...prev,
-          to_users: updatedUsers,
-        };
+        return { ...prev, to_users: updatedUsers };
       } else {
-        // Add user
         setSelectedUserNames({
           ...selectedUserNames,
           [userId]: userName,
         });
-
-        return {
-          ...prev,
-          to_users: [...prev.to_users, userId],
-        };
+        return { ...prev, to_users: [...prev.to_users, userId] };
       }
     });
-
-    // Clear the search term after selection
     setSearchTerm("");
   };
 
   const removeSelectedUser = (userId) => {
-    setFormData((prev) => ({
-      ...prev,
-      to_users: prev.to_users.filter((id) => id !== userId),
-    }));
-
+    setFormData((prev) => {
+      const updatedUsers = prev.to_users.filter((id) => id !== userId);
+      return { ...prev, to_users: updatedUsers };
+    });
     const newSelectedNames = { ...selectedUserNames };
     delete newSelectedNames[userId];
     setSelectedUserNames(newSelectedNames);
@@ -154,6 +208,13 @@ const QmsOutboxReplay = () => {
       return;
     }
 
+    const messageRelatedId = formData.message_related || id;
+    if (!messageRelatedId) {
+      setError("Original message ID is missing.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const companyId = getUserCompanyId();
       const fromUserId = getRelevantUserId();
@@ -163,13 +224,12 @@ const QmsOutboxReplay = () => {
       }
 
       const formDataToSend = new FormData();
+      formDataToSend.append("message_related", messageRelatedId);
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
-
       formData.to_users.forEach((userId) => {
         formDataToSend.append("to_users", userId);
       });
-
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
       if (formData.file) {
@@ -177,7 +237,7 @@ const QmsOutboxReplay = () => {
       }
 
       const response = await axios.post(
-        `${BASE_URL}/qms/messages/create/`,
+        `${BASE_URL}/qms/messages/reply/${messageRelatedId}/`,
         formDataToSend,
         {
           headers: {
@@ -194,15 +254,16 @@ const QmsOutboxReplay = () => {
       setSuccessMessage("Replay Sent Successfully");
     } catch (error) {
       console.error("Error submitting message:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       let errorMsg = error.message;
 
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
@@ -212,10 +273,6 @@ const QmsOutboxReplay = () => {
       }
 
       setError(errorMsg);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -225,26 +282,27 @@ const QmsOutboxReplay = () => {
     navigate("/company/qms/list-outbox");
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.first_name} ${user.last_name}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter((user) => {
+    const currentUserId = getRelevantUserId();
+    return (
+      user.id.toString() !== currentUserId?.toString() &&
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  });
 
-  // Focus on input when clicking on the container
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
-      if (inputElement) {
-        inputElement.focus();
-      }
+      if (inputElement) inputElement.focus();
     }
   };
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-        <h1 className="add-training-head">Replay Message</h1>
+        <h1 className="add-training-head">Reply Message</h1>
         <button
           className="border border-[#858585] text-[#858585] rounded w-[140px] h-[42px] list-training-btn duration-200"
           onClick={handleInbox}
@@ -265,11 +323,14 @@ const QmsOutboxReplay = () => {
         error={error}
       />
 
+      {loading && (
+        <div className="px-[104px] py-2 text-center not-found">Loading...</div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
-        {/* To Field - Updated to display selected users in the input field */}
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             To <span className="text-red-500">*</span>
@@ -284,7 +345,7 @@ const QmsOutboxReplay = () => {
                   key={userId}
                   className="flex items-center bg-[#1C1C24] text-white text-sm rounded px-2 py-1 mr-1 mb-1"
                 >
-                  <span>{selectedUserNames[userId]}</span>
+                  <span>{selectedUserNames[userId] || "Loading..."}</span>
                   <X
                     size={14}
                     className="ml-1 cursor-pointer"
@@ -301,9 +362,7 @@ const QmsOutboxReplay = () => {
                   formData.to_users.length > 0 ? "" : "Search users..."
                 }
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-none bg-transparent outline-none flex-grow min-w-[100px] p-0"
               />
               <Search
@@ -374,7 +433,10 @@ const QmsOutboxReplay = () => {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <button className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]">
+              <button
+                className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
+                disabled={!formData.file}
+              >
                 Click to view file <Eye size={17} />
               </button>
             </div>

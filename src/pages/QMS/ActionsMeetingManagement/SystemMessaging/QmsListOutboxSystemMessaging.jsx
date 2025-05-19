@@ -240,8 +240,8 @@ const QmsListOutboxSystemMessaging = () => {
     navigate(`/company/qms/outbox-replay/${id}`, { state: { messageType } });
   };
 
-  const handleOutboxForward = (id, messageType) => {
-    navigate(`/company/qms/outbox-forward/${id}`, { state: { messageType } });
+  const handleOutboxForward = (id) => {
+    navigate(`/company/qms/outbox-forward/${id}`); 
   };
 
   const handleView = (item) => {
@@ -461,7 +461,7 @@ const QmsListOutboxSystemMessaging = () => {
                   <td className="list-awareness-training-datas text-center">
                     <button
                       onClick={() =>
-                        handleOutboxForward(item.id, item.messageType)
+                        handleOutboxForward(item.id)
                       }
                     >
                       <img

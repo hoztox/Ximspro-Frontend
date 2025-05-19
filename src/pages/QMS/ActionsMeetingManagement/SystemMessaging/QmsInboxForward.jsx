@@ -11,28 +11,27 @@ const QmsInboxForward = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const getCurrentUserId = () => {
-    return localStorage.getItem("user_id");
-  };
-
   const [formData, setFormData] = useState({
     message_related: id, // Maps to parent in Message model
     to_users: [],
     subject: "",
-    file: null,
+    file: null, // For locally selected File object
     message: "",
   });
+  const [serverFileUrl, setServerFileUrl] = useState(null); // For server file URL
   const [originalMessage, setOriginalMessage] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
-
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  const getCurrentUserId = () => {
+    return localStorage.getItem("user_id");
+  };
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -56,9 +55,7 @@ const QmsInboxForward = () => {
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     const userId = localStorage.getItem("user_id");
-    if (userRole === "user" && userId) {
-      return userId;
-    }
+    if (userRole === "user" && userId) return userId;
     return null;
   };
 
@@ -69,34 +66,23 @@ const QmsInboxForward = () => {
         setError("Company ID not found");
         return;
       }
-      const response = await axios.get(
-        `${BASE_URL}/company/users-active/${companyId}/`
-      );
+      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
       let errorMsg = error.message;
-
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
-      } else if (error.message) {
-        errorMsg = error.message;
       }
-
       setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
     }
   };
 
@@ -109,7 +95,10 @@ const QmsInboxForward = () => {
         subject: `Re: ${response.data.subject || "No Subject"}`,
         message: `${response.data.message || "No Message"}`,
       }));
-
+      // Set server file URL if available
+      if (response.data.file) {
+        setServerFileUrl(response.data.file);
+      }
       // Auto-tick the from_user
       if (response.data.from_user?.id) {
         const fromUserId = response.data.from_user.id;
@@ -122,28 +111,19 @@ const QmsInboxForward = () => {
       }
     } catch (error) {
       console.error("Error fetching original message:", error);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
       let errorMsg = error.message;
-
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
-      } else if (error.message) {
-        errorMsg = error.message;
       }
-
       setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
     }
   };
 
@@ -158,45 +138,51 @@ const QmsInboxForward = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      file: e.target.files[0],
-    });
+    setFormData({ ...formData, file: e.target.files[0] });
+  };
+
+  const handleViewFile = () => {
+    try {
+      if (formData.file) {
+        // Local file (File object)
+        const fileURL = URL.createObjectURL(formData.file);
+        window.open(fileURL, "_blank");
+        setTimeout(() => URL.revokeObjectURL(fileURL), 30000);
+      } else if (serverFileUrl) {
+        // Server file (URL)
+        window.open(serverFileUrl, "_blank");
+      } else {
+        setError("No file available to view");
+        setShowErrorModal(true);
+        setTimeout(() => setShowErrorModal(false), 3000);
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+      setError("Failed to open file");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+    }
   };
 
   const toggleUserSelection = (userId) => {
     const user = users.find((u) => u.id === userId);
     const userName = user ? `${user.first_name} ${user.last_name}` : "";
-
     setFormData((prev) => {
       if (prev.to_users.includes(userId)) {
         const updatedUsers = prev.to_users.filter((id) => id !== userId);
         const newSelectedNames = { ...selectedUserNames };
         delete newSelectedNames[userId];
         setSelectedUserNames(newSelectedNames);
-        return {
-          ...prev,
-          to_users: updatedUsers,
-        };
+        return { ...prev, to_users: updatedUsers };
       } else {
-        setSelectedUserNames({
-          ...selectedUserNames,
-          [userId]: userName,
-        });
-        return {
-          ...prev,
-          to_users: [...prev.to_users, userId],
-        };
+        setSelectedUserNames({ ...selectedUserNames, [userId]: userName });
+        return { ...prev, to_users: [...prev.to_users, userId] };
       }
     });
-
     setSearchTerm("");
   };
 
@@ -205,7 +191,6 @@ const QmsInboxForward = () => {
       ...prev,
       to_users: prev.to_users.filter((id) => id !== userId),
     }));
-
     const newSelectedNames = { ...selectedUserNames };
     delete newSelectedNames[userId];
     setSelectedUserNames(newSelectedNames);
@@ -225,7 +210,6 @@ const QmsInboxForward = () => {
     try {
       const companyId = getUserCompanyId();
       const fromUserId = getRelevantUserId();
-
       if (!companyId || !fromUserId) {
         throw new Error("Missing required user information");
       }
@@ -234,18 +218,16 @@ const QmsInboxForward = () => {
       formDataToSend.append("company", companyId);
       formDataToSend.append("from_user", fromUserId);
       if (formData.message_related) {
-        formDataToSend.append("message_related", formData.message_related); // Maps to parent
+        formDataToSend.append("message_related", formData.message_related);
         if (originalMessage?.thread_root?.id) {
           formDataToSend.append("thread_root", originalMessage.thread_root.id);
         } else {
-          formDataToSend.append("thread_root", id); // Original message is the thread root
+          formDataToSend.append("thread_root", id);
         }
       }
-
       formData.to_users.forEach((userId) => {
-        formDataToSend.append("to_user", userId); // Maps to to_user ManyToMany
+        formDataToSend.append("to_user", userId);
       });
-
       formDataToSend.append("subject", formData.subject);
       formDataToSend.append("message", formData.message);
       if (formData.file) {
@@ -255,11 +237,7 @@ const QmsInboxForward = () => {
       const response = await axios.post(
         `${BASE_URL}/qms/messages/forward/${id}/`,
         formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       setShowSuccessModal(true);
@@ -270,28 +248,19 @@ const QmsInboxForward = () => {
       setSuccessMessage("Message Forwarded Successfully");
     } catch (error) {
       console.error("Error submitting forward message:", error);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
       let errorMsg = error.message;
-
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
-      } else if (error.message) {
-        errorMsg = error.message;
       }
-
       setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
     } finally {
       setLoading(false);
     }
@@ -314,10 +283,15 @@ const QmsInboxForward = () => {
   const handleContainerClick = (e) => {
     if (e.target.tagName !== "INPUT") {
       const inputElement = e.currentTarget.querySelector("input");
-      if (inputElement) {
-        inputElement.focus();
-      }
+      if (inputElement) inputElement.focus();
     }
+  };
+
+  // Get file name for display
+  const getFileName = () => {
+    if (formData.file) return formData.file.name;
+    if (serverFileUrl) return serverFileUrl.split("/").pop() || "Attached File";
+    return "No file chosen";
   };
 
   return (
@@ -344,9 +318,7 @@ const QmsInboxForward = () => {
         error={error}
       />
 
-      {loading && (
-        <div className="px-[104px] py-2 text-center not-found">Loading...</div>
-      )}
+      {loading && <div className="px-[104px] py-2 text-center not-found">Loading...</div>}
 
       <form
         onSubmit={handleSubmit}
@@ -379,13 +351,9 @@ const QmsInboxForward = () => {
               ))}
               <input
                 type="text"
-                placeholder={
-                  formData.to_users.length > 0 ? "" : "Search users..."
-                }
+                placeholder={formData.to_users.length > 0 ? "" : "Search users..."}
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="border-none bg-transparent outline-none flex-grow min-w-[100px] p-0"
               />
               <Search
@@ -398,10 +366,7 @@ const QmsInboxForward = () => {
           <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto mt-1">
             {filteredUsers.length > 0 ? (
               filteredUsers.map((user) => (
-                <div
-                  key={user.id}
-                  className="flex items-center py-2 last:border-0"
-                >
+                <div key={user.id} className="flex items-center py-2 last:border-0">
                   <input
                     type="checkbox"
                     id={`user-${user.id}`}
@@ -459,20 +424,15 @@ const QmsInboxForward = () => {
               <button
                 type="button"
                 className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
-                disabled={!formData.file}
+                disabled={!formData.file && !serverFileUrl}
+                onClick={handleViewFile}
               >
                 Click to view file <Eye size={17} />
               </button>
             </div>
-            {formData.file ? (
-              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                {formData.file.name}
-              </p>
-            ) : (
-              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                No file chosen
-              </p>
-            )}
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              {getFileName()}
+            </p>
           </div>
         </div>
         <div></div>

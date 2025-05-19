@@ -79,7 +79,24 @@ const QmsAddNonConformityReport = () => {
       setSuppliers(activeSuppliers);
     } catch (err) {
       console.error("Error fetching suppliers:", err);
-      setError("Failed to fetch suppliers data");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -201,9 +218,29 @@ const QmsAddNonConformityReport = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load users. Please check your connection and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -303,7 +340,25 @@ const QmsAddNonConformityReport = () => {
     } catch (error) {
       console.error("Error saving draft:", error);
       setIsLoading(false);
-      setError("Failed to save draft. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -392,7 +447,25 @@ const QmsAddNonConformityReport = () => {
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsLoading(false);
-      setError("Failed to save. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -524,21 +597,20 @@ const QmsAddNonConformityReport = () => {
               </option>
               {suppliers && suppliers.length > 0
                 ? suppliers.map((supplier) => (
-                    <option key={supplier.id} value={supplier.id}>
-                      {supplier.company_name}
-                    </option>
-                  ))
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.company_name}
+                  </option>
+                ))
                 : !isLoading && (
-                    <option value="" disabled>
-                      No approved suppliers found
-                    </option>
-                  )}
+                  <option value="" disabled>
+                    No approved suppliers found
+                  </option>
+                )}
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "supplier" ? "rotate-180" : ""
-                            }`}
+                            ${focusedDropdown === "supplier" ? "rotate-180" : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
@@ -562,23 +634,22 @@ const QmsAddNonConformityReport = () => {
             </option>
             {rootCauses && rootCauses.length > 0
               ? rootCauses.map((cause) => (
-                  <option key={cause.id} value={cause.id}>
-                    {cause.title}
-                  </option>
-                ))
+                <option key={cause.id} value={cause.id}>
+                  {cause.title}
+                </option>
+              ))
               : !isLoading && (
-                  <option value="" disabled>
-                    No root causes found
-                  </option>
-                )}
+                <option value="" disabled>
+                  No root causes found
+                </option>
+              )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "root_cause"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "root_cause"
+                ? "rotate-180"
+                : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
@@ -606,15 +677,15 @@ const QmsAddNonConformityReport = () => {
             </option>
             {users && users.length > 0
               ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
               : !isLoading && (
-                  <option value="" disabled>
-                    No users found
-                  </option>
-                )}
+                <option value="" disabled>
+                  No users found
+                </option>
+              )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
@@ -665,11 +736,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -690,11 +760,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -715,11 +784,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -746,11 +814,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -771,11 +838,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -796,11 +862,10 @@ const QmsAddNonConformityReport = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

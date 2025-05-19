@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
+import DeleteConfimModal from "./Modals/DeleteConfimModal";
 
 const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
   const [animateClass, setAnimateClass] = useState("");
@@ -11,6 +14,14 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
   const [error, setError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [errors, setErrors] = useState({ newCauseTitle: "" });
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [causeToDelete, setCauseToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +38,6 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
       const companyId = getUserCompanyId();
       if (!companyId) {
         setError("Company ID not found. Please log in again.");
-      
         return;
       }
 
@@ -38,7 +48,10 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
     } catch (error) {
       console.error("Error fetching causes:", error);
       setError("Failed to load causes. Please try again.");
-       
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -63,15 +76,40 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
     return null;
   };
 
-  const handleDelete = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (cause) => {
+    setCauseToDelete(cause);
+    setShowDeleteModal(true);
+    setDeleteMessage('Root Cause');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!causeToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/conf-cause/${id}/`);
-      setCauses(causes.filter((item) => item.id !== id));
-      
+      await axios.delete(`${BASE_URL}/qms/conf-cause/${causeToDelete.id}/`);
+      setCauses(causes.filter(item => item.id !== causeToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Root Cause Deleted Successfully");
     } catch (error) {
       console.error("Error deleting cause:", error);
       setError("Failed to delete cause. Please try again.");
-      
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setShowDeleteModal(false);
     }
   };
 
@@ -86,7 +124,6 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
       const companyId = getUserCompanyId();
       if (!companyId) {
         setError("Company ID not found. Please log in again.");
-        
         return;
       }
 
@@ -98,12 +135,19 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
       setCauses([...causes, response.data]);
       if (onAddCause) onAddCause(response.data);
 
-    
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
+      setSuccessMessage("Root Cause Added Successfully");
       setNewCauseTitle("");
     } catch (error) {
       console.error("Error adding cause:", error);
       setError("Failed to add cause. Please try again.");
-      
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsAdding(false);
     }
@@ -128,8 +172,6 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
-      
-
       {/* Main Modal */}
       <div
         className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}
@@ -138,6 +180,19 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
         {/* Causes List Section */}
         <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
           <h2 className="agenda-list-head pb-5">Root Causes List</h2>
+
+          <SuccessModal
+            showSuccessModal={showSuccessModal}
+            onClose={() => setShowSuccessModal(false)}
+            successMessage={successMessage}
+          />
+
+          <ErrorModal
+            showErrorModal={showErrorModal}
+            onClose={() => setShowErrorModal(false)}
+            error={error}
+          />
+
           {loading ? (
             <div className="text-center py-4 not-found">Loading...</div>
           ) : (
@@ -168,7 +223,7 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
                           key={item.id}
                           className="border-b border-[#383840] h-[42px]"
                         >
-                          <td className="px-3 agenda-data w-[10%]">
+                          <td className="px-3 agenda-data w-[10%]"> 
                             {index + 1}
                           </td>
                           <td className="px-3 agenda-data w-[60%]">
@@ -176,7 +231,7 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
                           </td>
                           <td className="px-3 agenda-data text-center w-[15%]">
                             <div className="flex items-center justify-center h-[42px]">
-                              <button onClick={() => handleDelete(item.id)}>
+                              <button onClick={() => openDeleteModal(item)}>
                                 <img
                                   src={deletes}
                                   alt="Delete Icon"
@@ -237,6 +292,14 @@ const RootCauseModalNonConformity = ({ isOpen, onClose, onAddCause }) => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
     </div>
   );
 };

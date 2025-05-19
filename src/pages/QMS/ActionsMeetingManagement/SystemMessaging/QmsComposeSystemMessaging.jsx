@@ -50,6 +50,15 @@ const QmsComposeSystemMessaging = () => {
     return null;
   };
 
+  const handleViewFile = () => {
+    if (formData.file) {
+      const fileURL = URL.createObjectURL(formData.file);
+      window.open(fileURL, "_blank");
+      // Optional: Revoke the URL after some time to free memory
+      setTimeout(() => URL.revokeObjectURL(fileURL), 30000);
+    }
+  };
+
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     const userId = localStorage.getItem("user_id");
@@ -90,7 +99,7 @@ const QmsComposeSystemMessaging = () => {
         setTimeout(() => {
           setShowErrorModal(false);
         }, 3000);
-        let errorMsg =  error.message;
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -501,6 +510,7 @@ const QmsComposeSystemMessaging = () => {
                 type="button"
                 className="flex click-view-file-btn items-center gap-2 text-[#1E84AF]"
                 disabled={!formData.file}
+                onClick={handleViewFile} // Add the onClick handler
               >
                 Click to view file <Eye size={17} />
               </button>
@@ -516,7 +526,7 @@ const QmsComposeSystemMessaging = () => {
               </p>
             )}
           </div>
-        </div>
+        </div> 
         <div></div>
 
         <div className="flex flex-col gap-3">

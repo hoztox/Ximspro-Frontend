@@ -56,6 +56,8 @@ const QmsListTrashSystemMessaging = () => {
         `${BASE_URL}/qms/messages/trash/user/${userId}/`
       );
       setTrashedMessages(response.data);
+      console.log('trashhhhhhh:', response.data);
+      
       setError(null);
     } catch (error) {
       console.error("Failed to fetch trashed messages:", error);
@@ -314,7 +316,7 @@ const QmsListTrashSystemMessaging = () => {
                     <div>
                       <label className="view-page-label pb-[6px]">From</label>
                       <p className="view-page-data">
-                        {selectedMessage.from_user?.name || "Anonymous"}
+                        {selectedMessage.from_user?.name || "N/A"}
                       </p>
                     </div>
 
@@ -328,7 +330,7 @@ const QmsListTrashSystemMessaging = () => {
                             </li>
                           ))
                         ) : (
-                          <li>Anonymous</li>
+                          <li>N/A</li>
                         )}
                       </ul>
                     </div>

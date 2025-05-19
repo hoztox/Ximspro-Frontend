@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
