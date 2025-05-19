@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../../../ThemeContext";
 import deleteIllustrate from "../../../../assets/images/Modal/deleteillustration.png"
 
-const DeleteQuestionConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) => {
+const DeleteQuestionConfirmModal = ({ showDeleteModal, onConfirm, onClose }) => {
     const { theme } = useTheme();
 
     return (
@@ -17,7 +17,7 @@ const DeleteQuestionConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) =>
                     transition={{ duration: 0.3 }}
                 >
                     <motion.div
-                        className={`modals ${theme === "dark" ? "dark" : "light"
+                        className={`modals ${theme === "dark" ? "dark" : "light" 
                             }`}
                         style={{ maxWidth: 'calc(100vw - 40px)' }}
                         initial={{ scale: 0.9 }}
@@ -40,7 +40,7 @@ const DeleteQuestionConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) =>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}
                             >
-                                <button onClick={onCancel} className="btn-cancels duration-200 w-[176px] h-[49px]">
+                                <button onClick={onClose} className="btn-cancels duration-200 w-[176px] h-[49px]">
                                     Cancel
                                 </button>
                                 <button onClick={onConfirm} className="btn-confirms duration-200 w-[176px] h-[49px]">
