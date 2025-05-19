@@ -17,8 +17,8 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
     const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '',
-        no: '',
+        location: '',
+        wmp: '',
         send_notification_to_checked_by: false,
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
@@ -88,8 +88,8 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
     useEffect(() => {
         if (manualDetails) {
             setFormData({
-                name: manualDetails.name || '',
-                no: manualDetails.no || '',
+                location: manualDetails.location || '',
+                wmp: manualDetails.wmp || '',
                 written_by: manualDetails.written_by?.id || null,
                 checked_by: manualDetails.checked_by?.id || null,
                 approved_by: manualDetails.approved_by?.id || null,
@@ -132,7 +132,7 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
     const fetchManualDetails = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/waste-management-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Details:", response.data);
@@ -196,8 +196,8 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
             isValid = false;
         }
 
-        if (!formData.no.trim()) {
-            newErrors.no = 'WMP No is required';
+        if (!formData.wmp.trim()) {
+            newErrors.wmp = 'WMP No is required';
             isValid = false;
         }
 
@@ -286,7 +286,7 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
                 }
             });
 
-            const response = await axios.put(`${BASE_URL}/qms/waste-management/create/${id}/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/waste/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -338,8 +338,8 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="name"
-                                value={formData.name}
+                                name="location"
+                                value={formData.location}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
@@ -378,12 +378,12 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="wmp"
+                                value={formData.wmp}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                             />
-                            {fieldErrors.no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+                            {fieldErrors.wmp && <p className={errorTextClass}>{fieldErrors.wmp}</p>}
                         </div>
 
                         <div className="flex">

@@ -3,6 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsAddPreventiveActions = () => {
   const navigate = useNavigate();
@@ -29,6 +31,14 @@ const QmsAddPreventiveActions = () => {
   const [users, setUsers] = useState([]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [error, setError] = useState(null);
+  const [formErrors, setFormErrors] = useState({
+    title: ""
+  });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -63,7 +73,6 @@ const QmsAddPreventiveActions = () => {
   const companyId = getUserCompanyId();
   const userId = getRelevantUserId();
 
-  // Fetch users for executor dropdown
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -76,6 +85,10 @@ const QmsAddPreventiveActions = () => {
         setUsers(response.data);
       } catch (err) {
         setError("Failed to fetch users");
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         console.error(err);
       }
     };
@@ -108,6 +121,12 @@ const QmsAddPreventiveActions = () => {
         ...formData,
         [name]: value,
       });
+      if (name === "title") {
+        setFormErrors({
+          ...formErrors,
+          title: ""
+        });
+      }
     }
   };
 
@@ -118,9 +137,26 @@ const QmsAddPreventiveActions = () => {
     return null;
   };
 
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      errors.title = "Title is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       const submissionData = {
@@ -141,16 +177,29 @@ const QmsAddPreventiveActions = () => {
         `${BASE_URL}/qms/preventive/create/`,
         submissionData
       );
-      console.log("Preventive Action created:", response.data);
-      navigate("/company/qms/list-preventive-actions");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-preventive-actions");
+      }, 1500);
+      setSuccessMessage("Preventive Action Added Successfully")
     } catch (err) {
       setError("Failed to create preventive action");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       console.error(err);
     }
   };
 
   const handleSaveDraft = async () => {
     setError(null);
+
+    if (!validateForm()) {
+      return;
+    }
 
     const submissionData = {
       company: companyId,
@@ -171,10 +220,19 @@ const QmsAddPreventiveActions = () => {
         `${BASE_URL}/qms/preventive/draft-create/`,
         submissionData
       );
-      console.log("Draft saved Preventive action:", response.data);
-      navigate("/company/qms/draft-preventive-actions");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-preventive-actions");
+      }, 1500);
+      setSuccessMessage("Preventive Action Drafted Successfully")
     } catch (err) {
       setError("Failed to save draft");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       console.error(err);
     }
   };
@@ -195,7 +253,6 @@ const QmsAddPreventiveActions = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-      {error && <div className="text-red-500 mb-4">{error}</div>}
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
         <h1 className="add-training-head">Add Preventive Action</h1>
         <button
@@ -206,20 +263,34 @@ const QmsAddPreventiveActions = () => {
         </button>
       </div>
 
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal 
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">Title</label>
+          <label className="add-training-label">Title <span className="text-red-500">*</span></label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
+            className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
           />
+          {formErrors.title && (
+            <p className="text-red-500 text-sm">{formErrors.title}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 relative">
@@ -256,7 +327,6 @@ const QmsAddPreventiveActions = () => {
             value={formData.description}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
-            required
           />
         </div>
 
@@ -267,7 +337,6 @@ const QmsAddPreventiveActions = () => {
             value={formData.action}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
-            required
           />
         </div>
 
@@ -290,11 +359,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -315,11 +383,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -340,11 +407,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -371,11 +437,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -396,11 +461,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -421,11 +485,10 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

@@ -1,22 +1,33 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { BASE_URL } from "../../../../Utils/Config";
+import { BASE_URL } from '../../../../Utils/Config';
 import RootCauseModal from './RootCauseModal';
-const QmsAddEnvironmentalIncidents = () => {
-    const getUserCompanyId = () => {
-        const storedCompanyId = localStorage.getItem("company_id");
-        if (storedCompanyId) return storedCompanyId;
 
-        const userRole = localStorage.getItem("role");
-        if (userRole === "user") {
-            const userData = localStorage.getItem("user_company_id");
+const QmsAddEnvironmentalIncidents = () => {
+    const navigate = useNavigate();
+    const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
+    const [rootCauses, setRootCauses] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [nextEino, setNextEino] = useState('1');
+    const [error, setError] = useState('');
+    const [formErrors, setFormErrors] = useState({});
+
+    const sourceOptions = ['Internal', 'External', 'Customer', 'Regulatory'];
+
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem('company_id');
+        if (storedCompanyId) return storedCompanyId;
+        const userRole = localStorage.getItem('role');
+        if (userRole === 'user') {
+            const userData = localStorage.getItem('user_company_id');
             if (userData) {
                 try {
                     return JSON.parse(userData);
                 } catch (e) {
-                    console.error("Error parsing user company ID:", e);
+                    console.error('Error parsing user company ID:', e);
                     return null;
                 }
             }
@@ -24,190 +35,138 @@ const QmsAddEnvironmentalIncidents = () => {
         return null;
     };
 
-    // Now you can safely use the function
-    const companyId = getUserCompanyId();
-    const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
-    const navigate = useNavigate();
-    const [rootCauses, setRootCauses] = useState([]);
-    const [users, setUsers] = useState([]);
-    // const [suppliers, setSuppliers] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
-    const [nextEino, setNextEino] = useState("1");
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        fetchRootCauses();
-        fetchUsers();
-        fetchNextEiNumber();
-        // fetchSuppliers();
-    }, []);
-
-    // // Fetch suppliers
-    // const fetchSuppliers = async () => {
-    //     try {
-    //         setIsLoading(true);
-    //         if (!companyId) return;
-
-    //         const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
-    //         const activeSuppliers = response.data.filter(supplier =>
-    //             supplier.active === 'active'
-    //         );
-    //         setSuppliers(activeSuppliers);
-    //     } catch (err) {
-    //         console.error('Error fetching suppliers:', err);
-    //         setError('Failed to fetch suppliers data');
-    //     } finally {
-    //         setIsLoading(false);
-    //     }
-    // };
-
-    const handleOpenRootCauseModal = () => {
-        setIsRootCauseModalOpen(true);
-    };
-
-    const handleCloseRootCauseModal = (newCauseAdded = false) => {
-        setIsRootCauseModalOpen(false);
-        if (newCauseAdded) {
-            fetchRootCauses();
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem('role');
+        if (userRole === 'user') {
+            const userId = localStorage.getItem('user_id');
+            if (userId) return userId;
         }
+        const companyId = localStorage.getItem('company_id');
+        if (companyId) return companyId;
+        return null;
     };
+
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const [formData, setFormData] = useState({
         source: '',
         title: '',
         next_ei_no: '',
-        status: '',
+        status: 'Pending',
         root_cause: '',
         report_by: '',
         description: '',
         action: '',
-        // supplier: '',
-        date_raised: {
-            day: '',
-            month: '',
-            year: ''
-        },
-        date_completed: {
-            day: '',
-            month: '',
-            year: ''
-        },
+        date_raised: { day: '', month: '', year: '' },
+        date_completed: { day: '', month: '', year: '' },
         remarks: '',
         send_notification: false,
-        is_draft: false
+        is_draft: false,
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
-    const handleListNonConformity = () => {
-        navigate('/company/qms/list-environmantal-incident')
-    }
+    useEffect(() => {
+        if (companyId) {
+            fetchRootCauses();
+            fetchUsers();
+            fetchNextEiNumber();
+        }
+    }, [companyId]);
 
-    // New function to fetch the next available action number
     const fetchNextEiNumber = async () => {
         try {
-            const companyId = getUserCompanyId();
             if (!companyId) {
-                // If no company ID, default to empty string
-                setNextEino("1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_ei_no: "1"
-                }));
+                setNextEino('1');
+                setFormData((prev) => ({ ...prev, next_ei_no: '1' }));
                 return;
             }
-
-            const response = await axios.get(`${BASE_URL}/qms/car-number/next-action/${companyId}/`);
-            if (response.data && response.data.next_ei_no) {
-
-                const eiNumber = String(response.data.next_ei_no);
-                setNextEino(eiNumber);
-
-                console.log('Action Number:', eiNumber);
-
-
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_ei_no: eiNumber
-                }));
-            } else {
-                // If response doesn't contain a valid number, default to "1"
-                setNextEino("1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_ei_no: "1"
-                }));
+            const response = await axios.get(`${BASE_URL}/qms/incident/next-action/${companyId}/`);
+            // Handle {"next_incident_no": "EI-2"}
+            let eiNumber = '1';
+            if (response.data.next_incident_no) {
+                eiNumber = response.data.next_incident_no.replace('EI-', '');
             }
+            setNextEino(eiNumber);
+            setFormData((prev) => ({ ...prev, next_ei_no: eiNumber }));
         } catch (error) {
-            console.error('Error fetching next ei number:', error);
-            // Set a fallback value if the API fails
-            setNextEino("1");
-            setFormData(prevData => ({
-                ...prevData,
-                next_ei_no: "1"
-            }));
+            console.error('Error fetching next EI number:', error);
+            setNextEino('1');
+            setFormData((prev) => ({ ...prev, next_ei_no: '1' }));
+            setError('Failed to fetch next incident number');
         }
     };
 
     const fetchRootCauses = async () => {
         try {
             setIsLoading(true);
-            const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
-            setRootCauses(response.data);
-            setIsLoading(false);
+            const response = await axios.get(`${BASE_URL}/qms/incident-root/company/${companyId}/`);
+            if (Array.isArray(response.data)) {
+                setRootCauses(response.data);
+            } else {
+                setRootCauses([]);
+                setError('Unexpected root cause data format');
+            }
         } catch (error) {
             console.error('Error fetching root causes:', error);
+            setError('Failed to fetch root causes');
+        } finally {
             setIsLoading(false);
         }
     };
 
     const fetchUsers = async () => {
         try {
-            const companyId = getUserCompanyId();
             if (!companyId) return;
-
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
                 setUsers([]);
-                console.error("Unexpected response format:", response.data);
+                setError('Unexpected user data format');
             }
         } catch (error) {
-            console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            console.error('Error fetching users:', error);
+            setError('Failed to load users');
         }
     };
 
+    const validateForm = () => {
+        const errors = {};
+        if (!formData.source) errors.source = 'Source is required';
+        if (!formData.title) errors.title = 'Incident title is required';
+        if (!formData.date_raised.day || !formData.date_raised.month || !formData.date_raised.year) {
+            errors.date_raised = 'Date raised is required';
+        }
+        if (formData.status === 'Completed') {
+            if (!formData.action) errors.action = 'Action is required for Completed status';
+            if (!formData.date_completed.day || !formData.date_completed.month || !formData.date_completed.year) {
+                errors.date_completed = 'Complete date is required for Completed status';
+            }
+        }
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         if (name === 'next_ei_no') return;
 
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
-            setFormData({
-                ...formData,
-                [parent]: {
-                    ...formData[parent],
-                    [child]: value
-                }
-            });
-        } else if (e.target.type === 'checkbox') {
-            // Handle checkboxes
-            setFormData({
-                ...formData,
-                [name]: e.target.checked
-            });
+            setFormData((prev) => ({
+                ...prev,
+                [parent]: { ...prev[parent], [child]: value },
+            }));
         } else {
-            // Handle regular inputs
-            setFormData({
-                ...formData,
-                [name]: value
-            });
+            setFormData((prev) => ({
+                ...prev,
+                [name]: type === 'checkbox' ? checked : value,
+            }));
         }
+
+        setFormErrors((prev) => ({ ...prev, [name.split('.')[0]]: '' }));
     };
 
     const formatDate = (dateObj) => {
@@ -215,145 +174,93 @@ const QmsAddEnvironmentalIncidents = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
-    const handleDraftSave = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
+        if (!validateForm()) return;
+    
         try {
             setIsLoading(true);
             setError('');
-            const companyId = getUserCompanyId();
-
-            // Format the dates
+    
             const dateRaised = formatDate(formData.date_raised);
-            const dateCompleted = formatDate(formData.date_completed);
-
-            // Prepare submission data
+            const dateCompleted = formData.date_completed.day ? formatDate(formData.date_completed) : null;
+    
             const submissionData = {
                 company: companyId,
+                user: userId,
                 source: formData.source,
                 title: formData.title,
-                next_ei_no: formData.next_ei_no,
+                incident_no: `EI-${formData.next_ei_no}`,
                 status: formData.status,
-                root_cause: formData.root_cause,
-                report_by: formData.report_by,
-                description: formData.description,
-                action: formData.action,
+                root_cause: formData.root_cause || null,
+                reported_by: formData.report_by || null,
+                description: formData.description || null,
+                action: formData.action || null,
                 date_raised: dateRaised,
                 date_completed: dateCompleted,
-                remarks: formData.remarks,
+                remarks: formData.remarks || null,
                 send_notification: formData.send_notification,
-                is_draft: true
             };
-
-            // Add supplier only if source is 'Supplier'
-            // if (formData.source === 'Supplier') {
-            //     submissionData.supplier = formData.supplier;
-            // }
-
-            // Submit to draft-specific API endpoint
-            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
-
-            console.log('Saved CAR Draft:', response.data);
-
+    
+            await axios.post(`${BASE_URL}/qms/incident/create/`, submissionData);
+    
             setIsLoading(false);
-
-            // Show success message or navigate
-            // navigate('/company/qms/draft-correction-actions');
-
-        } catch (error) {
-            console.error('Error saving draft:', error);
-            setIsLoading(false);
-            setError('Failed to save draft. Please check your inputs and try again.');
-        }
-    };
-
-    const handleSubmit = async (e, asDraft = false) => {
-        e.preventDefault();
-
-        // If saving as draft, use the specialized draft save function
-        if (asDraft) {
-            handleDraftSave(e);
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            const companyId = getUserCompanyId();
-
-            // Format the dates
-            const dateRaised = formatDate(formData.date_raised);
-            const dateCompleted = formatDate(formData.date_completed);
-
-            // Prepare submission data
-            const submissionData = {
-                company: companyId,
-                source: formData.source,
-                title: formData.title,
-                next_ei_no: formData.next_ei_no,
-                status: formData.status,
-                root_cause: formData.root_cause,
-                report_by: formData.report_by,
-                description: formData.description,
-                action: formData.action,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                remarks: formData.remarks,
-                send_notification: formData.send_notification,
-                is_draft: false
-            };
-
-            // Add supplier only if source is 'Supplier'
-            // if (formData.source === 'Supplier') {
-            //     submissionData.supplier = formData.supplier;
-            // }
-
-            // Submit to API
-            const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
-
-            console.log('Added EI:', submissionData);
-
-            setIsLoading(false);
-
-
             navigate('/company/qms/list-environmantal-incident');
-
-            // Reset form and fetch new action number for next time
-            setFormData({
-                source: '',
-                title: '',
-                next_ei_no: '',
-                status: '',
-                root_cause: '',
-                report_by: '',
-                description: '',
-                action: '',
-                // supplier: '',
-                date_raised: {
-                    day: '',
-                    month: '',
-                    year: ''
-                },
-                date_completed: {
-                    day: '',
-                    month: '',
-                    year: ''
-                },
-                remarks: '',
-                send_notification: false,
-                is_draft: false
-            });
-
-            // After successful submission, fetch the next action number for next time
-            fetchNextEiNumber();
-
         } catch (error) {
             console.error('Error submitting form:', error);
+            setError(error.response?.data?.detail || 'Failed to save. Please check your inputs and try again.');
             setIsLoading(false);
-            setError('Failed to save. Please check your inputs and try again.');
         }
     };
 
-    // Generate options for dropdowns
+
+    const handleDraftClick = async () => {
+        try {
+            setIsLoading(true);
+            setError('');
+    
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                setIsLoading(false);
+                return;
+            }
+            if (!userId) {
+                setError('User ID not found. Please log in again.');
+                setIsLoading(false);
+                return;
+            }
+    
+            const dateRaised = formatDate(formData.date_raised);
+            const dateCompleted = formData.date_completed.day ? formatDate(formData.date_completed) : null;
+    
+            const submissionData = {
+                company: companyId,
+                user: userId,
+                source: formData.source || null,
+                title: formData.title || null,
+                incident_no: formData.next_ei_no ? `EI-${formData.next_ei_no}` : null,
+                status: formData.status || 'Pending',
+                root_cause: formData.root_cause || null,
+                reported_by: formData.report_by || null,
+                description: formData.description || null,
+                action: formData.action || null,
+                date_raised: dateRaised,
+                date_completed: dateCompleted,
+                remarks: formData.remarks || null,
+                send_notification: formData.send_notification,
+                is_draft: true,
+            };
+    
+            await axios.post(`${BASE_URL}/qms/incident/draft-create/`, submissionData);
+    
+            setIsLoading(false);
+            navigate('/company/qms/draft-environmantal-incident');
+        } catch (error) {
+            console.error('Error saving draft incident:', error);
+            setError(error.response?.data?.detail || 'Failed to save draft. Please try again.');
+            setIsLoading(false);
+        }
+    };
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -370,36 +277,51 @@ const QmsAddEnvironmentalIncidents = () => {
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-                <h1 className="add-training-head">Add Environmental Incidents</h1>
+                <h1 className="add-training-head">Add Environmental Incident</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={() => handleListNonConformity()}
+                    onClick={() => navigate('/company/qms/list-environmental-incident')}
                 >
                     List Environmental Incidents
                 </button>
             </div>
 
             {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
+                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">{error}</div>
             )}
 
             <RootCauseModal
                 isOpen={isRootCauseModalOpen}
-                onClose={handleCloseRootCauseModal}
+                onClose={(newCauseAdded) => {
+                    setIsRootCauseModalOpen(false);
+                    if (newCauseAdded) fetchRootCauses();
+                }}
             />
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Source <span className="text-red-500">*</span></label>
-                    <input
-                        type="text"
+                    <label className="add-training-label">
+                        Source <span className="text-red-500">*</span>
+                    </label>
+                    <select
                         name="source"
                         value={formData.source}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
                         required
+                    >
+                        <option value="" disabled>Select Source</option>
+                        {sourceOptions.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                        ))}
+                    </select>
+                    {formErrors.source && <span className="text-red-500 text-sm">{formErrors.source}</span>}
+                    <ChevronDown
+                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 ${
+                            focusedDropdown === 'source' ? 'rotate-180' : ''
+                        }`}
+                        size={20}
+                        color="#AAAAAA"
                     />
                 </div>
 
@@ -415,19 +337,17 @@ const QmsAddEnvironmentalIncidents = () => {
                         className="add-training-inputs focus:outline-none"
                         required
                     />
+                    {formErrors.title && <span className="text-red-500 text-sm">{formErrors.title}</span>}
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Incident No
-                    </label>
+                    <label className="add-training-label">Incident No</label>
                     <input
                         type="text"
                         name="next_ei_no"
                         value={`EI-${formData.next_ei_no}`}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
-                        title="Auto-generated ei number"
                     />
                 </div>
 
@@ -437,58 +357,22 @@ const QmsAddEnvironmentalIncidents = () => {
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("status")}
+                        onFocus={() => setFocusedDropdown('status')}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
-                        <option value="" disabled>Select Status</option>
                         <option value="Pending">Pending</option>
                         <option value="Completed">Completed</option>
                         <option value="Deleted">Deleted</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${focusedDropdown === "status" ? "rotate-180" : ""}`}
+                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 ${
+                            focusedDropdown === 'status' ? 'rotate-180' : ''
+                        }`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
-
-                {/* {formData.source === 'Supplier' ? (
-                    <div className="flex flex-col gap-3 relative">
-                        <label className="add-training-label">Supplier <span className="text-red-500">*</span></label>
-                        <select
-                            name="supplier"
-                            value={formData.supplier}
-                            onChange={handleChange}
-                            onFocus={() => setFocusedDropdown("supplier")}
-                            onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
-                        >
-                            <option value="" disabled>
-                                {isLoading ? "Loading suppliers..." : "Select Supplier"}
-                            </option>
-                            {suppliers && suppliers.length > 0 ? (
-                                suppliers.map(supplier => (
-                                    <option key={supplier.id} value={supplier.id}>
-                                        {supplier.company_name}
-                                    </option>
-                                ))
-                            ) : !isLoading && (
-                                <option value="" disabled>No approved suppliers found</option>
-                            )}
-                        </select>
-                        <ChevronDown
-                            className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                            ${focusedDropdown === "supplier" ? "rotate-180" : ""}`}
-                            size={20}
-                            color="#AAAAAA"
-                        />
-                    </div>
-                ) : (
-                    <div></div>
-                )} */}
 
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Root Cause</label>
@@ -496,74 +380,63 @@ const QmsAddEnvironmentalIncidents = () => {
                         name="root_cause"
                         value={formData.root_cause}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("root_cause")}
+                        onFocus={() => setFocusedDropdown('root_cause')}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>
-                            {isLoading ? "Loading..." : "Select Root Cause"}
+                            {isLoading ? 'Loading...' : 'Select Root Cause'}
                         </option>
-                        {rootCauses && rootCauses.length > 0 ? (
-                            rootCauses.map(cause => (
-                                <option key={cause.id} value={cause.id}>
-                                    {cause.title}
-                                </option>
-                            ))
-                        ) : !isLoading && (
-                            <option value="" disabled>No root causes found</option>
-                        )}
+                        {rootCauses.map((cause) => (
+                            <option key={cause.id} value={cause.id}>{cause.title}</option>
+                        ))}
                     </select>
-                    <ChevronDown
-                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${focusedDropdown === "root_cause" ? "rotate-180" : ""}`}
-                        size={20}
-                        color="#AAAAAA"
-                    />
                     <button
-                        className='flex justify-start add-training-label !text-[#1E84AF] mt-1'
-                        onClick={handleOpenRootCauseModal}
+                        className="flex justify-start add-training-label !text-[#1E84AF] mt-1"
+                        onClick={() => setIsRootCauseModalOpen(true)}
                         type="button"
                     >
                         View / Add Root Cause
                     </button>
+                    <ChevronDown
+                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${
+                            focusedDropdown === 'root_cause' ? 'rotate-180' : ''
+                        }`}
+                        size={20}
+                        color="#AAAAAA"
+                    />
                 </div>
 
-                {/* Rest of the form remains the same */}
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Report By</label>
+                    <label className="add-training-label">Reported By</label>
                     <select
                         name="report_by"
                         value={formData.report_by}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("report_by")}
+                        onFocus={() => setFocusedDropdown('report_by')}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>
-                            {isLoading ? "Loading..." : "Select Executor"}
+                            {isLoading ? 'Loading...' : 'Select Reported By'}
                         </option>
-                        {users && users.length > 0 ? (
-                            users.map(user => (
-                                <option key={user.id} value={user.id}>
-                                    {user.first_name} {user.last_name || ''}
-                                </option>
-                            ))
-                        ) : !isLoading && (
-                            <option value="" disabled>No users found</option>
-                        )}
+                        {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                                {user.first_name} {user.last_name || ''}
+                            </option>
+                        ))}
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                        ${focusedDropdown === "report_by" ? "rotate-180" : ""}`}
+                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${
+                            focusedDropdown === 'report_by' ? 'rotate-180' : ''
+                        }`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Incident Description
-                    </label>
+                    <label className="add-training-label">Incident Description</label>
                     <textarea
                         name="description"
                         value={formData.description}
@@ -574,156 +447,164 @@ const QmsAddEnvironmentalIncidents = () => {
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Action or Corrections
+                        Action or Corrections {formData.status === 'Completed' && <span className="text-red-500">*</span>}
                     </label>
                     <textarea
                         name="action"
                         value={formData.action}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
+                        required={formData.status === 'Completed'}
                     />
+                    {formErrors.action && <span className="text-red-500 text-sm">{formErrors.action}</span>}
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Date Raised</label>
+                    <label className="add-training-label">
+                        Date Raised <span className="text-red-500">*</span>
+                    </label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_raised.day"
                                 value={formData.date_raised.day}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_raised.day")}
+                                onFocus={() => setFocusedDropdown('date_raised.day')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.day" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_raised.day' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_raised.month"
                                 value={formData.date_raised.month}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_raised.month")}
+                                onFocus={() => setFocusedDropdown('date_raised.month')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.month" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_raised.month' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_raised.year"
                                 value={formData.date_raised.year}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_raised.year")}
+                                onFocus={() => setFocusedDropdown('date_raised.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.year" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_raised.year' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
                     </div>
+                    {formErrors.date_raised && <span className="text-red-500 text-sm">{formErrors.date_raised}</span>}
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Complete By</label>
+                    <label className="add-training-label">
+                        Complete By {formData.status === 'Completed' && <span className="text-red-500">*</span>}
+                    </label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_completed.day"
                                 value={formData.date_completed.day}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_completed.day")}
+                                onFocus={() => setFocusedDropdown('date_completed.day')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required={formData.status === 'Completed'}
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.day" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_completed.day' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_completed.month"
                                 value={formData.date_completed.month}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_completed.month")}
+                                onFocus={() => setFocusedDropdown('date_completed.month')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required={formData.status === 'Completed'}
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.month" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_completed.month' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_completed.year"
                                 value={formData.date_completed.year}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("date_completed.year")}
+                                onFocus={() => setFocusedDropdown('date_completed.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                required={formData.status === 'Completed'}
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.year" ? "rotate-180" : ""}`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
+                                    focusedDropdown === 'date_completed.year' ? 'rotate-180' : ''
+                                }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
                     </div>
+                    {formErrors.date_completed && <span className="text-red-500 text-sm">{formErrors.date_completed}</span>}
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">
-                        Remarks
-                    </label>
+                    <label className="add-training-label">Remarks</label>
                     <textarea
                         name="remarks"
                         value={formData.remarks}
@@ -732,46 +613,39 @@ const QmsAddEnvironmentalIncidents = () => {
                     />
                 </div>
 
-
-
                 <div className="flex items-end justify-end mt-3">
                     <label className="flex items-center">
                         <input
                             type="checkbox"
                             name="send_notification"
                             className="mr-2 form-checkboxes"
-                            checked={formData.send_notification || false}
+                            checked={formData.send_notification}
                             onChange={handleChange}
                         />
-                        <span className="permissions-texts cursor-pointer">
-                            Send Notification
-                        </span>
+                        <span className="permissions-texts cursor-pointer">Send Notification</span>
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button
                             type="button"
-                            onClick={handleDraftSave}
-                            className='request-correction-btn duration-200'>
+                            onClick={(e) => handleDraftClick(e, true)}
+                            className="request-correction-btn duration-200"
+                            disabled={isLoading}
+                        >
                             Save as Draft
                         </button>
                     </div>
-                    <div className='flex gap-5'>
+                    <div className="flex gap-5">
                         <button
                             type="button"
-                            onClick={handleListNonConformity}
+                            onClick={() => navigate('/company/qms/list-environmantal-incident')}
                             className="cancel-btn duration-200"
                         >
                             Cancel
                         </button>
-                        <button
-                            type="submit"
-                            className="save-btn duration-200"
-                            disabled={isLoading}
-                        >
+                        <button type="submit" className="save-btn duration-200" disabled={isLoading}>
                             {isLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
@@ -781,4 +655,4 @@ const QmsAddEnvironmentalIncidents = () => {
     );
 };
 
-export default QmsAddEnvironmentalIncidents
+export default QmsAddEnvironmentalIncidents;

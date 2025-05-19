@@ -49,7 +49,7 @@ const QmsAddHealthSafetyHazards = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        no: `HS-1`, // Initialize with default
+        hazard_no: `HS-1`, // Initialize with default
         send_notification_to_checked_by: true,
         send_email_to_checked_by: true,
         send_notification_to_approved_by: true,
@@ -111,19 +111,19 @@ const QmsAddHealthSafetyHazards = () => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/hazard-number/next/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health/next-action/${companyId}/`);
             if (response.data && response.data.next_hazard_no) {
                 const hazardNumber = String(response.data.next_hazard_no);
                 setNextHazardNo(hazardNumber);
                 setFormData(prev => ({
                     ...prev,
-                    no: `HS-${hazardNumber}`
+                    hazard_no: `${hazardNumber}`
                 }));
             } else {
                 setNextHazardNo("1");
                 setFormData(prev => ({
                     ...prev,
-                    no: "HS-1"
+                    hazard_no: "HS-1"
                 }));
             }
         } catch (error) {
@@ -131,7 +131,7 @@ const QmsAddHealthSafetyHazards = () => {
             setNextHazardNo("1");
             setFormData(prev => ({
                 ...prev,
-                no: "HS-1"
+                hazard_no: "HS-1"
             }));
         }
     };
@@ -289,7 +289,7 @@ const QmsAddHealthSafetyHazards = () => {
                 submitData.append(key, formData[key]);
             });
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/heath-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -299,7 +299,7 @@ const QmsAddHealthSafetyHazards = () => {
             setShowAddManualSuccessModal(true);
             setTimeout(() => {
                 setShowAddManualSuccessModal(false);
-                navigate('/company/qms/list-sustainability');
+                navigate('/company/qms/list-health-safety-hazards');
             }, 1500);
 
         } catch (err) {
@@ -346,7 +346,7 @@ const QmsAddHealthSafetyHazards = () => {
                 }
             });
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability/draft-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/health/draft-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -356,7 +356,7 @@ const QmsAddHealthSafetyHazards = () => {
             setShowDraftManualSuccessModal(true);
             setTimeout(() => {
                 setShowDraftManualSuccessModal(false);
-                navigate('/company/qms/draft-sustainability');
+                navigate('/company/qms/draft-health-safety-hazards');
             }, 1500);
 
         } catch (err) {
@@ -471,8 +471,8 @@ const QmsAddHealthSafetyHazards = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="hazard_no"
+                                value={formData.hazard_no}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                                 required

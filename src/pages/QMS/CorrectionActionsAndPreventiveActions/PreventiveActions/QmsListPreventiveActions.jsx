@@ -6,7 +6,10 @@ import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { BASE_URL } from "../../../../Utils/Config"; 
+import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal"; 
 
 const QmsListPreventiveActions = () => {
   // State
@@ -16,6 +19,15 @@ const QmsListPreventiveActions = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [draftCount, setDraftCount] = useState(0);
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [preventiveActionToDelete, setPreventiveActionToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Get company ID from local storage
   const getUserCompanyId = () => {
@@ -37,7 +49,22 @@ const QmsListPreventiveActions = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
 
   // Fetch preventive actions from backend
   useEffect(() => {
@@ -48,10 +75,16 @@ const QmsListPreventiveActions = () => {
           `${BASE_URL}/qms/preventive/${companyId}/`
         );
         setPreventiveActions(response.data);
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/preventive/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching preventive actions:", err);
-        setError("Failed to load preventive actions");
+        handleError(err, "Failed to load preventive actions");
         setLoading(false);
       }
     };
@@ -62,7 +95,27 @@ const QmsListPreventiveActions = () => {
       setError("Company ID not found");
       setLoading(false);
     }
-  }, [companyId]);
+  }, [companyId, userId]);
+
+  const handleError = (error, defaultMessage) => {
+    let errorMsg = defaultMessage || error.message;
+
+    if (error.response) {
+      if (error.response.data.date) {
+        errorMsg = error.response.data.date[0];
+      } else if (error.response.data.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+    }
+
+    setError(errorMsg);
+    setShowErrorModal(true);
+    setTimeout(() => {
+      setShowErrorModal(false);
+    }, 3000);
+  };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -112,17 +165,38 @@ const QmsListPreventiveActions = () => {
     navigate(`/company/qms/edit-preventive-actions/${id}`);
   };
 
-  // Delete preventive action
-  const handleDeletePreventiveAction = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (preventiveAction) => {
+    setPreventiveActionToDelete(preventiveAction);
+    setShowDeleteModal(true);
+    setDeleteMessage('Preventive Action');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!preventiveActionToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
-      // Update state after successful deletion
+      await axios.delete(`${BASE_URL}/qms/preventive-get/${preventiveActionToDelete.id}/`);
       setPreventiveActions(
-        preventiveActions.filter((preventive) => preventive.id !== id)
+        preventiveActions.filter((preventive) => preventive.id !== preventiveActionToDelete.id)
       );
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Preventive Action Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (err) {
       console.error("Error deleting preventive action:", err);
-      // Handle error (could add a notification system here)
+      handleError(err, "Failed to delete preventive action");
+      setShowDeleteModal(false);
     }
   };
 
@@ -137,7 +211,7 @@ const QmsListPreventiveActions = () => {
     if (!dateString) return "-";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
@@ -170,10 +244,15 @@ const QmsListPreventiveActions = () => {
             </div>
           </div>
           <button
-            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
+            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px] relative"
             onClick={handleDraftPreventiveActions}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute -top-[10px] -right-[10px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -191,12 +270,11 @@ const QmsListPreventiveActions = () => {
 
       {/* Loading and Error States */}
       {loading && (
-        <div className="text-center py-4">Loading preventive actions...</div>
+        <div className="text-center py-4 not-found">Loading preventive actions...</div>
       )}
-      {error && <div className="text-center py-4 text-red-400">{error}</div>}
 
       {/* Table */}
-      {!loading && !error && (
+      {!loading && (
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
@@ -244,13 +322,12 @@ const QmsListPreventiveActions = () => {
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
                       <span
-                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                          preventive.status === "Completed"
+                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${preventive.status === "Completed"
                             ? "bg-[#36DDAE11] text-[#36DDAE]"
                             : preventive.status === "Pending"
-                            ? "bg-[#1E84AF11] text-[#1E84AF]"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
+                              ? "bg-[#1E84AF11] text-[#1E84AF]"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
                       >
                         {preventive.status}
                       </span>
@@ -282,9 +359,7 @@ const QmsListPreventiveActions = () => {
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
                       <button
-                        onClick={() =>
-                          handleDeletePreventiveAction(preventive.id)
-                        }
+                        onClick={() => openDeleteModal(preventive)}
                       >
                         <img src={deleteIcon} alt="Delete Icon" />
                       </button>
@@ -293,7 +368,7 @@ const QmsListPreventiveActions = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="10" className="text-center py-4">
+                  <td colSpan="10" className="text-center py-4 not-found">
                     No preventive actions found
                   </td>
                 </tr>
@@ -304,16 +379,15 @@ const QmsListPreventiveActions = () => {
       )}
 
       {/* Pagination */}
-      {!loading && !error && preventiveActions.length > 0 && (
+      {!loading && preventiveActions.length > 0 && (
         <div className="flex justify-between items-center mt-6 text-sm">
           <div className="text-white total-text">Total-{totalItems}</div>
           <div className="flex items-center gap-5">
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -323,9 +397,8 @@ const QmsListPreventiveActions = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {number}
                 </button>
@@ -335,17 +408,38 @@ const QmsListPreventiveActions = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
 
-export default QmsListPreventiveActions;
+export default QmsListPreventiveActions; 

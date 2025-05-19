@@ -26,7 +26,7 @@ const QmsEditHealthSafetyHazards = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        no: '',
+        hazard_no: '',
         written_by: null,
         checked_by: null,
         approved_by: null,
@@ -83,7 +83,7 @@ const QmsEditHealthSafetyHazards = () => {
         if (hazardDetails) {
             setFormData({
                 title: hazardDetails.title || '',
-                no: hazardDetails.no || '',
+                hazard_no: hazardDetails.hazard_no || '',
                 written_by: hazardDetails.written_by?.id || null,
                 checked_by: hazardDetails.checked_by?.id || null,
                 approved_by: hazardDetails.approved_by?.id || null,
@@ -136,7 +136,7 @@ const QmsEditHealthSafetyHazards = () => {
 
     const fetchHazardDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-detail/${id}/`);
             setHazardDetails(response.data);
             setIsInitialLoad(false);
             console.log("Hazard Details:", response.data);
@@ -151,7 +151,7 @@ const QmsEditHealthSafetyHazards = () => {
 
     const fetchHazardCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/health/${id}/corrections/`);
             setCorrections(response.data);
             console.log("Fetched Hazard Corrections:", response.data);
         } catch (error) {
@@ -329,7 +329,7 @@ const QmsEditHealthSafetyHazards = () => {
                 }
             });
 
-            const response = await axios.put(`${BASE_URL}/qms/health-safety-hazards/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/health/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -434,8 +434,8 @@ const QmsEditHealthSafetyHazards = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="hazard_no"
+                                value={formData.hazard_no}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                             />

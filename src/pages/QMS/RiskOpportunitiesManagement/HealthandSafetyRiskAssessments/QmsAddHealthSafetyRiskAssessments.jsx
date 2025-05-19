@@ -51,7 +51,7 @@ const QmsAddHealthSafetyRiskAssessments = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        no: '',
+        assessment_no: '',
         send_notification_to_checked_by: true,
         send_email_to_checked_by: true,
         send_notification_to_approved_by: true,
@@ -149,8 +149,8 @@ const QmsAddHealthSafetyRiskAssessments = () => {
         const newErrors = {};
 
         // Check required fields
-        if (!formData.no.trim()) {
-            newErrors.no = "Compliance/Obligation Number is required";
+        if (!formData.assessment_no.trim()) {
+            newErrors.assessment_no = "Compliance/Obligation Number is required";
         }
 
         if (!formData.written_by) {
@@ -288,7 +288,7 @@ const QmsAddHealthSafetyRiskAssessments = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/assessment-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -353,7 +353,7 @@ const QmsAddHealthSafetyRiskAssessments = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability/draft-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/assessment/draft-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -484,12 +484,12 @@ const QmsAddHealthSafetyRiskAssessments = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="assessment_no"
+                                value={formData.assessment_no}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
-                            <ErrorMessage message={errors.no} />
+                            <ErrorMessage message={errors.assessment_no} />
 
                         </div>
 

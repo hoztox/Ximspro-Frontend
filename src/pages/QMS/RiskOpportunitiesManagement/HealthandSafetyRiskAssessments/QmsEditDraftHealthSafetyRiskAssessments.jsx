@@ -27,7 +27,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
     const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
     const [fieldErrors, setFieldErrors] = useState({
         written_by: '',
-        no: '',
+        assessment_no: '',
         checked_by: '',
         // approved_by: ''
     });
@@ -63,7 +63,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
             setFormData({
                 title: manualDetails.title || '',
                 written_by: manualDetails.written_by?.id || null,
-                no: manualDetails.no || '',
+                assessment_no: manualDetails.assessment_no || '',
                 checked_by: manualDetails.checked_by?.id || null,
                 rivision: manualDetails.rivision || '',
                 approved_by: manualDetails.approved_by?.id || null,
@@ -92,7 +92,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
     const fetchManualDetails = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Detailssssssssssss:", response.data);
@@ -125,7 +125,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
     const [formData, setFormData] = useState({
         title: '',
         written_by: null,
-        no: '',
+        assessment_no: '',
         checked_by: null,
         rivision: '',
         approved_by: null,
@@ -244,8 +244,8 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
         }
 
         // Validate section number
-        if (!formData.no.trim()) {
-            newErrors.no = 'Section Number is required';
+        if (!formData.assessment_no.trim()) {
+            newErrors.assessment_no = 'Section Number is required';
             isValid = false;
         }
 
@@ -404,7 +404,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/sustainability/create/${id}/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/assessment/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -414,7 +414,7 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
             setShowEditDraftManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditDraftManualSuccessModal(false)
-                navigate('/company/qms/list-sustainability');
+                navigate('/company/qms/draft-health-safety-assessments');
             }, 2000);
 
         } catch (err) {
@@ -495,8 +495,8 @@ const QmsEditDraftHealthSafetyRiskAssessments = () => {
                         </label>
                         <input
                             type="text"
-                            name="no"
-                            value={formData.no}
+                            name="assessment_no"
+                            value={formData.assessment_no}
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />

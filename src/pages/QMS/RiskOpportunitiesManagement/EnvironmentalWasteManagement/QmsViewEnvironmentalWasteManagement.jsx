@@ -102,7 +102,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste-detail/${id}/`);
             setManualDetails(response.data);
             console.log("Manual Details:", response.data);
             setLoading(false);
@@ -130,7 +130,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Waste Management Corrections:", allCorrections);
 
@@ -223,14 +223,14 @@ const QmsViewEnvironmentalWasteManagement = () => {
             }
 
             const requestData = {
-                waste_management_id: id,
+                waste_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
             };
 
             console.log('Submitting correction request:', requestData);
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability/submit-correction/`, requestData);
+            const response = await axios.post(`${BASE_URL}/qms/waste/submit-correction/`, requestData);
 
             console.log('Correction response:', response.data);
 
@@ -327,12 +327,12 @@ const QmsViewEnvironmentalWasteManagement = () => {
             }
 
             const requestData = {
-                waste_management_id: id,
+                waste_id: id,
                 current_user_id: currentUser.user_id
             };
 
             const response = await axios.post(
-                `${BASE_URL}/qms/sustainability-review/`,
+                `${BASE_URL}/qms/waste-review/`,
                 requestData
             );
 
@@ -464,11 +464,11 @@ const QmsViewEnvironmentalWasteManagement = () => {
                     <div className="grid grid-cols-1 gap-[40px]">
                         <div>
                             <label className="viewmanuallabels">Location/Site Name</label>
-                            <p className="viewmanuasdata">{manualDetails.name || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.location || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">WMP No</label>
-                            <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.wmp || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Waste Category</label>
@@ -542,7 +542,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
                                         <button
                                             onClick={() => {
                                                 handleMoveToHistory();
-                                                navigate(`/company/qms/edit-environmental-waste-management/${id}`);
+                                                navigate(`/company/qms/edit-environmantal-waste-management/${id}`);
                                             }}
                                         >
                                             <img src={edits} alt="Edit Icon" />

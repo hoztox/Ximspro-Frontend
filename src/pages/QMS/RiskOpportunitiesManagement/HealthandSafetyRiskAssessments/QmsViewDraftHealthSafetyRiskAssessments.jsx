@@ -107,13 +107,13 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
     // Fetch manual details
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment-detail/${id}/`);
             setManualDetails(response.data);
             console.log("Manual Details:", response.data);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching manual details:", err);
-            setError("Failed to load sustainability details");
+            setError("Failed to load assessment details");
             setLoading(false);
         }
     };
@@ -137,7 +137,7 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Record Formats Corrections:", allCorrections);
 
@@ -258,7 +258,7 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
 
             console.log('Submitting correction request:', requestData);
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability/submit-correction/`, requestData);
+            const response = await axios.post(`${BASE_URL}/qms/assessment/submit-correction/`, requestData);
 
             console.log('Correction response:', response.data);
 
@@ -395,14 +395,14 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
             };
 
             const response = await axios.post(
-                `${BASE_URL}/qms/sustainability-review/`,
+                `${BASE_URL}/qms/assessment-review/`,
                 requestData
             );
 
             setShowSubmitManualSuccessModal(true);
             setTimeout(() => {
                 setShowSubmitManualSuccessModal(false);
-                navigate("/company/qms/list-sustainability");
+                navigate("/company/qms/list-health-safety-assessments");
             }, 1500);
             fetchManualDetails();
             fetchManualCorrections();
@@ -536,7 +536,7 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
                         </div>
                         <div>
                             <label className="viewmanuallabels">Risk Assessment Number </label>
-                            <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.assessment_no || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Revision</label>

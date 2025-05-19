@@ -14,7 +14,7 @@ import ReviewSubmitSuccessModal from "./Modals/ReviewSubmitSuccessModal";
 import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
-import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal"; 
+import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
 
 const ViewQmsManual = () => {
   const navigate = useNavigate();
@@ -128,7 +128,7 @@ const ViewQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-     let errorMsg = err.message;
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -219,6 +219,76 @@ const ViewQmsManual = () => {
   const handleCloseViewPage = () => {
     navigate("/company/qms/manual");
   };
+
+  const handleCorrectionSubmit = async () => {
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        alert("User not authenticated");
+        return;
+      }
+
+      const requestData = {
+        manual_id: id,
+        correction: correctionRequest.text,
+        from_user: currentUser.user_id,
+      };
+
+      console.log("Submitting correction request:", requestData);
+
+      const response = await axios.post(
+        `${BASE_URL}/qms/submit-correction/`, 
+        requestData
+      );
+
+      console.log("Correction response:", response.data);
+
+      handleCloseCorrectionRequest();
+      setShowSentCorrectionSuccessModal(true);
+
+      // Clear any previously viewed corrections from localStorage to ensure
+      // the new correction appears highlighted for the current user
+      const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
+        "user_id"
+      )}`;
+      localStorage.removeItem(storageKey);
+
+      // Refresh data immediately to get the new correction
+      await fetchManualDetails();
+      await fetchManualCorrections();
+
+      setTimeout(() => {
+        setShowSentCorrectionSuccessModal(false);
+        // Don't navigate away - we want to show the highlighted correction
+      }, 1500);
+    } catch (error) {
+      console.error("Error submitting correction:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowSentCorrectionErrorModal(true);
+      setTimeout(() => {
+        setShowSentCorrectionErrorModal(false);
+      }, 3000);
+    }
+  };
+
 
   // Delete manual functions
   const handleDelete = (id) => {
@@ -372,10 +442,23 @@ const ViewQmsManual = () => {
       fetchManualCorrections();
     } catch (error) {
       console.error("Error submitting review:", error);
-      const errorMessage =
-        error.response?.data?.error ||
-        error.response?.data?.message ||
-        "Failed to submit review";
+       let errorMsg;
+
+  if (error.response) {
+    // Server responded with a status other than 2xx
+    const data = error.response.data;
+
+    // Try multiple possible locations for an error message
+    errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+  } else if (error.request) {
+    // Request was made but no response received
+    errorMsg = "No response received from server.";
+  } else {
+    // Something happened in setting up the request
+    errorMsg = error.message || "An unknown error occurred.";
+  }
+
+      setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
         setShowSubmitManualErrorModal(false);
@@ -445,9 +528,8 @@ const ViewQmsManual = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
-              index < historyCorrections.length - 1 ? "mb-5" : ""
-            }`}
+            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? "mb-5" : ""
+              }`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -606,9 +688,8 @@ const ViewQmsManual = () => {
                 <label className="viewmanuallabels">Review Frequency</label>
                 <p className="viewmanuasdata">
                   {manualDetails.review_frequency_year
-                    ? `${manualDetails.review_frequency_year} years, ${
-                        manualDetails.review_frequency_month || 0
-                      } months`
+                    ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0
+                    } months`
                     : "N/A"}
                 </p>
               </div>

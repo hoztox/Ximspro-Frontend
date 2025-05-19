@@ -28,7 +28,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
     const [formData, setFormData] = useState({
         title: '',
         written_by: null,
-        no: '',
+        assessment_no: '',
         checked_by: null,
         rivision: '',
         approved_by: null,
@@ -123,7 +123,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
             setFormData({
                 title: manualDetails.title || '',
                 written_by: manualDetails.written_by?.id || null,
-                no: manualDetails.no || '',
+                assessment_no: manualDetails.assessment_no || '',
                 checked_by: manualDetails.checked_by?.id || null,
                 rivision: manualDetails.rivision || '',
                 approved_by: manualDetails.approved_by?.id || null,
@@ -179,7 +179,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Details:", response.data);
@@ -194,7 +194,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/sustainability/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment/${id}/corrections/`);
             setCorrections(response.data);
             console.log("Fetched Manual Corrections:", response.data);
         } catch (error) {
@@ -270,8 +270,8 @@ const QmsEditHealthSafetyRiskAssessments = () => {
         }
 
         // Validate section number
-        if (!formData.no.trim()) {
-            newErrors.no = 'Compliance/Obligation Number is required';
+        if (!formData.assessment_no.trim()) {
+            newErrors.assessment_no = 'Compliance/Obligation Number is required';
             isValid = false;
         }
 
@@ -391,7 +391,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
                 submitData.append('upload_attachment', fileObject);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/sustainability/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/assessment/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -403,7 +403,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
             setShowEditManualSuccessModal(true)
             setTimeout(() => {
                 setShowEditManualSuccessModal(false)
-                navigate('/company/qms/list-sustainability');
+                navigate('/company/qms/list-health-safety-assessments');
             }, 2000);
 
         } catch (err) {
@@ -523,12 +523,12 @@ const QmsEditHealthSafetyRiskAssessments = () => {
                         </label>
                         <input
                             type="text"
-                            name="no"
-                            value={formData.no}
+                            name="assessment_no"
+                            value={formData.assessment_no}
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />
-                        {fieldErrors.no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+                        {fieldErrors.assessment_no && <p className={errorTextClass}>{fieldErrors.no}</p>}
 
                     </div>
 

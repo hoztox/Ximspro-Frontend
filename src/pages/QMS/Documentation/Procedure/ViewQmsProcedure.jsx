@@ -242,6 +242,25 @@ const ViewQmsprocedure = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting correction:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
         setShowSentCorrectionErrorModal(false);
@@ -370,6 +389,23 @@ const ViewQmsprocedure = () => {
       fetchManualCorrections();
     } catch (error) {
       console.error("Error submitting review:", error);
+      let errorMsg;
+
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        const data = error.response.data;
+
+        // Try multiple possible locations for an error message
+        errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMsg = "No response received from server.";
+      } else {
+        // Something happened in setting up the request
+        errorMsg = error.message || "An unknown error occurred.";
+      }
+
+      setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
         setShowSubmitManualErrorModal(false);
@@ -441,9 +477,8 @@ const ViewQmsprocedure = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
-              index < historyCorrections.length - 1 ? "mb-5" : ""
-            }`}
+            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? "mb-5" : ""
+              }`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -560,9 +595,8 @@ const ViewQmsprocedure = () => {
                 <label className="viewmanuallabels">Review Frequency</label>
                 <p className="viewmanuasdata">
                   {manualDetails.review_frequency_year
-                    ? `${manualDetails.review_frequency_year} years, ${
-                        manualDetails.review_frequency_month || 0
-                      } months`
+                    ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0
+                    } months`
                     : "N/A"}
                 </p>
               </div>

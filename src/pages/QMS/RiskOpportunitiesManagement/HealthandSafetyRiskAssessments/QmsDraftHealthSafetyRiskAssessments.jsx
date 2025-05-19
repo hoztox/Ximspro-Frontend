@@ -30,7 +30,7 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
     const handleConfirmDelete = () => {
         if (manualToDelete) {
             axios
-                .delete(`${BASE_URL}/qms/sustainability-detail/${manualToDelete}/`)
+                .delete(`${BASE_URL}/qms/assessment-detail/${manualToDelete}/`)
                 .then((response) => {
                     // Remove the deleted manual from state
                     setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
@@ -105,12 +105,12 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
         try {
             setLoading(true);
             const id = getRelevantUserId();
-            const response = await axios.get(`${BASE_URL}/qms/sustainability-draft/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment-draft/${id}/`);
             setManuals(response.data);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching Sustainability:", err);
-            setError("Failed to load Sustainability. Please try again.");
+            console.error("Error fetching assessment:", err);
+            setError("Failed to load assessment. Please try again.");
             setLoading(false);
         }
     };
@@ -121,7 +121,7 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
 
     const filteredManual = manuals.filter(manual =>
         (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (manual.assessment_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
@@ -223,7 +223,7 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
                                     <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
                                         <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{manual.assessment_no || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">
                                             {manual.approved_by ?
                                                 `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :

@@ -31,7 +31,7 @@ const QmsDraftEnvironmentalWasteManagement = () => {
     const handleConfirmDelete = () => {
         if (manualToDelete) {
             axios
-                .delete(`${BASE_URL}/qms/waste-management-detail/${manualToDelete}/`)
+                .delete(`${BASE_URL}/qms/waste-detail/${manualToDelete}/`)
                 .then((response) => {
                     setManuals(manuals.filter((manual) => manual.id !== manualToDelete));
                     setShowDeleteDraftManualSuccessModal(true);
@@ -94,7 +94,7 @@ const QmsDraftEnvironmentalWasteManagement = () => {
         try {
             setLoading(true);
             const id = getRelevantUserId();
-            const response = await axios.get(`${BASE_URL}/qms/waste-management-draft/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste-draft/${id}/`);
             setManuals(response.data);
             setLoading(false);
         } catch (err) {
@@ -204,7 +204,7 @@ const QmsDraftEnvironmentalWasteManagement = () => {
                         <thead className='bg-[#24242D]'>
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                                <th className="px-2 text-left add-manual-theads">Title</th>
+                                <th className="px-2 text-left add-manual-theads">Location</th>
                                 <th className="px-2 text-left add-manual-theads">WMP No</th>
                                 <th className="px-2 text-left add-manual-theads">Approved By</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>
@@ -217,8 +217,8 @@ const QmsDraftEnvironmentalWasteManagement = () => {
                                 paginatedManual.map((manual, index) => (
                                     <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
                                         <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
-                                        <td className="px-2 add-manual-datas">{manual.name || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{manual.location || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{manual.wmp || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">
                                             {manual.approved_by ?
                                                 `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :

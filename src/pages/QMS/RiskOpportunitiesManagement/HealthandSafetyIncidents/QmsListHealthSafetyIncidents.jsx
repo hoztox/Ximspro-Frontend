@@ -1,89 +1,160 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from 'axios';
 
 const QmsListHealthSafetyIncidents = () => {
-    const initialData = [
-        { id: 1, title: 'Anonymous', source: 'Anonymous', incident_no: 'HS-1', date_raised: '03-12-2024', completed_by: '04-12-2024', report_by: 'abc', status: 'Completed' },
-        { id: 2, title: 'Anonymous', source: 'Anonymous', incident_no: 'HS-2', date_raised: '03-12-2024', completed_by: '04-12-2024', report_by: 'abc', status: 'Pending' },
-        { id: 3, title: 'Anonymous', source: 'Anonymous', incident_no: 'HS-3', date_raised: '03-12-2024', completed_by: '04-12-2024', report_by: 'abc', status: 'Deleted' },
-
-    ];
-
-
     // State
-    const [nonConformity, setNonConformity] = useState(initialData);
+    const [incidents, setIncidents] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
     const [searchQuery, setSearchQuery] = useState('');
-    const [formData, setFormData] = useState({
-        title: '',
-        source: '',
-        incident_no: '',
-        date_raised: '',
-        completed_by: '',
-        report_by: '',
-        status: 'Completed'
-    });
+    const [currentPage, setCurrentPage] = useState(1);
+
+
+    const getUserCompanyId = () => {
+        const storedCompanyId = localStorage.getItem("company_id");
+        if (storedCompanyId) return storedCompanyId;
+
+        const userRole = localStorage.getItem("role");
+        if (userRole === "user") {
+            const userData = localStorage.getItem("user_company_id");
+            if (userData) {
+                try {
+                    return JSON.parse(userData);
+                } catch (e) {
+                    console.error("Error parsing user company ID:", e);
+                    return null;
+                }
+            }
+        }
+        return null;
+    };
+    // Fetch incidents data from the API
+    useEffect(() => {
+        const fetchIncidents = async () => {
+            try {
+                setLoading(true);
+                const companyId = getUserCompanyId();
+                // Replace with your actual API endpoint
+                const response = await axios.get(`${BASE_URL}/qms/safety_incidents/company/${companyId}/`);
+                
+                // Format data for display
+                const formattedData = response.data.map(incident => ({
+                    id: incident.id,
+                    title: incident.title || 'Anonymous',
+                    source: incident.source || 'Anonymous',
+                    incident_no: incident.incident_no,
+                    date_raised: incident.date_raised ? formatDate(incident.date_raised) : '-',
+                    completed_by: incident.date_completed ? formatDate(incident.date_completed) : '-',
+                    report_by: incident.reported_by ? incident.reported_by.username : 'Anonymous',
+                    status: incident.status
+                }));
+                
+                setIncidents(formattedData);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching health incidents:', err);
+                setError('Failed to load incidents. Please try again later.');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchIncidents();
+    }, []);
+
+    // Format date from YYYY-MM-DD to DD-MM-YYYY
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).replace(/\//g, '-');
+    };
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
         setSearchQuery(value);
-        setSearchTerm(value); // Update_raised searchTerm as well
         setCurrentPage(1);
     };
 
-
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = nonConformity.length;
+    const totalItems = incidents.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = nonConformity.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = incidents.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-
-    const filteredNonConformity = currentItems.filter(nonConformities =>
-        nonConformities.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nonConformities.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        nonConformities.report_by.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredIncidents = currentItems.filter(incident =>
+        incident.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        incident.source.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        incident.report_by.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        incident.incident_no.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleAddIncident = () => {
+        navigate('/company/qms/add-health-safety-incidents');
+    };
 
+    const handleDraftIncidents = () => {
+        navigate('/company/qms/draft-health-safety-incidents');
+    };
 
-    const handleAddNonConformity = () => {
-        navigate('/company/qms/add-health-safety-incidents')
-    }
+    const handleViewIncident = (id) => {
+        navigate(`/company/qms/view-health-safety-incidents/${id}`);
+    };
 
-    const handleDraftNonConformity = () => {
-        navigate('/company/qms/draft-health-safety-incidents')
-    }
+    const handleEditIncident = (id) => {
+        navigate(`/company/qms/edit-health-safety-incidents/${id}`);
+    };
 
-    const handleQmsViewNonconformity = () => {
-        navigate('/company/qms/view-health-safety-incidents')
-    }
-
-    const handleQmsEditNonConformity = () => {
-        navigate('/company/qms/edit-health-safety-incidents')
-    }
-
-
-    const handleDeleteNonConformity = (id) => {
-        setNonConformity(nonConformity.filter(nonConformities => nonConformities.id !== id));
+    const handleDeleteIncident = async (id) => {
+        if (window.confirm('Are you sure you want to delete this incident?')) {
+            try {
+                await axios.delete(`/api/health-incidents/${id}/`);
+                // Update the incidents list after deletion
+                setIncidents(incidents.filter(incident => incident.id !== id));
+            } catch (err) {
+                console.error('Error deleting incident:', err);
+                alert('Failed to delete incident. Please try again.');
+            }
+        }
     };
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+
+    // Display loading or error states
+    if (loading) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-[400px]">
+                <p>Loading health and safety incidents...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-[400px]">
+                <p className="text-red-400">{error}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -105,14 +176,13 @@ const QmsListHealthSafetyIncidents = () => {
                     </div>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={handleDraftNonConformity}
+                        onClick={handleDraftIncidents}
                     >
                         <span>Drafts</span>
-
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-                        onClick={handleAddNonConformity}
+                        onClick={handleAddIncident}
                     >
                         <span>Add Health and Safety Incidents</span>
                         <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
@@ -139,45 +209,53 @@ const QmsListHealthSafetyIncidents = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredNonConformity.map((nonConformities, index) => (
-                            <tr key={nonConformities.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                                <td className="pl-5 pr-2 add-manual-datas">{nonConformities.id}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.title}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.source}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.incident_no}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.report_by}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.date_raised}</td>
-                                <td className="px-2 add-manual-datas">{nonConformities.completed_by}</td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <span
-                                        className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${nonConformities.status === 'Completed'
-                                            ? 'bg-[#36DDAE11] text-[#36DDAE]'
-                                            : nonConformities.status === 'Pending'
-                                                ? 'bg-[#1E84AF11] text-[#1E84AF]'
-                                                : 'bg-[#dd363611] text-[#dd3636]'
-                                            }`}
-                                    >
-                                        {nonConformities.status}
-                                    </span>
-
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsViewNonconformity}>
-                                        <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleQmsEditNonConformity}>
-                                        <img src={editIcon} alt="Edit Icon" />
-                                    </button>
-                                </td>
-                                <td className="px-2 add-manual-datas !text-center">
-                                    <button onClick={handleDeleteNonConformity}>
-                                        <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
+                        {filteredIncidents.length > 0 ? (
+                            filteredIncidents.map((incident, index) => (
+                                <tr key={incident.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                                    <td className="px-2 add-manual-datas">{incident.title}</td>
+                                    <td className="px-2 add-manual-datas">{incident.source}</td>
+                                    <td className="px-2 add-manual-datas">{incident.incident_no}</td>
+                                    <td className="px-2 add-manual-datas">{incident.report_by}</td>
+                                    <td className="px-2 add-manual-datas">{incident.date_raised}</td>
+                                    <td className="px-2 add-manual-datas">{incident.completed_by}</td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <span
+                                            className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
+                                                incident.status === 'Completed'
+                                                    ? 'bg-[#36DDAE11] text-[#36DDAE]'
+                                                    : incident.status === 'Pending'
+                                                        ? 'bg-[#1E84AF11] text-[#1E84AF]'
+                                                        : 'bg-[#dd363611] text-[#dd3636]'
+                                                }`}
+                                        >
+                                            {incident.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleViewIncident(incident.id)}>
+                                            <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleEditIncident(incident.id)}>
+                                            <img src={editIcon} alt="Edit Icon" />
+                                        </button>
+                                    </td>
+                                    <td className="px-2 add-manual-datas !text-center">
+                                        <button onClick={() => handleDeleteIncident(incident.id)}>
+                                            <img src={deleteIcon} alt="Delete Icon" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="11" className="py-4 text-center text-gray-400">
+                                    No incidents found matching your search criteria.
                                 </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
@@ -198,8 +276,7 @@ const QmsListHealthSafetyIncidents = () => {
                         <button
                             key={number}
                             onClick={() => paginate(number)}
-                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'
-                                }`}
+                            className={`${currentPage === number ? 'pagin-active' : 'pagin-inactive'}`}
                         >
                             {number}
                         </button>
@@ -217,4 +294,5 @@ const QmsListHealthSafetyIncidents = () => {
         </div>
     );
 };
-export default QmsListHealthSafetyIncidents
+
+export default QmsListHealthSafetyIncidents;

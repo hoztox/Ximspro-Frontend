@@ -57,7 +57,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
             setFormData({
                 title: hazardDetails.title || '',
                 written_by: hazardDetails.written_by?.id || null,
-                no: hazardDetails.no || '', // Use existing Hazard Number
+                hazard_no: hazardDetails.hazard_no || '', // Use existing Hazard Number
                 checked_by: hazardDetails.checked_by?.id || null,
                 approved_by: hazardDetails.approved_by?.id || null,
                 hazard_source: hazardDetails.hazard_source || '',
@@ -78,7 +78,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
     const fetchHazardDetails = async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-detail/${id}/`);
             setHazardDetails(response.data);
             setIsInitialLoad(false);
             console.log("Hazard Details:", response.data);
@@ -100,7 +100,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
     const [formData, setFormData] = useState({
         title: '',
         written_by: null,
-        no: '',
+        hazard_no: '',
         checked_by: null,
         approved_by: null,
         hazard_source: '',
@@ -324,7 +324,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
                 }
             });
 
-            const response = await axios.put(`${BASE_URL}/qms/health-safety-hazards/create/${id}/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/health/create/${id}/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -417,8 +417,8 @@ const QmsDraftEditHealthSafetyHazards = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="hazard_no"
+                                value={formData.hazard_no}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed"
                                 readOnly

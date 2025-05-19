@@ -45,8 +45,8 @@ const QmsAddEnvironmentalWasteManagement = () => {
     console.log("Stored Company ID:", companyId);
 
     const [formData, setFormData] = useState({
-        name: '',
-        no: 'WMP-1', // Initialize with default WMP No
+        location: '',
+        wmp: 'WMP-1', // Initialize with default WMP No
         send_notification_to_checked_by: true,
         send_email_to_checked_by: true,
         send_notification_to_approved_by: true,
@@ -104,24 +104,24 @@ const QmsAddEnvironmentalWasteManagement = () => {
                 setNextWmpNo("1");
                 setFormData(prevData => ({
                     ...prevData,
-                    no: "WMP-1"
+                    wmp: "WMP-1"
                 }));
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/wmp-number/next/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste/next-action/${companyId}/`);
             if (response.data && response.data.next_wmp_no) {
                 const wmpNumber = String(response.data.next_wmp_no);
                 setNextWmpNo(wmpNumber);
                 setFormData(prevData => ({
                     ...prevData,
-                    no: `WMP-${wmpNumber}`
+                    wmp: `${wmpNumber}`
                 }));
             } else {
                 setNextWmpNo("1");
                 setFormData(prevData => ({
                     ...prevData,
-                    no: "WMP-1"
+                    wmp: "WMP-1"
                 }));
             }
         } catch (error) {
@@ -254,7 +254,7 @@ const QmsAddEnvironmentalWasteManagement = () => {
                 submitData.append(key, formData[key]);
             });
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/waste-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -315,7 +315,7 @@ const QmsAddEnvironmentalWasteManagement = () => {
                 }
             });
 
-            const response = await axios.post(`${BASE_URL}/qms/sustainability/draft-create/`, submitData, {
+            const response = await axios.post(`${BASE_URL}/qms/waste/draft-create/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -386,8 +386,8 @@ const QmsAddEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="name"
-                                value={formData.name}
+                                name="location"
+                                value={formData.location}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
@@ -426,8 +426,8 @@ const QmsAddEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="wmp"
+                                value={formData.wmp}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                             />

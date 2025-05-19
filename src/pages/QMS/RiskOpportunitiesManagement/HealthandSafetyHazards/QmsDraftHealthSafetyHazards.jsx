@@ -31,7 +31,7 @@ const QmsDraftHealthSafetyHazards = () => {
     const handleConfirmDelete = () => {
         if (hazardToDelete) {
             axios
-                .delete(`${BASE_URL}/qms/health-safety-hazards-detail/${hazardToDelete}/`)
+                .delete(`${BASE_URL}/qms/health-detail/${hazardToDelete}/`)
                 .then((response) => {
                     setHazards(hazards.filter((hazard) => hazard.id !== hazardToDelete));
                     setShowDeleteDraftHazardSuccessModal(true);
@@ -108,7 +108,7 @@ const QmsDraftHealthSafetyHazards = () => {
         try {
             setLoading(true);
             const id = getRelevantUserId();
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards-draft/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-draft/${id}/`);
             setHazards(response.data);
             setLoading(false);
         } catch (err) {
@@ -229,7 +229,7 @@ const QmsDraftHealthSafetyHazards = () => {
                                     <tr key={hazard.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
                                         <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * hazardsPerPage + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{hazard.title || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{hazard.no || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{hazard.hazard_no || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">
                                             {hazard.approved_by ?
                                                 `${hazard.approved_by.first_name} ${hazard.approved_by.last_name}` :

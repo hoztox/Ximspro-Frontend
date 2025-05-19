@@ -100,7 +100,7 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/waste-management-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste-detail/${id}/`);
             setManualDetails(response.data);
             console.log("Manual Details:", response.data);
             setLoading(false);
@@ -128,7 +128,7 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/waste-management/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Waste Management Corrections:", allCorrections);
 
@@ -209,7 +209,7 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
     };
 
     const handleCloseViewPage = () => {
-        navigate('/company/qms/draft-environmental-waste-management');
+        navigate('/company/qms/draft-environmantal-waste-management');
     };
 
     const handleCorrectionSubmit = async () => {
@@ -228,7 +228,7 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
 
             console.log('Submitting correction request:', requestData);
 
-            const response = await axios.post(`${BASE_URL}/qms/waste-management/submit-correction/`, requestData);
+            const response = await axios.post(`${BASE_URL}/qms/waste/submit-correction/`, requestData);
 
             console.log('Correction response:', response.data);
 
@@ -330,7 +330,7 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
             };
 
             const response = await axios.post(
-                `${BASE_URL}/qms/waste-management-review/`,
+                `${BASE_URL}/qms/waste-review/`,
                 requestData
             );
 
@@ -462,11 +462,11 @@ const QmsDraftViewEnvironmentalWasteManagement = () => {
                     <div className="grid grid-cols-1 gap-[40px]">
                         <div>
                             <label className="viewmanuallabels">Location/Site Name</label>
-                            <p className="viewmanuasdata">{manualDetails.name || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.location || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">WMP No</label>
-                            <p className="viewmanuasdata">{manualDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{manualDetails.wmp || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Waste Category</label>

@@ -3,10 +3,17 @@ import { ChevronDown } from "lucide-react";
 import { BASE_URL } from "../../../../Utils/Config";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsEditDraftPreventiveActions = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the ID from URL params
+  const { id } = useParams();
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -30,6 +37,9 @@ const QmsEditDraftPreventiveActions = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+  const [formErrors, setFormErrors] = useState({
+    title: ""
+  });
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -52,19 +62,16 @@ const QmsEditDraftPreventiveActions = () => {
 
   const companyId = getUserCompanyId();
 
-  // Fetch preventive action data and users on component mount
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch preventive action details
         if (id) {
           const response = await axios.get(
             `${BASE_URL}/qms/preventive-get/${id}/`
           );
           const actionData = response.data;
 
-          // Get date components for date_raised if exists
           let dateRaised = { day: "", month: "", year: "" };
           if (actionData.date_raised) {
             const date = new Date(actionData.date_raised);
@@ -75,7 +82,6 @@ const QmsEditDraftPreventiveActions = () => {
             };
           }
 
-          // Get date components for date_completed if exists
           let dateCompleted = { day: "", month: "", year: "" };
           if (actionData.date_completed) {
             const date = new Date(actionData.date_completed);
@@ -98,13 +104,16 @@ const QmsEditDraftPreventiveActions = () => {
           });
         }
 
-        // Fetch users for executor dropdown
         const usersResponse = await axios.get(
           `${BASE_URL}/company/users-active/${companyId}/`
         );
         setUsers(usersResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setIsLoading(false);
       }
@@ -128,7 +137,6 @@ const QmsEditDraftPreventiveActions = () => {
       return;
     }
 
-    // Handle nested objects (for dates)
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setFormData({
@@ -143,14 +151,36 @@ const QmsEditDraftPreventiveActions = () => {
         ...formData,
         [name]: value,
       });
+      if (name === "title") {
+        setFormErrors({
+          ...formErrors,
+          title: ""
+        });
+      }
     }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      errors.title = "Title is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validateForm()) {
+      return;
+    }
+
     try {
-      // Format dates from the form components
       let formattedData = {
         title: formData.title,
         executor: formData.executor,
@@ -160,7 +190,6 @@ const QmsEditDraftPreventiveActions = () => {
         send_notification: formData.send_notification,
       };
 
-      // Add date_raised if all date components are provided
       if (
         formData.date_raised.day &&
         formData.date_raised.month &&
@@ -169,7 +198,6 @@ const QmsEditDraftPreventiveActions = () => {
         formattedData.date_raised = `${formData.date_raised.year}-${formData.date_raised.month}-${formData.date_raised.day}`;
       }
 
-      // Add date_completed if all date components are provided
       if (
         formData.date_completed.day &&
         formData.date_completed.month &&
@@ -178,16 +206,24 @@ const QmsEditDraftPreventiveActions = () => {
         formattedData.date_completed = `${formData.date_completed.year}-${formData.date_completed.month}-${formData.date_completed.day}`;
       }
 
-      // Update existing preventive action
       const response = await axios.put(
         `${BASE_URL}/qms/preventive-draft/edit/${id}/`,
         formattedData
       );
 
-      // Redirect to listing page
-      navigate("/company/qms/draft-preventive-actions");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-preventive-actions");
+      }, 1500);
+      setSuccessMessage("Preventive Action Saved Successfully")
     } catch (error) {
       console.error("Error saving preventive action:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -206,7 +242,7 @@ const QmsEditDraftPreventiveActions = () => {
   };
 
   if (isLoading) {
-    return <div className="text-white text-center py-10">Loading...</div>;
+    return <div className="not-found text-center py-10">Loading...</div>;
   }
 
   return (
@@ -221,20 +257,34 @@ const QmsEditDraftPreventiveActions = () => {
         </button>
       </div>
 
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal 
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
       <form
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">Title</label>
+          <label className="add-training-label">Title <span className="text-red-500">*</span></label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
+            className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
           />
+          {formErrors.title && (
+            <p className="text-red-500 text-sm">{formErrors.title}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 relative">
@@ -246,7 +296,6 @@ const QmsEditDraftPreventiveActions = () => {
             onFocus={() => setFocusedDropdown("executor")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>
               Select Executor
@@ -259,9 +308,8 @@ const QmsEditDraftPreventiveActions = () => {
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                           ${
-                             focusedDropdown === "executor" ? "rotate-180" : ""
-                           }`}
+                           ${focusedDropdown === "executor" ? "rotate-180" : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
@@ -274,7 +322,6 @@ const QmsEditDraftPreventiveActions = () => {
             value={formData.description}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
-            required
           />
         </div>
 
@@ -285,14 +332,12 @@ const QmsEditDraftPreventiveActions = () => {
             value={formData.action}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none !h-[98px]"
-            required
           />
         </div>
 
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Date Raised</label>
           <div className="grid grid-cols-3 gap-5">
-            {/* Day */}
             <div className="relative">
               <select
                 name="date_raised.day"
@@ -309,17 +354,15 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_raised.day"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_raised.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Month */}
             <div className="relative">
               <select
                 name="date_raised.month"
@@ -336,17 +379,15 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_raised.month"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_raised.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Year */}
             <div className="relative">
               <select
                 name="date_raised.year"
@@ -363,11 +404,10 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_raised.year"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_raised.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -378,7 +418,6 @@ const QmsEditDraftPreventiveActions = () => {
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Complete By</label>
           <div className="grid grid-cols-3 gap-5">
-            {/* Day */}
             <div className="relative">
               <select
                 name="date_completed.day"
@@ -395,17 +434,15 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_completed.day"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_completed.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Month */}
             <div className="relative">
               <select
                 name="date_completed.month"
@@ -422,17 +459,15 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_completed.month"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_completed.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
             </div>
 
-            {/* Year */}
             <div className="relative">
               <select
                 name="date_completed.year"
@@ -449,11 +484,10 @@ const QmsEditDraftPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                               ${
-                                 focusedDropdown === "date_completed.year"
-                                   ? "rotate-180"
-                                   : ""
-                               }`}
+                               ${focusedDropdown === "date_completed.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -470,7 +504,6 @@ const QmsEditDraftPreventiveActions = () => {
             onFocus={() => setFocusedDropdown("status")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>
               Select Status
@@ -501,7 +534,6 @@ const QmsEditDraftPreventiveActions = () => {
           </label>
         </div>
 
-        {/* Form Actions */}
         <div className="md:col-span-2 flex gap-4 justify-end">
           <div className="flex gap-5">
             <button
@@ -520,4 +552,5 @@ const QmsEditDraftPreventiveActions = () => {
     </div>
   );
 };
+
 export default QmsEditDraftPreventiveActions;

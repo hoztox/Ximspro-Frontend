@@ -18,8 +18,8 @@ const QmsEditEnvironmentalWasteManagement = () => {
     const [showEditManualSuccessModal, setShowEditManualSuccessModal] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '',
-        no: '',
+        location: '',
+        wmp: '',
         send_notification_to_checked_by: false,
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
@@ -76,8 +76,8 @@ const QmsEditEnvironmentalWasteManagement = () => {
     useEffect(() => {
         if (manualDetails) {
             setFormData({
-                name: manualDetails.name || '',
-                no: manualDetails.no || '',
+                location: manualDetails.location || '',
+                wmp: manualDetails.wmp || '',
                 written_by: manualDetails.written_by?.id || null,
                 checked_by: manualDetails.checked_by?.id || null,
                 approved_by: manualDetails.approved_by?.id || null,
@@ -132,7 +132,7 @@ const QmsEditEnvironmentalWasteManagement = () => {
 
     const fetchManualDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/waste-management-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste-detail/${id}/`);
             setManualDetails(response.data);
             setIsInitialLoad(false);
             console.log("Manual Details:", response.data);
@@ -147,7 +147,7 @@ const QmsEditEnvironmentalWasteManagement = () => {
 
     const fetchManualCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/waste-management/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/waste/${id}/corrections/`);
             setCorrections(response.data);
             console.log("Fetched Manual Corrections:", response.data);
         } catch (error) {
@@ -290,7 +290,7 @@ const QmsEditEnvironmentalWasteManagement = () => {
                 }
             });
 
-            const response = await axios.put(`${BASE_URL}/qms/waste-management/${id}/update/`, submitData, {
+            const response = await axios.put(`${BASE_URL}/qms/waste/${id}/update/`, submitData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -342,8 +342,8 @@ const QmsEditEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="name"
-                                value={formData.name}
+                                name="location"
+                                value={formData.location}
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
@@ -382,8 +382,8 @@ const QmsEditEnvironmentalWasteManagement = () => {
                             </label>
                             <input
                                 type="text"
-                                name="no"
-                                value={formData.no}
+                                name="wmp"
+                                value={formData.wmp}
                                 className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
                                 readOnly
                             />

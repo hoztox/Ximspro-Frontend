@@ -60,12 +60,7 @@ const QmsViewDraftPreventiveActions = () => {
 
   if (loading)
     return (
-      <div className="bg-[#1C1C24] text-white rounded-lg p-5">Loading...</div>
-    );
-
-  if (error)
-    return (
-      <div className="bg-[#1C1C24] rounded-lg p-5 text-red-500">{error}</div>
+      <div className="bg-[#1C1C24] not-found rounded-lg p-5">Loading...</div>
     );
 
   return (

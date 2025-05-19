@@ -100,7 +100,7 @@ const QmsDraftViewHealthSafetyHazards = () => {
 
     const fetchHazardDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-detail/${id}/`);
             setHazardDetails(response.data);
             console.log("Hazard Details:", response.data);
             setLoading(false);
@@ -128,7 +128,7 @@ const QmsDraftViewHealthSafetyHazards = () => {
 
     const fetchHazardCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/health/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Hazard Corrections:", allCorrections);
 
@@ -227,7 +227,7 @@ const QmsDraftViewHealthSafetyHazards = () => {
 
             console.log('Submitting correction request:', requestData);
 
-            const response = await axios.post(`${BASE_URL}/qms/health-safety-hazards/submit-correction/`, requestData);
+            const response = await axios.post(`${BASE_URL}/qms/health/submit-correction/`, requestData);
 
             console.log('Correction response:', response.data);
 
@@ -468,7 +468,7 @@ const QmsDraftViewHealthSafetyHazards = () => {
                         </div>
                         <div>
                             <label className="viewmanuallabels">Hazard No</label>
-                            <p className="viewmanuasdata">{hazardDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{hazardDetails.hazard_no || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Hazard Source</label>

@@ -523,7 +523,7 @@ const QmsEditDraftMeeting = () => {
             <div className="flex items-center mb-2 border border-[#383840] rounded-md">
               <input
                 type="text"
-                placeholder="Search agendas..."
+                placeholder="Search Agenda..."
                 value={agendaSearchTerm}
                 onChange={(e) => setAgendaSearchTerm(e.target.value)}
                 className="add-training-inputs !pr-10"

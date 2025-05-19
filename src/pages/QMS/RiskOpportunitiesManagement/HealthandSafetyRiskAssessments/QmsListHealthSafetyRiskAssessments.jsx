@@ -196,7 +196,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
             const companyId = getUserCompanyId();
             console.log("Fetching manuals for company ID:", companyId);
 
-            const response = await axios.get(`${BASE_URL}/qms/sustainability/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/assessment/${companyId}/`);
             console.log("Raw API response:", response.data);
 
             // Apply visibility filtering
@@ -228,7 +228,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                 const companyId = getUserCompanyId();
                 console.log("Fetching manuals for company ID:", companyId);
 
-                const manualsResponse = await axios.get(`${BASE_URL}/qms/sustainability/${companyId}/`);
+                const manualsResponse = await axios.get(`${BASE_URL}/qms/assessment/${companyId}/`);
                 console.log("Raw manuals data from API:", manualsResponse.data);
 
                 // Apply visibility filtering using the centralized function
@@ -242,7 +242,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                 const correctionsPromises = filteredManuals.map(async (manual) => {
                     try {
                         console.log(`Fetching corrections for manual ID ${manual.id}`);
-                        const correctionResponse = await axios.get(`${BASE_URL}/qms/sustainability/${manual.id}/corrections/`);
+                        const correctionResponse = await axios.get(`${BASE_URL}/qms/assessment/${manual.id}/corrections/`);
                         console.log(`Corrections for manual ${manual.id}:`, correctionResponse.data);
                         return { manualId: manual.id, corrections: correctionResponse.data };
                     } catch (correctionError) {
@@ -266,7 +266,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                 // Fetch draft count
                 const id = getRelevantUserId();
                 console.log("Getting draft count for user ID:", id);
-                const draftResponse = await axios.get(`${BASE_URL}/qms/sustainability/drafts-count/${id}/`);
+                const draftResponse = await axios.get(`${BASE_URL}/qms/assessment/drafts-count/${id}/`);
                 console.log("Draft count response:", draftResponse.data);
                 setDraftCount(draftResponse.data.count);
 
@@ -305,7 +305,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
     };
 
     const handleClickApprove = (id) => {
-        navigate(`/company/qms/view-sustainability/${id}`);
+        navigate(`/company/qms/view-health-safety-assessments/${id}`);
     };
 
     // Delete manual
@@ -317,7 +317,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
     const handleConfirmDelete = async () => {
         if (manualToDelete) {
             try {
-                await axios.delete(`${BASE_URL}/qms/sustainability-detail/${manualToDelete}/`);
+                await axios.delete(`${BASE_URL}/qms/assessment-detail/${manualToDelete}/`);
                 setShowDeleteModal(false);
                 setShowDeleteManualSuccessModal(true);
                 setTimeout(() => {
@@ -341,7 +341,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
 
     const filteredManual = manuals.filter(manual =>
         (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (manual.assessment_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.rivision?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
@@ -426,7 +426,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
             console.log("Publishing manual with ID:", selectedManualId);
             console.log("Send notification:", sendNotification);
 
-            await axios.post(`${BASE_URL}/qms/sustainability/${selectedManualId}/publish-notification/`, {
+            await axios.post(`${BASE_URL}/qms/assessment/${selectedManualId}/publish-notification/`, {
                 company_id: companyId,
                 published_by: userId,
                 send_notification: sendNotification
@@ -437,7 +437,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                 setShowPublishSuccessModal(false);
                 closePublishModal();
                 fetchManuals(); // Refresh the list
-                navigate("/company/qms/list-sustainability");
+                navigate("/company/qms/list-health-safety-assessments");
                 setIsPublishing(false); // Reset loading state after completion
             }, 1500);
         } catch (error) {
@@ -583,7 +583,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                                         <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
                                             <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
                                             <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                                            <td className="px-2 add-manual-datas">{manual.no || 'N/A'}</td>
+                                            <td className="px-2 add-manual-datas">{manual.assessment_no || 'N/A'}</td>
                                             <td className="px-2 add-manual-datas">
                                                 {manual.approved_by ?
                                                     `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :

@@ -102,7 +102,7 @@ const QmsViewHealthSafetyHazards = () => {
 
     const fetchHazardDetails = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards-detail/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-detail/${id}/`);
             setHazardDetails(response.data);
             console.log("Hazard Details:", response.data);
             setLoading(false);
@@ -130,7 +130,7 @@ const QmsViewHealthSafetyHazards = () => {
 
     const fetchHazardCorrections = async () => {
         try {
-            const response = await axios.get(`${BASE_URL}/qms/health-safety-hazards/${id}/corrections/`);
+            const response = await axios.get(`${BASE_URL}/qms/health/${id}/corrections/`);
             const allCorrections = response.data;
             console.log("Fetched Hazard Corrections:", allCorrections);
 
@@ -223,12 +223,12 @@ const QmsViewHealthSafetyHazards = () => {
             }
 
             const requestData = {
-                hazard_id: id,
+                health_id: id,
                 correction: correctionRequest.text,
                 from_user: currentUser.user_id
             };
 
-            const response = await axios.post(`${BASE_URL}/qms/health-safety-hazards/submit-correction/`, requestData);
+            const response = await axios.post(`${BASE_URL}/qms/health/submit-correction/`, requestData);
 
             console.log('Correction response:', response.data);
 
@@ -336,12 +336,12 @@ const QmsViewHealthSafetyHazards = () => {
             }
 
             const requestData = {
-                hazard_id: id,
+                health_id: id,
                 current_user_id: currentUser.user_id
             };
 
             const response = await axios.post(
-                `${BASE_URL}/qms/health-safety-hazards-review/`,
+                `${BASE_URL}/qms/health-review/`,
                 requestData
             );
 
@@ -477,7 +477,7 @@ const QmsViewHealthSafetyHazards = () => {
                         </div>
                         <div>
                             <label className="viewmanuallabels">Hazard No</label>
-                            <p className="viewmanuasdata">{hazardDetails.no || 'N/A'}</p>
+                            <p className="viewmanuasdata">{hazardDetails.hazard_no || 'N/A'}</p>
                         </div>
                         <div>
                             <label className="viewmanuallabels">Hazard Source</label>

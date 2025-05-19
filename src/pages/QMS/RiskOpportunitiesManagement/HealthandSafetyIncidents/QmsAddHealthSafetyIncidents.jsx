@@ -24,7 +24,19 @@ const QmsAddHealthSafetyIncidents = () => {
         }
         return null;
     };
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem('role');
+        if (userRole === 'user') {
+            const userId = localStorage.getItem('user_id');
+            if (userId) return userId;
+        }
+        const companyId = localStorage.getItem('company_id');
+        if (companyId) return companyId;
+        return null;
+    };
 
+ 
+    const userId = getRelevantUserId();
     // Now you can safely use the function
     const companyId = getUserCompanyId();
     const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
@@ -96,7 +108,7 @@ const QmsAddHealthSafetyIncidents = () => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/car-number/next-action/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety_incidents/next-action/${companyId}/`);
             if (response.data && response.data.next_hsi_no) {
                 // Format the number with HSI- prefix
                 const rawNumber = String(response.data.next_hsi_no);
@@ -132,7 +144,7 @@ const QmsAddHealthSafetyIncidents = () => {
         try {
             setIsLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety-root/company/${companyId}/`);
             setRootCauses(response.data);
             setIsLoading(false);
         } catch (error) {
@@ -212,6 +224,7 @@ const QmsAddHealthSafetyIncidents = () => {
             // Prepare submission data
             const submissionData = {
                 company: companyId,
+                userId:userId,
                 title: formData.title,
                 source: formData.source,
                 root_cause: formData.root_cause,
@@ -228,7 +241,7 @@ const QmsAddHealthSafetyIncidents = () => {
             };
 
             // Submit to draft-specific API endpoint
-            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
+            const response = await axios.post(`${BASE_URL}/qms/safety_incidents//draft-create/`, submissionData);
 
             console.log('Saved Draft:', response.data);
 
@@ -267,6 +280,7 @@ const QmsAddHealthSafetyIncidents = () => {
             // Prepare submission data
             const submissionData = {
                 company: companyId,
+                user:userId,
                 title: formData.title,
                 source: formData.source,
                 root_cause: formData.root_cause,
@@ -283,7 +297,7 @@ const QmsAddHealthSafetyIncidents = () => {
             };
 
             // Submit to API
-            const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
+            const response = await axios.post(`${BASE_URL}/qms/safety_incidents/`, submissionData);
 
             console.log('Added:', submissionData);
 

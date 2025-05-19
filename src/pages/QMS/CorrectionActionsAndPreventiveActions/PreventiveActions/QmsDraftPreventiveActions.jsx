@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { BASE_URL } from "../../../../Utils/Config";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsDraftPreventiveActions = () => {
   // State
@@ -14,6 +17,12 @@ const QmsDraftPreventiveActions = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [preventiveToDelete, setPreventiveToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -35,7 +44,7 @@ const QmsDraftPreventiveActions = () => {
 
   const fetchPreventiveActions = async () => {
     if (!userId) {
-      setError("User/Company ID not found");
+      handleError(new Error("User/Company ID not found"), "User/Company ID not found");
       setLoading(false);
       return;
     }
@@ -52,9 +61,29 @@ const QmsDraftPreventiveActions = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching preventive actions:", err);
-      setError("Failed to load preventive actions");
+      handleError(err, "Failed to load preventive actions");
       setLoading(false);
     }
+  };
+
+  const handleError = (error, defaultMessage) => {
+    let errorMsg = defaultMessage || error.message;
+
+    if (error.response) {
+      if (error.response.data.date) {
+        errorMsg = error.response.data.date[0];
+      } else if (error.response.data.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+    }
+
+    setError(errorMsg);
+    setShowErrorModal(true);
+    setTimeout(() => {
+      setShowErrorModal(false);
+    }, 3000);
   };
 
   const handleSearchChange = (e) => {
@@ -64,14 +93,35 @@ const QmsDraftPreventiveActions = () => {
   };
 
   // Delete preventive action
-  const handleDeletePreventiveAction = async (id) => {
+  const handleDeletePreventiveAction = (preventive) => {
+    setPreventiveToDelete(preventive);
+    setShowDeleteModal(true);
+    setDeleteMessage("Draft Preventive Action");
+  };
+
+  const confirmDelete = async () => {
+    if (!preventiveToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
-      setPreventives(preventives.filter((preventive) => preventive.id !== id));
+      await axios.delete(`${BASE_URL}/qms/preventive-get/${preventiveToDelete.id}/`);
+      setPreventives(preventives.filter((preventive) => preventive.id !== preventiveToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Draft Preventive Action Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (err) {
       console.error("Error deleting preventive action:", err);
-      alert("Failed to delete preventive action");
+      handleError(err, "Failed to delete preventive action");
+      setShowDeleteModal(false);
     }
+  };
+
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+    setShowErrorModal(false);
   };
 
   const handleClose = () => {
@@ -129,14 +179,7 @@ const QmsDraftPreventiveActions = () => {
 
   if (loading)
     return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>
-    );
-
-  if (error)
-    return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-        Error: {error}
-      </div>
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg">Loading...</div>
     );
 
   return (
@@ -231,9 +274,7 @@ const QmsDraftPreventiveActions = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button
-                      onClick={() =>
-                        handleDeletePreventiveAction(preventive.id)
-                      }
+                      onClick={() => handleDeletePreventiveAction(preventive)}
                     >
                       <img src={deleteIcon} alt="Delete Icon" />
                     </button>
@@ -292,6 +333,28 @@ const QmsDraftPreventiveActions = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

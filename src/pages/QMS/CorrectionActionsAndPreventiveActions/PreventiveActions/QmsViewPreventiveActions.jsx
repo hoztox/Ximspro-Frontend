@@ -5,6 +5,9 @@ import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsViewPreventiveActions = () => {
   const [formData, setFormData] = useState({
@@ -20,6 +23,11 @@ const QmsViewPreventiveActions = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -37,7 +45,7 @@ const QmsViewPreventiveActions = () => {
         console.log("Fetched Response:", response.data);
       } catch (err) {
         console.error("Error fetching preventive action:", err);
-        setError("Failed to load preventive action data");
+        handleError(err, "Failed to load preventive action data");
         setLoading(false);
       }
     };
@@ -47,6 +55,26 @@ const QmsViewPreventiveActions = () => {
     }
   }, [id]);
 
+  const handleError = (error, defaultMessage) => {
+    let errorMsg = defaultMessage || error.message;
+
+    if (error.response) {
+      if (error.response.data.date) {
+        errorMsg = error.response.data.date[0];
+      } else if (error.response.data.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+    }
+
+    setError(errorMsg);
+    setShowErrorModal(true);
+    setTimeout(() => {
+      setShowErrorModal(false);
+    }, 3000);
+  };
+
   const handleClose = () => {
     navigate("/company/qms/list-preventive-actions");
   };
@@ -55,18 +83,32 @@ const QmsViewPreventiveActions = () => {
     navigate(`/company/qms/edit-preventive-actions/${id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (
-      window.confirm("Are you sure you want to delete this preventive action?")
-    ) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+    setDeleteMessage("Preventive Action");
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/preventive-get/${id}/`);
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Preventive Action Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
         navigate("/company/qms/list-preventive-actions");
-      } catch (err) {
-        console.error("Error deleting preventive action:", err);
-        alert("Failed to delete preventive action");
-      }
+      }, 3000);
+    } catch (err) {
+      console.error("Error deleting preventive action:", err);
+      handleError(err, "Failed to delete preventive action");
+      setShowDeleteModal(false);
     }
+  };
+
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+    setShowErrorModal(false);
   };
 
   // Format the executor name if available
@@ -92,8 +134,7 @@ const QmsViewPreventiveActions = () => {
   };
 
   if (loading)
-    return <div className="text-white text-center p-5">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
+    return <div className="not-found text-center p-5">Loading...</div>;
 
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -177,7 +218,7 @@ const QmsViewPreventiveActions = () => {
 
             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
               Delete
-              <button onClick={() => handleDelete(id)}>
+              <button onClick={() => handleDelete()}>
                 <img
                   src={deletes}
                   alt="Delete Icon"
@@ -188,6 +229,28 @@ const QmsViewPreventiveActions = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
