@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsListCorrectionActions = () => {
     // Retrieve company ID from localStorage
@@ -26,8 +29,23 @@ const QmsListCorrectionActions = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     const companyId = getUserCompanyId();
-    
+    const userId = getRelevantUserId();
+
     // State
     const [corrections, setCorrections] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,6 +53,15 @@ const QmsListCorrectionActions = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [correctionToDelete, setCorrectionToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [draftCount, setDraftCount] = useState(0);
 
     // Fetch data from API
     useEffect(() => {
@@ -44,16 +71,42 @@ const QmsListCorrectionActions = () => {
                 setLoading(false);
                 return;
             }
-            
+
             try {
                 const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
-                console.log('car list:', response); 
-                
+                console.log('car list:', response);
+
                 setCorrections(response.data);
+
+                const draftResponse = await axios.get(
+                    `${BASE_URL}/qms/car/drafts-count/${userId}/`
+                );
+                setDraftCount(draftResponse.data.count);
+
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching correction actions:", err);
-                setError("Failed to load data");
+                let errorMsg = err.message;
+
+                if (err.response) {
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    }
+                    else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 setLoading(false);
             }
         };
@@ -102,16 +155,56 @@ const QmsListCorrectionActions = () => {
         navigate(`/company/qms/edit-correction-actions/${id}`);
     };
 
-    // Delete correction
-    const handleDeleteCorrectionAction = async (id) => {
-        if (window.confirm("Are you sure you want to delete this correction action?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
-                setCorrections(corrections.filter(correction => correction.id !== id));
-            } catch (err) {
-                console.error("Error deleting correction action:", err);
-                alert("Failed to delete correction action");
+    // Open delete confirmation modal
+    const openDeleteModal = (correction) => {
+        setCorrectionToDelete(correction);
+        setShowDeleteModal(true);
+        setDeleteMessage('Correction Action');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!correctionToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/car-numbers/${correctionToDelete.id}/`);
+            setCorrections(corrections.filter(correction => correction.id !== correctionToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Correction Action Deleted Successfully");
+        } catch (err) {
+            console.error("Error deleting correction action:", err);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteModal(false);
         }
     };
 
@@ -135,16 +228,15 @@ const QmsListCorrectionActions = () => {
     };
 
     const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
 
-    if (loading) return <div className="text-white text-center p-5">Loading...</div>;
-    if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
+    if (loading) return <div className="not-found text-center p-5">Loading...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -169,6 +261,11 @@ const QmsListCorrectionActions = () => {
                         onClick={handleDraftCorrectionActions}
                     >
                         <span>Drafts</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[302px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -203,12 +300,18 @@ const QmsListCorrectionActions = () => {
                             filteredCorrections.map((correction, index) => (
                                 <tr key={correction.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{correction.title || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{correction.source || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{correction.action_no || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{correction.executor?.first_name} {correction.executor?.last_name}</td>
-                                    <td className="px-2 add-manual-datas">{formatDate(correction.date_raised || '-')}</td>
-                                    <td className="px-2 add-manual-datas">{formatDate(correction.date_completed || '-')}</td>
+                                    <td className="px-2 add-manual-datas">{correction.title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.source || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.action_no || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{correction.executor?.first_name && correction.executor?.last_name ?
+                                        `${correction.executor.first_name} ${correction.executor.last_name}` : "N/A"}
+                                    </td> 
+                                    <td className="px-2 add-manual-datas">
+                                        {correction.date_raised ? formatDate(correction.date_raised) : 'N/A'}
+                                    </td>
+                                    <td className="px-2 add-manual-datas">
+                                        {correction.date_completed ? formatDate(correction.date_completed) : 'N/A'}
+                                    </td>
                                     <td className="px-2 add-manual-datas !text-center">
                                         <span
                                             className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${getStatusClass(correction.status)}`}
@@ -227,7 +330,7 @@ const QmsListCorrectionActions = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteCorrectionAction(correction.id)}>
+                                        <button onClick={() => openDeleteModal(correction)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -275,6 +378,28 @@ const QmsListCorrectionActions = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

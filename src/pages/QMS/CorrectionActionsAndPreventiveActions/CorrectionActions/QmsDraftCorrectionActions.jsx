@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsDraftCorrectionActions = () => {
     // Get relevant user ID
@@ -28,25 +31,52 @@ const QmsDraftCorrectionActions = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [correctionToDelete, setCorrectionToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     // Fetch draft corrections from API
     useEffect(() => {
         const fetchDraftCorrections = async () => {
             if (!id) {
                 setError("User/Company ID not found");
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 setLoading(false);
                 return;
             }
 
             try {
-                const id = getRelevantUserId();
                 const response = await axios.get(`${BASE_URL}/qms/car_no/draft/${id}/`);
                 console.log('Draft corrections:', response.data);
                 setCorrections(response.data);
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching draft corrections:", err);
-                setError("Failed to load draft corrections");
+                let errorMsg = err.message;
+
+                if (err.response) {
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    } else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    } else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 setLoading(false);
             }
         };
@@ -91,35 +121,73 @@ const QmsDraftCorrectionActions = () => {
         navigate(`/company/qms/edit-draft-correction-actions/${id}`);
     };
 
-    // Delete draft correction
-    const  handleDeleteDraftCorrection = async (id) => {
-        if (window.confirm("Are you sure you want to delete this draft correction?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
-                setCorrections(corrections.filter(correction => correction.id !== id));
-            } catch (err) {
-                console.error("Error deleting draft correction:", err);
-                alert("Failed to delete draft correction");
+    // Open delete confirmation modal
+    const handleDeleteDraftCorrection = (correction) => {
+        setCorrectionToDelete(correction);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Correction Action');
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!correctionToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/car-numbers/${correctionToDelete.id}/`);
+            setCorrections(corrections.filter(correction => correction.id !== correctionToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Draft Correction Action Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (err) {
+            console.error("Error deleting draft correction:", err);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                } else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowDeleteModal(false);
         }
     };
 
-     const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  }; 
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-    if (loading) return <div className="text-white text-center p-5">Loading...</div>;
-    if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
+    if (loading) return <div className="not-found text-center p-5">Loading...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -171,9 +239,13 @@ const QmsDraftCorrectionActions = () => {
                                     <td className="px-2 add-manual-datas">{correction.source || '-'}</td>
                                     <td className="px-2 add-manual-datas">{correction.action_no || '-'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {correction.executor?.first_name} {correction.executor?.last_name}
+                                        {correction.executor?.first_name && correction.executor?.last_name
+                                            ? `${correction.executor.first_name} ${correction.executor.last_name}`
+                                            : "N/A"}
                                     </td>
-                                    <td className="px-2 add-manual-datas">{formatDate(correction.date_raised || '-')}</td>
+
+                                    {/* <td className="px-2 add-manual-datas">{formatDate(correction.date_raised || '-')}</td> */}
+                                    <td className="px-2 add-manual-datas">{correction.date_raised ? formatDate(correction.date_raised) : 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
                                         <button
                                             onClick={() => handleQmsEditDraftCorrectionAction(correction.id)}
@@ -188,7 +260,7 @@ const QmsDraftCorrectionActions = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteDraftCorrection(correction.id)}>
+                                        <button onClick={() => handleDeleteDraftCorrection(correction)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -236,6 +308,28 @@ const QmsDraftCorrectionActions = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

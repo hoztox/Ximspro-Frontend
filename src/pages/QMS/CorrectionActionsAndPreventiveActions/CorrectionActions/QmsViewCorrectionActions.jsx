@@ -5,6 +5,9 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../DeleteConfimModal";
+import SuccessModal from "../SuccessModal";
+import ErrorModal from "../ErrorModal";
 
 const QmsViewCorrectionActions = () => {
   const [formData, setFormData] = useState({
@@ -12,7 +15,7 @@ const QmsViewCorrectionActions = () => {
     title: "",
     action_no: "",
     root_cause: "",
-    executor: "",
+    executor: "", 
     description: "",
     action_or_corrections: "",
     date_raised: "",
@@ -21,6 +24,11 @@ const QmsViewCorrectionActions = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -38,6 +46,10 @@ const QmsViewCorrectionActions = () => {
         setLoading(false);
       } catch (err) {
         setError("Failed to load data");
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setLoading(false);
         console.error("Error fetching car number data:", err);
       }
@@ -56,41 +68,62 @@ const QmsViewCorrectionActions = () => {
     navigate(`/company/qms/edit-correction-actions/${id}`);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this item?")) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+    setDeleteMessage("Correction Action");
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Correction Action Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
         navigate("/company/qms/list-correction-actions");
-      } catch (err) {
-        console.error("Error deleting car number:", err);
-        alert("Failed to delete item");
+      }, 3000);
+    } catch (err) {
+      console.error("Error deleting car number:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setShowDeleteModal(false);
     }
+  };
+
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+    setShowErrorModal(false);
   };
 
   if (loading)
     return (
-      <div className="bg-[#1C1C24] text-white p-8 rounded-lg flex justify-center items-center">
+      <div className="bg-[#1C1C24] not-found p-8 rounded-lg flex justify-center items-center">
         <p>Loading...</p>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="bg-[#1C1C24] text-white p-8 rounded-lg">
-        <p className="text-red-500">{error}</p>
-        <button
-          className="mt-4 bg-blue-600 px-4 py-2 rounded-md"
-          onClick={() => navigate("/company/qms/list-correction-actions")}
-        >
-          Back to List
-        </button>
       </div>
     );
 
   // Format dates for display
   const formatDate = (dateString) => {
-     if (!dateString) return "-";
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
@@ -209,7 +242,7 @@ const QmsViewCorrectionActions = () => {
 
               <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                 Delete
-                <button onClick={() => handleDelete(id)}>
+                <button onClick={handleDelete}>
                   <img src={deletes} alt="Delete Icon" />
                 </button>
               </div>
@@ -217,6 +250,28 @@ const QmsViewCorrectionActions = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

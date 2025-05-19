@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import RootCauseModal from '../RootCauseModal';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../SuccessModal';
+import ErrorModal from '../ErrorModal';
 
 const QmsAddCorrectionActions = () => {
     const getUserCompanyId = () => {
@@ -36,7 +38,6 @@ const QmsAddCorrectionActions = () => {
         return null;
     };
 
-    // Now you can safely use the function
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
 
@@ -44,26 +45,34 @@ const QmsAddCorrectionActions = () => {
     const navigate = useNavigate();
     const [rootCauses, setRootCauses] = useState([]);
     const [users, setUsers] = useState([]);
-    const [suppliers, setSuppliers] = useState([]); // State for suppliers
+    const [suppliers, setSuppliers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [nextActionNo, setNextActionNo] = useState("1"); // Initialize with "1" as default
+    const [nextActionNo, setNextActionNo] = useState("1");
     const [error, setError] = useState('');
+    const [formErrors, setFormErrors] = useState({
+        source: '',
+        title: '',
+    });
+
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         fetchRootCauses();
         fetchUsers();
         fetchNextActionNumber();
-        fetchSuppliers(); // Fetch suppliers when component mounts
+        fetchSuppliers();
     }, []);
 
-    // Fetch suppliers
     const fetchSuppliers = async () => {
         try {
             setIsLoading(true);
             if (!companyId) return;
 
             const response = await axios.get(`${BASE_URL}/qms/suppliers/company/${companyId}/`);
-            // Filter only active suppliers with Approved status
             const activeSuppliers = response.data.filter(supplier =>
                 supplier.active === 'active'
             );
@@ -71,6 +80,10 @@ const QmsAddCorrectionActions = () => {
         } catch (err) {
             console.error('Error fetching suppliers:', err);
             setError('Failed to fetch suppliers data');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -83,19 +96,19 @@ const QmsAddCorrectionActions = () => {
     const handleCloseRootCauseModal = (newCauseAdded = false) => {
         setIsRootCauseModalOpen(false);
         if (newCauseAdded) {
-            fetchRootCauses(); // Refresh root causes when a new one is added
+            fetchRootCauses();
         }
     };
 
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        next_action_no: '', // Initialize with "1" as default
+        next_action_no: '',
         root_cause: '',
         executor: '',
         description: '',
         action_or_corrections: '',
-        supplier: '', // Added supplier field
+        supplier: '',
         date_raised: {
             day: '',
             month: '',
@@ -117,12 +130,10 @@ const QmsAddCorrectionActions = () => {
         navigate('/company/qms/list-correction-actions')
     }
 
-    // New function to fetch the next available action number
     const fetchNextActionNumber = async () => {
         try {
             const companyId = getUserCompanyId();
             if (!companyId) {
-                // If no company ID, default to empty string
                 setNextActionNo("1");
                 setFormData(prevData => ({
                     ...prevData,
@@ -132,20 +143,14 @@ const QmsAddCorrectionActions = () => {
             }
 
             const response = await axios.get(`${BASE_URL}/qms/car-number/next-action/${companyId}/`);
-            if (response.data && response.data.next_action_no) {  // Changed from next_action_number to next_action_no
-                // Convert to string to ensure consistent display
+            if (response.data && response.data.next_action_no) {
                 const actionNumber = String(response.data.next_action_no);
                 setNextActionNo(actionNumber);
-
-                console.log('Action Number:', actionNumber);
-
-                // Update the form data with the new action number
                 setFormData(prevData => ({
                     ...prevData,
                     next_action_no: actionNumber
                 }));
             } else {
-                // If response doesn't contain a valid number, default to "1"
                 setNextActionNo("1");
                 setFormData(prevData => ({
                     ...prevData,
@@ -154,7 +159,6 @@ const QmsAddCorrectionActions = () => {
             }
         } catch (error) {
             console.error('Error fetching next action number:', error);
-            // Set a fallback value if the API fails
             setNextActionNo("1");
             setFormData(prevData => ({
                 ...prevData,
@@ -182,7 +186,6 @@ const QmsAddCorrectionActions = () => {
             if (!companyId) return;
 
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
-
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
             } else {
@@ -191,7 +194,11 @@ const QmsAddCorrectionActions = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            setError("Failed to load users");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -199,7 +206,6 @@ const QmsAddCorrectionActions = () => {
         const { name, value } = e.target;
         if (name === 'next_action_no') return;
 
-        // Handle nested objects (dates)
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -210,23 +216,46 @@ const QmsAddCorrectionActions = () => {
                 }
             });
         } else if (e.target.type === 'checkbox') {
-            // Handle checkboxes
             setFormData({
                 ...formData,
                 [name]: e.target.checked
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
             });
+            // Clear error when user starts interacting
+            if (name === "source" || name === "title" || name === "supplier") {
+                setFormErrors({
+                    ...formErrors,
+                    [name]: ""
+                });
+            }
         }
     };
 
     const formatDate = (dateObj) => {
         if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.source) {
+            errors.source = "Please select source";
+            isValid = false;
+        }
+
+        if (!formData.title.trim()) {
+            errors.title = "Title is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
     };
 
     const handleDraftSave = async (e) => {
@@ -236,13 +265,11 @@ const QmsAddCorrectionActions = () => {
             setIsLoading(true);
             setError('');
             const companyId = getUserCompanyId();
-            const userId = getRelevantUserId(); // Get the user ID
+            const userId = getRelevantUserId();
 
-            // Format the dates
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Prepare submission data
             const submissionData = {
                 company: companyId,
                 title: formData.title,
@@ -257,35 +284,59 @@ const QmsAddCorrectionActions = () => {
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
                 is_draft: true,
-                user: userId  // Add the user ID to the submission data
+                user: userId
             };
 
-            // Add supplier only if source is 'Supplier'
-            if (formData.source === 'Supplier') {
+            if (formData.source === 'Supplier' && formData.supplier) {
                 submissionData.supplier = formData.supplier;
             }
 
-            // Submit to draft-specific API endpoint
             const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
-
-            console.log('Saved CAR Draft:', response.data);
-
             setIsLoading(false);
 
-            // Show success message or navigate
-            navigate('/company/qms/draft-correction-actions');
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-correction-actions');
+            }, 1500);
+            setSuccessMessage("Corrections Actions Drafted Successfully")
 
         } catch (error) {
             console.error('Error saving draft:', error);
             setIsLoading(false);
-            setError('Failed to save draft. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
 
-        // If saving as draft, use the specialized draft save function
+        if (!asDraft && !validateForm()) {
+            return;
+        }
+
         if (asDraft) {
             handleDraftSave(e);
             return;
@@ -295,11 +346,9 @@ const QmsAddCorrectionActions = () => {
             setIsLoading(true);
             const companyId = getUserCompanyId();
 
-            // Format the dates
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Prepare submission data
             const submissionData = {
                 company: companyId,
                 title: formData.title,
@@ -313,30 +362,28 @@ const QmsAddCorrectionActions = () => {
                 next_action_no: formData.next_action_no,
                 action_or_corrections: formData.action_or_corrections,
                 send_notification: formData.send_notification,
-                user: userId ,
+                user: userId,
                 is_draft: false
             };
 
-            // Add supplier only if source is 'Supplier'
             if (formData.source === 'Supplier') {
                 submissionData.supplier = formData.supplier;
             }
 
-            // Submit to API
             const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
-
-            console.log('Added CAR:', submissionData);
-
             setIsLoading(false);
 
-            // Navigate to the list page after successful submission
-            navigate('/company/qms/list-correction-actions');
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-correction-actions');
+            }, 1500);
+            setSuccessMessage("Corrections Actions Added Successfully")
 
-            // Reset form and fetch new action number for next time
             setFormData({
                 source: '',
                 title: '',
-                next_action_no: '1', // Reset to default
+                next_action_no: '1',
                 root_cause: '',
                 executor: '',
                 description: '',
@@ -349,17 +396,37 @@ const QmsAddCorrectionActions = () => {
                 is_draft: false
             });
 
-            // After successful submission, fetch the next action number for next time
             fetchNextActionNumber();
 
         } catch (error) {
             console.error('Error submitting form:', error);
             setIsLoading(false);
-            setError('Failed to save. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -385,16 +452,24 @@ const QmsAddCorrectionActions = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
 
             <RootCauseModal
                 isOpen={isRootCauseModalOpen}
                 onClose={handleCloseRootCauseModal}
             />
+
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3 relative">
@@ -405,8 +480,7 @@ const QmsAddCorrectionActions = () => {
                         onChange={handleChange}
                         onFocus={() => setFocusedDropdown("source")}
                         onBlur={() => setFocusedDropdown(null)}
-                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
+                        className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.source ? "border-red-500" : ""}`}
                     >
                         <option value="" disabled>Select</option>
                         <option value="Audit">Audit</option>
@@ -415,11 +489,14 @@ const QmsAddCorrectionActions = () => {
                         <option value="Supplier">Supplier</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[55px] transform transition-transform duration-300 
                         ${focusedDropdown === "source" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
+                    {formErrors.source && (
+                        <p className="text-red-500 text-sm">{formErrors.source}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -431,9 +508,11 @@ const QmsAddCorrectionActions = () => {
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
-                        required
+                        className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
                     />
+                    {formErrors.title && (
+                        <p className="text-red-500 text-sm">{formErrors.title}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -452,15 +531,14 @@ const QmsAddCorrectionActions = () => {
 
                 {formData.source === 'Supplier' ? (
                     <div className="flex flex-col gap-3 relative">
-                        <label className="add-training-label">Supplier <span className="text-red-500">*</span></label>
+                        <label className="add-training-label">Supplier</label>
                         <select
                             name="supplier"
                             value={formData.supplier}
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("supplier")}
                             onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
+                            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.supplier ? "border-red-500" : ""}`}
                         >
                             <option value="" disabled>
                                 {isLoading ? "Loading suppliers..." : "Select Supplier"}
@@ -524,7 +602,6 @@ const QmsAddCorrectionActions = () => {
                     </button>
                 </div>
 
-                {/* Rest of the form remains the same */}
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Executor</label>
                     <select
@@ -583,7 +660,6 @@ const QmsAddCorrectionActions = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date Raised</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_raised.day"
@@ -603,8 +679,6 @@ const QmsAddCorrectionActions = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_raised.month"
@@ -624,8 +698,6 @@ const QmsAddCorrectionActions = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_raised.year"
@@ -651,7 +723,6 @@ const QmsAddCorrectionActions = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Complete By</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_completed.day"
@@ -671,8 +742,6 @@ const QmsAddCorrectionActions = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_completed.month"
@@ -692,8 +761,6 @@ const QmsAddCorrectionActions = () => {
                                 color="#AAAAAA"
                             />
                         </div>
-
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_completed.year"
@@ -753,7 +820,6 @@ const QmsAddCorrectionActions = () => {
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-between">
                     <div>
                         <button

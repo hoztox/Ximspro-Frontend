@@ -15,11 +15,11 @@ const QmsViewDraftCorrectionActions = () => {
         action_or_corrections: "",
         date_raised: "",
         date_completed: "",
-        status: "",  
+        status: "",
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    
+
     const navigate = useNavigate();
     const { id } = useParams();
 
@@ -53,14 +53,16 @@ const QmsViewDraftCorrectionActions = () => {
     );
 
     // Format dates for display
-     const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
@@ -98,7 +100,7 @@ const QmsViewDraftCorrectionActions = () => {
                         </label>
                         <div className="view-employee-data">{formData.action_no || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Root Cause
@@ -107,46 +109,46 @@ const QmsViewDraftCorrectionActions = () => {
                             {formData.root_cause?.title || "N/A"}
                         </div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Executor
                         </label>
                         <div className="view-employee-data">
-                            {formData.executor?.first_name ? 
-                                `${formData.executor.first_name} ${formData.executor.last_name}` : 
+                            {formData.executor?.first_name ?
+                                `${formData.executor.first_name} ${formData.executor.last_name}` :
                                 "N/A"}
                         </div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Description
                         </label>
                         <div className="view-employee-data">{formData.description || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Action or Corrections
                         </label>
                         <div className="view-employee-data">{formData.action_or_corrections || "N/A"}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Date Raised
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_raised || "N/A")}</div>
                     </div>
-                    
+
                     <div>
                         <label className="block view-employee-label mb-[6px]">
                             Complete By
                         </label>
                         <div className="view-employee-data">{formatDate(formData.date_completed || "N/A")}</div>
                     </div>
-                    
+
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -155,7 +157,7 @@ const QmsViewDraftCorrectionActions = () => {
                             <div className="view-employee-data">{formData.status}</div>
                         </div>
                     </div>
-                    
+
                 </div>
             </div>
         </div>
