@@ -84,7 +84,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             setSuppliers(activeSuppliers);
         } catch (err) {
             console.error('Error fetching suppliers:', err);
-            let errorMsg = 'Failed to fetch suppliers. Please try again later.';
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -231,7 +231,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            let errorMsg = 'failed to fetch users';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -364,7 +364,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
         } catch (error) {
             console.error('Error submitting form:', error);
             setIsLoading(false);
-            let errorMsg = 'Failed to submit form. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -457,7 +457,7 @@ const AddCarNumberModal = ({ isOpen, onClose, onSuccess }) => {
         } catch (error) {
             console.error('Error saving draft:', error);
             setIsLoading(false);
-            let errorMsg = 'failed to draft car';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

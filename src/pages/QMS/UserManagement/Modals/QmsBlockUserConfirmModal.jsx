@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../../../ThemeContext";
-import blockillustrate from "../../../../assets/images/Modal/blockillustrate.svg"
+import blockillustrate from "../../../../assets/images/Modal/blockillustrate.png"
 
 const QmsBlockUserConfirmModal = ({ showBlockConfirmModal, actionType, onConfirm, onCancel }) => {
     const { theme } = useTheme();

@@ -35,7 +35,7 @@ const ViewQmsEmployeePerformance = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch employee performance data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -96,7 +96,7 @@ const ViewQmsEmployeePerformance = () => {
       }, 1500);
     } catch (err) {
       console.error("Error deleting performance evaluation:", err);
-      let errorMsg = "Failed to delete employee performance evaluation.";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

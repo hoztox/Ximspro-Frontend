@@ -220,7 +220,7 @@ const QmsEditTraining = () => {
         setLoading(false);
         console.log("Training data fetched successfully:", response.data);
       } catch (err) {
-        let errorMsg = "Failed to fetch training data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -388,7 +388,7 @@ const QmsEditTraining = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating training:", err);
-      let errorMsg = "Failed to update training. Please try again";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

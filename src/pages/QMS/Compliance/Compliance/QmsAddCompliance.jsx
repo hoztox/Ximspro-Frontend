@@ -10,7 +10,6 @@ import QmsAddComplianceErrorModal from "./Modals/QmsAddComplianceErrorModal";
 import QmsSaveDraftComplianceSuccessModal from "./Modals/QmsSaveDraftComplianceSuccessModal";
 import QmsSaveDraftComplianceErrorModal from "./Modals/QmsSaveDraftComplianceErrorModal";
 
-
 const QmsAddCompliance = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -29,13 +28,20 @@ const QmsAddCompliance = () => {
     send_notification: false,
   });
 
-  const [error, setError] = useState('')
+  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({
+    compliance_name: false,
+  });
 
-  const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] = useState(false);
-  const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] = useState(false);
+  const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] =
+    useState(false);
+  const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] =
+    useState(false);
 
-  const [showDraftComplianceSuccessModal, setShowDraftComplianceSuccessModal] = useState(false);
-  const [showDraftComplianceErrorModal, setShowDraftComplianceErrorModal] = useState(false);
+  const [showDraftComplianceSuccessModal, setShowDraftComplianceSuccessModal] =
+    useState(false);
+  const [showDraftComplianceErrorModal, setShowDraftComplianceErrorModal] =
+    useState(false);
 
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
@@ -62,6 +68,11 @@ const QmsAddCompliance = () => {
       ...formData,
       [name]: type === "checkbox" ? checked : value,
     });
+
+    // Clear error when user starts typing
+    if (name === "compliance_name" && value) {
+      setFieldErrors((prev) => ({ ...prev, compliance_name: false }));
+    }
   };
 
   const handleFileChange = (e) => {
@@ -117,47 +128,91 @@ const QmsAddCompliance = () => {
   useEffect(() => {
     const { day, month, year } = formData;
     if (day && month && year) {
-      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      setFormData(prev => ({ ...prev, date: formattedDate }));
+      const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
+        2,
+        "0"
+      )}`;
+      setFormData((prev) => ({ ...prev, date: formattedDate }));
     }
   }, [formData.day, formData.month, formData.year]);
 
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.compliance_name.trim()) {
+      errors.compliance_name = true;
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
 
     try {
       const userId = getRelevantUserId();
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setError('Company ID not found. Please log in again.');
+        setError("Company ID not found. Please log in again.");
         setLoading(false);
         return;
       }
       const submissionData = new FormData();
-      submissionData.append('company', companyId);
-      submissionData.append('user', userId);
+      submissionData.append("company", companyId);
+      submissionData.append("user", userId);
       console.log("fdsgfsdgfsdgf", formData);
 
       for (const key in formData) {
-        if (key !== 'day' && key !== 'month' && key !== 'year' && formData[key] !== null) {
+        if (
+          key !== "day" &&
+          key !== "month" &&
+          key !== "year" &&
+          formData[key] !== null
+        ) {
           submissionData.append(key, formData[key]);
         }
       }
 
-      const response = await axios.post(`${BASE_URL}/qms/compliances/create/`, submissionData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.post(
+        `${BASE_URL}/qms/compliances/create/`,
+        submissionData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       setShowAddComplianceSuccessModal(true);
       setTimeout(() => {
         setShowAddComplianceSuccessModal(false);
-        navigate('/company/qms/list-compliance');
+        navigate("/company/qms/list-compliance");
       }, 1500);
     } catch (error) {
-      console.error('Error submitting form:', error);
+      console.error("Error submitting form:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowAddComplianceErrorModal(true);
       setTimeout(() => {
         setShowAddComplianceErrorModal(false);
@@ -175,37 +230,38 @@ const QmsAddCompliance = () => {
       const userId = getRelevantUserId();
 
       if (!companyId || !userId) {
-        setError('Company ID or User ID not found. Please log in again.');
+        setError("Company ID or User ID not found. Please log in again.");
         setDraftLoading(false);
         return;
       }
 
       const submitData = new FormData();
 
-      submitData.append('company', companyId);
-      submitData.append('user', userId);
-      submitData.append('is_draft', true);
+      submitData.append("company", companyId);
+      submitData.append("user", userId);
+      submitData.append("is_draft", true);
 
       Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null && formData[key] !== '') {
+        if (formData[key] !== null && formData[key] !== "") {
           submitData.append(key, formData[key]);
         }
       });
 
-
       if (formData.file) {
-        submitData.append('upload_attachment', formData.file);
+        submitData.append("upload_attachment", formData.file);
       }
 
-      console.log('Sending draft data:', Object.fromEntries(submitData.entries()));
+      console.log(
+        "Sending draft data:",
+        Object.fromEntries(submitData.entries())
+      );
 
       const response = await axios.post(
         `${BASE_URL}/qms/compliance/draft-create/`,
         submitData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
-
+            "Content-Type": "multipart/form-data",
           },
         }
       );
@@ -214,29 +270,42 @@ const QmsAddCompliance = () => {
       setShowDraftComplianceSuccessModal(true);
       setTimeout(() => {
         setShowDraftComplianceSuccessModal(false);
-        navigate('/company/qms/draft-compliance');
+        navigate("/company/qms/draft-compliance");
       }, 1500);
-
-
     } catch (err) {
       setDraftLoading(false);
       setShowDraftComplianceErrorModal(true);
       setTimeout(() => {
         setShowDraftComplianceErrorModal(false);
       }, 3000);
-      const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
-      setError(errorMessage);
-      console.error('Error saving Draft:', err.response?.data || err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      console.error("Error saving Draft:", err.response?.data || err);
     }
   };
 
-
   const handleListCompliance = () => {
-    navigate('/company/qms/list-compliance');
+    navigate("/company/qms/list-compliance");
   };
 
   const handleCancel = () => {
-    navigate('/company/qms/list-compliance');
+    navigate("/company/qms/list-compliance");
   };
 
   return (
@@ -246,22 +315,32 @@ const QmsAddCompliance = () => {
 
         <QmsAddComplianceSuccessModal
           showAddComplianceSuccessModal={showAddComplianceSuccessModal}
-          onClose={() => { setShowAddComplianceSuccessModal(false) }}
+          onClose={() => {
+            setShowAddComplianceSuccessModal(false);
+          }}
         />
 
         <QmsAddComplianceErrorModal
           showAddComplianceErrorModal={showAddComplianceErrorModal}
-          onClose={() => { setShowAddComplianceErrorModal(false) }}
+          onClose={() => {
+            setShowAddComplianceErrorModal(false);
+          }}
+          error={error}
         />
 
         <QmsSaveDraftComplianceSuccessModal
           showDraftComplianceSuccessModal={showDraftComplianceSuccessModal}
-          onClose={() => { setShowDraftComplianceSuccessModal(false) }}
+          onClose={() => {
+            setShowDraftComplianceSuccessModal(false);
+          }}
         />
 
         <QmsSaveDraftComplianceErrorModal
           showDraftComplianceErrorModal={showDraftComplianceErrorModal}
-          onClose={() => { setShowDraftComplianceErrorModal(false) }}
+          onClose={() => {
+            setShowDraftComplianceErrorModal(false);
+          }}
+          error={error}
         />
 
         <button
@@ -276,15 +355,23 @@ const QmsAddCompliance = () => {
           {/* Name/Title */}
           <div>
             <label className="add-compliance-label">
-              Compliance/Obligation Name/Title
+              Compliance/Obligation Name/Title{" "}
+              <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               name="compliance_name"
               value={formData.compliance_name}
               onChange={handleInputChange}
-              className="w-full add-compliance-inputs"
+              className={`w-full add-compliance-inputs ${
+                fieldErrors.compliance_name ? "border-red-500" : ""
+              }`}
             />
+            {fieldErrors.compliance_name && (
+              <p className="text-red-500 text-sm mt-1">
+                Compliance/Obligation Name/Title is required
+              </p>
+            )}
           </div>
 
           {/* Number */}
@@ -298,7 +385,6 @@ const QmsAddCompliance = () => {
               name="compliance_no"
               value={formData.compliance_no}
               onChange={handleInputChange}
-              required
               className="w-full add-compliance-inputs"
             />
           </div>
@@ -321,11 +407,14 @@ const QmsAddCompliance = () => {
                 <option value="Legal">Legal</option>
                 <option value="Business">Business</option>
                 <option value="Client">Client</option>
-                <option value="Process/Specification">Process/Specification</option>
+                <option value="Process/Specification">
+                  Process/Specification
+                </option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.compliance_type ? "rotate-180" : ""
-                  }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                  dropdowns.compliance_type ? "rotate-180" : ""
+                }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -347,14 +436,18 @@ const QmsAddCompliance = () => {
                 >
                   <option value="">dd</option>
                   {[...Array(31)].map((_, i) => (
-                    <option key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
+                    <option
+                      key={i + 1}
+                      value={(i + 1).toString().padStart(2, "0")}
+                    >
                       {i + 1}
                     </option>
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.day ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -371,14 +464,18 @@ const QmsAddCompliance = () => {
                 >
                   <option value="">mm</option>
                   {[...Array(12)].map((_, i) => (
-                    <option key={i + 1} value={(i + 1).toString().padStart(2, '0')}>
+                    <option
+                      key={i + 1}
+                      value={(i + 1).toString().padStart(2, "0")}
+                    >
                       {i + 1}
                     </option>
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.month ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -401,8 +498,9 @@ const QmsAddCompliance = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.year ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -510,7 +608,7 @@ const QmsAddCompliance = () => {
               disabled={draftLoading}
               className="request-correction-btn duration-200"
             >
-              {draftLoading ? 'Saving...' : 'Save as Draft'}
+              {draftLoading ? "Saving..." : "Save as Draft"}
             </button>
           </div>
           <div className="flex items-end gap-5">
@@ -527,7 +625,7 @@ const QmsAddCompliance = () => {
               disabled={loading}
               className="save-btn duration-200 !w-full"
             >
-              {loading ? 'Saving...' : 'Save'}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

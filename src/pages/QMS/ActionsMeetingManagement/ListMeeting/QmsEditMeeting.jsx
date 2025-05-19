@@ -120,7 +120,7 @@ const QmsEditMeeting = () => {
 
             } catch (error) {
                 console.error('Error fetching data:', error);
-                let errorMsg = 'Failed to fetch data. Please try again';
+                let errorMsg =  error.message;
 
             if (error.response) {
                 if (error.response.data.date) {

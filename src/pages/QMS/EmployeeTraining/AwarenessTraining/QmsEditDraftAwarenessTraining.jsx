@@ -57,7 +57,7 @@ const QmsEditDraftAwarenessTraining = () => {
 
         setLoading(false);
       } catch (err) {
-        let errorMsg = "Failed to fetch awareness data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -161,7 +161,7 @@ const QmsEditDraftAwarenessTraining = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating awareness training:", err);
-      let errorMsg = "Failed to update awareness training";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

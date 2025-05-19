@@ -175,7 +175,7 @@ const QmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      let errorMsg = "Failed to fetch manuals. Please try again.";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -253,7 +253,7 @@ const QmsManual = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        let errorMsg = "Failed to fetch data";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first

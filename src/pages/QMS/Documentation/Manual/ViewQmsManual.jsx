@@ -128,7 +128,7 @@ const ViewQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-     let errorMsg = "Failed to fetch manual details. Please try again.";
+     let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

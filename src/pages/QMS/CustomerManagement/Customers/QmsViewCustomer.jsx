@@ -32,7 +32,7 @@ const QmsViewCustomer = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching customer data:", err);
-                let errorMsg = "Failed to fetch customer data";
+                let errorMsg = err.message;
 
                 if (err.response) {
                     // Check for field-specific errors first
@@ -92,7 +92,7 @@ const QmsViewCustomer = () => {
             }, 2000);
         } catch (err) {
             console.error("Error deleting customer:", err);
-            let errorMsg = "Failed to delete customer";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

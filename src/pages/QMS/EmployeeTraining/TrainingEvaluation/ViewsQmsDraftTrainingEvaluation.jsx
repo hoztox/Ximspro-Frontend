@@ -22,7 +22,7 @@ const ViewsQmsDraftTrainingEvaluation = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

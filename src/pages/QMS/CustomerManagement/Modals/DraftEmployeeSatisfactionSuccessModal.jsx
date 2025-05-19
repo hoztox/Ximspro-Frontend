@@ -51,7 +51,7 @@ const DraftEmployeeSatisfactionSuccessModal = ({ showDraftEmployeeSatisfactionSu
                                 className="w-[144px] h-[144px] success-dark"
                             />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Employee Satisfaction Drafted Successfully</p>
+                            <p className="success-messege">Customer Satisfaction Drafted Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>

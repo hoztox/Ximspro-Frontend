@@ -77,7 +77,24 @@ const QmsInboxReplay = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to fetch users");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -106,7 +123,24 @@ const QmsInboxReplay = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to fetch original message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -219,13 +253,12 @@ const QmsInboxReplay = () => {
         }
       );
 
-
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
         navigate("/company/qms/list-outbox");
       }, 1500);
-      setSuccessMessage("Replay Sent Successfully")
+      setSuccessMessage("Replay Sent Successfully");
       console.log("Reply sent successfully:", response.data);
     } catch (error) {
       console.error("Error submitting message:", error);
@@ -233,7 +266,24 @@ const QmsInboxReplay = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to send message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -284,9 +334,9 @@ const QmsInboxReplay = () => {
         error={error}
       />
 
-      {loading && <div className="px-[104px] py-2 text-center not-found">Loading...</div>}
-
-
+      {loading && (
+        <div className="px-[104px] py-2 text-center not-found">Loading...</div>
+      )}
 
       <form
         onSubmit={handleSubmit}

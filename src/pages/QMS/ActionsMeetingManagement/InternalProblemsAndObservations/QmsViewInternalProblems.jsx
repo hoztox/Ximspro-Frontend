@@ -38,7 +38,7 @@ const QmsViewInternalProblems = () => {
         setTimeout(() => {
           setShowErrorModal(false);
         }, 2000);
-        let errorMsg = 'Failed to fetch internal problem data.';
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -100,7 +100,7 @@ const QmsViewInternalProblems = () => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting internal problem:", error);
-      let errorMsg = "Failed to delete internal problem. Please try again.";
+      let errorMsg = error.message;
 
       if (error.response) {
         if (error.response.data.detail) {

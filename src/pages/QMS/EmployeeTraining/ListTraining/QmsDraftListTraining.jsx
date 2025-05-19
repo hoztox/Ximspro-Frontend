@@ -52,7 +52,7 @@ const QmsDraftListTraining = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching draft trainings:", error);
-        let errorMsg = "Failed to fetch draft trainings";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -140,7 +140,7 @@ const QmsDraftListTraining = () => {
       }, 2000);
     } catch (error) {
       console.error("Error deleting draft training:", error);
-      let errorMsg = "Failed to delete draft training";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

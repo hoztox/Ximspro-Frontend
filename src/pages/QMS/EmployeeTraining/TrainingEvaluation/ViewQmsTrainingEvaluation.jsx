@@ -34,7 +34,7 @@ const ViewQmsTrainingEvaluation = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation data";
+        let errorMsg =  err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -95,7 +95,7 @@ const ViewQmsTrainingEvaluation = () => {
       }, 1500);
     } catch (err) {
       console.error("Error deleting training evaluation:", err);
-      let errorMsg = "Failed to delete training evaluation.";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

@@ -127,7 +127,7 @@ const QmsEditDraftCustomer = () => {
 
         } catch (error) {
             console.error('Error fetching draft customer data:', error);
-            let errorMsg = 'Failed to fetch draft customer data. Please try again. ';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -268,7 +268,7 @@ const QmsEditDraftCustomer = () => {
             setSuccessMessage("Customer updated successfully")
         } catch (error) {
             console.error('Error updating draft customer:', error);
-            let errorMsg = 'Failed to update draft customer.';
+            let errorMsg =  error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

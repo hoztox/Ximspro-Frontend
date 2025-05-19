@@ -56,7 +56,7 @@ const DraftQmsTrainingEvaluation = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -144,7 +144,7 @@ const DraftQmsTrainingEvaluation = () => {
     } catch (err) {
       // Close delete modal and show error modal
       setShowDeleteModal(false);
-      let errorMsg = "Failed to delete training evaluation";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

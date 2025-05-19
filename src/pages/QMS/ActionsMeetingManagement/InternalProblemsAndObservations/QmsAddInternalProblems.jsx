@@ -102,7 +102,7 @@ const QmsAddInternalProblems = () => {
       setCauses(response.data);
     } catch (error) {
       console.error("Error fetching causes:", error);
-      let errorMsg = 'An error occurred while creating the meeting';
+      let errorMsg =  error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -141,7 +141,7 @@ const QmsAddInternalProblems = () => {
       setCarNumbers(response.data);
     } catch (error) {
       console.error("Error fetching car numbers:", error);
-      let errorMsg = 'An error occurred while creating the meeting';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -186,7 +186,7 @@ const QmsAddInternalProblems = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = 'An error occurred while creating the meeting';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -358,7 +358,7 @@ const QmsAddInternalProblems = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
-      let errorMsg = 'Failed to submit form. Please try again';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -444,7 +444,7 @@ const QmsAddInternalProblems = () => {
       }, 1500);
     } catch (error) {
       console.error("Error saving draft:", error);
-      let errorMsg = 'Failed to save draft. Please try again';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

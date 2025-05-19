@@ -164,7 +164,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch complaint data. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -197,7 +197,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch customers";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -239,7 +239,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to fetch users';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -276,7 +276,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch CAR numbers";
+            let errorMsg =  err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -310,7 +310,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch categories";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -530,7 +530,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to update complaint";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -652,7 +652,7 @@ const QmsEditComplaints = () => {
                             color="#AAAAAA"
                         />
                         {fieldErrors.customer && (
-                            <p className="text-red-500 text-sm mt-1">Customer is required</p>
+                            <p className="text-red-500 text-sm mt-1">Please select customer</p>
                         )}
                     </div>
                 </div>

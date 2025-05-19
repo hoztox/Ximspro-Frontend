@@ -50,7 +50,7 @@ const AddEmployeeSatisfactionSuccessModal = ({ showAddEmployeeSatisfactionSucces
                                 className="w-[144px] h-[144px] success-dark"
                             />
                             <h1 className="success-messegehead">Success!!</h1>
-                            <p className="success-messege">Employee Satisfaction Added Successfully</p>
+                            <p className="success-messege">Supplier Performance Added Successfully</p>
                         </div>
                     </motion.div>
                 </motion.div>

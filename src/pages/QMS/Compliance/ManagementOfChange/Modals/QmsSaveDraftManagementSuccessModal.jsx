@@ -37,7 +37,7 @@ const QmsSaveDraftManagementSuccessModal = ({ showDraftManagementSuccessModal, o
               <img src={success} alt="" className="w-[144px] h-[144px] success-light" />
               <img src={successdark} alt="" className="w-[144px] h-[144px] success-dark" />
               <h1 className="success-messegehead">Success!!</h1>
-              <p className="success-messege">Management Drafted Successfully</p>
+              <p className="success-messege">Management of Change Drafted Successfully</p>
             </div>
           </motion.div>
         </motion.div>

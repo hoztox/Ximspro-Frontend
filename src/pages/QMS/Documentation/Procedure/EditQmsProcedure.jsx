@@ -202,7 +202,7 @@ const EditQmsProcedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedure details:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -447,7 +447,7 @@ const EditQmsProcedure = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

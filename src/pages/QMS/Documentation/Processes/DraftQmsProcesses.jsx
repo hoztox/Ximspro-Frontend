@@ -77,7 +77,7 @@ const DraftQmsProcesses = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft processes:", error);
-        let errorMsg = "Failed to fetch draft processes";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -140,7 +140,7 @@ const DraftQmsProcesses = ({ userId }) => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting draft process:", error);
-      let errorMsg = "Failed to delete draft process.";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

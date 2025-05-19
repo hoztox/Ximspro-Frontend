@@ -128,7 +128,7 @@ const QmsListNonconformityReport = () => {
     }
 
     try {
-      await axios.delete(`${BASE_URL}/qms/conformity/${id}/`); 
+      await axios.delete(`${BASE_URL}/qms/conformity/${id}/`);
       setNonConformity(nonConformity.filter((report) => report.id !== id));
     } catch (err) {
       console.error("Error deleting nonconformity report:", err);
@@ -154,14 +154,8 @@ const QmsListNonconformityReport = () => {
 
   if (loading)
     return (
-      <div className="flex justify-center items-center h-[60vh]">
+      <div className="flex justify-center items-center">
         <div className="not-found">Loading...</div>
-      </div>
-    );
-  if (error)
-    return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <div className="text-white">Error: {error}</div>
       </div>
     );
 
@@ -246,11 +240,17 @@ const QmsListNonconformityReport = () => {
                       : "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {formatDate(report.date_raised)}
+                    {report.date_raised
+                      ? formatDate(report.date_raised)
+                      : "N/A"}
                   </td>
+
                   <td className="px-2 add-manual-datas">
-                    {formatDate(report.date_completed)}
+                    {report.date_completed
+                      ? formatDate(report.date_completed)
+                      : "N/A"}
                   </td>
+
                   <td className="px-2 add-manual-datas !text-center">
                     <span
                       className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${

@@ -36,6 +36,10 @@ const QmsEditDraftNonConformity = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState({
+    source: "",
+    title: "",
+  });
 
   const [formData, setFormData] = useState({
     source: "",
@@ -202,6 +206,13 @@ const QmsEditDraftNonConformity = () => {
         [name]: value,
       });
     }
+
+    if (name === "source" && value) {
+      setErrors((prev) => ({ ...prev, source: "" }));
+    }
+    if (name === "title" && value.trim()) {
+      setErrors((prev) => ({ ...prev, title: "" }));
+    }
   };
 
   const formatDate = (dateObj) => {
@@ -212,8 +223,17 @@ const QmsEditDraftNonConformity = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.source || !formData.title.trim()) {
+      setErrors({
+        source: formData.source ? "" : "Please select a source",
+        title: formData.title.trim() ? "" : "Title is required",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setError("");
 
       const dateRaised = formatDate(formData.date_raised);
       const dateCompleted = formatDate(formData.date_completed);
@@ -281,15 +301,9 @@ const QmsEditDraftNonConformity = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
-          <p className="text-white">Loading...</p>
+          <p className="not-found">Loading...</p>
         </div>
       ) : (
         <>
@@ -313,7 +327,6 @@ const QmsEditDraftNonConformity = () => {
                 onFocus={() => setFocusedDropdown("source")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
               >
                 <option value="" disabled>
                   Select
@@ -324,7 +337,7 @@ const QmsEditDraftNonConformity = () => {
                 <option value="Supplier">Supplier</option>
               </select>
               <ChevronDown
-                className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+                className={`absolute right-3 top-[55px] transform transition-transform duration-300
                                 ${
                                   focusedDropdown === "source"
                                     ? "rotate-180"
@@ -333,6 +346,9 @@ const QmsEditDraftNonConformity = () => {
                 size={20}
                 color="#AAAAAA"
               />
+              {errors.source && (
+                <p className="text-red-500 text-sm mt-1">{errors.source}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-3">
@@ -345,8 +361,10 @@ const QmsEditDraftNonConformity = () => {
                 value={formData.title}
                 onChange={handleChange}
                 className="add-training-inputs focus:outline-none"
-                required
               />
+              {errors.title && (
+                <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-3">
@@ -373,7 +391,6 @@ const QmsEditDraftNonConformity = () => {
                   onFocus={() => setFocusedDropdown("supplier")}
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                  required
                 >
                   <option value="" disabled>
                     Select Supplier
@@ -518,7 +535,6 @@ const QmsEditDraftNonConformity = () => {
                     color="#AAAAAA"
                   />
                 </div>
-
                 <div className="relative">
                   <select
                     name="date_raised.month"
@@ -545,7 +561,6 @@ const QmsEditDraftNonConformity = () => {
                     color="#AAAAAA"
                   />
                 </div>
-
                 <div className="relative">
                   <select
                     name="date_raised.year"
@@ -603,7 +618,6 @@ const QmsEditDraftNonConformity = () => {
                     color="#AAAAAA"
                   />
                 </div>
-
                 <div className="relative">
                   <select
                     name="date_completed.month"
@@ -630,7 +644,6 @@ const QmsEditDraftNonConformity = () => {
                     color="#AAAAAA"
                   />
                 </div>
-
                 <div className="relative">
                   <select
                     name="date_completed.year"
@@ -707,6 +720,7 @@ const QmsEditDraftNonConformity = () => {
                   type="button"
                   onClick={handleListDraftNonConformity}
                   className="cancel-btn duration-200"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>

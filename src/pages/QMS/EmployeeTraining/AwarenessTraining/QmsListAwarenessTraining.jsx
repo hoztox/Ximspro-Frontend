@@ -83,7 +83,7 @@ const QmsListAwarenessTraining = () => {
         );
         setDraftCount(draftResponse.data.count);
       } catch (err) {
-        let errorMsg = "Failed to fetch awareness training data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

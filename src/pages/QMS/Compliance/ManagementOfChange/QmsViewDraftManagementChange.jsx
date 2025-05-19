@@ -74,11 +74,7 @@ const QmsViewDraftManagementChange = () => {
   }, [id]);
 
   if (loading) {
-    return <div className="text-white text-center py-4">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500 text-center py-4">{error}</div>;
+    return <div className="not-found text-center py-4">Loading...</div>;
   }
 
   return (

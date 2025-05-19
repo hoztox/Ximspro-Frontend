@@ -72,7 +72,7 @@ const AddAuditReportModal = ({
       }, 1500);
     } catch (error) {
       console.error('Error updating audit:', error);
-      let errorMsg = 'Failed to upload files';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

@@ -67,7 +67,7 @@ const QmsDraftAudit = () => {
       setError(null);
     } catch (err) {
       console.error("Error fetching audits:", err);
-      let errorMsg = "Failed to fetch audits";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -133,7 +133,7 @@ const QmsDraftAudit = () => {
       setSuccessMessage("Draft Audit Deleted Successfully");
     } catch (error) {
       console.error("Error deleting draft audit:", error);
-      let errorMsg = 'Failed to delete draft audit. Please try again.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

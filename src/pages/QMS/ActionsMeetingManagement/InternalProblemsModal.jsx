@@ -49,7 +49,7 @@ const InternalProblemsModal = ({ isOpen, onClose, onAddCause }) => {
       setCauses(response.data);
     } catch (error) {
       console.error('Error fetching causes:', error);
-      let errorMsg = 'Failed to fetch causes. Please try again later.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -130,7 +130,7 @@ const InternalProblemsModal = ({ isOpen, onClose, onAddCause }) => {
       }, 3000);
     } catch (error) {
       console.error('Error deleting cause:', error);
-      let errorMsg = 'Failed to delete cause. Please try again. ';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -199,7 +199,7 @@ const InternalProblemsModal = ({ isOpen, onClose, onAddCause }) => {
       }, 1500);
     } catch (error) {
       console.error('Error adding cause:', error);
-      let errorMsg = 'Failed to add cause.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

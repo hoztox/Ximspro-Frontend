@@ -14,9 +14,17 @@ const QmsEditDraftManagementChange = () => {
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
-
-  const [showDraftEditManagementSuccessModal, setShowDraftEditManagementSuccessModal] = useState(false);
-  const [showDraftEditManagementErrorModal, setShowDraftEditManagementErrorModal] = useState(false);
+  const [
+    showDraftEditManagementSuccessModal,
+    setShowDraftEditManagementSuccessModal,
+  ] = useState(false);
+  const [
+    showDraftEditManagementErrorModal,
+    setShowDraftEditManagementErrorModal,
+  ] = useState(false);
+  const [errors, setErrors] = useState({
+    moc_title: "",
+  });
 
   const [formData, setFormData] = useState({
     moc_title: "",
@@ -33,7 +41,7 @@ const QmsEditDraftManagementChange = () => {
     potential_cosequences: "",
     impact_on_process: "",
     moc_remarks: "",
-    send_notification: false
+    send_notification: false,
   });
 
   const [dropdowns, setDropdowns] = useState({
@@ -52,7 +60,9 @@ const QmsEditDraftManagementChange = () => {
 
         console.log("API Response:", data); // Debug log
 
-        let day = "", month = "", year = "";
+        let day = "",
+          month = "",
+          year = "";
         if (data.date) {
           const dateObj = new Date(data.date);
           day = dateObj.getDate().toString();
@@ -74,11 +84,11 @@ const QmsEditDraftManagementChange = () => {
           potential_cosequences: data.potential_cosequences || "",
           impact_on_process: data.impact_on_process || "",
           moc_remarks: data.moc_remarks || "",
-          send_notification: data.send_notification || false
+          send_notification: data.send_notification || false,
         });
 
         if (data.attach_document) {
-          setSelectedFile(data.attach_document.split('/').pop());
+          setSelectedFile(data.attach_document.split("/").pop());
           setFileUrl(data.attach_document);
         }
 
@@ -107,8 +117,11 @@ const QmsEditDraftManagementChange = () => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: type === "checkbox" ? checked : value,
     });
+    if (name === "moc_title" && value.trim()) {
+      setErrors({ moc_title: "" });
+    }
   };
 
   const handleFileChange = (e) => {
@@ -119,6 +132,7 @@ const QmsEditDraftManagementChange = () => {
         ...formData,
         attach_document: file,
       });
+      setFileUrl(null); // Clear the existing file URL since we're uploading a new file
     } else {
       setSelectedFile(null);
       setFormData({
@@ -128,34 +142,54 @@ const QmsEditDraftManagementChange = () => {
     }
   };
 
+  const handleViewFile = () => {
+    if (fileUrl) {
+      window.open(fileUrl, "_blank");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const submitData = new FormData();
-
-    // Format date
-    if (formData.day && formData.month && formData.year) {
-      const formattedDate = `${formData.year}-${formData.month.padStart(2, '0')}-${formData.day.padStart(2, '0')}`;
-      submitData.append('date', formattedDate);
+    if (!formData.moc_title.trim()) {
+      setErrors({
+        moc_title: "MOC Name / Title is required",
+      });
+      return;
     }
 
-    // Append all form data except day, month, year
-    Object.keys(formData).forEach(key => {
-      if (!['day', 'month', 'year'].includes(key) && formData[key] !== null) {
-        if (key === 'attach_document' && typeof formData[key] === 'object') {
+    setErrors({ moc_title: "" });
+
+    const submitData = new FormData();
+
+    if (formData.day && formData.month && formData.year) {
+      const formattedDate = `${formData.year}-${formData.month.padStart(
+        2,
+        "0"
+      )}-${formData.day.padStart(2, "0")}`;
+      submitData.append("date", formattedDate);
+    }
+
+    Object.keys(formData).forEach((key) => {
+      if (!["day", "month", "year"].includes(key) && formData[key] !== null) {
+        if (key === "attach_document" && typeof formData[key] === "object") {
           submitData.append(key, formData[key]);
-        } else if (typeof formData[key] !== 'object') {
+        } else if (typeof formData[key] !== "object") {
           submitData.append(key, formData[key]);
         }
       }
     });
 
     try {
-      const response = await axios.put(`${BASE_URL}/qms/changes/create/${id}/`, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await axios.put(
+        `${BASE_URL}/qms/changes/create/${id}/`,
+        submitData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       console.log("Management change updated successfully:", response.data);
       setShowDraftEditManagementSuccessModal(true);
@@ -163,10 +197,26 @@ const QmsEditDraftManagementChange = () => {
         setShowDraftEditManagementSuccessModal(false);
         navigate("/company/qms/draft-management-change");
       }, 1500);
-
     } catch (err) {
       console.error("Error updating management change:", err);
-      setError("Failed to update management change");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDraftEditManagementErrorModal(true);
       setTimeout(() => {
         setShowDraftEditManagementErrorModal(false);
@@ -183,29 +233,28 @@ const QmsEditDraftManagementChange = () => {
   };
 
   if (loading) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Error: {error}</div>;
+    return (
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center mb-5 px-[122px] pb-5 border-b border-[#383840]">
         <h2 className="add-compliance-head">Edit Draft Management of Change</h2>
-
         <QmsEditDraftManagementSuccessModal
-          showDraftEditManagementSuccessModal={showDraftEditManagementSuccessModal}
-          onClose={() => { setShowDraftEditManagementSuccessModal(false) }}
+          showDraftEditManagementSuccessModal={
+            showDraftEditManagementSuccessModal
+          }
+          onClose={() => setShowDraftEditManagementSuccessModal(false)}
         />
-
         <QmsEditDraftManagementErrorModal
           showDraftEditManagementErrorModal={showDraftEditManagementErrorModal}
-          onClose={() => { setShowDraftEditManagementErrorModal(false) }}
+          onClose={() => setShowDraftEditManagementErrorModal(false)}
+          error={error}
         />
-
-
         <button
           className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
           onClick={handleListManagementChange}
@@ -215,9 +264,10 @@ const QmsEditDraftManagementChange = () => {
       </div>
       <form onSubmit={handleSubmit} className="px-[122px]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* MOC Name/Title */}
           <div>
-            <label className="add-compliance-label">MOC Name / Title</label>
+            <label className="add-compliance-label">
+              MOC Name / Title <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="moc_title"
@@ -225,9 +275,10 @@ const QmsEditDraftManagementChange = () => {
               onChange={handleInputChange}
               className="w-full add-compliance-inputs"
             />
+            {errors.moc_title && (
+              <p className="text-red-500 text-sm mt-1">{errors.moc_title}</p>
+            )}
           </div>
-
-          {/* MOC Number */}
           <div>
             <label className="add-compliance-label">
               MOC Number <span className="text-red-500">*</span>
@@ -237,12 +288,9 @@ const QmsEditDraftManagementChange = () => {
               name="moc_no"
               value={formData.moc_no}
               onChange={handleInputChange}
-
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* MOC Type */}
           <div>
             <label className="add-compliance-label">MOC Type</label>
             <div className="relative">
@@ -257,20 +305,21 @@ const QmsEditDraftManagementChange = () => {
                 <option value="">Select MOC Type</option>
                 <option value="Manual/Procedure">Manual/Procedure</option>
                 <option value="Guideline/Policy">Guideline/Policy</option>
-                <option value="Specification/Standards">Specification/Standards</option>
+                <option value="Specification/Standards">
+                  Specification/Standards
+                </option>
                 <option value="Facility/Equipment">Facility/Equipment</option>
                 <option value="System/Process">System/Process</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.moc_type ? "rotate-180" : ""
-                  }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                  dropdowns.moc_type ? "rotate-180" : ""
+                }`}
               >
                 <ChevronDown size={20} />
               </div>
             </div>
           </div>
-
-          {/* Date */}
           <div>
             <label className="add-compliance-label">Date</label>
             <div className="grid grid-cols-3 gap-5">
@@ -291,13 +340,13 @@ const QmsEditDraftManagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.day ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
               </div>
-
               <div className="relative">
                 <select
                   name="month"
@@ -315,13 +364,13 @@ const QmsEditDraftManagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.month ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
               </div>
-
               <div className="relative">
                 <select
                   name="year"
@@ -339,16 +388,15 @@ const QmsEditDraftManagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.year ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Attach Document */}
           <div>
             <label className="add-compliance-label">Attach Document</label>
             <div className="relative">
@@ -368,15 +416,26 @@ const QmsEditDraftManagementChange = () => {
                 </span>
                 <img src={file} alt="File Icon" />
               </button>
-              {!selectedFile && (
-                <p className="text-right no-file">No file chosen</p>
-              )}
+              <div className="flex items-center justify-between">
+                {selectedFile && fileUrl && (
+                  <button
+                    type="button"
+                    onClick={handleViewFile}
+                    className="flex items-center gap-2 mt-[10.65px] text-[#1E84AF] click-view-file-text !text-[14px]"
+                  >
+                    Click to view file <Eye size={17} />
+                  </button>
+                )}
+                {!selectedFile && (
+                  <p className="text-right no-file">No file chosen</p>
+                )}
+              </div>
             </div>
           </div>
-
-          {/* Related Record Format */}
           <div>
-            <label className="add-compliance-label">Related Record Format</label>
+            <label className="add-compliance-label">
+              Related Record Format
+            </label>
             <input
               type="text"
               name="related_record_format"
@@ -385,8 +444,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* Purpose of Change */}
           <div>
             <label className="add-compliance-label">Purpose of Change</label>
             <input
@@ -397,8 +454,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* Resources Required */}
           <div>
             <label className="add-compliance-label">Resources Required</label>
             <input
@@ -409,8 +464,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* Potential Consequences */}
           <div>
             <label className="add-compliance-label">
               Potential Consequences of Change
@@ -423,8 +476,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* Impact on Process */}
           <div>
             <label className="add-compliance-label">
               Impact on Processes/Activity
@@ -437,8 +488,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs"
             />
           </div>
-
-          {/* MOC Remarks */}
           <div>
             <label className="add-compliance-label">MOC Remarks</label>
             <textarea
@@ -448,8 +497,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs !h-[95px]"
             />
           </div>
-
-          {/* Revision */}
           <div>
             <label className="add-compliance-label">Revision</label>
             <textarea
@@ -459,7 +506,6 @@ const QmsEditDraftManagementChange = () => {
               className="w-full add-compliance-inputs !h-[95px]"
             />
           </div>
-
           <div></div>
           <div className="flex items-end justify-end mt-3">
             <label className="flex items-center">

@@ -80,7 +80,7 @@ const EvaluationModal = ({
         setPerformances(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation";
+        let errorMsg =  err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -125,7 +125,7 @@ const EvaluationModal = ({
       console.log("Fetched questions:", response.data);
     } catch (err) {
       console.error("Error fetching questions:", err);
-      let errorMsg = "Failed to fetch questions";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -238,7 +238,7 @@ const EvaluationModal = ({
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to update answer";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -516,7 +516,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
           setQuestions(response.data);
         } catch (err) {
           console.error("Error fetching questions:", err);
-          let errorMsg = "Failed to fetch questions";
+          let errorMsg = err.message;
 
           if (err.response) {
             // Check for field-specific errors first
@@ -580,7 +580,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setError("");
     } catch (err) {
       console.error("Error adding question:", err);
-      let errorMsg = "Failed to add question";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -643,7 +643,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     } catch (err) {
       console.error("Error deleting question:", err);
       setShowDeleteModal(false);
-      let errorMsg = "Failed to delete question";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -900,7 +900,7 @@ const QmsTrainingEvaluation = () => {
         setPerformances(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -992,7 +992,7 @@ const QmsTrainingEvaluation = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting performance evaluation:", err);
-      let errorMsg = "Failed to delete training evaluation";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

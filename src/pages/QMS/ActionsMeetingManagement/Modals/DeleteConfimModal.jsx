@@ -33,9 +33,9 @@ const DeleteConfimModal = ({ showDeleteModal, onConfirm, onCancel, deleteMessage
                                 <img src={deleteIllustrate} alt="Delete" className="w-[267px] h-[163px]" />
                             </div>
                             <h3 className="confirmations">
-                                Are you sure you want to delete
+                                Are you sure you want to
                                 <br />
-                                this {deleteMessage || "Page"}?
+                                delete this {deleteMessage || "Page"}?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}

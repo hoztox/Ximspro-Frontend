@@ -4,7 +4,7 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import view from "../../../../assets/images/Company Documentation/view.svg";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios';
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import QmsDeleteConfirmManagementModal from "./Modals/QmsDeleteConfirmManagementModal";
 import QmsDeleteManagementSuccessModal from "./Modals/QmsDeleteManagementSuccessModal";
@@ -22,18 +22,24 @@ const QmsDraftManagementChange = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [managementToDelete, setManagementToDelete] = useState(null);
-  const [showDeleteManagementSuccessModal, setShowDeleteManagementSuccessModal] = useState(false);
-  const [showDeleteManagementErrorModal, setShowDeleteManagementErrorModal] = useState(false);
+  const [
+    showDeleteManagementSuccessModal,
+    setShowDeleteManagementSuccessModal,
+  ] = useState(false);
+  const [showDeleteManagementErrorModal, setShowDeleteManagementErrorModal] =
+    useState(false);
 
   // Format date function
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).replace(/\//g, '-');
+    return date
+      .toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "-");
   };
 
   // Get user ID or company ID from localStorage
@@ -61,12 +67,14 @@ const QmsDraftManagementChange = () => {
           return;
         }
 
-        const response = await axios.get(`${BASE_URL}/qms/changes-draft/${id}/`);
+        const response = await axios.get(
+          `${BASE_URL}/qms/changes-draft/${id}/`
+        );
         console.log("API Response:", response.data);
 
         const data = response.data;
         if (Array.isArray(data)) {
-          const formattedData = data.map(item => ({
+          const formattedData = data.map((item) => ({
             id: item.id,
             title: item.moc_title || "",
             mocno: item.moc_no || "",
@@ -81,12 +89,12 @@ const QmsDraftManagementChange = () => {
             resourcesRequired: item.resources_required,
             impactOnProcess: item.impact_on_process,
             sendNotification: item.send_notification,
-            isDraft: item.is_draft
+            isDraft: item.is_draft,
           }));
           setComplianceData(formattedData);
         } else if (data?.data && Array.isArray(data.data)) {
           // Handle nested data structure
-          const formattedData = data.data.map(item => ({
+          const formattedData = data.data.map((item) => ({
             id: item.id,
             title: item.moc_title || "",
             mocno: item.moc_no || "",
@@ -101,7 +109,7 @@ const QmsDraftManagementChange = () => {
             resourcesRequired: item.resources_required,
             impactOnProcess: item.impact_on_process,
             sendNotification: item.send_notification,
-            isDraft: item.is_draft
+            isDraft: item.is_draft,
           }));
           setComplianceData(formattedData);
         } else {
@@ -143,27 +151,46 @@ const QmsDraftManagementChange = () => {
 
   // Add function to confirm deletion
   // Add function to confirm deletion
-const confirmDelete = async () => {
-  try {
-    await axios.delete(`${BASE_URL}/qms/changes-get/${managementToDelete}/`);
-    // Update complianceData instead of managementChanges
-    setComplianceData(complianceData.filter(item => item.id !== managementToDelete));
-    setShowDeleteModal(false);
-    setShowDeleteManagementSuccessModal(true);
-    // Auto-close success modal after 2 seconds
-    setTimeout(() => {
-      setShowDeleteManagementSuccessModal(false);
-    }, 2000);
-  } catch (err) {
-    console.error('Error deleting management change:', err);
-    setShowDeleteModal(false);
-    setShowDeleteManagementErrorModal(true);
-    // Auto-close error modal after 3 seconds
-    setTimeout(() => {
-      setShowDeleteManagementErrorModal(false);
-    }, 3000);
-  }
-};
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`${BASE_URL}/qms/changes-get/${managementToDelete}/`);
+      // Update complianceData instead of managementChanges
+      setComplianceData(
+        complianceData.filter((item) => item.id !== managementToDelete)
+      );
+      setShowDeleteModal(false);
+      setShowDeleteManagementSuccessModal(true);
+      // Auto-close success modal after 2 seconds
+      setTimeout(() => {
+        setShowDeleteManagementSuccessModal(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Error deleting management change:", err);
+      setShowDeleteModal(false);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowDeleteManagementErrorModal(true);
+      setTimeout(() => {
+        setShowDeleteManagementErrorModal(false);
+      }, 3000);
+    }
+  };
 
   // Add function to close modals
   const closeModals = () => {
@@ -186,11 +213,11 @@ const confirmDelete = async () => {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   if (loading) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-64">Error: {error}</div>;
+    return (
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center h-64">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -213,8 +240,8 @@ const confirmDelete = async () => {
           <QmsDeleteManagementErrorModal
             showDeleteManagementErrorModal={showDeleteManagementErrorModal}
             onClose={() => setShowDeleteManagementErrorModal(false)}
+            error={error}
           />
-
 
           <div className="flex gap-4">
             <div className="relative">
@@ -277,7 +304,9 @@ const confirmDelete = async () => {
                       key={item.id}
                       className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
                     >
-                      <td className="px-4 qms-list-compliance-data">{item.id}</td>
+                      <td className="px-4 qms-list-compliance-data">
+                        {item.id}
+                      </td>
                       <td className="px-4 qms-list-compliance-data">
                         {item.title}
                       </td>
@@ -291,12 +320,17 @@ const confirmDelete = async () => {
                         {item.date}
                       </td>
                       <td className="px-4 qms-list-compliance-data text-left">
-                        <button onClick={() => handleEditManagementChange(item.id)} className="text-[#1E84AF]">
+                        <button
+                          onClick={() => handleEditManagementChange(item.id)}
+                          className="text-[#1E84AF]"
+                        >
                           Click to Continue
                         </button>
                       </td>
                       <td className="px-4 qms-list-compliance-data text-center">
-                        <button onClick={() => handleViewManagementChange(item.id)}>
+                        <button
+                          onClick={() => handleViewManagementChange(item.id)}
+                        >
                           <img
                             src={view}
                             alt="View Icon"
@@ -317,7 +351,7 @@ const confirmDelete = async () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="8" className="px-4 py-6 text-center text-gray-400 not-found">
+                    <td colSpan="8" className="px-4 py-6 text-center not-found">
                       No Draft Management Changes Found
                     </td>
                   </tr>
@@ -333,10 +367,13 @@ const confirmDelete = async () => {
               </div>
               <div className="flex items-center gap-5">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
                   disabled={currentPage === 1}
-                  className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-                    }`}
+                  className={`cursor-pointer swipe-text ${
+                    currentPage === 1 ? "opacity-50" : ""
+                  }`}
                 >
                   Previous
                 </button>
@@ -347,10 +384,11 @@ const confirmDelete = async () => {
                     <button
                       key={pageNum}
                       onClick={() => setCurrentPage(pageNum)}
-                      className={`${currentPage === pageNum
-                        ? "pagin-active"
-                        : "pagin-inactive"
-                        }`}
+                      className={`${
+                        currentPage === pageNum
+                          ? "pagin-active"
+                          : "pagin-inactive"
+                      }`}
                     >
                       {pageNum}
                     </button>
@@ -362,10 +400,11 @@ const confirmDelete = async () => {
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
                   disabled={currentPage === totalPages || totalPages === 0}
-                  className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0
-                    ? "opacity-50"
-                    : ""
-                    }`}
+                  className={`cursor-pointer swipe-text ${
+                    currentPage === totalPages || totalPages === 0
+                      ? "opacity-50"
+                      : ""
+                  }`}
                 >
                   Next
                 </button>

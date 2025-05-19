@@ -103,7 +103,7 @@ const AddQmsProcedure = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -330,7 +330,7 @@ const AddQmsProcedure = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

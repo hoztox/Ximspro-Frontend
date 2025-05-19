@@ -45,7 +45,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             setCauses(response.data);
         } catch (error) {
             console.error('Error fetching causes:', error);
-            let errorMsg = 'Failed to fetch root causes. Please try again later. ';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -112,7 +112,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             }, 3000);
         } catch (error) {
             console.error('Error deleting root cause:', error);
-            let errorMsg = 'failed to delete root cause';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -177,7 +177,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             }, 1500);
         } catch (error) {
             console.error('Error adding cause:', error);
-            let errorMsg = 'Failed to add root cause. Please try again.';
+            let errorMsg =  error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

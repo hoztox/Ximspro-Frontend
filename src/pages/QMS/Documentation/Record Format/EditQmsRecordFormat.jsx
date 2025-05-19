@@ -185,7 +185,7 @@ const EditQmsRecordFormat = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = "Failed to load users";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -216,7 +216,7 @@ const EditQmsRecordFormat = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching record format details:", err);
-      let errorMsg = "Failed to fetch record format details";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -461,7 +461,7 @@ const EditQmsRecordFormat = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "Failed to update record format";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

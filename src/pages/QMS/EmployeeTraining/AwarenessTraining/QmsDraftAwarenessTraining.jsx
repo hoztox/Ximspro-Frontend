@@ -81,7 +81,7 @@ const QmsDraftAwarenessTraining = () => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft awareness trainings:", error);
-        let errorMsg = "Failed to fetch draft awareness trainings";
+        let errorMsg =error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -172,7 +172,7 @@ const QmsDraftAwarenessTraining = () => {
       }, 3000);
     } catch (err) {
       console.error("Error deleting awareness training item:", err);
-      let errorMsg = "Failed to delete awareness training";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

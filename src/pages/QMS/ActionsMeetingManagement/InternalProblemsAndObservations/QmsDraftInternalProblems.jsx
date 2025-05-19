@@ -86,7 +86,7 @@ const QmsDraftInternalProblems = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 2000);
-            let errorMsg = 'failed to fetch internal problems';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -155,7 +155,7 @@ const QmsDraftInternalProblems = () => {
             }, 3000);
         } catch (error) {
             console.error('Error deleting internal problem:', error);
-            let errorMsg = 'Failed to delete internal problem';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

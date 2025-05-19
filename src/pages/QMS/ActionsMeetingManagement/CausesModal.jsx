@@ -46,7 +46,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       setAgendaItems(response.data);
     } catch (error) {
       console.error('Error fetching agenda items:', error);
-      let errorMsg = 'Failed to fetch agenda items. Please try again later.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -130,7 +130,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       }, 1500);
     } catch (error) {
       console.error('Error deleting agenda item:', error);
-      let errorMsg = 'Failed to delete agenda item. Please try again. ';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -201,7 +201,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       }, 1500);
     } catch (error) {
       console.error('Error adding agenda item:', error);
-      let errorMsg = 'Failed to add agenda item. Please try again.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first

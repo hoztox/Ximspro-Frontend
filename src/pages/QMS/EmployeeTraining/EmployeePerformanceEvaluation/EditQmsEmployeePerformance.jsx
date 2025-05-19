@@ -68,7 +68,7 @@ const EditQmsEmployeePerformance = () => {
 
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch employee performance data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -195,7 +195,7 @@ const EditQmsEmployeePerformance = () => {
         setShowErrorModal(false);
       }, 3000);
 
-      let errorMsg = "Failed to update employee performance evaluation";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

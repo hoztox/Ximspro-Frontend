@@ -65,7 +65,7 @@ const QmsEditDraftEmployeePerformance = () => {
 
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch employee performance data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -190,7 +190,7 @@ const QmsEditDraftEmployeePerformance = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating performance evaluation:", err);
-      let errorMsg = "Failed to update employee performance evaluation";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

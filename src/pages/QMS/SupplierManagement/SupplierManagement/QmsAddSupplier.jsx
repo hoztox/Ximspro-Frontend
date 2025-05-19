@@ -1,41 +1,43 @@
-import React, { useEffect, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { countries } from 'countries-list';
+import React, { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { countries } from "countries-list";
 import { BASE_URL } from "../../../../Utils/Config";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import axios from 'axios';
+import axios from "axios";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsAddSupplier = () => {
   const countryList = Object.values(countries)
-    .map(country => country.name)
+    .map((country) => country.name)
     .sort((a, b) => a.localeCompare(b));
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    company_name: '',
-    website: '',
-    email: '',
-    city: '',
-    address: '',
-    state: '',
-    postal_code: '',
-    country: '',
-    phone: '',
-    alternate_phone: '',
-    resolution: '',
-    fax: '',
-    contact_person: '',
-    qualified_to_supply: '',
-    notes: '',
+    company_name: "",
+    website: "",
+    email: "",
+    city: "",
+    address: "",
+    state: "",
+    postal_code: "",
+    country: "",
+    phone: "",
+    alternate_phone: "",
+    resolution: "",
+    fax: "",
+    contact_person: "",
+    qualified_to_supply: "",
+    notes: "",
     analysis_needed: false,
-    approved_by: '',
-    status: 'Approved',
-    selection_criteria: '',
+    approved_by: "",
+    status: "Approved",
+    selection_criteria: "",
     approved_date: {
-      day: '',
-      month: '',
-      year: ''
+      day: "",
+      month: "",
+      year: "",
     },
   });
 
@@ -44,41 +46,43 @@ const QmsAddSupplier = () => {
   const [users, setUsers] = useState([]);
   const [draftLoading, setDraftLoading] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showDraftSuccessModal, setShowDraftSuccessModal] = useState(false);
+
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleListSupplier = () => {
-    navigate('/company/qms/list-supplier');
+    navigate("/company/qms/list-supplier");
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     // Handle checkboxes
-    if (type === 'checkbox') {
+    if (type === "checkbox") {
       setFormData({
         ...formData,
-        [name]: checked
+        [name]: checked,
       });
       return;
     }
 
     // Handle nested objects
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
       setFormData({
         ...formData,
         [parent]: {
           ...formData[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
 
@@ -86,7 +90,7 @@ const QmsAddSupplier = () => {
     if (errors[name]) {
       setErrors({
         ...errors,
-        [name]: ''
+        [name]: "",
       });
     }
   };
@@ -96,7 +100,7 @@ const QmsAddSupplier = () => {
 
     setFormData({
       ...formData,
-      [name]: files[0]
+      [name]: files[0],
     });
   };
 
@@ -140,29 +144,29 @@ const QmsAddSupplier = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.company_name.trim()) {
-      newErrors.company_name = 'Company name is required';
+      newErrors.company_name = "Company Name is required";
     }
 
     // Validate date if any part is filled
-    if (formData.approved_date.day || formData.approved_date.month || formData.approved_date.year) {
-      if (!formData.approved_date.day || !formData.approved_date.month || !formData.approved_date.year) {
-        newErrors.approved_date = 'Please complete the approval date';
+    if (
+      formData.approved_date.day ||
+      formData.approved_date.month ||
+      formData.approved_date.year
+    ) {
+      if (
+        !formData.approved_date.day ||
+        !formData.approved_date.month ||
+        !formData.approved_date.year
+      ) {
+        newErrors.approved_date = "Please complete the approval date";
       }
     }
 
     // Add additional validations as needed for your form
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-
-    if (!formData.status) {
-      newErrors.status = 'Status is required';
-    }
-
-    if (!formData.approved_by) {
-      newErrors.approved_by = 'Approved by is required';
+      newErrors.email = "Email is invalid";
     }
 
     setErrors(newErrors);
@@ -183,54 +187,60 @@ const QmsAddSupplier = () => {
     const userId = getRelevantUserId();
 
     if (!companyId) {
-      setError('Company ID not found. Please log in again.');
+      setError("Company ID not found. Please log in again.");
       return null;
     }
 
     const submissionData = new FormData();
-    submissionData.append('company', companyId);
-    submissionData.append('user', userId);
-    submissionData.append('company_name', formData.company_name);
-    submissionData.append('website', formData.website || '');
-    submissionData.append('email', formData.email || '');
-    submissionData.append('city', formData.city || '');
-    submissionData.append('address', formData.address || '');
-    submissionData.append('state', formData.state || '');
-    submissionData.append('postal_code', formData.postal_code || '');
-    submissionData.append('country', formData.country || '');
-    submissionData.append('phone', formData.phone || '');
-    submissionData.append('alternate_phone', formData.alternate_phone || '');
-    submissionData.append('fax', formData.fax || '');
-    submissionData.append('contact_person', formData.contact_person || '');
-    submissionData.append('qualified_to_supply', formData.qualified_to_supply || '');
-    submissionData.append('notes', formData.notes || '');
-    submissionData.append('analysis_needed', formData.analysis_needed);
-    submissionData.append('approved_by', formData.approved_by || '');
-    submissionData.append('status', formData.status || '');
-    submissionData.append('selection_criteria', formData.selection_criteria || '');
+    submissionData.append("company", companyId);
+    submissionData.append("user", userId);
+    submissionData.append("company_name", formData.company_name);
+    submissionData.append("website", formData.website || "N/A");
+    submissionData.append("email", formData.email || "N/A");
+    submissionData.append("city", formData.city || "N/A");
+    submissionData.append("address", formData.address || "N/A");
+    submissionData.append("state", formData.state || "N/A");
+    submissionData.append("postal_code", formData.postal_code || "N/A");
+    submissionData.append("country", formData.country || "N/A");
+    submissionData.append("phone", formData.phone || "N/A");
+    submissionData.append("alternate_phone", formData.alternate_phone || "N/A");
+    submissionData.append("fax", formData.fax || "N/A");
+    submissionData.append("contact_person", formData.contact_person || "N/A");
+    submissionData.append(
+      "qualified_to_supply",
+      formData.qualified_to_supply || "N/A"
+    );
+    submissionData.append("notes", formData.notes || "N/A");
+    submissionData.append("analysis_needed", formData.analysis_needed);
+    submissionData.append("approved_by", formData.approved_by || "");
+    submissionData.append("status", formData.status || "");
+    submissionData.append(
+      "selection_criteria",
+      formData.selection_criteria || ""
+    );
 
     // Append resolution only if analysis_needed is true
     if (formData.analysis_needed && formData.resolution) {
-      submissionData.append('resolution', formData.resolution);
+      submissionData.append("resolution", formData.resolution);
     }
 
     // Format and append approved_date date if all parts are filled
     const formattedDate = formatDateForSubmission();
     if (formattedDate) {
-      submissionData.append('approved_date', formattedDate);
+      submissionData.append("approved_date", formattedDate);
     }
 
     // Append file attachments if present
     if (formData.pre_qualification) {
-      submissionData.append('pre_qualification', formData.pre_qualification);
+      submissionData.append("pre_qualification", formData.pre_qualification);
     }
 
     if (formData.documents) {
-      submissionData.append('documents', formData.documents);
+      submissionData.append("documents", formData.documents);
     }
 
     if (isDraft) {
-      submissionData.append('is_draft', true);
+      submissionData.append("is_draft", true);
     }
 
     return submissionData;
@@ -244,7 +254,9 @@ const QmsAddSupplier = () => {
     try {
       if (!companyId) return;
 
-      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
 
       console.log("API Response:", response.data);
 
@@ -257,7 +269,28 @@ const QmsAddSupplier = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError("Failed to load users. Please check your connection and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -270,7 +303,7 @@ const QmsAddSupplier = () => {
     }
 
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const submissionData = prepareSubmissionData();
@@ -281,21 +314,38 @@ const QmsAddSupplier = () => {
 
       await axios.post(`${BASE_URL}/qms/suppliers/create/`, submissionData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
-      console.log('Added Supplier--', submissionData);
-
+      console.log("Added Supplier--", submissionData);
 
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
-        navigate('/company/qms/list-supplier');
+        navigate("/company/qms/list-supplier");
       }, 1500);
+      setSuccessMessage("Supplier Added Successfully");
     } catch (error) {
-      console.error('Error submitting form:', error);
-      setError(error.response?.data?.message || 'Failed to save supplier. Please try again.');
+      console.error("Error submitting form:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -307,7 +357,7 @@ const QmsAddSupplier = () => {
 
   const handleSaveAsDraft = async () => {
     setDraftLoading(true);
-    setError('');
+    setError("");
 
     try {
       const submissionData = prepareSubmissionData(true);
@@ -316,45 +366,65 @@ const QmsAddSupplier = () => {
         return;
       }
 
-      await axios.post(`${BASE_URL}/qms/suppliers/draft-create/`, submissionData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await axios.post(
+        `${BASE_URL}/qms/suppliers/draft-create/`,
+        submissionData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-      console.log('Drafte supp:', formData);
-      
+      console.log("Drafte supp:", formData);
 
-      setShowDraftSuccessModal(true);
+      setShowSuccessModal(true);
       setTimeout(() => {
-        setShowDraftSuccessModal(false);
-        navigate('/company/qms/draft-supplier');
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-supplier");
       }, 1500);
-
+      setSuccessMessage("Supplier Drafted Successfully");
     } catch (err) {
       setDraftLoading(false);
-      const errorMessage = err.response?.data?.detail || 'Failed to save Draft';
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.email) {
+          errorMsg = err.response.data.email[0];
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError(errorMessage);
-      console.error('Error saving Draft:', err.response?.data || err);
+      console.error("Error saving Draft:", err.response?.data || err);
     }
   };
 
   const handleCancel = () => {
-    navigate('/company/qms/list-supplier');
+    navigate("/company/qms/list-supplier");
   };
 
   // Generate options for dropdowns
-  const generateOptions = (start, end, prefix = '') => {
+  const generateOptions = (start, end, prefix = "") => {
     const options = [];
     for (let i = start; i <= end; i++) {
       const value = i < 10 ? `0${i}` : `${i}`;
       options.push(
         <option key={i} value={value}>
-          {prefix}{value}
+          {prefix}
+          {value}
         </option>
       );
     }
@@ -373,45 +443,34 @@ const QmsAddSupplier = () => {
         </button>
       </div>
 
-      {/* Success Modal would be imported or defined here */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-            <p className="text-green-500 text-lg">Supplier added successfully!</p>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
 
-      {/* Draft Success Modal would be imported or defined here */}
-      {showDraftSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-            <p className="text-green-500 text-lg">Supplier draft saved successfully!</p>
-          </div>
-        </div>
-      )}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
-      {/* Error Modal would be imported or defined here */}
-      {showErrorModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
-          <div className="bg-[#2A2A32] p-5 rounded-lg text-center">
-            <p className="text-red-500 text-lg">{error || 'An error occurred'}</p>
-          </div>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
+      >
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
             Company Name <span className="text-red-500">*</span>
           </label>
           <input
-            type='text'
+            type="text"
             name="company_name"
             value={formData.company_name}
             onChange={handleChange}
-            className={`add-training-inputs ${errors.company_name ? 'border-red-500' : ''}`}
-            required
+            className={`add-training-inputs ${
+              errors.company_name ? "border-red-500" : ""
+            }`}
           />
           {errors.company_name && (
             <p className="text-red-500 text-sm">{errors.company_name}</p>
@@ -419,11 +478,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Web Site
-          </label>
+          <label className="add-training-label">Web Site</label>
           <input
-            type='text'
+            type="text"
             name="website"
             value={formData.website}
             onChange={handleChange}
@@ -433,14 +490,16 @@ const QmsAddSupplier = () => {
 
         <div className="flex flex-col gap-3">
           <label className="add-training-label">
-            Email
+            Email <span className="text-red-500">*</span>
           </label>
           <input
-            type='email'
+            type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className={`add-training-inputs ${errors.email ? 'border-red-500' : ''}`}
+            className={`add-training-inputs ${
+              errors.email ? "border-red-500" : ""
+            }`}
           />
           {errors.email && (
             <p className="text-red-500 text-sm">{errors.email}</p>
@@ -448,11 +507,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            City
-          </label>
+          <label className="add-training-label">City</label>
           <input
-            type='text'
+            type="text"
             name="city"
             value={formData.city}
             onChange={handleChange}
@@ -461,9 +518,7 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3 col-span-2">
-          <label className="add-training-label">
-            Address
-          </label>
+          <label className="add-training-label">Address</label>
           <textarea
             name="address"
             value={formData.address}
@@ -473,11 +528,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            State
-          </label>
+          <label className="add-training-label">State</label>
           <input
-            type='text'
+            type="text"
             name="state"
             value={formData.state}
             onChange={handleChange}
@@ -486,11 +539,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Postal Code
-          </label>
+          <label className="add-training-label">Postal Code</label>
           <input
-            type='text'
+            type="text"
             name="postal_code"
             value={formData.postal_code}
             onChange={handleChange}
@@ -499,10 +550,8 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-5">
-          <div className='flex flex-col gap-3 relative'>
-            <label className="add-training-label">
-              Country
-            </label>
+          <div className="flex flex-col gap-3 relative">
+            <label className="add-training-label">Country</label>
             <select
               name="country"
               value={formData.country}
@@ -511,7 +560,9 @@ const QmsAddSupplier = () => {
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
             >
-              <option value="" disabled>Select Country</option>
+              <option value="" disabled>
+                Select Country
+              </option>
               {countryList.map((country, index) => (
                 <option key={index} value={country}>
                   {country}
@@ -520,7 +571,11 @@ const QmsAddSupplier = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                               ${focusedDropdown === "country" ? "rotate-180" : ""}`}
+                               ${
+                                 focusedDropdown === "country"
+                                   ? "rotate-180"
+                                   : ""
+                               }`}
               size={20}
               color="#AAAAAA"
             />
@@ -528,11 +583,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Phone
-          </label>
+          <label className="add-training-label">Phone</label>
           <input
-            type='text'
+            type="text"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
@@ -541,11 +594,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Alternate Phone
-          </label>
+          <label className="add-training-label">Alternate Phone</label>
           <input
-            type='text'
+            type="text"
             name="alternate_phone"
             value={formData.alternate_phone}
             onChange={handleChange}
@@ -554,11 +605,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Fax
-          </label>
+          <label className="add-training-label">Fax</label>
           <input
-            type='text'
+            type="text"
             name="fax"
             value={formData.fax}
             onChange={handleChange}
@@ -567,11 +616,9 @@ const QmsAddSupplier = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Contact Person
-          </label>
+          <label className="add-training-label">Contact Person</label>
           <input
-            type='text'
+            type="text"
             name="contact_person"
             value={formData.contact_person}
             onChange={handleChange}
@@ -587,8 +634,7 @@ const QmsAddSupplier = () => {
             value={formData.qualified_to_supply}
             onChange={handleChange}
             className="add-training-inputs !h-[98px]"
-          >
-          </textarea>
+          ></textarea>
 
           <div className="flex items-end justify-start">
             <label className="flex items-center">
@@ -613,8 +659,7 @@ const QmsAddSupplier = () => {
             value={formData.notes}
             onChange={handleChange}
             className="add-training-inputs !h-[98px]"
-          >
-          </textarea>
+          ></textarea>
 
           {/* Resolution After Analysis field - only visible when analysis_needed is true */}
           {formData.analysis_needed && (
@@ -623,33 +668,29 @@ const QmsAddSupplier = () => {
                 Resolution After Analysis
               </label>
               <input
-                type='text'
+                type="text"
                 name="resolution"
                 value={formData.resolution}
                 onChange={handleChange}
                 className="add-training-inputs"
-                required={formData.analysis_needed}
               />
             </div>
           )}
         </div>
 
-        <div className='flex flex-col gap-3 relative'>
-          <label className="add-training-label">
-            Approved By <span className="text-red-500">*</span>
-          </label>
+        <div className="flex flex-col gap-3 relative">
+          <label className="add-training-label">Approved By</label>
           <select
             name="approved_by"
             value={formData.approved_by}
             onChange={handleChange}
             onFocus={() => setFocusedDropdown("approved_by")}
             onBlur={() => setFocusedDropdown(null)}
-            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.approved_by ? 'border-red-500' : ''}`}
-            required
+            className="add-training-inputs appearance-none pr-10 cursor-pointer"
           >
-            <option value="" disabled>Select Approved By</option>
+            <option value="N/A">Select Approved By</option>
             {users.length > 0 ? (
-              users.map(user => (
+              users.map((user) => (
                 <option key={user.id} value={user.id}>
                   {user.first_name} {user.last_name}
                 </option>
@@ -664,25 +705,21 @@ const QmsAddSupplier = () => {
             size={20}
             color="#AAAAAA"
           />
-          {errors.approved_by && (
-            <p className="text-red-500 text-sm">{errors.approved_by}</p>
-          )}
         </div>
 
-        <div className='flex flex-col gap-3 relative'>
-          <label className="add-training-label">
-            Status <span className="text-red-500">*</span>
-          </label>
+        <div className="flex flex-col gap-3 relative">
+          <label className="add-training-label">Status</label>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
             onFocus={() => setFocusedDropdown("status")}
             onBlur={() => setFocusedDropdown(null)}
-            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.status ? 'border-red-500' : ''}`}
-            required
+            className="add-training-inputs appearance-none pr-10 cursor-pointer"
           >
-            <option value="" disabled>Select Status</option>
+            <option value="" disabled>
+              Select Status
+            </option>
             <option value="Approved">Approved</option>
             <option value="Provisional">Provisional</option>
             <option value="Not Approved">Not Approved</option>
@@ -693,17 +730,12 @@ const QmsAddSupplier = () => {
             size={20}
             color="#AAAAAA"
           />
-          {errors.status && (
-            <p className="text-red-500 text-sm">{errors.status}</p>
-          )}
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Selection Criteria
-          </label>
+          <label className="add-training-label">Selection Criteria</label>
           <input
-            type='text'
+            type="text"
             name="selection_criteria"
             value={formData.selection_criteria}
             onChange={handleChange}
@@ -722,14 +754,22 @@ const QmsAddSupplier = () => {
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("approved_date.day")}
                 onBlur={() => setFocusedDropdown(null)}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.approved_date ? 'border-red-500' : ''}`}
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  errors.approved_date ? "border-red-500" : ""
+                }`}
               >
-                <option value="" disabled>dd</option>
+                <option value="" disabled>
+                  dd
+                </option>
                 {generateOptions(1, 31)}
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                   ${focusedDropdown === "approved_date.day" ? "rotate-180" : ""}`}
+                                   ${
+                                     focusedDropdown === "approved_date.day"
+                                       ? "rotate-180"
+                                       : ""
+                                   }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -743,14 +783,22 @@ const QmsAddSupplier = () => {
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("approved_date.month")}
                 onBlur={() => setFocusedDropdown(null)}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.approved_date ? 'border-red-500' : ''}`}
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  errors.approved_date ? "border-red-500" : ""
+                }`}
               >
-                <option value="" disabled>mm</option>
+                <option value="" disabled>
+                  mm
+                </option>
                 {generateOptions(1, 12)}
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                   ${focusedDropdown === "approved_date.month" ? "rotate-180" : ""}`}
+                                   ${
+                                     focusedDropdown === "approved_date.month"
+                                       ? "rotate-180"
+                                       : ""
+                                   }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -764,14 +812,22 @@ const QmsAddSupplier = () => {
                 onChange={handleChange}
                 onFocus={() => setFocusedDropdown("approved_date.year")}
                 onBlur={() => setFocusedDropdown(null)}
-                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${errors.approved_date ? 'border-red-500' : ''}`}
+                className={`add-training-inputs appearance-none pr-10 cursor-pointer ${
+                  errors.approved_date ? "border-red-500" : ""
+                }`}
               >
-                <option value="" disabled>yyyy</option>
+                <option value="" disabled>
+                  yyyy
+                </option>
                 {generateOptions(2023, 2030)}
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                   ${focusedDropdown === "approved_date.year" ? "rotate-180" : ""}`}
+                                   ${
+                                     focusedDropdown === "approved_date.year"
+                                       ? "rotate-180"
+                                       : ""
+                                   }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -805,7 +861,9 @@ const QmsAddSupplier = () => {
               {formData.pre_qualification.name}
             </p>
           ) : (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              No file chosen
+            </p>
           )}
         </div>
 
@@ -832,7 +890,9 @@ const QmsAddSupplier = () => {
               {formData.documents.name}
             </p>
           ) : (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">No file chosen</p>
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              No file chosen
+            </p>
           )}
         </div>
 
@@ -843,12 +903,12 @@ const QmsAddSupplier = () => {
               type="button"
               onClick={handleSaveAsDraft}
               disabled={draftLoading}
-              className='request-correction-btn duration-200'
+              className="request-correction-btn duration-200"
             >
-              {draftLoading ? 'Saving...' : 'Save as Draft'}
+              {draftLoading ? "Saving..." : "Save as Draft"}
             </button>
           </div>
-          <div className='flex gap-5'>
+          <div className="flex gap-5">
             <button
               type="button"
               onClick={handleCancel}
@@ -861,7 +921,7 @@ const QmsAddSupplier = () => {
               disabled={loading}
               className="save-btn duration-200"
             >
-              {loading ? 'Saving...' : 'Save'}
+              {loading ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

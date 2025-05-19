@@ -60,7 +60,7 @@ const QmsDraftComplaints = () => {
                 setLoading(false);
             } catch (err) {
                 console.error("Error fetching complaints:", err);
-                let errorMsg = "Failed to fetch complaints";
+                let errorMsg = err.message;
 
                 if (err.response) {
                     // Check for field-specific errors first
@@ -138,7 +138,7 @@ const QmsDraftComplaints = () => {
             setSuccessMessage("Draft Complaint Deleted Successfully");
         } catch (err) {
             console.error("Error deleting complaint:", err);
-            let errorMsg = "Failed to delete draft complaint";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

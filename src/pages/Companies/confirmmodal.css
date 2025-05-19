@@ -50,7 +50,8 @@
 }
 
 .btn-cancels,
-.btn-confirms {
+.btn-confirms,
+.btn-restores {
   padding: 8px 16px;
   border: none;
   font-family: "Switzer Light";
@@ -68,9 +69,17 @@
   color: white;
 }
 
+.btn-restores {
+  background-color: #1E84AF;
+  color: white;
+}
+
 .btn-cancels:hover {
   background-color: #858585;
 }
 .btn-confirms:hover {
   background-color: #b80900;
+}
+.btn-restores:hover {
+  background-color: #106a91;
 }

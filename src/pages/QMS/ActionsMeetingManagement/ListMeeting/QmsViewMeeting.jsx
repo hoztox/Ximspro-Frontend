@@ -45,7 +45,7 @@ const QmsViewMeeting = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching meeting data:", error);
-        let errorMsg = "Failed to fetch meeting data";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -116,7 +116,7 @@ const QmsViewMeeting = () => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting meeting:", error);
-      let errorMsg = "Failed to delete meeting";
+      let errorMsg =  error.message;
 
       if (error.response) {
         if (error.response.data.detail) {

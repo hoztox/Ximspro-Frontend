@@ -76,7 +76,7 @@ const QmsInterestedParties = () => {
       setError(null);
     } catch (err) {
       console.error("Error fetching interested parties:", err);
-      let errorMsg = "Failed to fetch interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

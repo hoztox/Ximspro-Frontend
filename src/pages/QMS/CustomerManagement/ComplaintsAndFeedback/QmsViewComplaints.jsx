@@ -45,7 +45,7 @@ const QmsViewComplaints = () => {
                 setComplaint(response.data);
                 setLoading(false);
             } catch (err) {
-                let errorMsg = "Failed to fetch complaint data";
+                let errorMsg =  err.message;
 
                 if (err.response) {
                     if (err.response.data.date) {
@@ -103,7 +103,7 @@ const QmsViewComplaints = () => {
             }, 2000);
         } catch (err) {
             console.error("Error deleting complaint:", err);
-            let errorMsg = "Failed to delete complaint";
+            let errorMsg = err.message;
 
             if (err.response) {
                 if (err.response.data.date) {

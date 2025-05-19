@@ -57,7 +57,7 @@ const ViewQmsInterestedParties = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
-      let errorMsg = "Failed to delete interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -148,7 +148,7 @@ const ViewQmsInterestedParties = () => {
         console.log("resoneeeee", response.data);
       } catch (error) {
         console.error("Failed to fetch interested party data", error);
-        let errorMsg = "Failed to fetch interested parties data";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first

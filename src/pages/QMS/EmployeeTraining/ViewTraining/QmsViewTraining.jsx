@@ -70,7 +70,7 @@ const QmsViewTraining = () => {
         setTraining(response.data);
         setLoading(false);
       } catch (err) {
-        let errorMsg = "Failed to load training data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -122,7 +122,7 @@ const QmsViewTraining = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting training:", err);
-      let errorMsg = "Failed to delete training";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

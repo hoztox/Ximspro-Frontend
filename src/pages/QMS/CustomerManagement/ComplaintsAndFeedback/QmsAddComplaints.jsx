@@ -125,7 +125,7 @@ const QmsAddComplaints = () => {
       console.log('categories:', response);
     } catch (err) {
       console.error("Error fetching categories:", err);
-      let errorMsg = "Failed to fetch categories";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -161,7 +161,7 @@ const QmsAddComplaints = () => {
         );
         setCustomers(response.data);
       } catch (err) {
-        let errorMsg = "Failed to fetch customers";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -210,7 +210,7 @@ const QmsAddComplaints = () => {
         setTimeout(() => {
           setShowErrorModal(false);
         }, 3000);
-        let errorMsg = "Failed to fetch CAR numbers";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -260,7 +260,7 @@ const QmsAddComplaints = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = 'Failed to fetch users.';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -452,7 +452,7 @@ const QmsAddComplaints = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to draft compliants";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -533,7 +533,7 @@ const QmsAddComplaints = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to add compliants";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -643,7 +643,7 @@ const QmsAddComplaints = () => {
               color="#AAAAAA"
             />
             {fieldErrors.customer && (
-              <p className="text-red-500 text-sm mt-1">Customer is required</p>
+              <p className="text-red-500 text-sm mt-1">Please select customer</p>
             )}
           </div>
         </div>

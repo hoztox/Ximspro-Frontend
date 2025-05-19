@@ -81,7 +81,7 @@ const QmsAddInspection = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
-            let errorMsg = "Failed to fetch manuals. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -121,7 +121,7 @@ const QmsAddInspection = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
-            let errorMsg = "Failed to fetch users. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -161,7 +161,7 @@ const QmsAddInspection = () => {
                     return JSON.parse(userData);
                 } catch (err) {
                     console.error("Error parsing user company ID:", err);
-                    let errorMsg = "Failed to fetch company ID. Please try again.";
+                    let errorMsg = err.message;
 
                     if (err.response) {
                         // Check for field-specific errors first
@@ -292,7 +292,7 @@ const QmsAddInspection = () => {
             setSuccessMessage("Inspection Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            let errorMsg = 'An error occurred while creating the meeting';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -492,7 +492,7 @@ const QmsAddInspection = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch manuals. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

@@ -255,7 +255,7 @@ const QmsAddAudit = () => {
             setSuccessMessage("Audit Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            let errorMsg = 'failed to Add Audit';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -455,7 +455,7 @@ const QmsAddAudit = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to Draft Audit";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

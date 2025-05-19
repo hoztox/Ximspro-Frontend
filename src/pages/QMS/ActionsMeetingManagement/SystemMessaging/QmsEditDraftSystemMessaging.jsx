@@ -4,6 +4,8 @@ import { Eye, Search, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsEditDraftSystemMessaging = () => {
   const navigate = useNavigate();
@@ -20,6 +22,11 @@ const QmsEditDraftSystemMessaging = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
   const [currentUserId, setCurrentUserId] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -84,7 +91,7 @@ const QmsEditDraftSystemMessaging = () => {
         );
 
         // Filter out the current user from the users list
-        const filteredUsers = response.data.filter(user => {
+        const filteredUsers = response.data.filter((user) => {
           const userIdStr = user.id ? user.id.toString() : null;
           return userIdStr !== currentUserIdStr;
         });
@@ -95,7 +102,28 @@ const QmsEditDraftSystemMessaging = () => {
         setUsers(filteredUsers);
       } catch (error) {
         console.error("Error fetching users:", error);
-        setError("Failed to fetch users");
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       }
     };
     fetchUsers();
@@ -109,12 +137,12 @@ const QmsEditDraftSystemMessaging = () => {
           setLoading(true);
           const response = await axios.get(`${BASE_URL}/qms/messages/${id}/`);
           const message = response.data;
-          console.log('Response from API:', message);
+          console.log("Response from API:", message);
 
           if (message.is_draft) {
             // Handle to_user as array of objects with id property
             const toUserIds = Array.isArray(message.to_user)
-              ? message.to_user.map(user => user.id)
+              ? message.to_user.map((user) => user.id)
               : [];
 
             // Get current user ID for filtering
@@ -122,8 +150,8 @@ const QmsEditDraftSystemMessaging = () => {
             const currentIdStr = currentId ? currentId.toString() : null;
 
             // Filter out current user from recipients
-            const filteredUserIds = toUserIds.filter(id =>
-              id.toString() !== currentIdStr
+            const filteredUserIds = toUserIds.filter(
+              (id) => id.toString() !== currentIdStr
             );
 
             // Create mapping of usernames
@@ -140,18 +168,41 @@ const QmsEditDraftSystemMessaging = () => {
             setFormData({
               to_users: filteredUserIds,
               subject: message.subject || "",
-              file: message.file ? { name: message.file.split('/').pop() } : null,
+              file: message.file
+                ? { name: message.file.split("/").pop() }
+                : null,
               message: message.message || "",
             });
             setSelectedUserNames(userNames);
-            console.log('Processed to_users:', filteredUserIds);
-            console.log('Selected user names:', userNames);
+            console.log("Processed to_users:", filteredUserIds);
+            console.log("Selected user names:", userNames);
           } else {
             setError("Message is not a draft");
           }
         } catch (error) {
           console.error("Error fetching draft message:", error);
-          setError("Failed to fetch draft message");
+          let errorMsg = error.message;
+
+          if (error.response) {
+            // Check for field-specific errors first
+            if (error.response.data.date) {
+              errorMsg = error.response.data.date[0];
+            }
+            // Check for non-field errors
+            else if (error.response.data.detail) {
+              errorMsg = error.response.data.detail;
+            } else if (error.response.data.message) {
+              errorMsg = error.response.data.message;
+            }
+          } else if (error.message) {
+            errorMsg = error.message;
+          }
+
+          setError(errorMsg);
+          setShowErrorModal(true);
+          setTimeout(() => {
+            setShowErrorModal(false);
+          }, 3000);
         } finally {
           setLoading(false);
         }
@@ -161,7 +212,6 @@ const QmsEditDraftSystemMessaging = () => {
   }, [id, currentUserId]);
 
   // Remove isCurrentUser debug function that was added temporarily
-
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -252,8 +302,10 @@ const QmsEditDraftSystemMessaging = () => {
         formDataToSend.append("id", id);
       }
 
-      console.log("Sending message to users:", formData.to_users.filter(id =>
-        id.toString() !== currentUserIdStr));
+      console.log(
+        "Sending message to users:",
+        formData.to_users.filter((id) => id.toString() !== currentUserIdStr)
+      );
 
       const response = await axios.put(
         `${BASE_URL}/qms/messages/draft/${id}/send/`,
@@ -264,10 +316,37 @@ const QmsEditDraftSystemMessaging = () => {
           },
         }
       );
-      navigate("/company/qms/list-outbox");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-outbox");
+      }, 1500);
+      setSuccessMessage("Message Sent Successfully");
     } catch (error) {
       console.error("Error submitting message:", error);
-      setError(error.response?.data?.message || "Failed to send message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -304,9 +383,21 @@ const QmsEditDraftSystemMessaging = () => {
         </button>
       </div>
 
-      {error && <div className="px-[104px] py-2 text-red-500">{error}</div>}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
 
-      {loading && <div className="px-[104px] py-2 text-blue-500">Loading...</div>}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
+      {loading && (
+        <div className="px-[104px] py-2 text-center not-found">Loading...</div>
+      )}
 
       <form
         onSubmit={handleSubmit}

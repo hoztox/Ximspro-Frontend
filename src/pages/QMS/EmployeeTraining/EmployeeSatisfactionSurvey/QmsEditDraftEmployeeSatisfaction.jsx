@@ -62,7 +62,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
 
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch survey data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -193,7 +193,7 @@ const QmsEditDraftEmployeeSatisfaction = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to update survey.";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

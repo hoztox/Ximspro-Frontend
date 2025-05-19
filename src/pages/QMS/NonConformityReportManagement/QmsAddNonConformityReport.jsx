@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../Utils/Config";
 import RootCauseModalNonConformity from "./RootCauseModalNonConformity";
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
 
 const QmsAddNonConformityReport = () => {
   const getUserCompanyId = () => {
@@ -36,7 +38,6 @@ const QmsAddNonConformityReport = () => {
     return null;
   };
 
-  // Now you can safely use the function
   const companyId = getUserCompanyId();
   const userId = getRelevantUserId();
   const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
@@ -47,6 +48,15 @@ const QmsAddNonConformityReport = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [nextNcrno, setNextNcrNo] = useState("1");
   const [error, setError] = useState("");
+  const [errors, setErrors] = useState({
+    source: "",
+    title: "",
+  });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     fetchRootCauses();
@@ -55,7 +65,6 @@ const QmsAddNonConformityReport = () => {
     fetchSuppliers();
   }, []);
 
-  // Fetch suppliers
   const fetchSuppliers = async () => {
     try {
       setIsLoading(true);
@@ -71,6 +80,10 @@ const QmsAddNonConformityReport = () => {
     } catch (err) {
       console.error("Error fetching suppliers:", err);
       setError("Failed to fetch suppliers data");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +130,6 @@ const QmsAddNonConformityReport = () => {
     navigate("/company/qms/list-nonconformity");
   };
 
-  // New function to fetch the next available ncr number
   const fetchNextNcrNumber = async () => {
     try {
       const companyId = getUserCompanyId();
@@ -134,7 +146,6 @@ const QmsAddNonConformityReport = () => {
         `${BASE_URL}/qms/conformity/next-action/${companyId}/`
       );
       if (response.data && response.data.next_action_no) {
-        // Changed from next_ncr to next_action_no
         const ncrNumber = String(response.data.next_action_no);
         setNextNcrNo(ncrNumber);
         setFormData((prevData) => ({
@@ -198,9 +209,8 @@ const QmsAddNonConformityReport = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "ncr") return; // Make NCR field readonly
+    if (name === "ncr") return;
 
-    // Handle nested objects (dates)
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setFormData({
@@ -211,17 +221,22 @@ const QmsAddNonConformityReport = () => {
         },
       });
     } else if (e.target.type === "checkbox") {
-      // Handle checkboxes
       setFormData({
         ...formData,
         [name]: e.target.checked,
       });
     } else {
-      // Handle regular inputs
       setFormData({
         ...formData,
         [name]: value,
       });
+    }
+
+    if (name === "source" && value) {
+      setErrors((prev) => ({ ...prev, source: "" }));
+    }
+    if (name === "title" && value.trim()) {
+      setErrors((prev) => ({ ...prev, title: "" }));
     }
   };
 
@@ -233,17 +248,23 @@ const QmsAddNonConformityReport = () => {
   const handleDraftSave = async (e) => {
     e.preventDefault();
 
+    // if (!formData.source || !formData.title.trim()) {
+    //   setErrors({
+    //     source: formData.source ? "" : "This field is required",
+    //     title: formData.title.trim() ? "" : "This field is required",
+    //   });
+    //   return;
+    // }
+
     try {
       setIsLoading(true);
       setError("");
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
 
-      // Format the dates
       const dateRaised = formatDate(formData.date_raised);
       const dateCompleted = formatDate(formData.date_completed);
 
-      // Prepare submission data
       const submissionData = {
         company: companyId,
         user: userId,
@@ -261,49 +282,60 @@ const QmsAddNonConformityReport = () => {
         is_draft: true,
       };
 
-      // Add supplier only if source is 'Supplier'
       if (formData.source === "Supplier") {
         submissionData.supplier = formData.supplier;
       }
 
-      // Submit to draft-specific API endpoint
       const response = await axios.post(
         `${BASE_URL}/qms/conformity/draft-create/`,
         submissionData
       );
 
       console.log("Saved Conformity Draft:", response.data);
-
       setIsLoading(false);
 
-      // Show success message or navigate
-      navigate("/company/qms/draft-nonconformity");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-nonconformity");
+      }, 1500);
+      setSuccessMessage("Non Conformity Drafted Successfully");
     } catch (error) {
       console.error("Error saving draft:", error);
       setIsLoading(false);
       setError("Failed to save draft. Please check your inputs and try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
   const handleSubmit = async (e, asDraft = false) => {
     e.preventDefault();
 
-    // If saving as draft, use the specialized draft save function
     if (asDraft) {
       handleDraftSave(e);
       return;
     }
 
+    if (!formData.source || !formData.title.trim()) {
+      setErrors({
+        source: formData.source ? "" : "Plaese select a source",
+        title: formData.title.trim() ? "" : "Title is required",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
+      setError("");
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
 
-      // Format the dates
       const dateRaised = formatDate(formData.date_raised);
       const dateCompleted = formatDate(formData.date_completed);
 
-      // Prepare submission data
       const submissionData = {
         company: companyId,
         user: userId,
@@ -321,28 +353,22 @@ const QmsAddNonConformityReport = () => {
         is_draft: false,
       };
 
-      // Add supplier only if source is 'Supplier'
       if (formData.source === "Supplier") {
         submissionData.supplier = formData.supplier;
       }
 
-      // Submit to API
       const response = await axios.post(
         `${BASE_URL}/qms/conformity/create/`,
         submissionData
       );
 
       console.log("Added Conformity Report:", submissionData);
-
       setIsLoading(false);
 
-      navigate("/company/qms/list-nonconformity");
-
-      // Reset form and fetch new ncr number for next time
       setFormData({
         source: "",
         title: "",
-        ncr: "1", // Reset to default
+        ncr: "1",
         root_cause: "",
         executor: "",
         description: "",
@@ -355,16 +381,25 @@ const QmsAddNonConformityReport = () => {
         is_draft: false,
       });
 
-      // After successful submission, fetch the next ncr number for next time
       fetchNextNcrNumber();
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-nonconformity");
+      }, 1500);
+      setSuccessMessage("Non Conformity Added Successfully");
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsLoading(false);
       setError("Failed to save. Please check your inputs and try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
-  // Generate options for dropdowns
   const generateOptions = (start, end, prefix = "") => {
     const options = [];
     for (let i = start; i <= end; i++) {
@@ -391,15 +426,21 @@ const QmsAddNonConformityReport = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
-
       <RootCauseModalNonConformity
         isOpen={isRootCauseModalOpen}
         onClose={handleCloseRootCauseModal}
+      />
+
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
       />
 
       <form
@@ -417,7 +458,6 @@ const QmsAddNonConformityReport = () => {
             onFocus={() => setFocusedDropdown("source")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>
               Select
@@ -428,11 +468,14 @@ const QmsAddNonConformityReport = () => {
             <option value="Supplier">Supplier</option>
           </select>
           <ChevronDown
-            className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+            className={`absolute right-3 top-[55px] transform transition-transform duration-300
                         ${focusedDropdown === "source" ? "rotate-180" : ""}`}
             size={20}
             color="#AAAAAA"
           />
+          {errors.source && (
+            <p className="text-red-500 text-sm mt-1">{errors.source}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -445,8 +488,10 @@ const QmsAddNonConformityReport = () => {
             value={formData.title}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
-            required
           />
+          {errors.title && (
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -473,7 +518,6 @@ const QmsAddNonConformityReport = () => {
               onFocus={() => setFocusedDropdown("supplier")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
             >
               <option value="" disabled>
                 {isLoading ? "Loading suppliers..." : "Select Supplier"}
@@ -605,7 +649,6 @@ const QmsAddNonConformityReport = () => {
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Date Raised</label>
           <div className="grid grid-cols-3 gap-5">
-            {/* Day */}
             <div className="relative">
               <select
                 name="date_raised.day"
@@ -631,8 +674,6 @@ const QmsAddNonConformityReport = () => {
                 color="#AAAAAA"
               />
             </div>
-
-            {/* Month */}
             <div className="relative">
               <select
                 name="date_raised.month"
@@ -658,8 +699,6 @@ const QmsAddNonConformityReport = () => {
                 color="#AAAAAA"
               />
             </div>
-
-            {/* Year */}
             <div className="relative">
               <select
                 name="date_raised.year"
@@ -691,7 +730,6 @@ const QmsAddNonConformityReport = () => {
         <div className="flex flex-col gap-3">
           <label className="add-training-label">Complete By</label>
           <div className="grid grid-cols-3 gap-5">
-            {/* Day */}
             <div className="relative">
               <select
                 name="date_completed.day"
@@ -717,8 +755,6 @@ const QmsAddNonConformityReport = () => {
                 color="#AAAAAA"
               />
             </div>
-
-            {/* Month */}
             <div className="relative">
               <select
                 name="date_completed.month"
@@ -744,8 +780,6 @@ const QmsAddNonConformityReport = () => {
                 color="#AAAAAA"
               />
             </div>
-
-            {/* Year */}
             <div className="relative">
               <select
                 name="date_completed.year"
@@ -811,13 +845,13 @@ const QmsAddNonConformityReport = () => {
           </label>
         </div>
 
-        {/* Form Actions */}
         <div className="md:col-span-2 flex gap-4 justify-between">
           <div>
             <button
               type="button"
               onClick={handleDraftSave}
               className="request-correction-btn duration-200"
+              disabled={isLoading}
             >
               Save as Draft
             </button>
@@ -827,6 +861,7 @@ const QmsAddNonConformityReport = () => {
               type="button"
               onClick={handleListNonConformity}
               className="cancel-btn duration-200"
+              disabled={isLoading}
             >
               Cancel
             </button>

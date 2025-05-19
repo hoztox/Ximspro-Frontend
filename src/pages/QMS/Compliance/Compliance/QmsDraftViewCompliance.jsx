@@ -23,7 +23,7 @@ const QmsDraftViewCompliance = () => {
     const [error, setError] = useState(null);
     
     const navigate = useNavigate();
-    const { id } = useParams(); // Get compliance ID from URL
+    const { id } = useParams();
 
     useEffect(() => {
         // Fetch compliance data when component mounts
@@ -68,16 +68,8 @@ const QmsDraftViewCompliance = () => {
 
     if (loading) {
         return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-                <div className="text-lg">Loading compliance data...</div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-                <div className="text-lg text-red-500">{error}</div>
+            <div className="bg-[#1C1C24] rounded-lg p-5 flex justify-center items-center h-96">
+                <div className="not-found">Loading compliance data...</div>
             </div>
         );
     }

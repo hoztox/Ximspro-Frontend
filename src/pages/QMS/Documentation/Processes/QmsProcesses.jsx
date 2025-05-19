@@ -84,7 +84,7 @@ const QmsProcesses = () => {
       setError(null);
     } catch (err) {
       console.error("Error fetching processes:", err);
-      let errorMsg = "Failed to fetch processes";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

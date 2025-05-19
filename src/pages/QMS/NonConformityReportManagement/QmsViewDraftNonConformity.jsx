@@ -51,17 +51,11 @@ const QmsViewDraftNonConformity = () => {
 
   if (loading)
     return (
-      <div className="bg-[#1C1C24] text-white p-8 rounded-lg flex justify-center items-center">
+      <div className="bg-[#1C1C24] not-found p-8 rounded-lg flex justify-center items-center">
         <p>Loading...</p>
       </div>
     );
 
-  if (error)
-    return (
-      <div className="bg-[#1C1C24] text-white p-8 rounded-lg flex justify-center items-center">
-        <p>{error}</p>
-      </div>
-    );
 
   // Format dates for display
   const formatDate = (dateString) => {

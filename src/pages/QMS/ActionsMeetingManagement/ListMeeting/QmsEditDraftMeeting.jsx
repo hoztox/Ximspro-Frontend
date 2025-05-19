@@ -135,7 +135,7 @@ const QmsEditDraftMeeting = () => {
         setFilteredAgendaItems(agendasResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);
-        let errorMsg = "Failed to fetch draft meeting data";
+        let errorMsg = error.message;
 
         if (error.response) {
           if (error.response.data.date) {
@@ -330,7 +330,7 @@ const QmsEditDraftMeeting = () => {
       }, 1500);
     } catch (error) {
       console.error("Error updating meeting:", error);
-      let errorMsg = "Failed to update draft meeting";
+      let errorMsg = error.message;
 
       if (error.response) {
         if (error.response.data.date) {

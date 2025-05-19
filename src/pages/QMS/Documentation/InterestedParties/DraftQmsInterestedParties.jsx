@@ -78,7 +78,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
         setLoading(false);
       } catch (error) {
         console.error("Failed to fetch draft interested parties:", error);
-        let errorMsg = "failed to fetch draft interested parties";
+        let errorMsg =  error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -132,7 +132,7 @@ const DraftQmsInterestedParties = ({ userId }) => {
       }, 3000);
     } catch (err) {
       console.error("Error deleting interested party:", err);
-      let errorMsg = "Failed to delete interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

@@ -22,6 +22,9 @@ const QmsComposeSystemMessaging = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedUserNames, setSelectedUserNames] = useState({});
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    to_user: false,
+  });
 
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -76,8 +79,8 @@ const QmsComposeSystemMessaging = () => {
 
         // Filter out the current user from the users list
         const currentId = getRelevantUserId();
-        const filteredUsers = response.data.filter(user =>
-          user.id.toString() !== currentId?.toString()
+        const filteredUsers = response.data.filter(
+          (user) => user.id.toString() !== currentId?.toString()
         );
 
         setUsers(filteredUsers);
@@ -87,7 +90,24 @@ const QmsComposeSystemMessaging = () => {
         setTimeout(() => {
           setShowErrorModal(false);
         }, 3000);
-        setError("Failed to fetch users");
+        let errorMsg =  error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
       }
     };
 
@@ -147,6 +167,8 @@ const QmsComposeSystemMessaging = () => {
 
     // Clear the search term after selection
     setSearchTerm("");
+    // Clear error when user is selected
+    setFieldErrors({ ...fieldErrors, to_user: false });
   };
 
   const removeSelectedUser = (userId) => {
@@ -165,8 +187,9 @@ const QmsComposeSystemMessaging = () => {
     setLoading(true);
     setError(null);
 
+    // Validate required fields
     if (formData.to_user.length === 0) {
-      setError("Please select at least one recipient");
+      setFieldErrors({ ...fieldErrors, to_user: true });
       setLoading(false);
       return;
     }
@@ -205,20 +228,36 @@ const QmsComposeSystemMessaging = () => {
         }
       );
 
-
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
         navigate("/company/qms/list-inbox");
       }, 1500);
-      setSuccessMessage("Message Sent Successfully")
+      setSuccessMessage("Message Sent Successfully");
     } catch (error) {
       console.error("Error submitting message:", error);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to send message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -266,19 +305,35 @@ const QmsComposeSystemMessaging = () => {
       );
 
       if (response.data?.message === "Draft saved successfully.") {
-
         setShowSuccessModal(true);
         setTimeout(() => {
           setShowSuccessModal(false);
           navigate("/company/qms/list-draft");
         }, 1500);
-        setSuccessMessage("Message Drafted Successfully")
+        setSuccessMessage("Message Drafted Successfully");
       } else {
         throw new Error("Unexpected response from server");
       }
     } catch (error) {
       console.error("Error saving draft:", error);
-      setError("Failed to save draft");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -378,6 +433,9 @@ const QmsComposeSystemMessaging = () => {
                 color="#AAAAAA"
               />
             </div>
+            {fieldErrors.to_user && (
+              <p className="text-red-500 text-sm mt-1">Please select recipient</p>
+            )}
           </div>
           <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto mt-1">
             {filteredUsers.length > 0 ? (
@@ -416,7 +474,6 @@ const QmsComposeSystemMessaging = () => {
             value={formData.subject}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
-            required
           />
         </div>
         <div></div>
@@ -469,7 +526,6 @@ const QmsComposeSystemMessaging = () => {
             value={formData.message}
             onChange={handleChange}
             className="add-training-inputs !h-[151px]"
-            required
           />
         </div>
         <div></div>
@@ -508,4 +564,4 @@ const QmsComposeSystemMessaging = () => {
   );
 };
 
-export default QmsComposeSystemMessaging; 
+export default QmsComposeSystemMessaging;

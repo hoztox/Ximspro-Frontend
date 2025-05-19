@@ -97,7 +97,7 @@ const QmsListTraining = () => {
         setTrainings(formattedData);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -192,7 +192,7 @@ const QmsListTraining = () => {
       }, 2000);
     } catch (err) {
       console.error("Error deleting training:", err);
-      let errorMsg = "Failed to delete training data";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

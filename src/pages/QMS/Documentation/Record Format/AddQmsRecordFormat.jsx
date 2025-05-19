@@ -102,7 +102,7 @@ const AddQmsRecordFormat = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = "Failed to fetch users";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -333,7 +333,7 @@ const AddQmsRecordFormat = () => {
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to create Record Format";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

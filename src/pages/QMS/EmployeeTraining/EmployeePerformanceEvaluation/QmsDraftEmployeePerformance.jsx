@@ -52,7 +52,7 @@ const QmsDraftEmployeePerformance = () => {
         setPerformanceData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch employee performance data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -138,7 +138,7 @@ const QmsDraftEmployeePerformance = () => {
     } catch (err) {
       // Close delete modal and show error modal
       setShowDeleteModal(false);
-      let errorMsg = "Failed to delete employee performance";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

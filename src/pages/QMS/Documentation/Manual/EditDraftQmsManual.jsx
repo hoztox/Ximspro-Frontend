@@ -114,7 +114,7 @@ const EditDraftQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "Failed to fetch manual details";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -207,7 +207,7 @@ const EditDraftQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = "Failed to fetch users";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -485,7 +485,7 @@ const EditDraftQmsManual = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "Failed to update manual";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

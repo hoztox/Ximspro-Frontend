@@ -113,7 +113,7 @@ const EditDraftQmsRecordFormat = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching record format details:", err);
-      let errorMsg = "Failed to fetch record format details";
+      let errorMsg =err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -468,7 +468,7 @@ const EditDraftQmsRecordFormat = () => {
       }, 2000);
     } catch (err) {
       setLoading(false);
-      let errorMsg = "Failed to update record format";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

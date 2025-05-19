@@ -89,7 +89,7 @@ const QmsListAudit = () => {
             setError(null);
         } catch (err) {
             console.error("Error fetching audits:", err);
-            let errorMsg = "Failed to fetch audits";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -157,7 +157,7 @@ const QmsListAudit = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to delete audit. Please try again.';
+            let errorMsg =  error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

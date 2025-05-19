@@ -1,32 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Search, ChevronDown, X } from "lucide-react";
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
-import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import DeleteEmployeeSatisfactionConfirmModal from '../Modals/DeleteEmployeeSatisfactionConfirmModal';
-import DeleteEmployeeSatisfactionSuccessModal from '../Modals/DeleteEmployeeSatisfactionSuccessModal';
-import ErrorModal from '../Modals/ErrorModal';
-import QuestionAddSuccessModal from '../Modals/QuestionAddSuccessModal';
-import DeleteQuestionConfirmModal from '../Modals/DeleteQuestionConfirmModal';
-import DeleteQuestionSuccessModal from '../Modals/DeleteQuestionSuccessModal';
-import RatingAddSuccessModal from '../Modals/RatingAddSuccessModal';
+import DeleteEmployeeSatisfactionConfirmModal from "../Modals/DeleteEmployeeSatisfactionConfirmModal";
+import DeleteEmployeeSatisfactionSuccessModal from "../Modals/DeleteEmployeeSatisfactionSuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
+import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
+import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
+import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
+import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
 
-const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) => {
-  const [selectedCustomer, setSelectedCustomer] = useState(customer ? customer.id || 'Select Customer' : 'Select Customer');
+const EvaluationModal = ({
+  isOpen,
+  onClose,
+  customer,
+  customerList,
+  surveyId,
+}) => {
+  const [selectedCustomer, setSelectedCustomer] = useState(
+    customer ? customer.id || "Select Customer" : "Select Customer"
+  );
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [customers, setCustomers] = useState([]);
   const [surveys, setSurveys] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // Track which question is currently showing the rating selector
+  const [activeRatingQuestion, setActiveRatingQuestion] = useState(null);
+
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
     if (role === "company") {
@@ -53,10 +67,30 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
         );
 
         setCustomers(response.data);
-        console.log('fetch customers survey:', response);
-
       } catch (error) {
-        console.error('Error fetching unsubmitted users:', error);
+        console.error("Error fetching unsubmitted users:", error);
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       }
     };
 
@@ -65,31 +99,52 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
     }
   }, [isOpen, surveyId]);
 
-
   useEffect(() => {
     const fetchSurveyData = async () => {
       setLoading(true);
       try {
         const companyId = getUserCompanyId();
         if (!companyId) {
-          setError('Company ID not found');
+          setError("Company ID not found");
           setLoading(false);
           return;
         }
 
-        const response = await axios.get(`${BASE_URL}/qms/customer/survey/${companyId}/`);
+        const response = await axios.get(
+          `${BASE_URL}/qms/customer/survey/${companyId}/`
+        );
         setSurveys(response.data);
         setError(null);
       } catch (err) {
-        setError('Failed to load customer survey data');
-        console.error('Error fetching customer survey data:', err);
+        console.error("Error fetching customer survey data:", err);
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setLoading(false);
       }
     };
 
     fetchSurveyData();
-
   }, []);
 
   // Fetch questions when modal opens
@@ -99,73 +154,147 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
     }
   }, [isOpen, surveyId]);
 
-
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${BASE_URL}/qms/customer/survey/${surveyId}/questions/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/customer/survey/${surveyId}/questions/`
+      );
       setQuestions(response.data);
-      console.log('Fetched questions:', response.data);
     } catch (err) {
-      console.error('Error fetching questions:', err);
-      setError('Failed to load questions');
+      console.error("Error fetching questions:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
   };
 
-
-  const handleAnswerChange = async (questionId, rating) => {
-    if (selectedCustomer === 'Select Customer') {
-      setError('Please select a customer first');
-      return;
-    }
-
-    const updatedQuestions = questions.map(q =>
-      q.id === questionId ? { ...q, answer: rating } : q
-    );
-    setQuestions(updatedQuestions);
-
-    console.log("Submitting answer change with data:", {
-      questionId,
-      answer: rating,
-      customer_id: selectedCustomer
-    });
-
-    try {
-      await axios.patch(`${BASE_URL}/qms/customer/survey/question/answer/${questionId}/`, {
-        answer: rating,
-        customer_id: selectedCustomer
-      });
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        navigate('/company/qms/list-customer-survey');
-      }, 1500);
-    } catch (err) {
-      console.error('Error updating answer:', err);
+  // Toggle the rating selector for a specific question
+  const toggleRatingSelector = (questionId) => {
+    if (selectedCustomer === "Select Customer") {
+      setError("Please select a customer first");
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError('Failed to save answer');
+      return;
+    }
+
+    setActiveRatingQuestion(
+      activeRatingQuestion === questionId ? null : questionId
+    );
+  };
+
+  // Handle when a rating is selected
+  const handleAnswerChange = (questionId, rating) => {
+    if (selectedCustomer === "Select Customer") {
+      setError("Please select a customer first");
+      return;
+    }
+
+    const updatedQuestions = questions.map((q) =>
+      q.id === questionId ? { ...q, answer: rating } : q
+    );
+    setQuestions(updatedQuestions);
+
+    // Close rating selector after selection
+    setActiveRatingQuestion(null);
+  };
+
+  // Submit all answers when Done button is clicked
+  const handleSubmitAllAnswers = async () => {
+    if (selectedCustomer === "Select Customer") {
+      setError("Please select a customer first");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      // Filter questions that have answers
+      const questionsWithAnswers = questions.filter((q) => q.answer);
+
+      // Submit each answer sequentially
+      for (const question of questionsWithAnswers) {
+        await axios.patch(
+          `${BASE_URL}/qms/customer/survey/question/answer/${question.id}/`,
+          {
+            answer: question.answer,
+            customer_id: selectedCustomer,
+          }
+        );
+      }
+
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        navigate("/company/qms/list-customer-survey");
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error("Error submitting answers:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const combinedOptions = [...(customerList || []), ...(customers || [])].reduce((unique, item) => {
-    const exists = unique.find(x => x.id === item.id);
+  const combinedOptions = [
+    ...(customerList || []),
+    ...(customers || []),
+  ].reduce((unique, item) => {
+    const exists = unique.find((x) => x.id === item.id);
     if (!exists) {
       unique.push(item);
     }
     return unique;
   }, []);
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const toggleDropdown = (questionId) => {
-    setOpenDropdown(openDropdown === questionId ? null : questionId);
-  };
-
-
 
   return (
     <AnimatePresence>
@@ -185,22 +314,7 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <div className="bg-[#1C1C24] text-white flex items-start justify-center rounded-lg">
-
-              <RatingAddSuccessModal
-                showAddRatingSuccessModal={showAddRatingSuccessModal}
-                onClose={() => {
-                  setShowAddRatingSuccessModal(false);
-                }}
-              />
-
-              <ErrorModal
-                showErrorModal={showErrorModal}
-                onClose={() => {
-                  setShowErrorModal(false);
-                }}
-              />
-
-              <div className="w-[528px]  ">
+              <div className="w-[528px]">
                 <div className="px-[8px] pt-5 pb-6 border-b border-[#383840] mx-3">
                   <p className="evaluate-modal-head">
                     Please respond to each question on a scale of 1-10, 1<br />
@@ -208,9 +322,26 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                   </p>
                 </div>
 
+                <RatingAddSuccessModal
+                  showAddRatingSuccessModal={showAddRatingSuccessModal}
+                  onClose={() => {
+                    setShowAddRatingSuccessModal(false);
+                  }}
+                />
+
+                <ErrorModal
+                  error={error}
+                  showErrorModal={showErrorModal}
+                  onClose={() => {
+                    setShowErrorModal(false);
+                  }}
+                />
+
                 <div className="p-5 pt-6">
                   <div className="flex relative items-center gap-3">
-                    <label className="block evaluate-modal-head">Select Customer</label>
+                    <label className="block evaluate-modal-head">
+                      Select Customer
+                    </label>
                     <select
                       className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none cursor-pointer border-none px-3 select-employee-dropdown"
                       value={selectedCustomer}
@@ -219,11 +350,14 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                       onBlur={() => setIsDropdownOpen(false)}
                     >
                       <option value="Select Customer">Select Customer</option>
-                      {combinedOptions.map(item => (
+                      {combinedOptions.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.first_name && item.last_name
                             ? `${item.first_name} ${item.last_name}`
-                            : item.first_name || item.last_name || item.username || item.name}
+                            : item.first_name ||
+                              item.last_name ||
+                              item.username ||
+                              item.name}
                         </option>
                       ))}
                     </select>
@@ -231,7 +365,9 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
                       />
                     </div>
                   </div>
@@ -242,7 +378,7 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     <table className="min-w-full">
-                      <thead className='bg-[#24242D]'>
+                      <thead className="bg-[#24242D]">
                         <tr className="h-[48px]">
                           <th className="px-4 text-left employee-evaluation-theads w-16">
                             No
@@ -258,49 +394,76 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                       <tbody>
                         {questions.length > 0 ? (
                           questions.map((question, index) => (
-                            <tr key={question.id} className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {index + 1}
-                              </td>
-                              <td className="px-4 whitespace-nowrap employee-evaluate-data">
-                                {question.question_text}
-                              </td>
-                              <td className="px-4 whitespace-nowrap text-right">
-                                <div className="relative">
-                                  <button
-                                    onClick={() => toggleDropdown(question.id)}
-                                    className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-between w-[78px] h-[30px] ml-auto rating-data"
-                                  >
-                                    <span>{question.answer || 'N/A'}</span>
-                                    <ChevronDown
-                                      size={16}
-                                      className={`transition-transform duration-300 ${openDropdown === question.id ? 'rotate-180' : ''}`}
-                                    />
-                                  </button>
-
-                                  {openDropdown === question.id && (
-                                    <div className="absolute right-0 mt-1 w-24 bg-[#24242D] rounded shadow-lg z-[100]">
-                                      {['N/A', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((rating) => (
-                                        <div
-                                          key={rating}
-                                          className="px-4 py-2 text-sm hover:bg-[#0e0e13] cursor-pointer text-center"
-                                          onClick={() => {
-                                            handleAnswerChange(question.id, rating);
-                                            toggleDropdown(null);
-                                          }}
-                                        >
-                                          {rating}
-                                        </div>
-                                      ))}
+                            <React.Fragment key={question.id}>
+                              <tr className="bg-[#1C1C24] border-b border-[#383840] cursor-pointer h-[54px]">
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {index + 1}
+                                </td>
+                                <td className="px-4 whitespace-nowrap employee-evaluate-data">
+                                  {question.question_text}
+                                </td>
+                                <td className="px-4 whitespace-nowrap text-right">
+                                  {question.answer ? (
+                                    <div className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-center w-[78px] h-[30px] ml-auto rating-data">
+                                      {question.answer}
                                     </div>
+                                  ) : (
+                                    <button
+                                      onClick={() =>
+                                        toggleRatingSelector(question.id)
+                                      }
+                                      className="!text-[#1E84AF] employee-evaluate-data"
+                                    >
+                                      {activeRatingQuestion === question.id ? (
+                                        <X
+                                          size={18}
+                                          className="ml-auto text-[#AAAAAA]"
+                                        />
+                                      ) : (
+                                        "Click to Answer"
+                                      )}
+                                    </button>
                                   )}
-                                </div>
-                              </td>
-                            </tr>
+                                </td>
+                              </tr>
+                              {activeRatingQuestion === question.id && (
+                                <tr className="bg-[#1C1C24] border-b border-[#383840]">
+                                  <td colSpan="3" className="px-4 py-3">
+                                    <div className="flex justify-between items-center gap-2 bg-[#24242D] px-[20px] h-[58px] rounded-[6px]">
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(
+                                        (rating) => (
+                                          <button
+                                            key={rating}
+                                            onClick={() =>
+                                              handleAnswerChange(
+                                                question.id,
+                                                rating
+                                              )
+                                            }
+                                            className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${
+                                              rating === 10
+                                                ? "border border-[#1E84AF] !text-[#1E84AF]"
+                                                : "border border-[#5B5B5B] !text-[#5B5B5B]"
+                                            } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
+                                          >
+                                            {rating}
+                                          </button>
+                                        )
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </React.Fragment>
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="3" className="text-center py-4 not-found">No questions available</td>
+                            <td
+                              colSpan="3"
+                              className="text-center py-4 not-found"
+                            >
+                              No questions available
+                            </td>
                           </tr>
                         )}
                       </tbody>
@@ -309,17 +472,15 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
                 )}
 
                 <div className="p-4 flex justify-end space-x-4">
-                  <button className="cancel-btn duration-200"
-                    onClick={onClose}
-                  >
+                  <button className="cancel-btn duration-200" onClick={onClose}>
                     Cancel
                   </button>
-                  <button className="save-btn duration-200"
-                    onClick={() => {
-                      onClose();
-                    }}
+                  <button
+                    className="save-btn duration-200"
+                    onClick={handleSubmitAllAnswers}
+                    disabled={submitting}
                   >
-                    Done
+                    {submitting ? "Submitting..." : "Done"}
                   </button>
                 </div>
               </div>
@@ -330,37 +491,58 @@ const EvaluationModal = ({ isOpen, onClose, customer, customerList, surveyId }) 
     </AnimatePresence>
   );
 };
-
 const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    question_text: '',
-    answer: ''
+    question_text: "",
+    answer: "",
   });
   const [questions, setQuestions] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   // Modal states
-  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
+  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
-  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] = useState(false);
+  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] =
+    useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
       if (surveyId) {
         setLoading(true);
         try {
-          const response = await axios.get(`${BASE_URL}/qms/customer/survey/${surveyId}/questions/`);
+          const response = await axios.get(
+            `${BASE_URL}/qms/customer/survey/${surveyId}/questions/`
+          );
           setQuestions(response.data);
         } catch (err) {
-          console.error('Error fetching questions:', err);
-          setError('Failed to load questions');
-          setErrorMessage('Failed to load questions');
+          console.error("Error fetching questions:", err);
+          let errorMsg = err.message;
+
+          if (err.response) {
+            // Check for field-specific errors first
+            if (err.response.data.date) {
+              errorMsg = err.response.data.date[0];
+            }
+            // Check for non-field errors
+            else if (err.response.data.detail) {
+              errorMsg = err.response.data.detail;
+            } else if (err.response.data.message) {
+              errorMsg = err.response.data.message;
+            }
+          } else if (err.message) {
+            errorMsg = err.message;
+          }
+
+          setError(errorMsg);
           setShowErrorModal(true);
+          setTimeout(() => {
+            setShowErrorModal(false);
+          }, 3000);
         } finally {
           setLoading(false);
         }
@@ -375,44 +557,62 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting formData:', formData);
+    console.log("Submitting formData:", formData);
     if (!formData.question_text.trim()) {
-      setError('Question is required');
-      setErrorMessage('Question is required');
+      setError("Question is required");
       setShowErrorModal(true);
       return;
     }
 
     setLoading(true);
     try {
-      const response = await axios.post(`${BASE_URL}/qms/customer/survey/question-add/`, {
-        customer: surveyId, // Changed from survey to customer to match model
-        question_text: formData.question_text,
-        answer: formData.answer || null // Include answer field
-      });
+      const response = await axios.post(
+        `${BASE_URL}/qms/customer/survey/question-add/`,
+        {
+          customer: surveyId, // Changed from survey to customer to match model
+          question_text: formData.question_text,
+          answer: formData.answer || null, // Include answer field
+        }
+      );
 
       setQuestions([...questions, response.data]);
-      setFormData({ question_text: '', answer: '' });
+      setFormData({ question_text: "", answer: "" });
       setShowAddQuestionSuccessModal(true);
       setTimeout(() => {
         setShowAddQuestionSuccessModal(false);
         navigate("/company/qms/list-customer-survey");
       }, 1500);
-      setError('');
+      setError("");
     } catch (err) {
-      console.error('Error adding question:', err);
-      setErrorMessage('Failed to add question');
+      console.error("Error adding question:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError('Failed to add question');
     } finally {
       setLoading(false);
     }
@@ -436,17 +636,36 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
 
     setLoading(true);
     try {
-      await axios.delete(`${BASE_URL}/qms/customer/survey/question/${questionToDelete.id}/delete/`);
-      setQuestions(questions.filter(q => q.id !== questionToDelete.id));
+      await axios.delete(
+        `${BASE_URL}/qms/customer/survey/question/${questionToDelete.id}/delete/`
+      );
+      setQuestions(questions.filter((q) => q.id !== questionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteQuestionSuccessModal(true);
       setTimeout(() => {
         setShowDeleteQuestionSuccessModal(false);
       }, 3000);
     } catch (err) {
-      console.error('Error deleting question:', err);
+      console.error("Error deleting question:", err);
       setShowDeleteModal(false);
-      setErrorMessage('Failed to delete question');
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -458,8 +677,8 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
   };
 
   const handleCancel = () => {
-    setFormData({ question_text: '', answer: '' });
-    setError('');
+    setFormData({ question_text: "", answer: "" });
+    setError("");
   };
 
   return (
@@ -495,7 +714,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                 {error && <p className="text-red-500 mt-1">{error}</p>}
               </div>
               <div className="flex justify-end w-full">
-                <div className='flex w-[80%] gap-5'>
+                <div className="flex w-[80%] gap-5">
                   <button
                     type="button"
                     onClick={() => {
@@ -512,24 +731,32 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                     className="flex-1 save-btn duration-200"
                     disabled={loading}
                   >
-                    {loading ? 'Saving...' : 'Save'}
+                    {loading ? "Saving..." : "Save"}
                   </button>
                 </div>
               </div>
             </form>
 
             {loading && questions.length === 0 ? (
-              <div className="text-center py-4">Loading questions...</div>
+              <div className="text-center py-4 not-found">
+                Loading questions...
+              </div>
             ) : (
               questions.length > 0 && (
                 <div className="mb-4">
                   <table className="w-full text-left">
                     <thead className="bg-[#24242D]">
-                      <tr className='h-[48px]'>
-                        <th className="px-4 add-question-theads text-left w-[10%]">No</th>
-                        <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
+                      <tr className="h-[48px]">
+                        <th className="px-4 add-question-theads text-left w-[10%]">
+                          No
+                        </th>
+                        <th className="px-4 add-question-theads text-left w-[70%]">
+                          Question
+                        </th>
 
-                        <th className="px-4 pr-8 add-question-theads text-right">Delete</th>
+                        <th className="px-4 pr-8 add-question-theads text-right">
+                          Delete
+                        </th>
                       </tr>
                     </thead>
                   </table>
@@ -537,8 +764,13 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                     <table className="w-full text-left">
                       <tbody>
                         {questions.map((question, index) => (
-                          <tr key={question.id} className="border-b border-[#383840] h-[42px] last:border-b-0">
-                            <td className="px-4 add-question-data w-[10%]">{index + 1}</td>
+                          <tr
+                            key={question.id}
+                            className="border-b border-[#383840] h-[42px] last:border-b-0"
+                          >
+                            <td className="px-4 add-question-data w-[10%]">
+                              {index + 1}
+                            </td>
                             <td className="px-4 add-question-data w-[70%]">
                               {question.question_text}
                             </td>
@@ -572,7 +804,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
-        errorMessage={errorMessage}
+        error={error}
       />
 
       <DeleteQuestionConfirmModal
@@ -595,20 +827,26 @@ const QmsListCustomerSurvey = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [customers, setCustomers] = useState([]);
   const navigate = useNavigate();
+  const [draftCount, setDraftCount] = useState(0);
 
   // Modal states
-  const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, customer: null });
+  const [evaluationModal, setEvaluationModal] = useState({
+    isOpen: false,
+    customer: null,
+  });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
 
   // Delete related modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
-  const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
+  const [
+    showDeleteEmployeeSatisfactionSuccessModal,
+    setShowDeleteEmployeeSatisfactionSuccessModal,
+  ] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -626,25 +864,69 @@ const QmsListCustomerSurvey = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   // Fetch customer survey data
   useEffect(() => {
     const fetchSurveyData = async () => {
       setLoading(true);
       try {
         const companyId = getUserCompanyId();
+        const userId = getRelevantUserId();
         if (!companyId) {
-          setError('Company ID not found');
+          setError("Company ID not found");
           setLoading(false);
           return;
         }
 
         // Updated to match the model names
-        const response = await axios.get(`${BASE_URL}/qms/customer/survey/${companyId}/`);
+        const response = await axios.get(
+          `${BASE_URL}/qms/customer/survey/${companyId}/`
+        );
         setSurveys(response.data);
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/customer/survey/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
         setError(null);
       } catch (err) {
-        setError('Failed to load customer survey data');
-        console.error('Error fetching customer survey data:', err);
+        console.error("Error fetching customer survey data:", err);
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setLoading(false);
       }
@@ -659,18 +941,18 @@ const QmsListCustomerSurvey = () => {
   };
 
   // Filter surveys based on search term - updated to match model field name
-  const filteredSurveys = surveys.filter(survey =>
+  const filteredSurveys = surveys.filter((survey) =>
     survey.title?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Add new customer survey evaluation
   const handleAddCustomerSurvey = () => {
-    navigate('/company/qms/add-customer-survey');
+    navigate("/company/qms/add-customer-survey");
   };
 
   // Go to drafts
   const handleDraftCustomerSurvey = () => {
-    navigate('/company/qms/draft-customer-survey');
+    navigate("/company/qms/draft-customer-survey");
   };
 
   // View survey
@@ -692,17 +974,38 @@ const QmsListCustomerSurvey = () => {
   // Handle delete confirmation - updated endpoint
   const confirmDelete = async () => {
     try {
-      await axios.delete(`${BASE_URL}/qms/customer/survey/${satisfactionToDelete.id}/update/`);
-      setSurveys(surveys.filter(survey => survey.id !== satisfactionToDelete.id));
+      await axios.delete(
+        `${BASE_URL}/qms/customer/survey/${satisfactionToDelete.id}/update/`
+      );
+      setSurveys(
+        surveys.filter((survey) => survey.id !== satisfactionToDelete.id)
+      );
       setShowDeleteModal(false);
       setShowDeleteEmployeeSatisfactionSuccessModal(true);
       setTimeout(() => {
         setShowDeleteEmployeeSatisfactionSuccessModal(false);
       }, 2000);
     } catch (err) {
-      console.error('Error deleting survey evaluation:', err);
+      console.error("Error deleting survey evaluation:", err);
       setShowDeleteModal(false);
-      setErrorMessage('Failed to delete the evaluation');
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -733,7 +1036,7 @@ const QmsListCustomerSurvey = () => {
     setEvaluationModal({
       isOpen: true,
       customer: survey,
-      surveyId: survey.id
+      surveyId: survey.id,
     });
   };
 
@@ -744,9 +1047,14 @@ const QmsListCustomerSurvey = () => {
 
   // Format date
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    return date
+      .toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
       .replace(/(\d+)\/(\d+)\/(\d+)/, "$2-$1-$3");
   };
 
@@ -758,14 +1066,20 @@ const QmsListCustomerSurvey = () => {
   const totalPages = Math.ceil(filteredSurveys.length / itemsPerPage);
 
   if (loading) {
-    return <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">Loading...</div>;
+    return (
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center">
+        Loading...
+      </div>
+    );
   }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       {/* Header and Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center pb-5">
-        <h1 className="employee-performance-head">List Customer Satisfaction Survey</h1>
+        <h1 className="employee-performance-head">
+          List Customer Satisfaction Survey
+        </h1>
 
         <div className="flex w-full md:w-auto gap-4">
           <div className="relative">
@@ -776,7 +1090,7 @@ const QmsListCustomerSurvey = () => {
               value={searchTerm}
               onChange={handleSearch}
             />
-            <div className='absolute right-[1px] top-[1px] text-white bg-[#24242D] p-[11px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center'>
+            <div className="absolute right-[1px] top-[1px] text-white bg-[#24242D] p-[11px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />
             </div>
           </div>
@@ -786,6 +1100,11 @@ const QmsListCustomerSurvey = () => {
             onClick={handleDraftCustomerSurvey}
           >
             <span>Draft</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[297px]">
+                {draftCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -793,7 +1112,11 @@ const QmsListCustomerSurvey = () => {
             onClick={handleAddCustomerSurvey}
           >
             <span>Add Customer Satisfaction Survey</span>
-            <img src={plusIcon} alt="Add Icon" className='w-[18px] h-[18px] qms-add-plus' />
+            <img
+              src={plusIcon}
+              alt="Add Icon"
+              className="w-[18px] h-[18px] qms-add-plus"
+            />
           </button>
         </div>
       </div>
@@ -801,15 +1124,19 @@ const QmsListCustomerSurvey = () => {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className='bg-[#24242D]'>
+          <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
               <th className="px-2 text-left add-manual-theads">Valid Till</th>
               <th className="px-2 text-left add-manual-theads">Email</th>
               <th className="px-2 text-left add-manual-theads">Survey</th>
-              <th className="px-2 text-left add-manual-theads">See Result Graph</th>
-              <th className="px-2 text-left add-manual-theads">Add Questions</th>
+              <th className="px-2 text-left add-manual-theads">
+                See Result Graph
+              </th>
+              <th className="px-2 text-left add-manual-theads">
+                Add Questions
+              </th>
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
               <th className="px-2 text-center add-manual-theads">Delete</th>
@@ -818,10 +1145,19 @@ const QmsListCustomerSurvey = () => {
           <tbody>
             {currentItems.length > 0 ? (
               currentItems.map((survey, index) => (
-                <tr key={survey.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
-                  <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                  <td className="px-2 add-manual-datas">{survey.title || 'Anonymous'}</td>
-                  <td className="px-2 add-manual-datas">{formatDate(survey.valid_till)}</td>
+                <tr
+                  key={survey.id}
+                  className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
+                >
+                  <td className="pl-5 pr-2 add-manual-datas">
+                    {indexOfFirstItem + index + 1}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {survey.title || "Anonymous"}
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    {formatDate(survey.valid_till)}
+                  </td>
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF]"
@@ -851,24 +1187,38 @@ const QmsListCustomerSurvey = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => handleView(survey.id)}>
-                      <img src={viewIcon} alt="View Icon" className='action-btn' />
+                      <img
+                        src={viewIcon}
+                        alt="View Icon"
+                        className="action-btn"
+                      />
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => handleEdit(survey.id)}>
-                      <img src={editIcon} alt="Edit Icon" className='action-btn' />
+                      <img
+                        src={editIcon}
+                        alt="Edit Icon"
+                        className="action-btn"
+                      />
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => openDeleteModal(survey)}>
-                      <img src={deleteIcon} alt="Delete Icon" className='action-btn' />
+                      <img
+                        src={deleteIcon}
+                        alt="Delete Icon"
+                        className="action-btn"
+                      />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="text-center py-4 not-found">No customer satisfaction survey found</td>
+                <td colSpan="10" className="text-center py-4 not-found">
+                  No customer satisfaction survey found
+                </td>
               </tr>
             )}
           </tbody>
@@ -878,11 +1228,15 @@ const QmsListCustomerSurvey = () => {
       {/* Pagination */}
       {filteredSurveys.length > 0 && (
         <div className="flex justify-between items-center mt-3">
-          <div className='text-white total-text'>Total-{filteredSurveys.length}</div>
+          <div className="text-white total-text">
+            Total-{filteredSurveys.length}
+          </div>
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${currentPage === 1 ? 'opacity-50' : ''}`}
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              className={`cursor-pointer swipe-text ${
+                currentPage === 1 ? "opacity-50" : ""
+              }`}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
               Previous
@@ -890,15 +1244,22 @@ const QmsListCustomerSurvey = () => {
 
             {Array.from({ length: Math.min(4, totalPages) }, (_, i) => {
               // Show pages around current page
-              const pageToShow = currentPage <= 2 ? i + 1 :
-                currentPage >= totalPages - 1 ? totalPages - 3 + i :
-                  currentPage - 2 + i;
+              const pageToShow =
+                currentPage <= 2
+                  ? i + 1
+                  : currentPage >= totalPages - 1
+                  ? totalPages - 3 + i
+                  : currentPage - 2 + i;
 
               if (pageToShow <= totalPages) {
                 return (
                   <button
                     key={pageToShow}
-                    className={`${currentPage === pageToShow ? 'pagin-active' : 'pagin-inactive'}`}
+                    className={`${
+                      currentPage === pageToShow
+                        ? "pagin-active"
+                        : "pagin-inactive"
+                    }`}
                     onClick={() => setCurrentPage(pageToShow)}
                   >
                     {pageToShow}
@@ -909,8 +1270,12 @@ const QmsListCustomerSurvey = () => {
             })}
 
             <button
-              className={`cursor-pointer swipe-text ${currentPage === totalPages ? 'opacity-50' : ''}`}
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              className={`cursor-pointer swipe-text ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
               disabled={currentPage === totalPages}
             >
               Next
@@ -943,7 +1308,9 @@ const QmsListCustomerSurvey = () => {
 
       {/* Success Modal */}
       <DeleteEmployeeSatisfactionSuccessModal
-        showDeleteEmployeeSatisfactionSuccessModal={showDeleteEmployeeSatisfactionSuccessModal}
+        showDeleteEmployeeSatisfactionSuccessModal={
+          showDeleteEmployeeSatisfactionSuccessModal
+        }
         onClose={() => setShowDeleteEmployeeSatisfactionSuccessModal(false)}
       />
 
@@ -951,8 +1318,9 @@ const QmsListCustomerSurvey = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
+        error={error}
       />
     </div>
   );
 };
-export default QmsListCustomerSurvey
+export default QmsListCustomerSurvey;

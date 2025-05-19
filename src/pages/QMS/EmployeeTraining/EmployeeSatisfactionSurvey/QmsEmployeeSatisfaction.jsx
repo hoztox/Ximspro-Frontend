@@ -78,7 +78,7 @@ const EvaluationModal = ({
         setSurveys(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch survey data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -122,7 +122,7 @@ const EvaluationModal = ({
       console.log("Fetched questions:", response.data);
     } catch (err) {
       console.error("Error fetching questions:", err);
-      let errorMsg = "Failed to fetch questions";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -474,7 +474,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
           setQuestions(response.data);
         } catch (err) {
           console.error("Error fetching questions:", err);
-          let errorMsg = "Failed to fetch questions";
+          let errorMsg = err.message;
 
           if (err.response) {
             // Check for field-specific errors first
@@ -544,7 +544,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to add question";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -597,7 +597,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
     } catch (err) {
       console.error("Error deleting question:", err);
       setShowDeleteModal(false);
-      let errorMsg = "Failed to delete question";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -852,7 +852,7 @@ const QmsEmployeeSatisfaction = () => {
 
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch survey data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

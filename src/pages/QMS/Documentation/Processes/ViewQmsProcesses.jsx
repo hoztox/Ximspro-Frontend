@@ -68,7 +68,7 @@ const ViewQmsProcesses = () => {
       }, 3000);
     } catch (err) {
       console.error("Error deleting process:", err);
-      let errorMsg = "Failed to delete process.";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

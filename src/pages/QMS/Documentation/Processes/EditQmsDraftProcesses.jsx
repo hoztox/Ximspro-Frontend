@@ -87,7 +87,7 @@ const EditQmsDraftProcesses = () => {
       })
       .catch((error) => {
         console.error("Error fetching procedure:", error);
-        let errorMsg = "Failed to fetch procedure";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -159,7 +159,7 @@ const EditQmsDraftProcesses = () => {
       })
       .catch((err) => {
         console.error("Error fetching data:", err);
-        let errorMsg = "Failed to fetch data. Please try again";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -365,7 +365,7 @@ const EditQmsDraftProcesses = () => {
       }, 2000);
     } catch (err) {
       console.error("Error updating process:", err.response?.data || err);
-      let errorMsg = "Failed to update process";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

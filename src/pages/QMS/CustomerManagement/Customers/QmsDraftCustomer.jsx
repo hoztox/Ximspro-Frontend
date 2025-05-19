@@ -64,7 +64,7 @@ const QmsDraftCustomer = () => {
                 setError(null);
                 console.log('customers', response);
             } catch (err) {
-                let errorMsg = "Failed to fetch customers";
+                let errorMsg = err.message;
 
                 if (err.response) {
                     // Check for field-specific errors first
@@ -131,7 +131,7 @@ const QmsDraftCustomer = () => {
             setSuccessMessage("Draft Customer Deleted Successfully");
         } catch (err) {
             console.error('Error deleting draft customer:', err);
-            let errorMsg = "Failed to delete draft customer";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

@@ -18,7 +18,7 @@ import ManageSubscription from "./pages/Subscriptions/ManageSubscription/ManageS
 import EditSubscription from "./pages/Subscriptions/EditSubscription.jsx/EditSubscription";
 import ChangePassword from "./pages/ChangePassowrd/ChangePassword";
 import CompanyLogin from "./pages/CompanyLogin/CompanyLogin";
-import CompanyLayout from "./pages/CompanyLayout";
+import CompanyLayout from "./pages/CompanyLayout"; 
 import CompanyDashboard from "./pages/Company Dashboard/CompanyDashboard";
 import CompanyBackup from "./pages/Company Backup/CompanyBackup";
 import QmsPolicy from "./pages/QMS/Documentation/Policy/QmsPolicy";

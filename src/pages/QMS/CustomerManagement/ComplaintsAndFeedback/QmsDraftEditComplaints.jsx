@@ -152,7 +152,7 @@ const QmsDraftEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to fetch complaint data. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -180,7 +180,7 @@ const QmsDraftEditComplaints = () => {
             const response = await axios.get(`${BASE_URL}/qms/customer/company/${companyId}/`);
             setCustomers(response.data);
         } catch (err) {
-            let errorMsg = "Failed to fetch customers. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -211,7 +211,7 @@ const QmsDraftEditComplaints = () => {
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
             setUsers(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
-            let errorMsg = 'Failed to fetch users. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -243,7 +243,7 @@ const QmsDraftEditComplaints = () => {
             const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
             setCarNumbers(response.data);
         } catch (err) {
-            let errorMsg = "Failed to fetch car numbers. Please try again.";
+            let errorMsg =  err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -275,7 +275,7 @@ const QmsDraftEditComplaints = () => {
             setCategories(response.data);
             setFilteredCategories(response.data);
         } catch (err) {
-            let errorMsg = "Failed to fetch categories. Please try again.";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -474,7 +474,7 @@ const QmsDraftEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to update complaint";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -596,7 +596,7 @@ const QmsDraftEditComplaints = () => {
                             color="#AAAAAA"
                         />
                         {fieldErrors.customer && (
-                            <p className="text-red-500 text-sm mt-1">Customer is required</p>
+                            <p className="text-red-500 text-sm mt-1">Please select customer</p>
                         )}
                     </div>
                 </div>

@@ -120,7 +120,7 @@ const QmsListInternalProblems = () => {
       setLoading(false);
     } catch (error) {
       console.error("Error fetching internal problems:", error);
-      let errorMsg = 'Failed to fetch internal problems';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -198,7 +198,7 @@ const QmsListInternalProblems = () => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting internal problem:", error);
-      let errorMsg = "Failed to delete internal problem. Please try again.";
+      let errorMsg = error.message;
 
       if (error.response) {
         if (error.response.data.detail) {

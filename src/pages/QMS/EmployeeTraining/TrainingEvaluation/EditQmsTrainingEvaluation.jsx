@@ -70,7 +70,7 @@ const EditQmsTrainingEvaluation = () => {
         // Clear any field errors when new data is loaded
         setFieldErrors({});
       } catch (err) {
-        let errorMsg = "Failed to training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -220,7 +220,7 @@ const EditQmsTrainingEvaluation = () => {
         }, 3000);
       }
 
-      let errorMsg = "Failed to update training evaluation";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first

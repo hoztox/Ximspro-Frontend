@@ -35,7 +35,7 @@ const DeleteEmployeeSatisfactionConfirmModal = ({ showDeleteModal, onConfirm, on
                             <h3 className="confirmations">
                                 Are you sure you want to delete
                                 <br />
-                                this Employee Satisfaction?
+                                this Supplier Performance?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}

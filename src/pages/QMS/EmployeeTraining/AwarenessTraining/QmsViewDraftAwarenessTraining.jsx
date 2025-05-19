@@ -21,7 +21,7 @@ const QmsViewDraftAwarenessTraining = () => {
         setTrainingData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

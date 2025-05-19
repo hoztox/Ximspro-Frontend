@@ -200,7 +200,7 @@ const EditQmsmanual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "Failed to load manual details";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -450,7 +450,7 @@ const EditQmsmanual = () => {
       // Make the error message more informative
       if (err.response && err.response.data) {
         console.error("API error details:", err.response.data);
-        let errorMsg = "Failed to update manual. Please try again.";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

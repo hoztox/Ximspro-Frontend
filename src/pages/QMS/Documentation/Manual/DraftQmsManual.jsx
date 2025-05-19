@@ -117,7 +117,7 @@ const DraftQmsManual = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      let errorMsg = "Failed to fetch manuals";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

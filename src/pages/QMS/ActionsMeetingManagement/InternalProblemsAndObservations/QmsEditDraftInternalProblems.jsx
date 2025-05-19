@@ -143,7 +143,7 @@ const QmsEditDraftInternalProblems = () => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching data:", err);
-        let errorMsg = 'Failed to fetch data. Please try again.';
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -265,7 +265,7 @@ const QmsEditDraftInternalProblems = () => {
       }, 1500);
     } catch (err) {
       console.error("Error updating internal problem:", err);
-      let errorMsg = 'Failed to update internal problem';
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

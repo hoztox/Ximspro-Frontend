@@ -47,7 +47,7 @@ const QmsListInspection = () => {
                 return userCompanyId ? JSON.parse(userCompanyId) : null;
             } catch (err) {
                 console.error("Error parsing user company ID:", err);
-                let errorMsg = "Failed to fetch company ID";
+                let errorMsg = err.message;
 
                 if (err.response) {
                     // Check for field-specific errors first
@@ -105,7 +105,7 @@ const QmsListInspection = () => {
             setError(null);
         } catch (err) {
             console.error("Error fetching inspections:", err);
-            let errorMsg = "Failed to load inspections";
+            let errorMsg =err.message;
 
             if (err.response) {
                 if (err.response.data.date) {
@@ -169,7 +169,7 @@ const QmsListInspection = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to delete inspection. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 if (error.response.data.date) {

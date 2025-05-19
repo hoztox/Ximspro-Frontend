@@ -102,7 +102,7 @@ const QmsListCustomer = () => {
         setError(null);
         console.log("customers", response);
       } catch (err) {
-        let errorMsg = "Failed to fetch customers data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -173,7 +173,7 @@ const QmsListCustomer = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to delete customer";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

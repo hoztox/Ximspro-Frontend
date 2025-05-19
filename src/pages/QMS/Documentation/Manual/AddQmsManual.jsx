@@ -103,7 +103,7 @@ const AddQmsManual = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      let errorMsg = 'Failed to load users';
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -331,7 +331,7 @@ const AddQmsManual = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      let errorMsg = 'Please try again';
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

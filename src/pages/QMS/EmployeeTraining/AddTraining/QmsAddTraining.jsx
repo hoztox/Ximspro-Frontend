@@ -289,7 +289,7 @@ const QmsAddTraining = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -429,7 +429,7 @@ const QmsAddTraining = () => {
         navigate("/company/qms/draft-training");
       }, 1500);
     } catch (err) {
-      let errorMsg = "Failed to draft training";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

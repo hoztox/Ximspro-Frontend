@@ -199,7 +199,7 @@ const AddQmsEmployeeSatisfaction = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to submit form. Please try again.";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -246,7 +246,7 @@ const AddQmsEmployeeSatisfaction = () => {
       }, 1500);
     } catch (err) {
       setDraftLoading(false);
-      let errorMsg = "Failed to draft submission. Please try again";
+      let errorMsg =err.message;
 
       if (err.response) {
         // Check for field-specific errors first

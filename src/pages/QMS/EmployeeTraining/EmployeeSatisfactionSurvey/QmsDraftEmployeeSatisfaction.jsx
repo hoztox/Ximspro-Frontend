@@ -49,7 +49,7 @@ const QmsDraftEmployeeSatisfaction = () => {
         setsurveyData(response.data);
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch survey data";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -135,7 +135,7 @@ const QmsDraftEmployeeSatisfaction = () => {
       // Close delete modal and show error modal
       setShowDeleteModal(false);
       setShowErrorModal(true);
-      let errorMsg = "Failed to delete survey";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

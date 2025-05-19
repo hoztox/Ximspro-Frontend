@@ -115,7 +115,7 @@ const QmsEditInspection = () => {
         } catch (error) {
             console.error("Failed to fetch inspection data", error);
             setError("Failed to load inspection data");
-            let errorMsg = 'Faile to fetch inspection data';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -154,7 +154,7 @@ const QmsEditInspection = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
-            let errorMsg = "Failed to fetch procedures";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -194,7 +194,7 @@ const QmsEditInspection = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
-            let errorMsg = "Failed to fetch users";
+            let errorMsg =  err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -493,7 +493,7 @@ const QmsEditInspection = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to update inspection. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

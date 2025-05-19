@@ -119,7 +119,7 @@ const DraftQmsProcedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedures:", err);
-      let errorMsg = "Please try again";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

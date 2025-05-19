@@ -37,7 +37,7 @@ const QmsViewDraftMeeting = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching meeting data:", error);
-        let errorMsg = "Failed to fetch meeting data";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first

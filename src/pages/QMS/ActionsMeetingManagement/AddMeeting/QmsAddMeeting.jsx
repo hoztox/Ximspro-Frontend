@@ -277,7 +277,7 @@ const QmsAddMeeting = () => {
             }, 1500);
         } catch (error) {
             // Extract the first error message from the response
-            let errorMsg = 'An error occurred while creating the meeting';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -380,7 +380,7 @@ const QmsAddMeeting = () => {
                 navigate('/company/qms/draft-meeting');
             }, 1500);
         } catch (err) {
-            let errorMsg = 'Failed to save draft meeting';
+            let errorMsg = err.message;
 
             if (err.response) {
                 if (err.response.data.date) {

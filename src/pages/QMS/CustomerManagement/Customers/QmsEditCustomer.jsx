@@ -64,7 +64,7 @@ const QmsEditCustomer = () => {
                     return JSON.parse(userData);
                 } catch (err) {
                     console.error("Error parsing user company ID:", err);
-                    let errorMsg = "Failed to fetch company ID";
+                    let errorMsg =  err.message;
 
                     if (err.response) {
                         // Check for field-specific errors first
@@ -150,7 +150,7 @@ const QmsEditCustomer = () => {
 
         } catch (error) {
             console.error('Error fetching customer data:', error);
-            let errorMsg = 'Failed to fetch customer data.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -293,7 +293,7 @@ const QmsEditCustomer = () => {
             setSuccessMessage("Customer updated successfully")
         } catch (error) {
             console.error('Error updating customer:', error);
-            let errorMsg = 'Failed to update customer. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

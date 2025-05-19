@@ -79,14 +79,8 @@ const QmsDraftViewLegalRequirements = () => {
     };
 
     if (loading) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
+        <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-64">
             Loading legal requirement data...
-        </div>
-    );
-
-    if (error) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
-            Error: {error}
         </div>
     );
 

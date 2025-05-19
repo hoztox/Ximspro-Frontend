@@ -66,7 +66,7 @@ const QmsDraftInspection = () => {
             setError(null);
         } catch (err) {
             console.error("Error fetching inspections:", err);
-            let errorMsg = "Failed to load inspections";
+            let errorMsg = err.message;
 
             if (err.response) {
                 if (err.response.data.date) {
@@ -129,7 +129,7 @@ const QmsDraftInspection = () => {
             setSuccessMessage("Draft Inspection Deleted Successfully");
         } catch (error) {
             console.error("Error deleting draft inspection:", error);
-            let errorMsg = 'Failed to delete draft inspection. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 if (error.response.data.date) {

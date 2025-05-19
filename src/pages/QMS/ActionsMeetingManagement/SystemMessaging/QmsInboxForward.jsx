@@ -69,7 +69,9 @@ const QmsInboxForward = () => {
         setError("Company ID not found");
         return;
       }
-      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -77,7 +79,24 @@ const QmsInboxForward = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to fetch users");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -88,7 +107,7 @@ const QmsInboxForward = () => {
       setFormData((prev) => ({
         ...prev,
         subject: `Re: ${response.data.subject || "No Subject"}`,
-        message: `${response.data.message || "No Message"}`
+        message: `${response.data.message || "No Message"}`,
       }));
 
       // Auto-tick the from_user
@@ -107,7 +126,24 @@ const QmsInboxForward = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError("Failed to fetch original message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -226,20 +262,36 @@ const QmsInboxForward = () => {
         }
       );
 
-
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
         navigate("/company/qms/list-outbox");
       }, 1500);
-      setSuccessMessage("Message Forwarded Successfully")
+      setSuccessMessage("Message Forwarded Successfully");
     } catch (error) {
       console.error("Error submitting forward message:", error);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      setError(error.response?.data?.message || "Failed to send message");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -292,8 +344,9 @@ const QmsInboxForward = () => {
         error={error}
       />
 
-
-      {loading && <div className="px-[104px] py-2 text-center not-found">Loading...</div>}
+      {loading && (
+        <div className="px-[104px] py-2 text-center not-found">Loading...</div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -454,8 +507,6 @@ const QmsInboxForward = () => {
           </button>
         </div>
       </form>
-
-
     </div>
   );
 };

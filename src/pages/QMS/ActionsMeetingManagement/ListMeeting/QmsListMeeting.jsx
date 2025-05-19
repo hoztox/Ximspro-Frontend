@@ -55,7 +55,7 @@ const QmsListMeeting = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching meetings:", error);
-        let errorMsg = "An error occurred while creating the meeting";
+        let errorMsg = error.message;
 
         if (error.response) {
           if (error.response.data.date) {
@@ -169,7 +169,7 @@ const QmsListMeeting = () => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting meeting:", error);
-      let errorMsg = "An error occurred while deleting the meeting";
+      let errorMsg = error.message;
 
       if (error.response) {
         if (error.response.data.detail) {
@@ -259,7 +259,7 @@ const QmsListMeeting = () => {
         closeAddMinutesModal();
       } catch (error) {
         console.error("Error saving minutes:", error);
-        let errorMsg = "An error occurred while saving minutes";
+        let errorMsg = error.message;
 
         if (error.response) {
           if (error.response.data.detail) {

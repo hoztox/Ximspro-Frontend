@@ -147,7 +147,7 @@ const AddQmsInterestedParties = () => {
       setCausePartyOptions(response.data); // Store CauseParty data
     } catch (error) {
       console.error("Error fetching Cause Party:", error);
-      let errorMsg = "Failed to fetch Cause Party data.";
+      let errorMsg = error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -343,7 +343,7 @@ const AddQmsInterestedParties = () => {
         navigate("/company/qms/interested-parties");
       }, 1500);
     } catch (err) {
-      let errorMsg = "Failed to add interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -447,7 +447,7 @@ const AddQmsInterestedParties = () => {
       setTimeout(() => {
         setShowDraftInterestedErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to draft interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

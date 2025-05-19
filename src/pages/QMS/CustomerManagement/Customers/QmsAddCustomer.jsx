@@ -194,7 +194,7 @@ const QmsAddCustomer = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            let errorMsg = 'Failed to fetch users';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -254,7 +254,7 @@ const QmsAddCustomer = () => {
             setSuccessMessage("Customer Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            let errorMsg = 'Failed to add customer. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -311,7 +311,7 @@ const QmsAddCustomer = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = "Failed to draft customer";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

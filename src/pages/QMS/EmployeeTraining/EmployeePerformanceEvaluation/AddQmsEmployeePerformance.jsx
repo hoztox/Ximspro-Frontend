@@ -196,7 +196,7 @@ const AddQmsEmployeePerformance = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting form:", error);
-      let errorMsg = "Failed to submit form. Please try again.";
+      let errorMsg =error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -255,7 +255,7 @@ const AddQmsEmployeePerformance = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to draft employee performance";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

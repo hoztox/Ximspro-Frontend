@@ -117,7 +117,7 @@ const ViewQmsprocedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "Please try again";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

@@ -132,7 +132,6 @@ const QmsDraftNonConformityReport = () => {
 
   if (loading)
     return <div className="not-found text-center p-5">Loading...</div>;
-  if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -186,20 +185,20 @@ const QmsDraftNonConformityReport = () => {
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.title || "-"}
+                    {nonConformities.title || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.source || "-"}
+                    {nonConformities.source || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.ncr || "-"}
+                    {nonConformities.ncr || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.executor?.first_name}{" "}
+                    {nonConformities.executor?.first_name}{"N/A"}
                     {nonConformities.executor?.last_name}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.date_raised || "-"}
+                    {nonConformities.date_raised || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button

@@ -117,7 +117,7 @@ const DraftQmsRecordFormat = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedures:", err);
-      let errorMsg = "Failed to fetch record format details";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

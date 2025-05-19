@@ -33,9 +33,9 @@ const RestoreConfirmModal = ({ showRestoreModal, onConfirm, onCancel, restoreMes
                                 <img src={restores} alt="Delete" className="w-[167px] h-[147px]" />
                             </div>
                             <h3 className="confirmations">
-                                Are you sure you want to delete
+                                Are you sure you want to
                                 <br />
-                                this {restoreMessage || "Page"}?
+                               restore this {restoreMessage || "Page"}?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}
@@ -43,7 +43,7 @@ const RestoreConfirmModal = ({ showRestoreModal, onConfirm, onCancel, restoreMes
                                 <button onClick={onCancel} className="btn-cancels duration-200 w-[176px] h-[49px]">
                                     Cancel
                                 </button>
-                                <button onClick={onConfirm} className="save-btns duration-200 w-[176px] h-[49px]">
+                                <button onClick={onConfirm} className="btn-restores duration-200 w-[176px] h-[49px]">
                                     Restore
                                 </button>
                             </div>

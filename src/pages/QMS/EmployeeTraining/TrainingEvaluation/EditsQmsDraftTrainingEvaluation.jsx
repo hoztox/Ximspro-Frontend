@@ -64,7 +64,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
 
         setError(null);
       } catch (err) {
-        let errorMsg = "Failed to fetch training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first
@@ -228,7 +228,7 @@ const EditsQmsDraftTrainingEvaluation = () => {
           setFieldErrors(err.response.data);
         }
       } else {
-        let errorMsg = "Failed to update training evaluation";
+        let errorMsg = err.message;
 
         if (err.response) {
           // Check for field-specific errors first

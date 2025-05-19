@@ -117,7 +117,7 @@ const QmsEditDraftInspections = () => {
             setError(null);
         } catch (error) {
             console.error("Failed to fetch inspection data", error);
-            let errorMsg = 'Failed to fetch inspection data';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -156,7 +156,7 @@ const QmsEditDraftInspections = () => {
             setProcedureOptions(response.data);
         } catch (err) {
             console.error("Error fetching procedures:", err);
-            let errorMsg = "Failed to fetch procedures";
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -196,7 +196,7 @@ const QmsEditDraftInspections = () => {
             setUserOptions(response.data);
         } catch (err) {
             console.error("Error fetching users:", err);
-            let errorMsg = "Failed to fetch users";
+            let errorMsg =  err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -501,7 +501,7 @@ const QmsEditDraftInspections = () => {
             setSuccessMessage("Inspection updated successfully")
         } catch (error) {
             console.error('Error updating draft inspection:', error);
-            let errorMsg = 'Failed to update inspection. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

@@ -185,7 +185,7 @@ const QmsProcedure = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
-      let errorMsg = "An error occurred while creating the meeting";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -271,7 +271,7 @@ const QmsProcedure = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        let errorMsg = "An error occurred while creating the meeting";
+        let errorMsg = error.message;
 
         if (error.response) {
           // Check for field-specific errors first

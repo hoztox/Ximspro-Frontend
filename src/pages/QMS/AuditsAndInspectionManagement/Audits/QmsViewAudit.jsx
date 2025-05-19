@@ -53,7 +53,7 @@ const QmsViewAudit = () => {
                 setTimeout(() => {
                     setShowErrorModal(false);
                 }, 3000);
-                let errorMsg = 'Failed to fetch audit data';
+                let errorMsg = error.message;
 
                 if (error.response) {
                     // Check for field-specific errors first
@@ -118,7 +118,7 @@ const QmsViewAudit = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to delete audit';
+            let errorMsg =  error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

@@ -34,7 +34,7 @@ const QmsDeleteConfirmLegalModal =  ({ showDeleteModal, onConfirm, onCancel }) =
                 <h3 className="confirmations">
                   Are you sure you want to delete
                   <br />
-                  this Legal/Requirements?
+                  this Legal Requirements?
                 </h3>
                 <div className="modal-actionss gap-3"
                   style={{ maxWidth: 'calc(100vw - 80px)' }}

@@ -103,7 +103,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             setSuccessMessage("Root Cause Deleted Successfully");
         } catch (error) {
             console.error('Error deleting cause:', error);
-            let errorMsg = 'Failed to delete cause. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 if (error.response.data.detail) {
@@ -157,7 +157,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             setSuccessMessage("Root Cause Added Successfully")
         } catch (error) {
             console.error('Error adding cause:', error);
-            let errorMsg = 'Failed to add cause. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 if (error.response.data.detail) {

@@ -118,7 +118,7 @@ const QmsEditDraftAudit = () => {
             setError(null);
         } catch (error) {
             console.error("Failed to fetch audit data", error);
-            let errorMsg = 'Failed to fetch audit data';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first
@@ -474,7 +474,7 @@ const QmsEditDraftAudit = () => {
             setSuccessMessage("Audit updated successfully")
         } catch (error) {
             console.error('Error updating draft audit:', error);
-            let errorMsg = 'Failed to update draft audit. Please try again.';
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

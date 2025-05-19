@@ -122,7 +122,7 @@ const EditQmsInterestedParties = () => {
       setCausePartyOptions(response.data || []);
     } catch (error) {
       console.error("Error fetching Cause Party:", error);
-      let errorMsg = "Failed to fetch Cause Party. Please try again";
+      let errorMsg =  error.message;
 
       if (error.response) {
         // Check for field-specific errors first
@@ -176,7 +176,7 @@ const EditQmsInterestedParties = () => {
       }
     } catch (err) {
       console.error("Error fetching data:", err);
-      let errorMsg = "Failed to fetch Interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -361,7 +361,7 @@ const EditQmsInterestedParties = () => {
         response: err.response?.data,
         stack: err.stack,
       });
-      let errorMsg = "Failed to update interested parties";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

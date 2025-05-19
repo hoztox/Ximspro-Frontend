@@ -128,7 +128,7 @@ const ViewQmsRecordFormat = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manual details:", err);
-      let errorMsg = "Failed to fetch record format details";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first

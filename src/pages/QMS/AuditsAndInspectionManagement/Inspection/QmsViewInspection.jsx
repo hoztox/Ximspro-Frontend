@@ -54,7 +54,7 @@ const QmsViewInspection = () => {
                 setTimeout(() => {
                     setShowErrorModal(false);
                 }, 3000);
-                let errorMsg = 'Failed to fetch inspection data';
+                let errorMsg = error.message;
 
                 if (error.response) {
                     if (error.response.data.date) {
@@ -117,7 +117,7 @@ const QmsViewInspection = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = 'Failed to delete inspection';
+            let errorMsg = error.message;
 
             if (error.response) {
                 if (error.response.data.date) {

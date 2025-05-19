@@ -134,7 +134,7 @@ const QmsEditInternalProblems = () => {
                 setLoading(false);
             } catch (err) {
                 console.error('Error fetching data:', err);
-                let errorMsg = 'PFailed to fetch data. Please try again later.';
+                let errorMsg = err.message;
 
                 if (err.response) {
                     // Check for field-specific errors first
@@ -256,7 +256,7 @@ const QmsEditInternalProblems = () => {
             }, 1500);
         } catch (err) {
             console.error('Error updating internal problem:', err);
-            let errorMsg = 'Failed to Update Internal Problem';
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first

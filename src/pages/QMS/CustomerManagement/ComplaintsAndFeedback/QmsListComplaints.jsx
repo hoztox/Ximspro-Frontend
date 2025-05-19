@@ -85,7 +85,7 @@ const QmsListComplaints = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching complaints:", error);
-        let errorMsg = 'Failed to fetch complaints. Please try again later.';
+        let errorMsg =  error.message;
 
         if (error.response) {
           // Check for field-specific errors first
@@ -147,7 +147,7 @@ const QmsListComplaints = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to delete complaint";
+      let errorMsg = error.message;
 
       if (error.response) {
         if (error.response.data.date) {

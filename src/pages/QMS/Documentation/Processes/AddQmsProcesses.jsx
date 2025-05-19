@@ -294,7 +294,7 @@ const AddQmsProcesses = () => {
         navigate("/company/qms/processes");
       }, 1500);
     } catch (err) {
-      let errorMsg = "Failed to save process";
+      let errorMsg =  err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -412,7 +412,7 @@ const AddQmsProcesses = () => {
       setTimeout(() => {
         setShowDraftProcessesErrorModal(false);
       }, 3000);
-      let errorMsg = "Failed to draft process";
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
