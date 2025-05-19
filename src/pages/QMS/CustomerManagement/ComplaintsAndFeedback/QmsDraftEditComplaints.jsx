@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, X, Search } from 'lucide-react';
+import { ChevronDown, X, Search, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
@@ -24,12 +24,11 @@ const QmsDraftEditComplaints = () => {
     const [error, setError] = useState(null);
     const [categorySearchTerm, setCategorySearchTerm] = useState('');
     const [filteredCategories, setFilteredCategories] = useState([]);
+    const [existingFileUrl, setExistingFileUrl] = useState(null);
 
     const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-
     const [showErrorModal, setShowErrorModal] = useState(false);
-
 
     const [fieldErrors, setFieldErrors] = useState({
         customer: false,
@@ -73,15 +72,15 @@ const QmsDraftEditComplaints = () => {
         corrective_action_need: 'Yes',
         corrections: '',
         no_car: '',
-        upload_attachment: null,
+        upload_attachment: null, // Can be a File object or a URL string
         is_draft: true,
-        send_notification: false
+        send_notification: false,
     });
 
     const [dateInputs, setDateInputs] = useState({
         day: '',
         month: '',
-        year: ''
+        year: '',
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -127,6 +126,10 @@ const QmsDraftEditComplaints = () => {
 
             setDateInputs({ day, month, year });
 
+            if (data.upload_attachment) {
+                setExistingFileUrl(data.upload_attachment);
+            }
+
             const categoryIds = Array.isArray(data.category)
                 ? data.category.map(cat => typeof cat === 'object' ? cat.id : cat)
                 : [];
@@ -142,10 +145,10 @@ const QmsDraftEditComplaints = () => {
                 corrective_action_need: data.corrective_action_need || 'Yes',
                 corrections: data.corrections || '',
                 no_car: data.no_car?.id || '',
-                upload_attachment: null,
-                is_draft: true
+                upload_attachment: null, // This will only be used for new files
+                is_draft: true,
+                send_notification: false,
             });
-
         } catch (err) {
             console.error("Error fetching complaint data:", err);
             setShowErrorModal(true);
@@ -155,12 +158,9 @@ const QmsDraftEditComplaints = () => {
             let errorMsg = err.message;
 
             if (err.response) {
-                // Check for field-specific errors first
                 if (err.response.data.date) {
                     errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
+                } else if (err.response.data.detail) {
                     errorMsg = err.response.data.detail;
                 } else if (err.response.data.message) {
                     errorMsg = err.response.data.message;
@@ -175,6 +175,8 @@ const QmsDraftEditComplaints = () => {
         }
     };
 
+
+
     const fetchCustomers = async () => {
         try {
             const response = await axios.get(`${BASE_URL}/qms/customer/company/${companyId}/`);
@@ -183,12 +185,9 @@ const QmsDraftEditComplaints = () => {
             let errorMsg = err.message;
 
             if (err.response) {
-                // Check for field-specific errors first
                 if (err.response.data.date) {
                     errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
+                } else if (err.response.data.detail) {
                     errorMsg = err.response.data.detail;
                 } else if (err.response.data.message) {
                     errorMsg = err.response.data.message;
@@ -214,15 +213,11 @@ const QmsDraftEditComplaints = () => {
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (error.response.data.detail) {
+                } else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
-                }
-                else if (error.response.data.message) {
+                } else if (error.response.data.message) {
                     errorMsg = error.response.data.message;
                 }
             } else if (error.message) {
@@ -243,15 +238,12 @@ const QmsDraftEditComplaints = () => {
             const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
             setCarNumbers(response.data);
         } catch (err) {
-            let errorMsg =  err.message;
+            let errorMsg = err.message;
 
             if (err.response) {
-                // Check for field-specific errors first
                 if (err.response.data.date) {
                     errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
+                } else if (err.response.data.detail) {
                     errorMsg = err.response.data.detail;
                 } else if (err.response.data.message) {
                     errorMsg = err.response.data.message;
@@ -278,12 +270,9 @@ const QmsDraftEditComplaints = () => {
             let errorMsg = err.message;
 
             if (err.response) {
-                // Check for field-specific errors first
                 if (err.response.data.date) {
                     errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
+                } else if (err.response.data.detail) {
                     errorMsg = err.response.data.detail;
                 } else if (err.response.data.message) {
                     errorMsg = err.response.data.message;
@@ -307,7 +296,7 @@ const QmsDraftEditComplaints = () => {
         if (type === 'checkbox') {
             setFormData({
                 ...formData,
-                [name]: checked
+                [name]: checked,
             });
             return;
         }
@@ -321,7 +310,7 @@ const QmsDraftEditComplaints = () => {
                 const formattedDate = `${updatedDateInputs.year}-${updatedDateInputs.month}-${updatedDateInputs.day}`;
                 setFormData({
                     ...formData,
-                    date: formattedDate
+                    date: formattedDate,
                 });
             }
             return;
@@ -329,7 +318,7 @@ const QmsDraftEditComplaints = () => {
 
         setFormData({
             ...formData,
-            [name]: value
+            [name]: value,
         });
     };
 
@@ -338,12 +327,12 @@ const QmsDraftEditComplaints = () => {
             if (prevData.category.includes(categoryId)) {
                 return {
                     ...prevData,
-                    category: prevData.category.filter(id => id !== categoryId)
+                    category: prevData.category.filter(id => id !== categoryId),
                 };
             } else {
                 return {
                     ...prevData,
-                    category: [...prevData.category, categoryId]
+                    category: [...prevData.category, categoryId],
                 };
             }
         });
@@ -352,7 +341,7 @@ const QmsDraftEditComplaints = () => {
     const handleRemoveCategory = (categoryId) => {
         setFormData(prevData => ({
             ...prevData,
-            category: prevData.category.filter(id => id !== categoryId)
+            category: prevData.category.filter(id => id !== categoryId),
         }));
     };
 
@@ -369,7 +358,7 @@ const QmsDraftEditComplaints = () => {
         if (car?.id) {
             setFormData({
                 ...formData,
-                no_car: car.id
+                no_car: car.id,
             });
         }
     };
@@ -388,7 +377,7 @@ const QmsDraftEditComplaints = () => {
         if (!formData.category.includes(newCategoryId)) {
             setFormData({
                 ...formData,
-                category: [...formData.category, newCategoryId]
+                category: [...formData.category, newCategoryId],
             });
         }
     };
@@ -400,6 +389,17 @@ const QmsDraftEditComplaints = () => {
         });
     };
 
+    const handleViewFile = () => {
+        if (formData.upload_attachment) {
+            // For newly uploaded files
+            const fileUrl = URL.createObjectURL(formData.upload_attachment);
+            window.open(fileUrl, '_blank');
+        } else if (existingFileUrl) {
+            // For existing files from API
+            window.open(existingFileUrl, '_blank');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -407,55 +407,45 @@ const QmsDraftEditComplaints = () => {
         try {
             setLoading(true);
 
-            // Create a regular object first (not FormData)
-            const payload = {
-                ...formData,
-                user: userId,
-                company: companyId,
-                // Ensure category is always an array
-                category: Array.isArray(formData.category) ? formData.category : []
-            };
+            const formDataToSend = new FormData();
 
-            // Convert to FormData only if we have a file to upload
-            let submitData;
-            let config = {};
+            // Append all fields except upload_attachment and category
+            Object.keys(formData).forEach(key => {
+                if (key !== 'upload_attachment' && key !== 'category' && formData[key] !== null && formData[key] !== undefined) {
+                    formDataToSend.append(key, String(formData[key]));
+                }
+            });
 
-            if (formData.upload_attachment) {
-                submitData = new FormData();
-                // Append all fields except category
-                Object.keys(payload).forEach(key => {
-                    if (key !== 'category' && payload[key] !== null && payload[key] !== undefined) {
-                        if (key === 'upload_attachment') {
-                            submitData.append(key, payload[key]);
-                        } else {
-                            submitData.append(key, String(payload[key]));
-                        }
-                    }
+            // Handle categories array
+            if (Array.isArray(formData.category)) {
+                formData.category.forEach(catId => {
+                    formDataToSend.append('category', catId);
                 });
-                // Append categories separately
-                payload.category.forEach(catId => {
-                    submitData.append('category', catId);
-                });
-                config.headers = { 'Content-Type': 'multipart/form-data' };
-            } else {
-                // No file upload - send as JSON
-                submitData = payload;
-                config.headers = { 'Content-Type': 'application/json' };
             }
 
-            console.log('Submitting payload:', submitData);
+            // Handle file upload - only append if there's a new file
+            if (formData.upload_attachment instanceof File) {
+                formDataToSend.append('upload_attachment', formData.upload_attachment);
+            }
+            // If no new file is uploaded, the existing file will be retained
+
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            };
 
             let response;
             if (id) {
                 response = await axios.put(
                     `${BASE_URL}/qms/complaints/${id}/`,
-                    submitData,
+                    formDataToSend,
                     config
                 );
             } else {
                 response = await axios.post(
                     `${BASE_URL}/qms/complaints/`,
-                    submitData,
+                    formDataToSend,
                     config
                 );
             }
@@ -465,33 +455,23 @@ const QmsDraftEditComplaints = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/draft-complaints');
             }, 1500);
-            setSuccessMessage("Compliants updated successfully")
-
-
+            setSuccessMessage("Complaints updated successfully");
         } catch (err) {
             console.error("Error submitting form:", err);
+            console.log("Backend error response:", err.response?.data);
+            let errorMsg = err.message;
+
+            if (err.response?.data) {
+                errorMsg = Object.entries(err.response.data)
+                    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .join('\n');
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = err.message;
-
-            if (err.response) {
-                // Check for field-specific errors first
-                if (err.response.data.date) {
-                    errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
-                    errorMsg = err.response.data.detail;
-                } else if (err.response.data.message) {
-                    errorMsg = err.response.data.message;
-                }
-            } else if (err.message) {
-                errorMsg = err.message;
-            }
-
-            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -516,10 +496,6 @@ const QmsDraftEditComplaints = () => {
 
     if (loading && !customers.length) {
         return <div className="flex justify-center items-center p-10">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>;
     }
 
     return (
@@ -577,7 +553,7 @@ const QmsDraftEditComplaints = () => {
                                 setFocusedDropdown(null);
                                 setFieldErrors(prev => ({
                                     ...prev,
-                                    customer: !formData.customer
+                                    customer: !formData.customer,
                                 }));
                             }}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
@@ -591,7 +567,7 @@ const QmsDraftEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-      ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "customer" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -708,7 +684,7 @@ const QmsDraftEditComplaints = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
+              ${focusedDropdown === "executor" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -734,7 +710,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
+                  ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -756,7 +732,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
+                  ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -778,7 +754,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                     ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
+                  ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -803,7 +779,7 @@ const QmsDraftEditComplaints = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                             ${focusedDropdown === "solved_after_action" ? "rotate-180" : ""}`}
+              ${focusedDropdown === "solved_after_action" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -827,7 +803,7 @@ const QmsDraftEditComplaints = () => {
                         </select>
                         <ChevronDown
                             className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                             ${focusedDropdown === "corrective_action_need" ? "rotate-180" : ""}`}
+                ${focusedDropdown === "corrective_action_need" ? "rotate-180" : ""}`}
                             size={20}
                             color="#AAAAAA"
                         />
@@ -869,7 +845,7 @@ const QmsDraftEditComplaints = () => {
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[45%] transform transition-transform duration-300 
-                             ${focusedDropdown === "no_car" ? "rotate-180" : ""}`}
+                  ${focusedDropdown === "no_car" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -902,16 +878,30 @@ const QmsDraftEditComplaints = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.upload_attachment ? (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            {formData.upload_attachment.name}
-                        </p>
-                    ) : (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            No file chosen
-                        </p>
-                    )}
-                </div>
+                    <div className='flex justify-between items-center'>
+                        <button
+                            type="button"
+                            onClick={handleViewFile}
+                            disabled={!formData.upload_attachment && !existingFileUrl}
+                            className='click-view-file-btn text-[#1E84AF] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                            Click to view file <Eye size={17} />
+                        </button>
+                        {formData.upload_attachment ? (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                {formData.upload_attachment.name}
+                            </p>
+                        ) : existingFileUrl ? (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                {existingFileUrl.split('/').pop()}
+                            </p>
+                        ) : (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                No file chosen
+                            </p>
+                        )}
+                    </div>
+                </div> 
 
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
@@ -937,4 +927,4 @@ const QmsDraftEditComplaints = () => {
     );
 };
 
-export default QmsDraftEditComplaints;
+export default QmsDraftEditComplaints; 

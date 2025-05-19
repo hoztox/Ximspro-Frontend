@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDown, X, Search } from 'lucide-react';
+import { ChevronDown, X, Search, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
@@ -24,6 +24,7 @@ const QmsEditComplaints = () => {
     const [error, setError] = useState(null);
     const [categorySearchTerm, setCategorySearchTerm] = useState('');
     const [filteredCategories, setFilteredCategories] = useState([]);
+    const [existingFileUrl, setExistingFileUrl] = useState(null);
 
     const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -74,9 +75,14 @@ const QmsEditComplaints = () => {
         corrective_action_need: 'Yes',
         corrections: '',
         no_car: '',
-        upload_attachment: null,
+        upload_attachment: null, // This should only be File object or null
         is_draft: false,
         send_notification: false
+    });
+
+    const [existingFile, setExistingFile] = useState({
+        url: null,
+        name: null
     });
 
     const [dateInputs, setDateInputs] = useState({
@@ -137,6 +143,13 @@ const QmsEditComplaints = () => {
                 year
             });
 
+            if (data.upload_attachment) {
+                setExistingFile({
+                    url: data.upload_attachment,
+                    name: data.upload_attachment.split('/').pop()
+                });
+            }
+
             // Transform category data to ensure it's an array of IDs
             const categoryIds = Array.isArray(data.category)
                 ? data.category.map(cat => typeof cat === 'object' ? cat.id : cat)
@@ -157,6 +170,7 @@ const QmsEditComplaints = () => {
                 upload_attachment: null,
                 is_draft: data.is_draft || false
             });
+            setExistingFileUrl(data.upload_attachment);
 
         } catch (err) {
             console.error("Error fetching complaint data:", err);
@@ -184,6 +198,18 @@ const QmsEditComplaints = () => {
             setError(errorMsg);
         } finally {
             setLoading(false);
+        }
+    };
+
+
+    const handleViewFile = () => {
+        if (formData.upload_attachment) {
+            // For newly uploaded files
+            const fileUrl = URL.createObjectURL(formData.upload_attachment);
+            window.open(fileUrl, '_blank');
+        } else if (existingFileUrl) {
+            // For existing files from API
+            window.open(existingFileUrl, '_blank');
         }
     };
 
@@ -276,7 +302,7 @@ const QmsEditComplaints = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg =  err.message;
+            let errorMsg = err.message;
 
             if (err.response) {
                 // Check for field-specific errors first
@@ -464,90 +490,74 @@ const QmsEditComplaints = () => {
         try {
             setLoading(true);
 
-            // Create a regular object first (not FormData)
-            const submitData = {
-                ...formData,
-                user: userId,
-                company: companyId
-            };
+            const formDataToSend = new FormData();
+            console.log('formdataaaaa', formData);
+            
 
-            // Convert to FormData only if we have a file to upload
-            let payload;
-            if (formData.upload_attachment) {
-                payload = new FormData();
-                // Append all fields except category
-                Object.keys(submitData).forEach(key => {
-                    if (key !== 'category' && submitData[key] !== null && submitData[key] !== undefined) {
-                        if (key === 'upload_attachment') {
-                            payload.append(key, submitData[key]);
-                        } else {
-                            payload.append(key, String(submitData[key]));
-                        }
-                    }
-                });
-                // Append categories separately
-                if (Array.isArray(submitData.category)) {
-                    submitData.category.forEach(catId => {
-                        payload.append('category', catId);
-                    });
+            // Append all fields except upload_attachment and category
+            Object.keys(formData).forEach(key => {
+                if (key !== 'upload_attachment' && key !== 'category' && formData[key] !== null && formData[key] !== undefined) {
+                    formDataToSend.append(key, String(formData[key]));
                 }
-            } else {
-                // No file upload - send as JSON
-                payload = submitData;
+            });
+
+            // Handle categories array
+            if (Array.isArray(formData.category)) {
+                formData.category.forEach(catId => {
+                    formDataToSend.append('category', catId);
+                });
             }
 
-            console.log('Submitting data:', payload);
+            // Handle file upload
+            if (formData.upload_attachment instanceof File) {
+                formDataToSend.append('upload_attachment', formData.upload_attachment);
+            }
+            // If no new file is uploaded, omit upload_attachment to retain existing file
+            // If you need to clear the file, you can add logic here (e.g., formDataToSend.append('upload_attachment', ''))
 
-            const config = formData.upload_attachment ? {
+            const config = {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
-            } : {};
+            };
 
             let response;
             if (id) {
                 response = await axios.put(
                     `${BASE_URL}/qms/complaints/${id}/`,
-                    payload,
+                    formDataToSend,
                     config
                 );
             } else {
                 response = await axios.post(
                     `${BASE_URL}/qms/complaints/`,
-                    payload,
+                    formDataToSend,
                     config
                 );
             }
+
             setShowSuccessModal(true);
             setTimeout(() => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/list-complaints');
             }, 1500);
-            setSuccessMessage("Compliants updated successfully")
+            setSuccessMessage("Complaint updated successfully");
         } catch (err) {
             console.error("Error submitting form:", err);
+            console.log("Backend error response:", err.response?.data);
+            let errorMsg = err.message;
+
+            if (err.response?.data) {
+                errorMsg = Object.entries(err.response.data)
+                    .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                    .join('\n');
+            }
+
+            setError(errorMsg);
             setShowErrorModal(true);
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg = err.message;
-
-            if (err.response) {
-                // Check for field-specific errors first
-                if (err.response.data.date) {
-                    errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
-                    errorMsg = err.response.data.detail;
-                } else if (err.response.data.message) {
-                    errorMsg = err.response.data.message;
-                }
-            } else if (err.message) {
-                errorMsg = err.message;
-            }
-
-            setError(errorMsg);
         } finally {
             setLoading(false);
         }
@@ -571,11 +581,7 @@ const QmsEditComplaints = () => {
     };
 
     if (loading && !customers.length) {
-        return <div className="flex justify-center items-center p-10">Loading...</div>;
-    }
-
-    if (error) {
-        return <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>;
+        return <div className="flex justify-center items-center p-10 not-found">Loading...</div>;
     }
 
     return (
@@ -958,15 +964,29 @@ const QmsEditComplaints = () => {
                             <img src={file} alt="" />
                         </label>
                     </div>
-                    {formData.upload_attachment ? (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            {formData.upload_attachment.name}
-                        </p>
-                    ) : (
-                        <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                            No file chosen
-                        </p>
-                    )}
+                    <div className='flex justify-between items-center'>
+                        <button
+                            type="button"
+                            onClick={handleViewFile}
+                            disabled={!formData.upload_attachment && !existingFileUrl}
+                            className='click-view-file-btn text-[#1E84AF] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
+                        >
+                            Click to view file <Eye size={17} />
+                        </button>
+                        {formData.upload_attachment ? (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                {formData.upload_attachment.name}
+                            </p>
+                        ) : existingFileUrl ? (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                {existingFileUrl.split('/').pop()}
+                            </p>
+                        ) : (
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                No file chosen
+                            </p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Form Actions */}
@@ -988,8 +1008,8 @@ const QmsEditComplaints = () => {
                         </button>
                     </div>
                 </div>
-            </form>
-        </div>
+            </form >
+        </div >
     );
 };
 

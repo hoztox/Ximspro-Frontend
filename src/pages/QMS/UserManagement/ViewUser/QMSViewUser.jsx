@@ -7,6 +7,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import toast, { Toaster } from 'react-hot-toast';
+import QmsDeleteUserConfirmModal from '../Modals/QmsDeleteUserConfirmModal';
+import QmsDeleteUserSuccessModal from '../Modals/QmsDeleteUserSuccessModal';
+import QmsDeleteUserErrorModal from '../Modals/QmsDeleteUserErrorModal';
 
 const QMSViewUser = () => {
     const navigate = useNavigate();
@@ -36,6 +39,11 @@ const QMSViewUser = () => {
         permissions: ''
     });
     const [loading, setLoading] = useState(true);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteUserSuccessModal, setShowDeleteUserSuccessModal] = useState(false);
+    const [showDeleteUserErrorModal, setShowDeleteUserErrorModal] = useState(false);
 
     // Fetch user data when component mounts
     useEffect(() => {
@@ -76,19 +84,30 @@ const QMSViewUser = () => {
         navigate(`/company/qms/edituser/${id}`);
     };
 
-    const handleDeleteUser = async () => {
-        const confirmDelete = window.confirm("Are you sure you want to delete this user?");
-        if (!confirmDelete) return;
+    const handleDeleteClick = () => {
+        setShowDeleteModal(true);
+    };
 
+    const handleConfirmDelete = async () => {
         try {
             await axios.delete(`${BASE_URL}/company/users/delete/${id}/`);
-            toast.success("User deleted successfully");
-            // Navigate back to the list after deletion
-            navigate('/company/qms/listuser');
+            setShowDeleteUserSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteUserSuccessModal(false);
+                navigate('/company/qms/listuser');
+            }, 2000);
         } catch (error) {
             console.error("Error deleting user:", error);
-            toast.error("Failed to delete user. Please try again.");
+            setShowDeleteUserErrorModal(true);
+            setTimeout(() => {
+                setShowDeleteUserErrorModal(false);
+            }, 3000);
         }
+        setShowDeleteModal(false);
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
     };
 
     const formatDate = (dateString) => {
@@ -132,6 +151,23 @@ const QMSViewUser = () => {
                         <X size={24} />
                     </button>
                 </div>
+
+                {/* Delete Modals */}
+                <QmsDeleteUserConfirmModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={handleCancelDelete}
+                />
+
+                <QmsDeleteUserSuccessModal
+                    showDeleteUserSuccessModal={showDeleteUserSuccessModal}
+                    onClose={() => setShowDeleteUserSuccessModal(false)}
+                />
+
+                <QmsDeleteUserErrorModal
+                    showDeleteUserErrorModal={showDeleteUserErrorModal}
+                    onClose={() => setShowDeleteUserErrorModal(false)}
+                />
 
                 {loading ? (
                     <div className="flex justify-center items-center h-64">
@@ -295,7 +331,7 @@ const QMSViewUser = () => {
                                     </div>
                                     <div className='flex flex-col items-center'>
                                         <label className="block view-user-labels text-[#AAAAAA] mb-[8px]">Delete</label>
-                                        <button className="flex items-center" onClick={handleDeleteUser}>
+                                        <button className="flex items-center" onClick={handleDeleteClick}>
                                             <img src={deletes} alt="Delete icon" className='w-[18px] h-[18px]' />
                                         </button>
                                     </div>

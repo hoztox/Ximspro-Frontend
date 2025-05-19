@@ -550,13 +550,24 @@ const QMSEditUser = () => {
             setTimeout(() => {
                 setShowEditUserErrorModal(false);
             }, 3000);
-            if (err.response && err.response.data) {
-                setError(err.response.data.message || "Failed to update user");
-                toast.error(err.response.data.message || "Failed to update user");
-            } else {
-                setError("Failed to update user. Please try again.");
-                toast.error("Failed to update user. Please try again.");
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
         } finally {
             setIsLoading(false);
         }

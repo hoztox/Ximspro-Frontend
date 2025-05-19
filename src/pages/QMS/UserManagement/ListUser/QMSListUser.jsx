@@ -40,6 +40,7 @@ const QMSListUser = () => {
   const [showBlockConfirmModal, setShowBlockConfirmModal] = useState(false);
   const [showBlockSuccessModal, setShowBlockSuccessModal] = useState(false);
   const [showBlockErrorModal, setShowBlockErrorModal] = useState(false);
+  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
 
@@ -143,6 +144,25 @@ const QMSListUser = () => {
         }, 3000);
       } catch (error) {
         console.error("Error deleting user:", error);
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setShowDeleteUserErrorModal(true);
         setTimeout(() => {
           setShowDeleteUserErrorModal(false);
@@ -184,6 +204,7 @@ const QMSListUser = () => {
           setTimeout(() => {
             setShowBlockErrorModal(false);
           }, 3000);
+          setError('Company ID not found. Please log in again.');
           return;
         }
 
@@ -217,6 +238,25 @@ const QMSListUser = () => {
         setTimeout(() => {
           setShowBlockErrorModal(false);
         }, 3000);
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
       } finally {
         setStatusLoading(prev => ({ ...prev, [userToBlock]: false }));
       }
@@ -262,6 +302,7 @@ const QMSListUser = () => {
         <QmsDeleteUserErrorModal
           showDeleteUserErrorModal={showDeleteUserErrorModal}
           onClose={() => setShowDeleteUserErrorModal(false)}
+          error={error}
         />
 
         {/* Block Modals */}
@@ -281,6 +322,7 @@ const QMSListUser = () => {
         <QmsBlockUserErrorModal
           showBlockErrorModal={showBlockErrorModal}
           onClose={() => setShowBlockErrorModal(false)}
+          error={error}
         />
 
         <div className="flex space-x-5">
@@ -331,7 +373,7 @@ const QMSListUser = () => {
                   <td className="px-5 add-user-datas">{user.first_name} {user.last_name}</td>
                   <td className="px-5 add-user-datas">{user.email}</td>
                   <td className="px-5 add-user-datas">
-                    <span className={`px-2 py-1 rounded text-xs ${user.status === 'active' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-red-900 text-red-300'}`}>
+                    <span className={`px-2 py-1 rounded text-xs ${user.status === 'active' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363642] text-red-500'}`}>
                       {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                     </span>
                   </td>

@@ -6,6 +6,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import choosefile from "../../../../assets/images/Company User Management/choosefile.svg"
 import "./adduser.css";
 import QmsAddUserSuccessModal from '../Modals/QmsAddUserSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QMSAddUser = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const QMSAddUser = () => {
   const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   const [showAddUserSuccessModal, setShowAddUserSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -176,7 +178,7 @@ const QMSAddUser = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Remove spaces from username field
     if (name === 'username') {
       const valueWithoutSpaces = value.replace(/\s/g, '');
@@ -190,7 +192,7 @@ const QMSAddUser = () => {
         [name]: value
       });
     }
-  
+
     // Clear the error for this field when user changes the value
     if (fieldErrors[name]) {
       setFieldErrors({
@@ -424,12 +426,15 @@ const QMSAddUser = () => {
       }
     } catch (err) {
       console.error("Error saving user:", err);
-      toast.error("Failed to add user");
       if (err.response && err.response.data) {
         setError(err.response.data.message || "Failed to add user");
       } else {
         setError("Failed to add user. Please try again.");
       }
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -451,6 +456,12 @@ const QMSAddUser = () => {
       <QmsAddUserSuccessModal
         showAddUserSuccessModal={showAddUserSuccessModal}
         onClose={() => { setShowAddUserSuccessModal(false) }}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
       />
 
 
