@@ -5,9 +5,12 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewObjectives = () => {
-  const { id } = useParams(); // Get objective ID from URL
+  const { id } = useParams();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     objective: "",
@@ -20,6 +23,13 @@ const QmsViewObjectives = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     fetchObjective();
@@ -45,19 +55,43 @@ const QmsViewObjectives = () => {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching objective:", error);
-      setError("Failed to load objective. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "-";
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
+    if (isNaN(date)) return "N/A"; // handle invalid date formats
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
+
 
   const handleClose = () => {
     navigate("/company/qms/list-objectives");
@@ -67,13 +101,55 @@ const QmsViewObjectives = () => {
     navigate(`/company/qms/edit-objectives/${id}`);
   };
 
-  const handleDelete = async () => {
+  // Open delete confirmation modal
+  const openDeleteModal = () => {
+    setShowDeleteModal(true);
+    setDeleteMessage('Objective');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/qms/objectives-get/${id}/`);
-      navigate("/company/qms/list-objectives");
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Objective Deleted Successfully");
+      setTimeout(() => {
+        navigate("/company/qms/list-objectives");
+      }, 2000);
     } catch (error) {
       console.error("Error deleting objective:", error);
-      setError("Failed to delete objective. Please try again.");
+      setShowDeleteModal(false);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -88,12 +164,6 @@ const QmsViewObjectives = () => {
           <X className="text-white" />
         </button>
       </div>
-
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 my-4 rounded">
-          {error}
-        </div>
-      )}
 
       {isLoading ? (
         <div className="text-center py-4 not-found">Loading objective...</div>
@@ -127,7 +197,7 @@ const QmsViewObjectives = () => {
               <label className="block view-employee-label mb-[6px]">
                 Target Date
               </label>
-              <div className="view-employee-data">{formatDate(formData.target_date || "N/A")}</div>
+              <div className="view-employee-data">{formatDate(formData.target_date)}</div>
             </div>
 
             <div>
@@ -169,7 +239,7 @@ const QmsViewObjectives = () => {
 
               <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                 Delete
-                <button onClick={handleDelete}>
+                <button onClick={openDeleteModal}>
                   <img
                     src={deletes}
                     alt="Delete Icon"
@@ -181,6 +251,28 @@ const QmsViewObjectives = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

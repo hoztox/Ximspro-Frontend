@@ -3,8 +3,15 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsAddObjectives = () => {
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
@@ -25,15 +32,15 @@ const QmsAddObjectives = () => {
   };
 
   const getRelevantUserId = () => {
-        const userRole = localStorage.getItem("role");
-        if (userRole === "user") {
-            const userId = localStorage.getItem("user_id");
-            if (userId) return userId;
-        }
-        const companyId = localStorage.getItem("company_id");
-        if (companyId) return companyId;
-        return null;
-    };
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
 
   const companyId = getUserCompanyId();
   const userId = getRelevantUserId();
@@ -41,6 +48,10 @@ const QmsAddObjectives = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    objective: "",
+    responsible: ""
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -90,6 +101,10 @@ const QmsAddObjectives = () => {
       setError(
         "Failed to load users. Please check your connection and try again."
       );
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -110,8 +125,33 @@ const QmsAddObjectives = () => {
         ...formData,
         [name]: value,
       });
+      // Clear error when user starts typing
+      if (name === "objective" || name === "responsible") {
+        setFormErrors({
+          ...formErrors,
+          [name]: ""
+        });
+      }
     }
-  }; 
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.objective.trim()) {
+      errors.objective = "Objective is required";
+      isValid = false;
+    }
+
+    if (!formData.responsible) {
+      errors.responsible = "Responsible is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
 
   const formatDate = (dateObj) => {
     if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
@@ -120,6 +160,10 @@ const QmsAddObjectives = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -148,11 +192,39 @@ const QmsAddObjectives = () => {
       console.log("Added Objective:", response.data);
 
       setIsLoading(false);
-      navigate("/company/qms/list-objectives");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-objectives");
+      }, 1500);
+      setSuccessMessage("Objectives Added Successfully")
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsLoading(false);
-      setError("Failed to save. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -186,13 +258,39 @@ const QmsAddObjectives = () => {
       console.log("Saved as Draft:", response.data);
 
       setIsLoading(false);
-      navigate("/company/qms/draft-objectives");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-objectives");
+      }, 1500);
+      setSuccessMessage("Objectives Drafted Successfully")
     } catch (error) {
       console.error("Error saving as draft:", error);
       setIsLoading(false);
-      setError(
-        "Failed to save as draft. Please check your inputs and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -222,11 +320,17 @@ const QmsAddObjectives = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
       <form
         onSubmit={handleSubmit}
@@ -241,9 +345,12 @@ const QmsAddObjectives = () => {
             name="objective"
             value={formData.objective}
             onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
+            className={`add-training-inputs focus:outline-none ${formErrors.objective ? "border-red-500" : ""
+              }`}
           />
+          {formErrors.objective && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.objective}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -286,11 +393,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -312,11 +418,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -338,11 +443,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -360,32 +464,34 @@ const QmsAddObjectives = () => {
             onChange={handleChange}
             onFocus={() => setFocusedDropdown("responsible")}
             onBlur={() => setFocusedDropdown(null)}
-            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
+            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""
+              }`}
           >
             <option value="" disabled>
               {isLoading ? "Loading..." : "Select Responsible"}
             </option>
             {users && users.length > 0
               ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
               : !isLoading && (
-                  <option value="" disabled>
-                    No users found
-                  </option>
-                )}
+                <option value="" disabled>
+                  No users found
+                </option>
+              )}
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${
-                          focusedDropdown === "responsible" ? "rotate-180" : ""
-                        }`}
+                        ${focusedDropdown === "responsible" ? "rotate-180" : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
+          {formErrors.responsible && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.responsible}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 relative">
@@ -397,7 +503,6 @@ const QmsAddObjectives = () => {
             onFocus={() => setFocusedDropdown("status")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>
               Select Status
@@ -434,11 +539,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -460,11 +564,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -486,11 +589,10 @@ const QmsAddObjectives = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />

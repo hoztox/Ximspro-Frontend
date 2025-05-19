@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListObjectives = () => {
   const navigate = useNavigate();
@@ -15,6 +18,15 @@ const QmsListObjectives = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [objectiveToDelete, setObjectiveToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [draftCount, setDraftCount] = useState(0);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -35,7 +47,22 @@ const QmsListObjectives = () => {
     return null;
   };
 
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
   const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
 
   useEffect(() => {
     fetchObjectives();
@@ -54,12 +81,37 @@ const QmsListObjectives = () => {
         setObjectives([]);
         console.error("Unexpected response format:", response.data);
       }
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/objectives/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching objectives:", error);
-      setError(
-        "Failed to load objectives. Please check your connection and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   };
@@ -77,6 +129,62 @@ const QmsListObjectives = () => {
     const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
+  };
+
+  // Open delete confirmation modal
+  const openDeleteModal = (objective) => {
+    setObjectiveToDelete(objective);
+    setShowDeleteModal(true);
+    setDeleteMessage('Objective');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!objectiveToDelete) return;
+
+    try {
+      await axios.delete(`${BASE_URL}/qms/objectives-get/${objectiveToDelete.id}/`);
+      setObjectives(objectives.filter((objective) => objective.id !== objectiveToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Objective Deleted Successfully");
+    } catch (error) {
+      console.error("Error deleting objective:", error);
+
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowDeleteModal(false);
+    }
   };
 
   // Pagination
@@ -119,16 +227,6 @@ const QmsListObjectives = () => {
     navigate(`/company/qms/edit-objectives/${id}`);
   };
 
-  const handleDeleteObjectives = async (id) => {
-    try {
-      await axios.delete(`${BASE_URL}/qms/objectives-get/${id}/`);
-      setObjectives(objectives.filter((objective) => objective.id !== id));
-    } catch (error) {
-      console.error("Error deleting objective:", error);
-      setError("Failed to delete objective. Please try again.");
-    }
-  };
-
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
@@ -157,6 +255,11 @@ const QmsListObjectives = () => {
             onClick={handleDraftObjectives}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[189px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -172,16 +275,9 @@ const QmsListObjectives = () => {
         </div>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-          {error}
-        </div>
-      )}
-
       {/* Loading State */}
       {isLoading ? (
-        <div className="text-center py-4">Loading objectives...</div>
+        <div className="text-center py-4 not-found">Loading objectives...</div>
       ) : (
         <>
           {/* Table */}
@@ -219,26 +315,25 @@ const QmsListObjectives = () => {
                         {objective.objective}
                       </td>
                       <td className="px-2 add-manual-datas">
-                        {formatDate(objective.target_date || "N/A")}
+                        {objective.target_date ? formatDate(objective.target_date) : 'N/A'}
                       </td>
+
                       <td className="px-2 add-manual-datas">
                         {objective.responsible
-                          ? `${objective.responsible.first_name} ${
-                              objective.responsible.last_name || ""
-                            }`
+                          ? `${objective.responsible.first_name} ${objective.responsible.last_name || ""
+                          }`
                           : "N/A"}
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
                         <span
-                          className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                            objective.status === "Achieved"
-                              ? "bg-[#36DDAE11] text-[#36DDAE]"
-                              : objective.status === "On Going"
+                          className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${objective.status === "Achieved"
+                            ? "bg-[#36DDAE11] text-[#36DDAE]"
+                            : objective.status === "On Going"
                               ? "bg-[#1E84AF11] text-[#1E84AF]"
                               : objective.status === "Not Achieved"
-                              ? "bg-[#dd363611] text-[#dd3636]"
-                              : "bg-[#FFA50011] text-[#FFA500]" // Modified status
-                          }`}
+                                ? "bg-[#dd363611] text-[#dd3636]"
+                                : "bg-[#FFA50011] text-[#FFA500]" // Modified status
+                            }`}
                         >
                           {objective.status}
                         </span>
@@ -265,9 +360,7 @@ const QmsListObjectives = () => {
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
-                        <button
-                          onClick={() => handleDeleteObjectives(objective.id)}
-                        >
+                        <button onClick={() => openDeleteModal(objective)}>
                           <img src={deleteIcon} alt="Delete Icon" />
                         </button>
                       </td>
@@ -275,10 +368,7 @@ const QmsListObjectives = () => {
                   ))
                 ) : (
                   <tr>
-                    <td
-                      colSpan="8"
-                      className="text-center py-4 not-found"
-                    >
+                    <td colSpan="8" className="text-center py-4 not-found">
                       No objectives found
                     </td>
                   </tr>
@@ -294,9 +384,8 @@ const QmsListObjectives = () => {
               <button
                 onClick={prevPage}
                 disabled={currentPage === 1}
-                className={`cursor-pointer swipe-text ${
-                  currentPage === 1 ? "opacity-50" : ""
-                }`}
+                className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                  }`}
               >
                 Previous
               </button>
@@ -306,9 +395,8 @@ const QmsListObjectives = () => {
                   <button
                     key={number}
                     onClick={() => paginate(number)}
-                    className={`${
-                      currentPage === number ? "pagin-active" : "pagin-inactive"
-                    }`}
+                    className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                      }`}
                   >
                     {number}
                   </button>
@@ -318,9 +406,8 @@ const QmsListObjectives = () => {
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
-                className={`cursor-pointer swipe-text ${
-                  currentPage === totalPages ? "opacity-50" : ""
-                }`}
+                className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                  }`}
               >
                 Next
               </button>
@@ -328,6 +415,28 @@ const QmsListObjectives = () => {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

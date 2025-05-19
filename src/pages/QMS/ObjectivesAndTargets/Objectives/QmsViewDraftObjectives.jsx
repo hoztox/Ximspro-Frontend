@@ -53,13 +53,15 @@ const QmsViewDraftObjectives = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-  };
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -73,14 +75,8 @@ const QmsViewDraftObjectives = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 my-4 rounded">
-          {error}
-        </div>
-      )}
-
       {isLoading ? (
-        <div className="text-center py-4">Loading draft objective...</div>
+        <div className="text-center py-4">Loading Draft Objectives...</div>
       ) : (
         <div className="pt-5 relative">
           <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>

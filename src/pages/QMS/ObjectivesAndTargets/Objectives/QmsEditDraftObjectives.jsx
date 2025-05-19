@@ -3,6 +3,8 @@ import { ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsEditDraftObjectives = () => {
   const { id } = useParams(); // Get objective ID from URL
@@ -10,6 +12,15 @@ const QmsEditDraftObjectives = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    objective: "",
+    responsible: ""
+  });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -67,30 +78,34 @@ const QmsEditDraftObjectives = () => {
     try {
       if (!companyId) return;
 
-      const response = await axios.get(
+      const knuckles = await axios.get(
         `${BASE_URL}/company/users-active/${companyId}/`
       );
 
-      if (Array.isArray(response.data)) {
-        setUsers(response.data);
+      if (Array.isArray(knuckles.data)) {
+        setUsers(knuckles.data);
       } else {
         setUsers([]);
-        console.error("Unexpected response format:", response.data);
+        console.error("Unexpected response format:", knuckles.data);
       }
     } catch (error) {
       console.error("Error fetching users:", error);
       setError(
         "Failed to load users. Please check your connection and try again."
       );
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
   const fetchObjective = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL}/qms/objectives-get/${id}/`);
+      const knuckles = await axios.get(`${BASE_URL}/qms/objectives-get/${id}/`);
 
-      const data = response.data;
+      const data = knuckles.data;
       const parseDate = (dateStr) => {
         if (!dateStr) return { day: "", month: "", year: "" };
         const [year, month, day] = dateStr.split("-");
@@ -110,7 +125,29 @@ const QmsEditDraftObjectives = () => {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching objective:", error);
-      setError("Failed to load draft objective. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   };
@@ -132,7 +169,32 @@ const QmsEditDraftObjectives = () => {
         ...formData,
         [name]: value,
       });
+      // Clear error when user starts typing
+      if (name === "objective" || name === "responsible") {
+        setFormErrors({
+          ...formErrors,
+          [name]: ""
+        });
+      }
     }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.objective.trim()) {
+      errors.objective = "Objective is required";
+      isValid = false;
+    }
+
+    if (!formData.responsible) {
+      errors.responsible = "Responsible is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
   const formatDate = (dateObj) => {
@@ -142,6 +204,10 @@ const QmsEditDraftObjectives = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -162,18 +228,46 @@ const QmsEditDraftObjectives = () => {
         is_draft: false,
       };
 
-      const response = await axios.put(
+      const knuckles = await axios.put(
         `${BASE_URL}/qms/objectives-get/${id}/`,
         submissionData
       );
 
-      console.log("Updated Objective:", response.data);
+      console.log("Updated Objective:", knuckles.data);
       setIsLoading(false);
-      navigate("/company/qms/list-objectives");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-objectives");
+      }, 1500);
+      setSuccessMessage("Objectives Saved Successfully")
     } catch (error) {
       console.error("Error updating objective:", error);
       setIsLoading(false);
-      setError("Failed to save. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -207,14 +301,21 @@ const QmsEditDraftObjectives = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
 
       {isLoading ? (
-        <div className="text-center py-4">Loading draft objective...</div>
+        <div className="text-center py-4 not-found">Loading Draft Objectives...</div>
       ) : (
         <form
           onSubmit={handleSubmit}
@@ -229,9 +330,12 @@ const QmsEditDraftObjectives = () => {
               name="objective"
               value={formData.objective}
               onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-              required
+              className={`add-training-inputs focus:outline-none ${formErrors.objective ? "border-red-500" : ""
+                }`}
             />
+            {formErrors.objective && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.objective}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -274,11 +378,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.day"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -300,11 +403,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.month"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -326,11 +428,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "target_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "target_date.year"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -348,32 +449,34 @@ const QmsEditDraftObjectives = () => {
               onChange={handleChange}
               onFocus={() => setFocusedDropdown("responsible")}
               onBlur={() => setFocusedDropdown(null)}
-              className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
+              className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""
+                }`}
             >
               <option value="" disabled>
                 {isLoading ? "Loading..." : "Select Responsible"}
               </option>
               {users && users.length > 0
                 ? users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name || ""}
-                    </option>
-                  ))
+                  <option key={user.id} value={user.id}>
+                    {user.first_name} {user.last_name || ""}
+                  </option>
+                ))
                 : !isLoading && (
-                    <option value="" disabled>
-                      No users found
-                    </option>
-                  )}
+                  <option value="" disabled>
+                    No users found
+                  </option>
+                )}
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${
-                          focusedDropdown === "responsible" ? "rotate-180" : ""
-                        }`}
+                        ${focusedDropdown === "responsible" ? "rotate-180" : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
+            {formErrors.responsible && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.responsible}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 relative">
@@ -385,7 +488,6 @@ const QmsEditDraftObjectives = () => {
               onFocus={() => setFocusedDropdown("status")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
             >
               <option value="" disabled>
                 Select Status
@@ -422,11 +524,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.day"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -448,11 +549,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.month"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -474,11 +574,10 @@ const QmsEditDraftObjectives = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "reminder_date.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "reminder_date.year"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />

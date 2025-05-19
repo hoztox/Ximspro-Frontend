@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftObjectives = () => {
   const navigate = useNavigate();
@@ -13,6 +16,13 @@ const QmsDraftObjectives = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [objectiveToDelete, setObjectiveToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -74,9 +84,21 @@ const QmsDraftObjectives = () => {
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching draft objectives:", error);
-      setError(
-        "Failed to load draft objectives. Please check your connection and try again."
-      );
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   };
@@ -123,13 +145,50 @@ const QmsDraftObjectives = () => {
     navigate(`/company/qms/edit-draft-objectives/${id}`);
   };
 
-  const handleDeleteObjectives = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (objective) => {
+    setObjectiveToDelete(objective);
+    setShowDeleteModal(true);
+    setDeleteMessage("Draft Objective");
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteObjectives = async () => {
+    if (!objectiveToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/objectives-get/${id}/`);
-      setObjectives(objectives.filter((objective) => objective.id !== id));
+      await axios.delete(`${BASE_URL}/qms/objectives-get/${objectiveToDelete.id}/`);
+      setObjectives(objectives.filter((objective) => objective.id !== objectiveToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Draft Objective Deleted Successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (error) {
       console.error("Error deleting draft objective:", error);
-      setError("Failed to delete draft objective. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setShowDeleteModal(false);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -170,13 +229,6 @@ const QmsDraftObjectives = () => {
           </button>
         </div>
       </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-          {error}
-        </div>
-      )}
 
       {/* Loading State */}
       {isLoading ? (
@@ -219,13 +271,12 @@ const QmsDraftObjectives = () => {
                         {objective.objective}
                       </td>
                       <td className="px-2 add-manual-datas">
-                        {formatDate(objective.target_date || "N/A")}
+                        {objective.target_date ? formatDate(objective.target_date) : 'N/A'}
                       </td>
                       <td className="px-2 add-manual-datas">
                         {objective.responsible
-                          ? `${objective.responsible.first_name} ${
-                              objective.responsible.last_name || ""
-                            }`
+                          ? `${objective.responsible.first_name} ${objective.responsible.last_name || ""
+                          }`
                           : "N/A"}
                       </td>
                       <td className="px-2 add-manual-datas">
@@ -252,7 +303,7 @@ const QmsDraftObjectives = () => {
                       </td>
                       <td className="px-2 add-manual-datas !text-center">
                         <button
-                          onClick={() => handleDeleteObjectives(objective.id)}
+                          onClick={() => openDeleteModal(objective)}
                         >
                           <img src={deleteIcon} alt="Delete Icon" />
                         </button>
@@ -280,9 +331,8 @@ const QmsDraftObjectives = () => {
               <button
                 onClick={prevPage}
                 disabled={currentPage === 1}
-                className={`cursor-pointer swipe-text ${
-                  currentPage === 1 ? "opacity-50" : ""
-                }`}
+                className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                  }`}
               >
                 Previous
               </button>
@@ -292,9 +342,8 @@ const QmsDraftObjectives = () => {
                   <button
                     key={number}
                     onClick={() => paginate(number)}
-                    className={`${
-                      currentPage === number ? "pagin-active" : "pagin-inactive"
-                    }`}
+                    className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                      }`}
                   >
                     {number}
                   </button>
@@ -304,9 +353,8 @@ const QmsDraftObjectives = () => {
               <button
                 onClick={nextPage}
                 disabled={currentPage === totalPages}
-                className={`cursor-pointer swipe-text ${
-                  currentPage === totalPages ? "opacity-50" : ""
-                }`}
+                className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                  }`}
               >
                 Next
               </button>
@@ -314,8 +362,30 @@ const QmsDraftObjectives = () => {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleDeleteObjectives}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
 
-export default QmsDraftObjectives;
+export default QmsDraftObjectives; 
