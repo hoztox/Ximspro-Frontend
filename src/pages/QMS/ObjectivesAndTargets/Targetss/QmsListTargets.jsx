@@ -7,6 +7,9 @@ import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListTargets = () => {
     // State
@@ -16,6 +19,15 @@ const QmsListTargets = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [targetToDelete, setTargetToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [draftCount, setDraftCount] = useState(0);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -36,7 +48,22 @@ const QmsListTargets = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     // Fetch targets from backend
     const fetchTargets = async () => {
@@ -50,12 +77,43 @@ const QmsListTargets = () => {
             setLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/targets/${companyId}`);
             setTargets(response.data);
+
+            // Fetch draft count
+            const draftResponse = await axios.get(
+                `${BASE_URL}/qms/targets/drafts-count/${userId}/`
+            );
+            setDraftCount(draftResponse.data.count);
+
             setLoading(false);
         } catch (err) {
-            setError('Failed to fetch targets. Please try again.');
-            console.error('Error fetching targets:', err);
+            handleError('Failed to fetch targets. Please try again.', err);
             setLoading(false);
         }
+    };
+
+    // Handle errors consistently
+    const handleError = (defaultMsg, error) => {
+        let errorMsg = defaultMsg;
+
+        if (error.response) {
+            if (error.response.data.date) {
+                errorMsg = error.response.data.date[0];
+            }
+            else if (error.response.data.detail) {
+                errorMsg = error.response.data.detail;
+            }
+            else if (error.response.data.message) {
+                errorMsg = error.response.data.message;
+            }
+        } else if (error.message) {
+            errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+            setShowErrorModal(false);
+        }, 3000);
     };
 
     // Initial fetch
@@ -108,25 +166,68 @@ const QmsListTargets = () => {
         navigate(`/company/qms/edit-targets/${id}`);
     };
 
+    // Open delete confirmation modal
+    const openDeleteModal = (target) => {
+        setTargetToDelete(target);
+        setShowDeleteModal(true);
+        setDeleteMessage('Target');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
     // Delete target
-    const handleDeleteTargets = async (id) => {
-        if (window.confirm('Are you sure you want to delete this target?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/targets-get/${id}/`);
-                setTargets(targets.filter(target => target.id !== id));
-                // If we deleted the last item on the page, go to previous page
-                if (filteredTargets.length === 1 && currentPage > 1) {
-                    setCurrentPage(prev => prev - 1);
-                }
-            } catch (err) {
-                setError('Failed to delete target. Please try again.');
-                console.error('Error deleting target:', err);
+    const confirmDelete = async () => {
+        if (!targetToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/targets-get/${targetToDelete.id}/`);
+            setTargets(targets.filter(target => target.id !== targetToDelete.id));
+
+            // If we deleted the last item on the page, go to previous page
+            if (filteredTargets.length === 1 && currentPage > 1) {
+                setCurrentPage(prev => prev - 1);
             }
+
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Target Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (err) {
+            handleError('Failed to delete target. Please try again.', err);
+            setShowDeleteModal(false);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.email) {
+                    errorMsg = err.response.data.email[0];
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -141,16 +242,8 @@ const QmsListTargets = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-[60vh]">
+            <div className="flex justify-center items-center">
                 <div className="not-found">Loading...</div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex justify-center items-center h-[60vh]">
-                <div className="text-white">Error: {error}</div>
             </div>
         );
     }
@@ -174,10 +267,15 @@ const QmsListTargets = () => {
                         </div>
                     </div>
                     <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
+                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px] relative"
                         onClick={handleDraftTargets}
                     >
                         <span>Drafts</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute -top-[10px] -right-[10px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -188,11 +286,6 @@ const QmsListTargets = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-                <div className="text-red-500 mb-4">{error}</div>
-            )}
 
             {/* Table */}
             <div className="overflow-x-auto">
@@ -242,7 +335,7 @@ const QmsListTargets = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteTargets(target.id)}>
+                                        <button onClick={() => openDeleteModal(target)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -305,6 +398,28 @@ const QmsListTargets = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

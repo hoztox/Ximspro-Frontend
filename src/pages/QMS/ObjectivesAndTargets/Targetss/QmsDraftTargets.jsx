@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import axios from 'axios';
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftTargets = () => {
     // State
@@ -16,6 +17,12 @@ const QmsDraftTargets = () => {
     const [totalItems, setTotalItems] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [targetToDelete, setTargetToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage] = useState("Draft Target");
+    const [successMessage] = useState("Draft Target Deleted Successfully");
     const navigate = useNavigate();
 
     // Pagination
@@ -44,8 +51,6 @@ const QmsDraftTargets = () => {
                 }
             });
             setTargets(response.data);
-            console.log('dddddd', response.data);
-            
             setTotalItems(response.data.length);
             setError(null);
         } catch (err) {
@@ -101,23 +106,53 @@ const QmsDraftTargets = () => {
         navigate(`/company/qms/edit-draft-targets/${id}`);
     };
 
+    // Open delete confirmation modal
+    const handleDeleteDraftTargets = (target) => {
+        setTargetToDelete(target);
+        setShowDeleteModal(true);
+    };
+
     // Delete draft target
-    const handleDeleteDraftTargets = async (id) => {
-        if (window.confirm('Are you sure you want to delete this draft target?')) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/targets-get/${id}/`);
-                setTargets(targets.filter(target => target.id !== id));
-                // If we deleted the last item on the page, go to previous page
-                if (currentTargets.length === 1 && currentPage > 1) {
-                    setCurrentPage(prev => prev - 1);
-                }
-            } catch (err) {
-                setError('Failed to delete draft target. Please try again.');
-                console.error('Error deleting draft target:', err);
+    const confirmDelete = async () => {
+        if (!targetToDelete) return;
+        try {
+            await axios.delete(`${BASE_URL}/qms/targets-get/${targetToDelete.id}/`);
+            setTargets(targets.filter(target => target.id !== targetToDelete.id));
+            setTotalItems(prev => prev - 1);
+            // If we deleted the last item on the page, go to previous page
+            if (currentTargets.length === 1 && currentPage > 1) {
+                setCurrentPage(prev => prev - 1);
             }
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (err) {
+            setShowDeleteModal(false);
+            let errorMsg = 'Failed to delete draft target. Please try again.';
+            if (err.response?.data?.detail) {
+                errorMsg = err.response.data.detail;
+            } else if (err.response?.data?.message) {
+                errorMsg = err.response.data.message;
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+        setTargetToDelete(null);
+    };
 
     const formatDate = (dateString) => {
         if (!dateString) return "-";
@@ -158,14 +193,9 @@ const QmsDraftTargets = () => {
                 </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="text-red-500 mb-4">{error}</div>
-            )}
-
             {/* Loading State */}
             {loading && (
-                <div className="text-center">Loading...</div>
+                <div className="text-center not-found">Loading...</div>
             )}
 
             {/* Table */}
@@ -189,7 +219,7 @@ const QmsDraftTargets = () => {
                                     <tr key={target.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                         <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{target.target || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{formatDate(target.target_date || 'N/A')}</td>
+                                        <td className="px-2 add-manual-datas">{target.target_date ? formatDate(target.target_date) : 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{target.responsible?.first_name} {target.responsible?.last_name || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">
                                             <button onClick={() => handleQmsEditDraftTargets(target.id)} className='text-[#1E84AF]'>
@@ -202,7 +232,7 @@ const QmsDraftTargets = () => {
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button onClick={() => handleDeleteDraftTargets(target.id)}>
+                                            <button onClick={() => handleDeleteDraftTargets(target)}>
                                                 <img src={deleteIcon} alt="Delete Icon" />
                                             </button>
                                         </td>
@@ -266,6 +296,28 @@ const QmsDraftTargets = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

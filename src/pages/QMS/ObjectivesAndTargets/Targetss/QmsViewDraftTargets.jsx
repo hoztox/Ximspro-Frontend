@@ -66,13 +66,15 @@ const QmsViewDraftTargets = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
         return `${day}-${month}-${year}`;
     };
+
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -87,18 +89,13 @@ const QmsViewDraftTargets = () => {
                 </button>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="text-red-500 p-5">{error}</div>
-            )}
-
             {/* Loading State */}
             {loading && (
-                <div className="text-center p-5">Loading...</div>
+                <div className="text-center p-5 not-found">Loading...</div>
             )}
 
             {/* Content */}
-            {!loading && !error && (
+            {!loading && (
                 <div className="p-5 relative">
                     {/* Vertical divider line */}
                     <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>
@@ -130,7 +127,7 @@ const QmsViewDraftTargets = () => {
                                         ))}
                                     </ul>
                                 ) : (
-                                    '-'
+                                    'N/A'
                                 )}
                             </div>
                         </div>
@@ -185,7 +182,7 @@ const QmsViewDraftTargets = () => {
                                 >
                                     Click to view file <Eye size={17} />
                                 </a>
-                            ) : (
+                            ) : ( 
                                 <div className="view-employee-data">N/A</div>
                             )}
                         </div>

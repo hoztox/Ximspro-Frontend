@@ -4,6 +4,8 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsAddTargets = () => {
   const getUserCompanyId = () => {
@@ -43,6 +45,15 @@ const QmsAddTargets = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [programFields, setProgramFields] = useState([{ id: 1, title: "" }]);
+  const [formErrors, setFormErrors] = useState({
+    target: "",
+    responsible: ""
+  });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -67,7 +78,7 @@ const QmsAddTargets = () => {
       year: "",
     },
     is_draft: false,
-    programs: [{ "title": "" }],
+    programs: [{ title: "" }],
   });
 
   const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -100,6 +111,10 @@ const QmsAddTargets = () => {
       setError(
         "Failed to load users. Please check your connection and try again."
       );
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -119,6 +134,13 @@ const QmsAddTargets = () => {
         ...formData,
         [name]: value,
       });
+      // Clear error when user starts typing
+      if (name === "target" || name === "responsible") {
+        setFormErrors({
+          ...formErrors,
+          [name]: ""
+        });
+      }
     }
   };
 
@@ -167,15 +189,33 @@ const QmsAddTargets = () => {
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
   };
 
-  const validatePrograms = () => {
-    const validPrograms = formData.programs.filter(
-      (program) => program.title.trim() !== ""
-    );
-    if (validPrograms.length === 0) {
-      setError("At least one program with a non-empty title is required.");
-      return false;
+  // const validatePrograms = () => {
+  //   const validPrograms = formData.programs.filter(
+  //     (program) => program.title.trim() !== "" 
+  //   );
+  //   if (validPrograms.length === 0) {
+  //     setError("At least one program with a non-empty title is required.");
+  //     return false;
+  //   }
+  //   return true;
+  // };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.target.trim()) {
+      errors.target = "Target is required";
+      isValid = false;
     }
-    return true;
+
+    if (!formData.responsible) {
+      errors.responsible = "Responsible is required";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
   const prepareFormData = (isDraft) => {
@@ -204,7 +244,7 @@ const QmsAddTargets = () => {
       formDataToSend.append("upload_attachment", formData.upload_attachment);
     }
 
-    // Append programs correctly - the key fix for both normal and draft submissions
+    // Append programs correctly
     const validPrograms = formData.programs.filter(p => p.title.trim() !== "");
 
     // Use JSON string for draft endpoint
@@ -222,7 +262,7 @@ const QmsAddTargets = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validatePrograms()) return;
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
@@ -240,27 +280,49 @@ const QmsAddTargets = () => {
 
       console.log("Target Response", response.data);
       setIsLoading(false);
-      navigate("/company/qms/list-targets");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-targets");
+      }, 1500);
+      setSuccessMessage("Targets Added Successfully")
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsLoading(false);
-      const errorMessage =
-        error.response?.data?.errors?.programs
-          ? `Failed to save programs: ${JSON.stringify(error.response.data.errors.programs, null, 2)}`
-          : error.response?.data?.message || "Failed to save. Please check your inputs and try again.";
-      setError(errorMessage);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
   const handleSaveAsDraft = async (e) => {
     e.preventDefault();
-    if (!validatePrograms()) return;
 
     try {
       setIsLoading(true);
       const formDataToSend = prepareFormData(true);
 
-      // Log the form data for debugging
       console.log("Draft Form Data:", Object.fromEntries(formDataToSend.entries()));
 
       const response = await axios.post(
@@ -275,15 +337,39 @@ const QmsAddTargets = () => {
 
       console.log("Draft Response", response.data);
       setIsLoading(false);
-      navigate("/company/qms/draft-targets");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-targets");
+      }, 1500);
+      setSuccessMessage("Targets Drafted Successfully")
     } catch (error) {
       console.error("Error saving as draft:", error);
       setIsLoading(false);
-      const errorMessage =
-        error.response?.data?.errors?.programs
-          ? `Failed to save programs as draft: ${JSON.stringify(error.response.data.errors.programs, null, 2)}`
-          : error.response?.data?.message || "Failed to save as draft. Please check your inputs and try again.";
-      setError(errorMessage); 
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
     }
   };
 
@@ -313,11 +399,17 @@ const QmsAddTargets = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
       <form
         onSubmit={handleSubmit}
@@ -332,9 +424,11 @@ const QmsAddTargets = () => {
             name="target"
             value={formData.target}
             onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
+            className={`add-training-inputs focus:outline-none ${formErrors.target ? "border-red-500" : ""}`}
           />
+          {formErrors.target && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.target}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3">
@@ -352,7 +446,7 @@ const QmsAddTargets = () => {
           <div key={field.id} className="flex flex-col gap-3">
             <div className="flex items-center gap-2 justify-between last:pr-[57px]">
               <label className="add-training-label">
-                Program(s) <span className="text-red-500">*</span>
+                Program(s)
               </label>
               {index > 0 && (
                 <button
@@ -370,7 +464,6 @@ const QmsAddTargets = () => {
                 value={field.title}
                 onChange={(e) => handleProgramChange(field.id, e.target.value)}
                 className="add-training-inputs focus:outline-none flex-1"
-                required={index === 0}
               />
               {index === programFields.length - 1 && (
                 <button
@@ -483,8 +576,7 @@ const QmsAddTargets = () => {
             onChange={handleChange}
             onFocus={() => setFocusedDropdown("responsible")}
             onBlur={() => setFocusedDropdown(null)}
-            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
+            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
           >
             <option value="" disabled>
               {isLoading ? "Loading..." : "Select Responsible"}
@@ -503,11 +595,13 @@ const QmsAddTargets = () => {
           </select>
           <ChevronDown
             className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                        ${focusedDropdown === "responsible" ? "rotate-180" : ""
-              }`}
+                        ${focusedDropdown === "responsible" ? "rotate-180" : ""}`}
             size={20}
             color="#AAAAAA"
           />
+          {formErrors.responsible && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.responsible}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-3 relative">
@@ -519,7 +613,6 @@ const QmsAddTargets = () => {
             onFocus={() => setFocusedDropdown("status")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
           >
             <option value="" disabled>
               Select Status

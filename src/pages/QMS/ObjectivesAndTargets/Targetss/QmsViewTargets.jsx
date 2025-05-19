@@ -5,6 +5,9 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewTargets = () => {
     const [formData, setFormData] = useState({
@@ -22,15 +25,19 @@ const QmsViewTargets = () => {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage] = useState("Target");
+    const [successMessage] = useState("Target Deleted Successfully");
     const navigate = useNavigate();
-    const { id } = useParams(); // Get target ID from URL
+    const { id } = useParams();
 
-    // Fetch target data
     const fetchTarget = async () => {
         setLoading(true);
         try {
             const response = await axios.get(`${BASE_URL}/qms/targets-get/${id}/`);
-            const data = response.data.data; // Assuming { success: true, data: {...} }
+            const data = response.data.data;
             setFormData({
                 target: data.target || data.title || "No Title",
                 title: data.title || "",
@@ -53,7 +60,6 @@ const QmsViewTargets = () => {
         }
     };
 
-    // Fetch data on mount
     useEffect(() => {
         if (id) {
             fetchTarget();
@@ -71,30 +77,56 @@ const QmsViewTargets = () => {
         navigate(`/company/qms/edit-targets/${id}`);
     };
 
-    const handleDelete = async () => {
-        if (window.confirm("Are you sure you want to delete this target?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/targets-get/${id}/`);
+    const handleDelete = () => {
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/targets-get/${id}/`);
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
                 navigate("/company/qms/list-targets");
-            } catch (err) {
-                setError("Failed to delete target. Please try again.");
-                console.error("Error deleting target:", err);
+            }, 3000);
+        } catch (err) {
+            setShowDeleteModal(false);
+            let errorMsg = "Failed to delete target. Please try again.";
+            if (err.response?.data?.detail) {
+                errorMsg = err.response.data.detail;
+            } else if (err.response?.data?.message) {
+                errorMsg = err.response.data.message;
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
         return `${day}-${month}-${year}`;
     };
 
+
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
-            {/* Header */}
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
                 <h2 className="view-employee-head">Targets and Programs Information</h2>
                 <button
@@ -105,20 +137,12 @@ const QmsViewTargets = () => {
                 </button>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="text-red-500 p-5">{error}</div>
-            )}
-
-            {/* Loading State */}
             {loading && (
-                <div className="text-center p-5">Loading...</div>
+                <div className="text-center p-5 not-found">Loading...</div>
             )}
 
-            {/* Content */}
-            {!loading && !error && (
+            {!loading && (
                 <div className="p-5 relative">
-                    {/* Vertical divider line */}
                     <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px]">
@@ -148,11 +172,10 @@ const QmsViewTargets = () => {
                                         ))}
                                     </ul>
                                 ) : (
-                                    '-'
+                                    'N/A'
                                 )}
                             </div>
                         </div>
-
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -175,7 +198,6 @@ const QmsViewTargets = () => {
                             <div className="view-employee-data">{formData.responsible?.first_name} {formData.responsible?.last_name || 'N/A'}</div>
                         </div>
 
-
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Status
@@ -189,8 +211,6 @@ const QmsViewTargets = () => {
                             </label>
                             <div className="view-employee-data">{formatDate(formData.reminder_date || 'N/A')}</div>
                         </div>
-
-
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -206,7 +226,7 @@ const QmsViewTargets = () => {
                                     Click to view file <Eye size={17} />
                                 </a>
                             ) : (
-                                <div className="view-employee-data">-</div>
+                                <div className="view-employee-data">N/A</div>
                             )}
                         </div>
 
@@ -236,6 +256,25 @@ const QmsViewTargets = () => {
                     </div>
                 </div>
             )}
+
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

@@ -4,6 +4,8 @@ import { ChevronDown, Eye, Plus, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditTargets = () => {
     const { id } = useParams(); // Get target ID from URL
@@ -13,6 +15,15 @@ const QmsEditTargets = () => {
     const [error, setError] = useState('');
     const [programFields, setProgramFields] = useState([{ id: 1, value: '' }]);
     const [existingAttachment, setExistingAttachment] = useState(null);
+    const [formErrors, setFormErrors] = useState({
+        target: '',
+        responsible: ''
+    });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -63,6 +74,10 @@ const QmsEditTargets = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -94,22 +109,45 @@ const QmsEditTargets = () => {
                 results: data.results || '',
                 target_date: parseDate(data.target_date),
                 reminder_date: parseDate(data.reminder_date),
-                responsible: data.responsible || '', // This should be the user object or ID
+                responsible: data.responsible?.id || data.responsible || '',
                 status: data.status || 'On Going',
                 upload_attachment: null,
                 is_draft: data.is_draft || false,
-                programs: programs.length > 0 ? programs : [{ title: '' }] // Initialize programs
+                programs: programs.length > 0 ? programs : [{ title: '' }]
             });
 
             setExistingAttachment(data.upload_attachment || null);
             setError('');
         } catch (error) {
             console.error("Error fetching target:", error);
-            setError("Failed to load target data.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
     };
+
     useEffect(() => {
         fetchUsers();
         if (id) {
@@ -133,6 +171,13 @@ const QmsEditTargets = () => {
                 ...formData,
                 [name]: value
             });
+            // Clear error when user starts typing
+            if (name === "target" || name === "responsible") {
+                setFormErrors({
+                    ...formErrors,
+                    [name]: ""
+                });
+            }
         }
     };
 
@@ -173,15 +218,36 @@ const QmsEditTargets = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.target.trim()) {
+            errors.target = "Target is required";
+            isValid = false;
+        }
+
+        if (!formData.responsible) {
+            errors.responsible = "Responsible is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
         setIsLoading(true);
         setError('');
 
         try {
             const submissionData = new FormData();
-            console.log('Target Form Data:', formData); 
-            
+            console.log('Target Form Data:', formData);
 
             // Append all basic fields
             submissionData.append('company', companyId);
@@ -190,7 +256,7 @@ const QmsEditTargets = () => {
             submissionData.append('results', formData.results);
             submissionData.append('target_date', formatDate(formData.target_date) || '');
             submissionData.append('reminder_date', formatDate(formData.reminder_date) || '');
-            submissionData.append('responsible', formData.responsible.id || formData.responsible); // Ensure responsible is ID
+            submissionData.append('responsible', formData.responsible);
             submissionData.append('status', formData.status);
             submissionData.append('is_draft', formData.is_draft);
 
@@ -213,10 +279,38 @@ const QmsEditTargets = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            navigate('/company/qms/list-targets');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-targets');
+            }, 1500);
+            setSuccessMessage("Targets Updated Successfully")
         } catch (error) {
             console.error('Error updating target:', error);
-            setError(error.response?.data?.message || 'Failed to update target. Please check your inputs.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -252,15 +346,22 @@ const QmsEditTargets = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             {isLoading && (
-                <div className="text-center px-[104px] py-5">Loading...</div>
+                <div className="text-center px-[104px] py-5 not-found">Loading...</div>
             )}
+
 
             {!isLoading && (
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
@@ -273,12 +374,12 @@ const QmsEditTargets = () => {
                             name="target"
                             value={formData.target}
                             onChange={handleChange}
-                            className="add-training-inputs focus:outline-none"
-                            required
+                            className={`add-training-inputs focus:outline-none ${formErrors.target ? "border-red-500" : ""}`}
                         />
+                        {formErrors.target && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.target}</p>
+                        )}
                     </div>
-
-                   
 
                     <div className="flex flex-col gap-3">
                         <label className="add-training-label">
@@ -413,8 +514,7 @@ const QmsEditTargets = () => {
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("responsible")}
                             onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
+                            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
                         >
                             <option value="" disabled>Select Responsible</option>
                             {users.map(user => (
@@ -429,6 +529,9 @@ const QmsEditTargets = () => {
                             size={20}
                             color="#AAAAAA"
                         />
+                        {formErrors.responsible && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.responsible}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3 relative">
@@ -440,7 +543,6 @@ const QmsEditTargets = () => {
                             onFocus={() => setFocusedDropdown("status")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
                         >
                             <option value="" disabled>Select Status</option>
                             <option value="On Going">On Going</option>

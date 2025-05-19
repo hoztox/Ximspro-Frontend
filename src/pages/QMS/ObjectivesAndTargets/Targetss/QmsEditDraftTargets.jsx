@@ -4,6 +4,8 @@ import { ChevronDown, Eye, Plus, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftTargets = () => {
     const { id } = useParams(); // Get target ID from URL
@@ -13,6 +15,15 @@ const QmsEditDraftTargets = () => {
     const [error, setError] = useState('');
     const [programFields, setProgramFields] = useState([{ id: 1, value: '' }]);
     const [existingAttachment, setExistingAttachment] = useState(null);
+    const [formErrors, setFormErrors] = useState({
+        target: '',
+        responsible: ''
+    });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -45,7 +56,7 @@ const QmsEditDraftTargets = () => {
         status: '',
         upload_attachment: null,
         is_draft: false,
-        programs: [] // Initialize programs array
+        programs: []
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -64,6 +75,10 @@ const QmsEditDraftTargets = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -73,8 +88,8 @@ const QmsEditDraftTargets = () => {
         try {
             const response = await axios.get(`${BASE_URL}/qms/targets-get/${id}/`);
             const data = response.data.data;
-            console.log('ffffffffffff', response.data); 
-            
+            console.log('Fetched draft target:', response.data);
+
             // Parse dates
             const parseDate = (dateStr) => {
                 if (!dateStr) return { day: '', month: '', year: '' };
@@ -99,18 +114,40 @@ const QmsEditDraftTargets = () => {
                 results: data.results || '',
                 target_date: parseDate(data.target_date),
                 reminder_date: parseDate(data.reminder_date),
-                responsible: responsibleId, // Store just the ID
+                responsible: responsibleId,
                 status: data.status || 'On Going',
                 upload_attachment: null,
-                is_draft: false, // Ensure draft status
-                programs: programs.map(p => ({ title: p.title || '' })) // Store programs in formData
+                is_draft: false,
+                programs: programs.map(p => ({ title: p.title || '' }))
             });
 
             setExistingAttachment(data.upload_attachment || null);
             setError('');
         } catch (error) {
             console.error("Error fetching draft target:", error);
-            setError("Failed to load draft target data.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -139,6 +176,13 @@ const QmsEditDraftTargets = () => {
                 ...formData,
                 [name]: value
             });
+            // Clear error when user starts typing
+            if (name === "target" || name === "responsible") {
+                setFormErrors({
+                    ...formErrors,
+                    [name]: ""
+                });
+            }
         }
     };
 
@@ -194,8 +238,30 @@ const QmsEditDraftTargets = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.target.trim()) {
+            errors.target = "Target is required";
+            isValid = false;
+        }
+
+        if (!formData.responsible) {
+            errors.responsible = "Responsible is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
         setIsLoading(true);
         setError('');
 
@@ -206,24 +272,22 @@ const QmsEditDraftTargets = () => {
             submissionData.append('target', formData.target);
             submissionData.append('associative_objective', formData.associative_objective);
             submissionData.append('results', formData.results);
-            
+
             // Only append dates if they are valid
             const targetDate = formatDate(formData.target_date);
             const reminderDate = formatDate(formData.reminder_date);
-            
+
             if (targetDate) {
                 submissionData.append('target_date', targetDate);
             }
-            
+
             if (reminderDate) {
                 submissionData.append('reminder_date', reminderDate);
             }
-            
-            // Make sure responsible is not empty before appending
-            if (formData.responsible) {
-                submissionData.append('responsible', formData.responsible);
-            }
-            
+
+            // Append responsible
+            submissionData.append('responsible', formData.responsible);
+
             submissionData.append('status', formData.status);
             submissionData.append('is_draft', false);
 
@@ -241,35 +305,45 @@ const QmsEditDraftTargets = () => {
                 submissionData.append('upload_attachment', formData.upload_attachment);
             }
 
-            // Add some debugging logs
-            console.log("Submitting responsible ID:", formData.responsible);
-            
-            // For FormData debugging
-            for (let pair of submissionData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-
             // Update draft target
             const response = await axios.put(`${BASE_URL}/qms/targets-get/${id}/`, submissionData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             console.log("Update successful:", response.data);
-            navigate('/company/qms/draft-targets');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-targets');
+            }, 1500);
+            setSuccessMessage("Targets Saved Successfully")
 
         } catch (error) {
             console.error('Error updating draft target:', error);
-            // More detailed error handling
-            if (error.response && error.response.data) {
-                const errorData = error.response.data;
-                if (errorData.errors && errorData.errors.responsible) {
-                    setError(`Responsible field error: ${errorData.errors.responsible.join(', ')}`);
-                } else {
-                    setError('Failed to update draft target: ' + (errorData.message || 'Unknown error'));
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
                 }
-            } else {
-                setError('Failed to update draft target. Please check your inputs.');
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -305,14 +379,20 @@ const QmsEditDraftTargets = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             {isLoading && (
-                <div className="text-center px-[104px] py-5">Loading...</div>
+                <div className="text-center py-5 not-found">Loading...</div>
             )}
 
             {!isLoading && (
@@ -326,9 +406,11 @@ const QmsEditDraftTargets = () => {
                             name="target"
                             value={formData.target}
                             onChange={handleChange}
-                            className="add-training-inputs focus:outline-none"
-                            required
+                            className={`add-training-inputs focus:outline-none ${formErrors.target ? "border-red-500" : ""}`}
                         />
+                        {formErrors.target && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.target}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -457,15 +539,14 @@ const QmsEditDraftTargets = () => {
                     </div>
 
                     <div className="flex flex-col gap-3 relative">
-                        <label className="add-training-label">Responsible <span className="text-red-500">*</span></label> 
+                        <label className="add-training-label">Responsible <span className="text-red-500">*</span></label>
                         <select
                             name="responsible"
                             value={formData.responsible}
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("responsible")}
                             onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
+                            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
                         >
                             <option value="" disabled>Select Responsible</option>
                             {users.map(user => (
@@ -480,6 +561,9 @@ const QmsEditDraftTargets = () => {
                             size={20}
                             color="#AAAAAA"
                         />
+                        {formErrors.responsible && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.responsible}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3 relative">
@@ -491,7 +575,6 @@ const QmsEditDraftTargets = () => {
                             onFocus={() => setFocusedDropdown("status")}
                             onBlur={() => setFocusedDropdown(null)}
                             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
                         >
                             <option value="" disabled>Select Status</option>
                             <option value="On Going">On Going</option>
