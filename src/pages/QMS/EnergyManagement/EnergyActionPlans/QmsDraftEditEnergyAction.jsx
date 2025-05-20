@@ -11,6 +11,10 @@ const QmsDraftEditEnergyAction = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    title: "",
+    responsible: ""
+  });
   const [programFields, setProgramFields] = useState([{ id: 1, value: "" }]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
@@ -95,7 +99,7 @@ const QmsDraftEditEnergyAction = () => {
         responsible: response.data.responsible || "",
         energy_improvements: response.data.energy_improvements || "",
         statement: response.data.statement || "",
-        upload_attachment: response.data.upload_attachment || null,
+        upload_attachment: null,
       });
 
       if (response.data.programs && Array.isArray(response.data.programs)) {
@@ -111,11 +115,10 @@ const QmsDraftEditEnergyAction = () => {
       if (response.data.upload_attachment) {
         setExistingAttachment(response.data.upload_attachment);
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching energy action:", error);
       setError("Failed to load energy action data. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -157,6 +160,13 @@ const QmsDraftEditEnergyAction = () => {
         [name]: value,
       });
     }
+
+    if (name === "title" || name === "responsible") {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
   const handleProgramChange = (id, value) => {
@@ -186,6 +196,24 @@ const QmsDraftEditEnergyAction = () => {
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
   };
 
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      errors.title = "Action Plan Title/Name is required";
+      isValid = false;
+    }
+
+    if (!formData.responsible) {
+      errors.responsible = "Please select responsible";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const handleViewFile = () => {
     if (existingAttachment) {
       window.open(existingAttachment, "_blank");
@@ -194,6 +222,11 @@ const QmsDraftEditEnergyAction = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -212,27 +245,24 @@ const QmsDraftEditEnergyAction = () => {
       const date = formatDate(formData.date);
 
       const submissionData = new FormData();
-      console.log('rrrrrrrrrrrrrrrrrr', formData);
 
       submissionData.append("company", companyId);
       submissionData.append("title", formData.title);
       submissionData.append("associative_objective", formData.associative_objective);
-
       submissionData.append("legal_requirements", formData.legal_requirements);
       submissionData.append("means", formData.means);
       if (date) submissionData.append("date", date);
-      submissionData.append("responsible", formData.responsible.id || "");
+      submissionData.append("responsible", formData.responsible);
       submissionData.append("energy_improvements", formData.energy_improvements);
       submissionData.append("statement", formData.statement);
-
+      submissionData.append("action_plan", formData.action_plan);
+      submissionData.append("programs", JSON.stringify(programs));
 
       if (formData.upload_attachment instanceof File) {
         submissionData.append("upload_attachment", formData.upload_attachment);
       }
 
-      submissionData.append("programs", JSON.stringify(programs));
-
-      const response = await axios.put(
+      await axios.put(
         `${BASE_URL}/qms/energy-action/${id}/`,
         submissionData,
         {
@@ -242,11 +272,11 @@ const QmsDraftEditEnergyAction = () => {
         }
       );
 
-      console.log("Updated Energy Action:", response.data);
       navigate("/company/qms/draft-energy-action-plan");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error updating draft energy action:", error);
       setError("Failed to update. Please check your inputs and try again.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -277,15 +307,6 @@ const QmsDraftEditEnergyAction = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className="px-[104px] py-5">Loading...</div>
-      ) : (
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
@@ -313,9 +334,11 @@ const QmsDraftEditEnergyAction = () => {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-              required
+              className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
             />
+            {formErrors.title && (
+              <p className="text-red-500 text-sm">{formErrors.title}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -495,8 +518,7 @@ const QmsDraftEditEnergyAction = () => {
               onChange={handleChange}
               onFocus={() => setFocusedDropdown("responsible")}
               onBlur={() => setFocusedDropdown(null)}
-              className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
+              className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
             >
               <option value="" disabled>
                 {isLoading ? "Loading..." : "Select Responsible"}
@@ -504,7 +526,7 @@ const QmsDraftEditEnergyAction = () => {
               {users && users.length > 0
                 ? users.map((user) => (
                   <option key={user.id} value={user.id}>
-                    {user.full_name || user.username}
+                    {user.first_name} {user.last_name || ""}
                   </option>
                 ))
                 : !isLoading && (
@@ -512,11 +534,14 @@ const QmsDraftEditEnergyAction = () => {
                 )}
             </select>
             <ChevronDown
-              className={`absolute right-3 top-[38%] transform transition-transform duration-300
+              className={`absolute right-3 top-[55px] transform transition-transform duration-300
                 ${focusedDropdown === "responsible" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
+            {formErrors.responsible && (
+              <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -544,6 +569,7 @@ const QmsDraftEditEnergyAction = () => {
               type="button"
               onClick={handleListDraftEnergyAction}
               className="cancel-btn duration-200"
+              disabled={isLoading}
             >
               Cancel
             </button>
@@ -556,7 +582,6 @@ const QmsDraftEditEnergyAction = () => {
             </button>
           </div>
         </form>
-      )}
     </div>
   );
 };

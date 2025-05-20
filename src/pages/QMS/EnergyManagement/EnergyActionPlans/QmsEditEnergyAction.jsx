@@ -6,10 +6,14 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsEditEnergyAction = () => {
-  const { id } = useParams(); // Get the Energy Action ID from URL
+  const { id } = useParams();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    title: "",
+    responsible: ""
+  });
   const [programFields, setProgramFields] = useState([{ id: 1, value: "" }]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
@@ -60,15 +64,12 @@ const QmsEditEnergyAction = () => {
   const fetchEnergyAction = async () => {
     try {
       setIsLoading(true);
-      // Fetch the energy action details
       const response = await axios.get(`${BASE_URL}/qms/energy-action/${id}/`);
-      
-      // Parse the date from the response
+
       const dateParts = response.data.date
         ? response.data.date.split("-")
         : ["", "", ""];
 
-      // Set form data based on the response
       setFormData({
         action_plan: response.data.action_plan || "",
         title: response.data.title || "",
@@ -83,10 +84,9 @@ const QmsEditEnergyAction = () => {
         responsible: response.data.responsible || "",
         energy_improvements: response.data.energy_improvements || "",
         statement: response.data.statement || "",
-        upload_attachment: response.data.upload_attachment || null,
+        upload_attachment: null,
       });
 
-      // Handle programs from response
       if (response.data.programs && Array.isArray(response.data.programs)) {
         const programs = response.data.programs.map((program, index) => ({
           id: index + 1,
@@ -100,11 +100,10 @@ const QmsEditEnergyAction = () => {
       if (response.data.upload_attachment) {
         setExistingAttachment(response.data.upload_attachment);
       }
-
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching energy action:", error);
       setError("Failed to load energy action data. Please try again.");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -142,13 +141,12 @@ const QmsEditEnergyAction = () => {
       ...formData,
       upload_attachment: e.target.files[0],
     });
-    setExistingAttachment(null); // Clear existing attachment when new file is selected
+    setExistingAttachment(null);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Prevent manual editing of action_plan number
     if (name === "action_plan") return;
 
     if (name.includes(".")) {
@@ -165,6 +163,13 @@ const QmsEditEnergyAction = () => {
         ...formData,
         [name]: value,
       });
+    }
+
+    if (name === "title" || name === "responsible") {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
     }
   };
 
@@ -190,6 +195,24 @@ const QmsEditEnergyAction = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      errors.title = "Action Plan Title/Name is required";
+      isValid = false;
+    }
+
+    if (!formData.responsible) {
+      errors.responsible = "Please select responsible";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
+
   const formatDate = (dateObj) => {
     if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
@@ -197,21 +220,23 @@ const QmsEditEnergyAction = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError("");
       const companyId = getUserCompanyId();
       const userId = localStorage.getItem("user_id") || null;
       const date = formatDate(formData.date);
-  
-      // Prepare programs array
+
       const programs = programFields
         .filter(field => field.value.trim() !== "")
         .map(field => ({ Program: field.value }));
-  
+
       if (formData.upload_attachment instanceof File) {
-        // Create FormData to send file + data
         const fileFormData = new FormData();
         fileFormData.append("upload_attachment", formData.upload_attachment);
         fileFormData.append("company", companyId);
@@ -220,20 +245,14 @@ const QmsEditEnergyAction = () => {
         fileFormData.append("associative_objective", formData.associative_objective);
         fileFormData.append("legal_requirements", formData.legal_requirements);
         fileFormData.append("means", formData.means);
-        fileFormData.append("date", date);
-        fileFormData.append("responsible", formData.responsible?.id || formData.responsible);
+        if (date) fileFormData.append("date", date);
+        fileFormData.append("responsible", formData.responsible);
         fileFormData.append("energy_improvements", formData.energy_improvements);
         fileFormData.append("statement", formData.statement);
-  
-        if (formData.action_plan) {
-          fileFormData.append("action_plan", formData.action_plan);
-        }
-  
-        // Append programs array (if your backend expects it as JSON string)
+        fileFormData.append("action_plan", formData.action_plan);
         fileFormData.append("programs", JSON.stringify(programs));
-  
-        // Send FormData with multipart/form-data headers
-        const response = await axios.put(
+
+        await axios.put(
           `${BASE_URL}/qms/energy-action/${id}/`,
           fileFormData,
           {
@@ -242,10 +261,7 @@ const QmsEditEnergyAction = () => {
             },
           }
         );
-  
-        console.log("Updated Energy Action with file:", response.data);
       } else {
-        // No file, send JSON
         const requestPayload = {
           company: companyId,
           user: userId,
@@ -254,34 +270,27 @@ const QmsEditEnergyAction = () => {
           legal_requirements: formData.legal_requirements,
           means: formData.means,
           date: date,
-          responsible: formData.responsible?.id || formData.responsible,
+          responsible: formData.responsible,
           energy_improvements: formData.energy_improvements,
           statement: formData.statement,
           programs: programs,
+          action_plan: formData.action_plan,
         };
-  
-        if (formData.action_plan) {
-          requestPayload.action_plan = formData.action_plan;
-        }
-  
-        const response = await axios.put(
+
+        await axios.put(
           `${BASE_URL}/qms/energy-action/${id}/`,
           requestPayload
         );
-  
-        console.log("Updated Energy Action:", response.data);
       }
-  
+
       navigate("/company/qms/list-energy-action-plan");
-  
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error updating energy action:", error);
       setError("Failed to update. Please check your inputs and try again.");
     } finally {
       setIsLoading(false);
     }
   };
-  
 
   const generateOptions = (start, end, prefix = "") => {
     const options = [];
@@ -309,15 +318,7 @@ const QmsEditEnergyAction = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
 
-      {isLoading ? (
-        <div className="px-[104px] py-5">Loading...</div>
-      ) : (
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
@@ -345,9 +346,11 @@ const QmsEditEnergyAction = () => {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-              required
+              className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
             />
+            {formErrors.title && (
+              <p className="text-red-500 text-sm">{formErrors.title}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -380,7 +383,7 @@ const QmsEditEnergyAction = () => {
             </div>
             <div className="flex justify-between items-center">
               {existingAttachment && (
-                <button 
+                <button
                   type="button"
                   className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]"
                   onClick={() => window.open(existingAttachment, '_blank')}
@@ -404,7 +407,6 @@ const QmsEditEnergyAction = () => {
             </div>
           </div>
 
-          {/* Dynamic Program Fields */}
           {programFields.map((field, index) => (
             <div key={field.id} className="flex flex-col gap-3">
               <div className="flex items-center gap-2 justify-between last:pr-[57px]">
@@ -468,7 +470,6 @@ const QmsEditEnergyAction = () => {
           <div className="flex flex-col gap-3">
             <label className="add-training-label">Target Date</label>
             <div className="grid grid-cols-3 gap-5">
-              {/* Day */}
               <div className="relative">
                 <select
                   name="date.day"
@@ -485,17 +486,15 @@ const QmsEditEnergyAction = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.day"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.day"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
               </div>
 
-              {/* Month */}
               <div className="relative">
                 <select
                   name="date.month"
@@ -512,17 +511,15 @@ const QmsEditEnergyAction = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.month"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.month"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
               </div>
 
-              {/* Year */}
               <div className="relative">
                 <select
                   name="date.year"
@@ -539,11 +536,10 @@ const QmsEditEnergyAction = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${
-                                   focusedDropdown === "date.year"
-                                     ? "rotate-180"
-                                     : ""
-                                 }`}
+                                 ${focusedDropdown === "date.year"
+                      ? "rotate-180"
+                      : ""
+                    }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -561,32 +557,33 @@ const QmsEditEnergyAction = () => {
               onChange={handleChange}
               onFocus={() => setFocusedDropdown("responsible")}
               onBlur={() => setFocusedDropdown(null)}
-              className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
+              className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
             >
               <option value="" disabled>
                 {isLoading ? "Loading..." : "Select Responsible"}
               </option>
               {users && users.length > 0
                 ? users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name || ""}
-                    </option>
-                  ))
+                  <option key={user.id} value={user.id}>
+                    {user.first_name} {user.last_name || ""}
+                  </option>
+                ))
                 : !isLoading && (
-                    <option value="" disabled>
-                      No users found
-                    </option>
-                  )}
+                  <option value="" disabled>
+                    No users found
+                  </option>
+                )}
             </select>
             <ChevronDown
-              className={`absolute right-3 top-[38%] transform transition-transform duration-300
-                         ${
-                           focusedDropdown === "responsible" ? "rotate-180" : ""
-                         }`}
+              className={`absolute right-3 top-[55px] transform transition-transform duration-300
+                         ${focusedDropdown === "responsible" ? "rotate-180" : ""
+                }`}
               size={20}
               color="#AAAAAA"
             />
+            {formErrors.responsible && (
+              <p className="text-red-500 text-sm">{formErrors.responsible}</p> 
+            )}
           </div>
 
           <div className="flex flex-col gap-3">
@@ -619,6 +616,7 @@ const QmsEditEnergyAction = () => {
                 type="button"
                 onClick={handleListEnergyAction}
                 className="cancel-btn duration-200"
+                disabled={isLoading}
               >
                 Cancel
               </button>
@@ -632,7 +630,6 @@ const QmsEditEnergyAction = () => {
             </div>
           </div>
         </form>
-      )}
     </div>
   );
 };
