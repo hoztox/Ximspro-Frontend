@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ProcessTypeModal from './ProcessTypeModal';
+import SuccessModal from './Modals/SuccessModal';
+import ErrorModal from './Modals/ErrorModal';
 
 const QmsEditEnvironmentalAspect = () => {
     const navigate = useNavigate();
@@ -20,7 +22,12 @@ const QmsEditEnvironmentalAspect = () => {
     const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
     const [corrections, setCorrections] = useState([]);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
-    const [environmentalAspectDetails, setEnvironmentalAspectDetails] = useState(null); 
+    const [environmentalAspectDetails, setEnvironmentalAspectDetails] = useState(null);
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -54,7 +61,7 @@ const QmsEditEnvironmentalAspect = () => {
         send_notification_to_checked_by: false,
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
-        send_email_to_approved_by: false, 
+        send_email_to_approved_by: false,
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         level_of_impact: '',
         written_by: '',
@@ -111,7 +118,29 @@ const QmsEditEnvironmentalAspect = () => {
             setLoading(false);
         } catch (error) {
             console.error('Error fetching environmental aspect:', error);
-            setError('Failed to load environmental aspect data');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setIsInitialLoad(false);
             setLoading(false);
         }
@@ -141,6 +170,10 @@ const QmsEditEnvironmentalAspect = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -345,11 +378,39 @@ const QmsEditEnvironmentalAspect = () => {
             });
 
             setLoading(false);
-            navigate('/company/qms/list-environmantal-aspect');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-environmantal-aspect');
+            }, 1500);
+            setSuccessMessage("Environmental Aspect Updated Successfully")
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update Environmental Aspect');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Update error:', err);
         }
     };
@@ -369,10 +430,6 @@ const QmsEditEnvironmentalAspect = () => {
 
     const errorTextClass = "text-red-500 text-sm mt-1";
 
-    if (loading) {
-        return <div className="text-center not-found">Loading...</div>;
-    }
-
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white p-5">
             <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
@@ -390,11 +447,23 @@ const QmsEditEnvironmentalAspect = () => {
                 onClose={handleCloseProcessTypeModal}
             />
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
             <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                 <div className="grid md:grid-cols-2 gap-5">
                     <div>
                         <label className="add-qms-manual-label">
-                            Aspect Source <span className="text-red-500">*</span>
+                            Aspect Source
                         </label>
                         <input
                             type="text"
@@ -403,7 +472,7 @@ const QmsEditEnvironmentalAspect = () => {
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />
-                        {fieldErrors.aspect_source && <p className={errorTextClass}>{fieldErrors.aspect_source}</p>}
+
                     </div>
 
                     <div>

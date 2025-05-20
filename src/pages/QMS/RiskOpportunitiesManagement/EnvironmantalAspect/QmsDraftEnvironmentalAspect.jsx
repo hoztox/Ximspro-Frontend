@@ -121,6 +121,25 @@ const QmsDraftEnvironmentalAspect = () => {
         }, 1500);
         console.log("Environmental aspect deleted successfully");
       } catch (error) {
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
         setShowDeleteDraftManualErrorModal(true);
         setTimeout(() => {
           setShowDeleteDraftManualErrorModal(false);
@@ -214,6 +233,7 @@ const QmsDraftEnvironmentalAspect = () => {
       <DeleteQmsManualDraftErrorModal
         showDeleteDraftManualErrorModal={showDeleteDraftManualErrorModal}
         onClose={() => setShowDeleteDraftManualErrorModal(false)}
+        error = {error}
       />
 
       {/* Table */}
@@ -222,8 +242,6 @@ const QmsDraftEnvironmentalAspect = () => {
           <div className="text-center py-4 text-white">
             Loading environmental aspects...
           </div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
         ) : (
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
@@ -326,9 +344,8 @@ const QmsDraftEnvironmentalAspect = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
           >
             Previous
           </button>
@@ -336,9 +353,8 @@ const QmsDraftEnvironmentalAspect = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {number}
             </button>
@@ -346,9 +362,8 @@ const QmsDraftEnvironmentalAspect = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
           >
             Next
           </button>

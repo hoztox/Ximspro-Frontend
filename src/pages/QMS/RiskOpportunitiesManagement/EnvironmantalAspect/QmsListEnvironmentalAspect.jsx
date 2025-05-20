@@ -152,7 +152,25 @@ const QmsListEnvironmentalAspect = () => {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching environmental aspects:", err);
-      setError("Failed to load environmental aspects. Please try again.");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setLoading(false);
     }
   };
@@ -301,6 +319,25 @@ const QmsListEnvironmentalAspect = () => {
       } catch (err) {
         console.error("Error deleting environmental aspect:", err);
         setShowDeleteModal(false);
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          }
+          else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setShowDeleteManualErrorModal(true);
         setTimeout(() => {
           setShowDeleteManualErrorModal(false);
@@ -354,11 +391,30 @@ const QmsListEnvironmentalAspect = () => {
         setShowPublishSuccessModal(false);
         closePublishModal();
         fetchEnvironmentalAspects();
-        navigate("/company/qms/environmental-aspects");
+        navigate("/company/qms/list-environmantal-aspect");
         setIsPublishing(false);
       }, 1500);
     } catch (error) {
       console.error("Error publishing environmental aspect:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowPublishErrorModal(true);
       setIsPublishing(false);
       setTimeout(() => {
@@ -445,6 +501,7 @@ const QmsListEnvironmentalAspect = () => {
       <DeleteQmsManualErrorModal
         showDeleteManualErrorModal={showDeleteManualErrorModal}
         onClose={() => setShowDeleteManualErrorModal(false)}
+        error={error}
       />
       <PublishSuccessModal
         showPublishSuccessModal={showPublishSuccessModal}
@@ -453,6 +510,7 @@ const QmsListEnvironmentalAspect = () => {
       <PublishErrorModal
         showPublishErrorModal={showPublishErrorModal}
         onClose={() => setShowPublishErrorModal(false)}
+        error={error}
       />
 
       {/* Table */}
@@ -461,8 +519,6 @@ const QmsListEnvironmentalAspect = () => {
           <div className="text-center py-4 not-found">
             Loading...
           </div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
         ) : (
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
@@ -532,8 +588,8 @@ const QmsListEnvironmentalAspect = () => {
                             {aspect.status === "Pending for Review/Checking"
                               ? "Review"
                               : aspect.status === "Correction Requested"
-                              ? "Correct"
-                              : "Click to Approve"}
+                                ? "Correct"
+                                : "Click to Approve"}
                           </button>
                         ) : (
                           <span className="text-[#858585]">
@@ -597,9 +653,8 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
           >
             Previous
           </button>
@@ -607,9 +662,8 @@ const QmsListEnvironmentalAspect = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {number}
             </button>
@@ -617,9 +671,8 @@ const QmsListEnvironmentalAspect = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
           >
             Next
           </button>

@@ -11,6 +11,9 @@ import ManualCorrectionSuccessModal from "./Modals/ManualCorrectionSuccessModal"
 import ManualCorrectionErrorModal from "./Modals/ManualCorrectionErrorModal";
 import ReviewSubmitSuccessModal from "./Modals/ReviewSubmitSuccessModal";
 import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
+import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
+import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
+import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
 
 const QmsViewEnvironmentalAspect = () => {
   const navigate = useNavigate();
@@ -47,6 +50,12 @@ const QmsViewEnvironmentalAspect = () => {
     isOpen: false,
     text: "",
   });
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
 
   const getCurrentUser = () => {
     const role = localStorage.getItem("role");
@@ -272,18 +281,54 @@ const QmsViewEnvironmentalAspect = () => {
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  const handleEdit = () => {
+  const handleEdit = (id) => {
     handleMoveToHistory();
-    navigate(`/company/qms/edit-environmental-aspect/${id}`);
+    navigate(`/company/qms/edit-environmantal-aspect/${id}`);
   };
 
-  const handleDelete = async () => {
+  // Delete handlers
+  const handleDelete = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/qms/aspect-detail/${id}/`);
-      navigate("/company/qms/list-environmental-aspect");
-    } catch (error) {
-      console.error("Error deleting aspect:", error);
+      setShowDeleteModal(false);
+      setShowDeleteManualSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteManualSuccessModal(false);
+        navigate("/company/qms/list-environmantal-aspect");
+      }, 2000);
+    } catch (err) {
+      console.error("Error deleting environmental aspect:", err);
+      setShowDeleteModal(false);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setDeleteError(errorMsg);
+      setShowDeleteManualErrorModal(true);
+      setTimeout(() => {
+        setShowDeleteManualErrorModal(false);
+      }, 2000);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   const currentUserId = Number(localStorage.getItem("user_id"));
@@ -339,6 +384,23 @@ const QmsViewEnvironmentalAspect = () => {
       fetchAspectCorrections();
     } catch (error) {
       console.error("Error submitting review:", error);
+      let errorMsg;
+
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        const data = error.response.data;
+
+        // Try multiple possible locations for an error message
+        errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMsg = "No response received from server.";
+      } else {
+        // Something happened in setting up the request
+        errorMsg = error.message || "An unknown error occurred.";
+      }
+
+      setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
         setShowSubmitManualErrorModal(false);
@@ -403,9 +465,8 @@ const QmsViewEnvironmentalAspect = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
-              index < historyCorrections.length - 1 ? "mb-5" : ""
-            }`}
+            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? "mb-5" : ""
+              }`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -440,6 +501,7 @@ const QmsViewEnvironmentalAspect = () => {
         <ManualCorrectionErrorModal
           showSentCorrectionErrorModal={showSentCorrectionErrorModal}
           onClose={() => setShowSentCorrectionErrorModal(false)}
+          error={error}
         />
         <ReviewSubmitSuccessModal
           showSubmitManualSuccessModal={showSubmitManualSuccessModal}
@@ -448,7 +510,25 @@ const QmsViewEnvironmentalAspect = () => {
         <ReviewSubmitErrorModal
           showSubmitManualErrorModal={showSubmitManualErrorModal}
           onClose={() => setShowSubmitManualErrorModal(false)}
+          error={error}
         />
+
+        {/* Delete Modals */}
+        <DeleteQmsManualConfirmModal
+          showDeleteModal={showDeleteModal}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        />
+        <DeleteQmsManualsuccessModal
+          showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+          onClose={() => setShowDeleteManualSuccessModal(false)}
+        />
+        <DeleteQmsManualErrorModal
+          showDeleteManualErrorModal={showDeleteManualErrorModal}
+          onClose={() => setShowDeleteManualErrorModal(false)}
+          error={deleteError}
+        />
+
         <button
           onClick={handleClose}
           className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -457,8 +537,8 @@ const QmsViewEnvironmentalAspect = () => {
         </button>
       </div>
       <div className="p-5 relative ">
-        <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px]">
+        <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840] h-[550px]"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px] border-b border-[#383840] pb-10">
           <div>
             <label className="block view-employee-label mb-[6px]">
               Aspect Source
@@ -554,7 +634,7 @@ const QmsViewEnvironmentalAspect = () => {
               <div className="flex space-x-10 justify-end">
                 <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                   Edit
-                  <button onClick={handleEdit}>
+                  <button onClick={() => handleEdit(id)}>
                     <img
                       src={edits}
                       alt="Edit Icon"
@@ -574,7 +654,6 @@ const QmsViewEnvironmentalAspect = () => {
                 </div>
               </div>
             )}
-
           </div>
         </div>
         {renderHighlightedCorrection()}

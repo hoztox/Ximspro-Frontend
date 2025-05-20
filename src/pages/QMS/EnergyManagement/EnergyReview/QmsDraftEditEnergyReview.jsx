@@ -275,6 +275,7 @@ const QmsDraftEditEnergyReview = () => {
             submissionData.append('relate_document_process', formData.relate_document_process);
             submissionData.append('revision', formData.revision);
             submissionData.append('send_notification', formData.send_notification);
+            submissionData.append('is_draft', 'false');
 
             const response = await axios.put(`${BASE_URL}/qms/energy-review-draft/update/${id}/`, submissionData, {
                 headers: {

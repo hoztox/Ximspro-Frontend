@@ -123,6 +123,10 @@ const QmsAddEnvironmentalAspect = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
       setError("Failed to load users. Please check your connection and try again.");
+      setShowDraftManualErrorModal(true);
+      setTimeout(() => {
+        setShowDraftManualErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -139,6 +143,11 @@ const QmsAddEnvironmentalAspect = () => {
     } catch (error) {
       console.error("Error fetching process:", error);
       setError("Failed to load process. Please try again.");
+      
+      setShowDraftManualErrorModal(true);
+      setTimeout(() => {
+        setShowDraftManualErrorModal(false);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -178,7 +187,7 @@ const QmsAddEnvironmentalAspect = () => {
   const [errors, setErrors] = useState({});
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.title.trim()) newErrors.title = "Section Name/Title is required";
+    if (!formData.title.trim()) newErrors.title = "Aspect Name/Title is required";
     if (!formData.aspect_no.trim()) newErrors.aspect_no = "Aspect Number is required";
     if (!formData.written_by) newErrors.written_by = "Written/Prepare By is required";
     if (!formData.checked_by) newErrors.checked_by = "Checked/Reviewed By is required";
@@ -247,7 +256,7 @@ const QmsAddEnvironmentalAspect = () => {
       submitData.append('company', companyId);
       Object.keys(formData).forEach(key => {
         if (key === 'send_notification_to_checked_by' || key === 'send_notification_to_approved_by' ||
-            key === 'send_email_to_checked_by' || key === 'send_email_to_approved_by') {
+          key === 'send_email_to_checked_by' || key === 'send_email_to_approved_by') {
           submitData.append(key, formData[key]);
           return;
         }
@@ -257,7 +266,7 @@ const QmsAddEnvironmentalAspect = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       console.log('Environmental Aspect:', response.data);
-      
+
       setLoading(false);
       setShowAddManualSuccessModal(true);
       setTimeout(() => {
@@ -266,7 +275,29 @@ const QmsAddEnvironmentalAspect = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
-      setError('Failed to save Environmental Aspect');
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowDraftManualErrorModal(true);
+      setTimeout(() => {
+        setShowDraftManualErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -315,6 +346,25 @@ const QmsAddEnvironmentalAspect = () => {
       }, 1500);
     } catch (err) {
       setLoading(false);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowDraftManualErrorModal(true);
       setTimeout(() => {
         setShowDraftManualErrorModal(false);
@@ -350,12 +400,6 @@ const QmsAddEnvironmentalAspect = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
-          {error}
-        </div>
-      )}
-
       <AddQmsManualSuccessModal
         showAddManualSuccessModal={showAddManualSuccessModal}
         onClose={() => setShowAddManualSuccessModal(false)}
@@ -367,6 +411,7 @@ const QmsAddEnvironmentalAspect = () => {
       <AddQmsManualDraftErrorModal
         showDraftManualErrorModal={showDraftManualErrorModal}
         onClose={() => setShowDraftManualErrorModal(false)}
+        error={error}
       />
 
       <ProcessTypeModal
@@ -378,7 +423,7 @@ const QmsAddEnvironmentalAspect = () => {
         <div className="grid md:grid-cols-2 gap-5">
           <div>
             <label className="add-qms-manual-label">
-              Aspect Source <span className="text-red-500">*</span>
+              Aspect Source
             </label>
             <input
               type="text"

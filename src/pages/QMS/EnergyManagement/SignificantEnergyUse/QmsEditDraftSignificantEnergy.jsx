@@ -260,7 +260,7 @@ const QmsEditDraftSignificantEnergy = () => {
             formDataToSend.append('remarks', formData.remarks);
             formDataToSend.append('revision', formData.revision);
             formDataToSend.append('is_notification', formData.is_notification);
-            formDataToSend.append('is_draft', false);
+            formDataToSend.append('is_draft', 'false');
 
             await axios.put(`${BASE_URL}/qms/significant-draft/update/${id}/`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }

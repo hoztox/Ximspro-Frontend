@@ -4,7 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ProcessTypeModal from './ProcessTypeModal';
-import EditDraftQmsManualSuccessModal from '../../Documentation/Manual/Modals/EditDraftQmsManualSuccessModal';
+import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
+import ErrorModal from './Modals/ErrorModal';
+
 
 const QmsEditDraftEnvironmentalAspect = () => {
     const navigate = useNavigate();
@@ -20,6 +22,7 @@ const QmsEditDraftEnvironmentalAspect = () => {
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
     const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
     const [corrections, setCorrections] = useState([]);
 
     const getUserCompanyId = () => {
@@ -108,6 +111,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         } catch (error) {
             console.error('Error fetching environmental aspect:', error);
             setError('Failed to load environmental aspect data');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setLoading(false);
         }
     };
@@ -138,6 +145,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -153,6 +164,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         } catch (error) {
             console.error("Error fetching process activities:", error);
             setError("Failed to load process activities.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -202,9 +217,9 @@ const QmsEditDraftEnvironmentalAspect = () => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.aspect_source.trim()) {
-            newErrors.aspect_source = "Aspect Source is required";
-        }
+        // if (!formData.aspect_source.trim()) {
+        //     newErrors.aspect_source = "Aspect Source is required";
+        // }
         if (!formData.title.trim()) {
             newErrors.title = "Aspect Name/Title is required";
         }
@@ -339,6 +354,10 @@ const QmsEditDraftEnvironmentalAspect = () => {
         } catch (err) {
             setLoading(false);
             setError('Failed to update Environmental Aspect');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Update error:', err);
         }
     };
@@ -387,377 +406,380 @@ const QmsEditDraftEnvironmentalAspect = () => {
                 onClose={() => setShowEditDraftManualSuccessModal(false)}
             />
 
-            {loading && !formData.aspect_no ? (
-                <div className="flex justify-center items-center h-64">
-                    <p>Loading environmental aspect data...</p>
-                </div>
-            ) : (
-                <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
-                    <div className="grid md:grid-cols-2 gap-5">
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect Source <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="aspect_source"
-                                value={formData.aspect_source}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
-                            />
-                            <ErrorMessage message={errors.aspect_source} />
-                        </div>
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect Name/Title <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
-                            />
-                            <ErrorMessage message={errors.title} />
-                        </div>
 
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Aspect No <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="aspect_no"
-                                value={formData.aspect_no}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
-                                readOnly
-                            />
-                            <ErrorMessage message={errors.aspect_no} />
-                        </div>
+            <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
+                <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Aspect Source
+                        </label>
+                        <input
+                            type="text"
+                            name="aspect_source"
+                            value={formData.aspect_source}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs"
+                        />
+                        {/* <ErrorMessage message={errors.aspect_source} /> */}
+                    </div>
 
-                        <div className="flex flex-col gap-3 relative">
-                            <label className="add-qms-manual-label">
-                                Process/Activity <span className="text-red-500">*</span>
-                            </label>
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Aspect Name/Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs"
+                        />
+                        <ErrorMessage message={errors.title} />
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Aspect No <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="aspect_no"
+                            value={formData.aspect_no}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs cursor-not-allowed bg-gray-800"
+                            readOnly
+                        />
+                        <ErrorMessage message={errors.aspect_no} />
+                    </div>
+                    <div></div>
+
+                    <div className="flex flex-col gap-3 relative">
+                        <label className="add-qms-manual-label">
+                            Process/Activity <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="process_activity"
+                            value={formData.process_activity}
+                            onChange={handleChange}
+                            onFocus={() => setFocusedDropdown("process_activity")}
+                            onBlur={() => setFocusedDropdown(null)}
+                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                        >
+                            <option value="" disabled>Select Process/Activity</option>
+                            {processActivities.map(activity => (
+                                <option key={activity.id} value={activity.id}>
+                                    {activity.title}
+                                </option>
+                            ))}
+                        </select>
+                        <ChevronDown
+                            className={`absolute right-3 top-[50px] transform transition-transform duration-300
+                                ${focusedDropdown === "process_activity" ? "rotate-180" : ""}`}
+                            size={20}
+                            color="#AAAAAA"
+                        />
+                        <ErrorMessage message={errors.process_activity} />
+                        <button
+                            className='flex justify-start add-training-label !ателефон:[#1E84AF]'
+                            onClick={handleOpenProcessTypeModal}
+                            type="button"
+                        >
+                            View / Add Process/Activities
+                        </button>
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Legal Requirement
+                        </label>
+                        <input
+                            type="text"
+                            name="legal_requirement"
+                            value={formData.legal_requirement}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Description
+                        </label>
+                        <textarea
+                            name="description"
+                            value={formData.description}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs !h-[98px] py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Action or Corrections
+                        </label>
+                        <textarea
+                            name="action"
+                            value={formData.action}
+                            onChange={handleChange}
+                            className="w-full add-qms-manual-inputs !h-[98px] py-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Written/Prepared By <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
                             <select
-                                name="process_activity"
-                                value={formData.process_activity}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("process_activity")}
-                                onBlur={() => setFocusedDropdown(null)}
-                                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                name="written_by"
+                                value={formData.written_by || ''}
+                                onFocus={() => toggleDropdown('written_by')}
+                                onChange={(e) => handleDropdownChange(e, 'written_by')}
+                                onBlur={() => setOpenDropdowns(prev => ({ ...prev, written_by: false }))}
                             >
-                                <option value="" disabled>Select Process/Activity</option>
-                                {processActivities.map(activity => (
-                                    <option key={activity.id} value={activity.id}>
-                                        {activity.title}
+                                <option value="">Select User</option>
+                                {users.map(user => (
+                                    <option key={`written-${user.id}`} value={user.id}>
+                                        {formatUserName(user)}
                                     </option>
                                 ))}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                ${focusedDropdown === "process_activity" ? "rotate-180" : ""}`}
-                                size={20}
-                                color="#AAAAAA"
-                            />
-                            <ErrorMessage message={errors.process_activity} />
-                            <button
-                                className='flex justify-start add-training-label !ателефон:[#1E84AF]'
-                                onClick={handleOpenProcessTypeModal}
-                                type="button"
-                            >
-                                View / Add Process/Activities
-                            </button>
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Legal Requirement
-                            </label>
-                            <input
-                                type="text"
-                                name="legal_requirement"
-                                value={formData.legal_requirement}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
+                                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
                             />
                         </div>
+                        <ErrorMessage message={errors.written_by} />
+                    </div>
 
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Description
-                            </label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs !h-[98px]"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Action or Corrections
-                            </label>
-                            <textarea
-                                name="action"
-                                value={formData.action}
-                                onChange={handleChange}
-                                className="w-full add-qms-manual-inputs !h-[98px]"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Written/Prepared By <span className="text-red-500">*</span>
-                            </label>
+                    <div className="flex">
+                        <div className="flex-grow">
+                            <div className='flex items-center justify-between h-[24px]'>
+                                <label className="add-qms-manual-label">
+                                    Approved By
+                                </label>
+                                <div className='flex items-end justify-end space-y-1'>
+                                    <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="flex items-center h-14 justify-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="send_notification_to_approved_by"
+                                                checked={formData.send_notification_to_approved_by}
+                                                onChange={handleChange}
+                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                            />
+                                            <label className="add-qms-manual-label check-label">System Notify</label>
+                                        </div>
+                                    </div>
+                                    <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="flex items-center h-14 justify-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="send_email_to_approved_by"
+                                                checked={formData.send_email_to_approved_by}
+                                                onChange={handleChange}
+                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                            />
+                                            <label className="add-qms-manual-label check-label">Email Notify</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div className="relative">
                                 <select
                                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="written_by"
-                                    value={formData.written_by || ''}
-                                    onFocus={() => toggleDropdown('written_by')}
-                                    onChange={(e) => handleDropdownChange(e, 'written_by')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, written_by: false }))}
+                                    name="approved_by"
+                                    value={formData.approved_by || ''}
+                                    onFocus={() => toggleDropdown('approved_by')}
+                                    onChange={(e) => handleDropdownChange(e, 'approved_by')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
                                 >
                                     <option value="">Select User</option>
                                     {users.map(user => (
-                                        <option key={`written-${user.id}`} value={user.id}>
+                                        <option key={`approved-${user.id}`} value={user.id}>
                                             {formatUserName(user)}
                                         </option>
                                     ))}
                                 </select>
                                 <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
                                 />
                             </div>
-                            <ErrorMessage message={errors.written_by} />
                         </div>
+                    </div>
 
-                        <div className="flex">
-                            <div className="flex-grow">
-                                <div className='flex items-center justify-between h-[24px]'>
-                                    <label className="add-qms-manual-label">
-                                        Approved By
-                                    </label>
-                                    <div className='flex items-end justify-end space-y-1'>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_notification_to_approved_by"
-                                                    checked={formData.send_notification_to_approved_by}
-                                                    onChange={handleChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">System Notify</label>
-                                            </div>
+                    <div className="flex">
+                        <div className="flex-grow">
+                            <div className='flex items-center justify-between h-[24px]'>
+                                <label className="add-qms-manual-label">
+                                    Checked/Reviewed By <span className="text-red-500">*</span>
+                                </label>
+                                <div className='flex items-end justify-end space-y-1'>
+                                    <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="flex items-center h-14 justify-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="send_notification_to_checked_by"
+                                                checked={formData.send_notification_to_checked_by}
+                                                onChange={handleChange}
+                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                            />
+                                            <label className="add-qms-manual-label check-label">System Notify</label>
                                         </div>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_email_to_approved_by"
-                                                    checked={formData.send_email_to_approved_by}
-                                                    onChange={handleChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">Email Notify</label>
-                                            </div>
+                                    </div>
+                                    <div className="ml-5 flex items-center h-[24px]">
+                                        <div className="flex items-center h-14 justify-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                name="send_email_to_checked_by"
+                                                checked={formData.send_email_to_checked_by}
+                                                onChange={handleChange}
+                                                className="cursor-pointer qms-manual-form-checkbox p-[7px]"
+                                            />
+                                            <label className="add-qms-manual-label check-label">Email Notify</label>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="approved_by"
-                                        value={formData.approved_by || ''}
-                                        onFocus={() => toggleDropdown('approved_by')}
-                                        onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map(user => (
-                                            <option key={`approved-${user.id}`} value={user.id}>
-                                                {formatUserName(user)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
                             </div>
-                        </div>
-
-                        <div className="flex">
-                            <div className="flex-grow">
-                                <div className='flex items-center justify-between h-[24px]'>
-                                    <label className="add-qms-manual-label">
-                                        Checked/Reviewed By <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className='flex items-end justify-end space-y-1'>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_notification_to_checked_by"
-                                                    checked={formData.send_notification_to_checked_by}
-                                                    onChange={handleChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">System Notify</label>
-                                            </div>
-                                        </div>
-                                        <div className="ml-5 flex items-center h-[24px]">
-                                            <div className="flex items-center h-14 justify-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="send_email_to_checked_by"
-                                                    checked={formData.send_email_to_checked_by}
-                                                    onChange={handleChange}
-                                                    className="cursor-pointer qms-manual-form-checkbox p-[7px]"
-                                                />
-                                                <label className="add-qms-manual-label check-label">Email Notify</label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="relative">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        name="checked_by"
-                                        value={formData.checked_by || ''}
-                                        onFocus={() => toggleDropdown('checked_by')}
-                                        onChange={(e) => handleDropdownChange(e, 'checked_by')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
-                                    >
-                                        <option value="">Select User</option>
-                                        {users.map(user => (
-                                            <option key={`checked-${user.id}`} value={user.id}>
-                                                {formatUserName(user)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                                <ErrorMessage message={errors.checked_by} />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Date Entered
-                            </label>
-                            <div className="flex space-x-5">
-                                <div className="relative w-1/3">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        value={dateParts.day}
-                                        onFocus={() => toggleDropdown('day')}
-                                        onChange={(e) => handleDropdownChange(e, 'day')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, day: false }))}
-                                    >
-                                        {days.map(day => (
-                                            <option key={`day-${day}`} value={day}>
-                                                {day < 10 ? `0${day}` : day}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                                <div className="relative w-1/3">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        value={dateParts.month}
-                                        onFocus={() => toggleDropdown('month')}
-                                        onChange={(e) => handleDropdownChange(e, 'month')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, month: false }))}
-                                    >
-                                        {months.map(month => (
-                                            <option key={`month-${month}`} value={month}>
-                                                {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                                <div className="relative w-1/3">
-                                    <select
-                                        className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                        value={dateParts.year}
-                                        onFocus={() => toggleDropdown('year')}
-                                        onChange={(e) => handleDropdownChange(e, 'year')}
-                                        onBlur={() => setOpenDropdowns(prev => ({ ...prev, year: false }))}
-                                    >
-                                        {years.map(year => (
-                                            <option key={`year-${year}`} value={year}>
-                                                {year}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? 'rotate-180' : ''}`}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="add-qms-manual-label">
-                                Level of Impact
-                            </label>
                             <div className="relative">
                                 <select
                                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="level_of_impact"
-                                    value={formData.level_of_impact}
-                                    onFocus={() => toggleDropdown('level_of_impact')}
-                                    onChange={(e) => handleDropdownChange(e, 'level_of_impact')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, level_of_impact: false }))}
+                                    name="checked_by"
+                                    value={formData.checked_by || ''}
+                                    onFocus={() => toggleDropdown('checked_by')}
+                                    onChange={(e) => handleDropdownChange(e, 'checked_by')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
                                 >
-                                    <option value="">Select Level of Impact</option>
-                                    {['Significant', 'Non Significant'].map(type => (
-                                        <option key={type} value={type}>
-                                            {type}
+                                    <option value="">Select User</option>
+                                    {users.map(user => (
+                                        <option key={`checked-${user.id}`} value={user.id}>
+                                            {formatUserName(user)}
                                         </option>
                                     ))}
                                 </select>
                                 <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.level_of_impact ? 'rotate-180' : ''}`}
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
+                                />
+                            </div>
+                            <ErrorMessage message={errors.checked_by} />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Date Entered
+                        </label>
+                        <div className="flex space-x-5">
+                            <div className="relative w-1/3">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    value={dateParts.day}
+                                    onFocus={() => toggleDropdown('day')}
+                                    onChange={(e) => handleDropdownChange(e, 'day')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, day: false }))}
+                                >
+                                    {days.map(day => (
+                                        <option key={`day-${day}`} value={day}>
+                                            {day < 10 ? `0${day}` : day}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? 'rotate-180' : ''}`}
+                                />
+                            </div>
+                            <div className="relative w-1/3">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    value={dateParts.month}
+                                    onFocus={() => toggleDropdown('month')}
+                                    onChange={(e) => handleDropdownChange(e, 'month')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, month: false }))}
+                                >
+                                    {months.map(month => (
+                                        <option key={`month-${month}`} value={month}>
+                                            {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? 'rotate-180' : ''}`}
+                                />
+                            </div>
+                            <div className="relative w-1/3">
+                                <select
+                                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                    value={dateParts.year}
+                                    onFocus={() => toggleDropdown('year')}
+                                    onChange={(e) => handleDropdownChange(e, 'year')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, year: false }))}
+                                >
+                                    {years.map(year => (
+                                        <option key={`year-${year}`} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? 'rotate-180' : ''}`}
                                 />
                             </div>
                         </div>
+                    </div>
 
-                        <div className="flex items-end mt-[22px] justify-end col-span-2">
-                            <div className='flex gap-[22px]'>
-                                <button
-                                    className="cancel-btn duration-200"
-                                    onClick={handleListDraftEnvironmentalAspect}
-                                    disabled={loading}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="save-btn duration-200"
-                                    onClick={handleUpdateClick}
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Updating...' : 'Update'}
-                                </button>
-                            </div>
+                    <div>
+                        <label className="add-qms-manual-label">
+                            Level of Impact
+                        </label>
+                        <div className="relative">
+                            <select
+                                className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                                name="level_of_impact"
+                                value={formData.level_of_impact}
+                                onFocus={() => toggleDropdown('level_of_impact')}
+                                onChange={(e) => handleDropdownChange(e, 'level_of_impact')}
+                                onBlur={() => setOpenDropdowns(prev => ({ ...prev, level_of_impact: false }))}
+                            >
+                                <option value="">Select Level of Impact</option>
+                                {['Significant', 'Non Significant'].map(type => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
+                            </select>
+                            <ChevronDown
+                                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.level_of_impact ? 'rotate-180' : ''}`}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex items-end mt-[22px] justify-end  ">
+                        <div className='flex gap-[22px]'>
+                            <button
+                                className="cancel-btn duration-200"
+                                onClick={handleListDraftEnvironmentalAspect}
+                                disabled={loading}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="save-btn duration-200"
+                                onClick={handleUpdateClick}
+                                disabled={loading}
+                            >
+                                {loading ? 'Updating...' : 'Update'}
+                            </button>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+
         </div>
     );
 };
