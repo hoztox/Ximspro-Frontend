@@ -44,7 +44,7 @@ const QmsEditPreventiveActions = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [formErrors, setFormErrors] = useState({
-    title: ""
+    title: "",
   });
 
   const getUserCompanyId = () => {
@@ -122,7 +122,24 @@ const QmsEditPreventiveActions = () => {
 
         setLoading(false);
       } catch (err) {
-        setError("Failed to load preventive action data");
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setShowErrorModal(true);
         setTimeout(() => {
           setShowErrorModal(false);
@@ -165,11 +182,12 @@ const QmsEditPreventiveActions = () => {
         setDateRaised(newDateRaised);
 
         if (newDateRaised.day && newDateRaised.month && newDateRaised.year) {
-          const formattedDate = `${newDateRaised.year
-            }-${newDateRaised.month.padStart(
-              2,
-              "0"
-            )}-${newDateRaised.day.padStart(2, "0")}`;
+          const formattedDate = `${
+            newDateRaised.year
+          }-${newDateRaised.month.padStart(
+            2,
+            "0"
+          )}-${newDateRaised.day.padStart(2, "0")}`;
           setFormData({
             ...formData,
             date_raised: formattedDate,
@@ -187,11 +205,12 @@ const QmsEditPreventiveActions = () => {
           newDateCompleted.month &&
           newDateCompleted.year
         ) {
-          const formattedDate = `${newDateCompleted.year
-            }-${newDateCompleted.month.padStart(
-              2,
-              "0"
-            )}-${newDateCompleted.day.padStart(2, "0")}`;
+          const formattedDate = `${
+            newDateCompleted.year
+          }-${newDateCompleted.month.padStart(
+            2,
+            "0"
+          )}-${newDateCompleted.day.padStart(2, "0")}`;
           setFormData({
             ...formData,
             date_completed: formattedDate,
@@ -206,7 +225,7 @@ const QmsEditPreventiveActions = () => {
       if (name === "title") {
         setFormErrors({
           ...formErrors,
-          title: ""
+          title: "",
         });
       }
     }
@@ -247,10 +266,27 @@ const QmsEditPreventiveActions = () => {
         setShowSuccessModal(false);
         navigate("/company/qms/list-preventive-actions");
       }, 1500);
-      setSuccessMessage("Preventive Action Updated Successfully")
+      setSuccessMessage("Preventive Action Updated Successfully");
     } catch (err) {
       console.error("Error submitting form:", err);
-      setError("Failed to save preventive action");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -294,7 +330,7 @@ const QmsEditPreventiveActions = () => {
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
-        error={error} 
+        error={error}
       />
 
       {loading ? (
@@ -307,13 +343,17 @@ const QmsEditPreventiveActions = () => {
           className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
         >
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">Title <span className="text-red-500">*</span></label>
+            <label className="add-training-label">
+              Title <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
+              className={`add-training-inputs focus:outline-none ${
+                formErrors.title ? "border-red-500" : ""
+              }`}
             />
             {formErrors.title && (
               <p className="text-red-500 text-sm">{formErrors.title}</p>
@@ -341,8 +381,9 @@ const QmsEditPreventiveActions = () => {
             </select>
             <ChevronDown
               className={`absolute right-3 top-[60%] transform transition-transform duration-300 
-                          ${focusedDropdown === "executor" ? "rotate-180" : ""
-                }`}
+                          ${
+                            focusedDropdown === "executor" ? "rotate-180" : ""
+                          }`}
               size={20}
               color="#AAAAAA"
             />
@@ -387,10 +428,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_raised.day"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_raised.day"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -412,10 +454,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_raised.month"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_raised.month"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -437,10 +480,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_raised.year"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_raised.year"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -467,10 +511,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_completed.day"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_completed.day"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -492,10 +537,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_completed.month"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_completed.month"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -517,10 +563,11 @@ const QmsEditPreventiveActions = () => {
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                              ${focusedDropdown === "date_completed.year"
-                      ? "rotate-180"
-                      : ""
-                    }`}
+                              ${
+                                focusedDropdown === "date_completed.year"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
                   size={20}
                   color="#AAAAAA"
                 />

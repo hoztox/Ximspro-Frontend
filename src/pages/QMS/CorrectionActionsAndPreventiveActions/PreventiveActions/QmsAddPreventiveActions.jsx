@@ -32,7 +32,7 @@ const QmsAddPreventiveActions = () => {
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [error, setError] = useState(null);
   const [formErrors, setFormErrors] = useState({
-    title: ""
+    title: "",
   });
 
   const [successMessage, setSuccessMessage] = useState("");
@@ -84,7 +84,24 @@ const QmsAddPreventiveActions = () => {
         );
         setUsers(response.data);
       } catch (err) {
-        setError("Failed to fetch users");
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setShowErrorModal(true);
         setTimeout(() => {
           setShowErrorModal(false);
@@ -124,7 +141,7 @@ const QmsAddPreventiveActions = () => {
       if (name === "title") {
         setFormErrors({
           ...formErrors,
-          title: ""
+          title: "",
         });
       }
     }
@@ -183,9 +200,26 @@ const QmsAddPreventiveActions = () => {
         setShowSuccessModal(false);
         navigate("/company/qms/list-preventive-actions");
       }, 1500);
-      setSuccessMessage("Preventive Action Added Successfully")
+      setSuccessMessage("Preventive Action Added Successfully");
     } catch (err) {
-      setError("Failed to create preventive action");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -226,9 +260,26 @@ const QmsAddPreventiveActions = () => {
         setShowSuccessModal(false);
         navigate("/company/qms/draft-preventive-actions");
       }, 1500);
-      setSuccessMessage("Preventive Action Drafted Successfully")
+      setSuccessMessage("Preventive Action Drafted Successfully");
     } catch (err) {
-      setError("Failed to save draft");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -269,7 +320,7 @@ const QmsAddPreventiveActions = () => {
         successMessage={successMessage}
       />
 
-      <ErrorModal 
+      <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
         error={error}
@@ -280,13 +331,17 @@ const QmsAddPreventiveActions = () => {
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">Title <span className="text-red-500">*</span></label>
+          <label className="add-training-label">
+            Title <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
+            className={`add-training-inputs focus:outline-none ${
+              formErrors.title ? "border-red-500" : ""
+            }`}
           />
           {formErrors.title && (
             <p className="text-red-500 text-sm">{formErrors.title}</p>
@@ -359,10 +414,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_raised.day"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -383,10 +439,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_raised.month"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -407,10 +464,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_raised.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_raised.year"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -437,10 +495,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_completed.day"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -461,10 +520,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_completed.month"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -485,10 +545,11 @@ const QmsAddPreventiveActions = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-1/3 transform transition-transform duration-300
-                                ${focusedDropdown === "date_completed.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
+                                ${
+                                  focusedDropdown === "date_completed.year"
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
                 size={20}
                 color="#AAAAAA"
               />
