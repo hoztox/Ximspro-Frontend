@@ -12,6 +12,7 @@ const QmsEditDraftPreventiveActions = () => {
 
   const [successMessage, setSuccessMessage] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [error, setError] = useState(null);
 
   const [showErrorModal, setShowErrorModal] = useState(false);
 
