@@ -1,60 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
 import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsDraftEnergyAction = () => {
-  const initialData = [
-    {
-      id: 1,
-      title: "Improve product quality",
-      statement: "Test",
-      date: "03-12-2024",
-      responsible: "Test",
-    },
-    {
-      id: 2,
-      title: "Reduce production waste",
-      statement: "Test",
-      date: "03-12-2024",
-      responsible: "Test",
-    },
-    {
-      id: 3,
-      title: "Implement new testing protocol",
-      statement: "Test",
-      date: "03-12-2024",
-      responsible: "Test",
-    },
-    {
-      id: 4,
-      title: "New safety standards",
-      statement: "Test",
-      date: "04-12-2024",
-      responsible: "Test",
-    },
-  ];
-
-  // State
-  const [energyActions, setEnergyActions] = useState(initialData);
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [energyActions, setEnergyActions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [formData, setFormData] = useState({
-    title: "",
-    statement: "",
-    date: "",
-    responsible: "",
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+  // Fetch draft energy actions from the API
+  useEffect(() => {
+    const fetchDraftEnergyActions = async () => {
+      try {
+        setIsLoading(true);
+        const userId = getRelevantUserId()
+        const response = await axios.get(`${BASE_URL}/qms/energy-action-draft/${userId}/`);
+        setEnergyActions(response.data);
+        setIsLoading(false);
+      } catch (err) {
+        setError("Failed to fetch draft energy actions");
+        setIsLoading(false);
+      }
+    };
+    fetchDraftEnergyActions();
+  }, []);
+
+  // Handle search
   const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setSearchTerm(value);
+    setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
 
@@ -62,46 +55,53 @@ const QmsDraftEnergyAction = () => {
   const itemsPerPage = 10;
   const totalItems = energyActions.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  // Get current items
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = energyActions.slice(indexOfFirstItem, indexOfLastItem);
 
-  // Search functionality
+  // Filter data based on search query
   const filteredEnergyActions = currentItems.filter(
     (energyAction) =>
-      energyAction.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      energyAction.statement
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      energyAction.responsible.toLowerCase().includes(searchQuery.toLowerCase())
+      energyAction.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      energyAction.statement?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      energyAction.responsible_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Handle navigation
   const handleClose = () => {
     navigate("/company/qms/list-energy-action-plan");
   };
 
-  const handleQmsViewDraftEnergyAction = () => {
-    navigate("/company/qms/view-draft-energy-action-plan");
+  const handleQmsViewDraftEnergyAction = (id) => {
+    navigate(`/company/qms/view-draft-energy-action-plan/${id}`);
   };
 
-  const handleQmsEditDraftEnergyAction = () => {
-    navigate("/company/qms/edit-draft-energy-action-plan");
+  const handleQmsEditDraftEnergyAction = (id) => {
+    navigate(`/company/qms/edit-draft-energy-action-plan/${id}`);
   };
 
-  // Delete energyAction
-  const handleDeleteDraftEnergyAction = (id) => {
-    setEnergyActions(
-      energyActions.filter((energyAction) => energyAction.id !== id)
-    );
+  // Delete energy action
+  const handleDeleteDraftEnergyAction = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/api/draft-energy-actions/${id}/`);
+      setEnergyActions(energyActions.filter((action) => action.id !== id));
+    } catch (err) {
+      setError("Failed to delete energy action");
+    }
   };
 
-  // Change page
+  // Pagination controls
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+
+  if (isLoading) {
+    return <div className="text-white">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -135,7 +135,7 @@ const QmsDraftEnergyAction = () => {
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
               <th className="px-2 text-left add-manual-theads">
-                Statement on Energy Improvement Perfomance
+                Statement on Energy Improvement Performance
               </th>
               <th className="px-2 text-left add-manual-theads">Action</th>
               <th className="px-2 text-center add-manual-theads">View</th>
@@ -143,28 +143,24 @@ const QmsDraftEnergyAction = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredEnergyActions.map((energyAction, index) => (
+            {filteredEnergyActions.map((energyAction) => (
               <tr
                 key={energyAction.id}
                 className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
               >
-                <td className="pl-5 pr-2 add-manual-datas">
-                  {energyAction.id}
-                </td>
+                <td className="pl-5 pr-2 add-manual-datas">{energyAction.id}</td>
                 <td className="px-2 add-manual-datas">{energyAction.title}</td>
-                <td className="px-2 add-manual-datas">
-                  {energyAction.statement}
-                </td>
+                <td className="px-2 add-manual-datas">{energyAction.statement}</td>
                 <td className="px-2 add-manual-datas">
                   <button
-                    onClick={handleQmsEditDraftEnergyAction}
+                    onClick={() => handleQmsEditDraftEnergyAction(energyAction.id)}
                     className="text-[#1E84AF]"
                   >
                     Click to Continue
                   </button>
                 </td>
                 <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={handleQmsViewDraftEnergyAction}>
+                  <button onClick={() => handleQmsViewDraftEnergyAction(energyAction.id)}>
                     <img
                       src={viewIcon}
                       alt="View Icon"
@@ -176,11 +172,7 @@ const QmsDraftEnergyAction = () => {
                   </button>
                 </td>
                 <td className="px-2 add-manual-datas !text-center">
-                  <button
-                    onClick={() =>
-                      handleDeleteDraftEnergyAction(energyAction.id)
-                    }
-                  >
+                  <button onClick={() => handleDeleteDraftEnergyAction(energyAction.id)}>
                     <img src={deleteIcon} alt="Delete Icon" />
                   </button>
                 </td>
@@ -197,31 +189,23 @@ const QmsDraftEnergyAction = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""}`}
           >
             Previous
           </button>
-
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"}`}
             >
               {number}
             </button>
           ))}
-
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""}`}
           >
             Next
           </button>
@@ -230,4 +214,5 @@ const QmsDraftEnergyAction = () => {
     </div>
   );
 };
+
 export default QmsDraftEnergyAction;

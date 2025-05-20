@@ -11,6 +11,9 @@ import ManualCorrectionSuccessModal from './Modals/ManualCorrectionSuccessModal'
 import ManualCorrectionErrorModal from './Modals/ManualCorrectionErrorModal';
 import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
 import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
+import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
+import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
+import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
 
 const QmsViewEnvironmentalImpact = () => {
   const navigate = useNavigate();
@@ -27,6 +30,9 @@ const QmsViewEnvironmentalImpact = () => {
   const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
   const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
   const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
 
   const [correctionRequest, setCorrectionRequest] = useState({
     isOpen: false,
@@ -226,6 +232,25 @@ const QmsViewEnvironmentalImpact = () => {
       }, 1500);
     } catch (error) {
       console.error('Error submitting correction:', error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
         setShowSentCorrectionErrorModal(false);
@@ -265,19 +290,54 @@ const QmsViewEnvironmentalImpact = () => {
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  const handleDeleteEnvironmentalImpact = async (id) => {
+  const handleDeleteEnvironmentalImpact = (id) => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/qms/impact-detail/${id}/`);
-      navigate('/company/qms/list-environmantal-impact');
-    } catch (error) {
-      console.error("Error deleting environmental impact:", error);
-      setError(error.response?.data?.message || 'Failed to delete environmental impact');
+      setShowDeleteModal(false);
+      setShowDeleteManualSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteManualSuccessModal(false);
+        navigate('/company/qms/list-environmantal-impact');
+      }, 1500);
+    } catch (err) {
+      console.error("Error deleting environmental impact:", err);
+      setShowDeleteModal(false);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowDeleteManualErrorModal(true);
+      setTimeout(() => {
+        setShowDeleteManualErrorModal(false);
+      }, 1500);
     }
   };
 
-  if (loading) return <div className="text-white">Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
-  if (!impactDetails) return <div className="text-white">No environmental impact details found</div>;
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+  };
+
+  if (loading) return <div className="text-center not-found">Loading...</div>;
+  if (!impactDetails) return <div className="text-center not-found">No environmental impact details found</div>;
 
   const currentUserId = Number(localStorage.getItem('user_id'));
   const isCurrentUserWrittenBy = currentUserId === impactDetails.written_by?.id;
@@ -332,6 +392,23 @@ const QmsViewEnvironmentalImpact = () => {
       fetchImpactCorrections();
     } catch (error) {
       console.error('Error submitting review:', error);
+      let errorMsg;
+
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        const data = error.response.data;
+
+        // Try multiple possible locations for an error message
+        errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMsg = "No response received from server.";
+      } else {
+        // Something happened in setting up the request
+        errorMsg = error.message || "An unknown error occurred.";
+      }
+
+      setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
         setShowSubmitManualErrorModal(false);
@@ -416,6 +493,7 @@ const QmsViewEnvironmentalImpact = () => {
         <ManualCorrectionErrorModal
           showSentCorrectionErrorModal={showSentCorrectionErrorModal}
           onClose={() => setShowSentCorrectionErrorModal(false)}
+          error={error}
         />
         <ReviewSubmitSuccessModal
           showSubmitManualSuccessModal={showSubmitManualSuccessModal}
@@ -424,6 +502,21 @@ const QmsViewEnvironmentalImpact = () => {
         <ReviewSubmitErrorModal
           showSubmitManualErrorModal={showSubmitManualErrorModal}
           onClose={() => setShowSubmitManualErrorModal(false)}
+          error={error}
+        />
+        <DeleteQmsManualConfirmModal
+          showDeleteModal={showDeleteModal}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+        /> 
+        <DeleteQmsManualsuccessModal
+          showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+          onClose={() => setShowDeleteManualSuccessModal(false)}
+        />
+        <DeleteQmsManualErrorModal
+          showDeleteManualErrorModal={showDeleteManualErrorModal}
+          onClose={() => setShowDeleteManualErrorModal(false)}
+          error={error}
         />
         <button
           className="text-white bg-[#24242D] p-1 rounded-md"

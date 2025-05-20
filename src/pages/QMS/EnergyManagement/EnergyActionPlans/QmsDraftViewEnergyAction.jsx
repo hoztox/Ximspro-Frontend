@@ -1,25 +1,85 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Eye, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsDraftViewEnergyAction = () => {
-  const [formData, setFormData] = useState({
-    eap_no: "Anonymous",
-    title: "Test",
-    associated_objective: "Test",
-    programs: "Test",
-    associated_legal_requirements: "Test",
-    means: "Test",
-    date: "02-02-2025",
-    responsible: "Test",
-    energy_improvement: "Test",
-    result_verification: "Test",
-  });
+  const { id } = useParams();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    action_plan: "",
+    title: "",
+    associative_objective: "",
+    programs: "",
+    legal_requirements: "",
+    means: "",
+    date: "",
+    responsible: "",
+    energy_improvements: "",
+    statement: "",
+    upload_attachment: null,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch energy action data
+  useEffect(() => {
+    const fetchEnergyAction = async () => {
+      if (!id) {
+        setError("No energy action ID provided");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`${BASE_URL}/qms/energy-action/${id}/`);
+        setFormData({
+          action_plan: response.data.action_plan || "Anonymous",
+          title: response.data.title || "N/A",
+          associative_objective: response.data.associative_objective || "N/A",
+          programs: Array.isArray(response.data.programs)
+            ? response.data.programs.map((p) => p.Program || "N/A").join(", ")
+            : "N/A",
+          legal_requirements: response.data.legal_requirements || "N/A",
+          means: response.data.means || "N/A",
+          date: response.data.date || "N/A",
+          responsible: response.data.responsible_name || "N/A",
+          energy_improvements: response.data.energy_improvements || "N/A",
+          statement: response.data.statement || "N/A",
+          upload_attachment: response.data.upload_attachment || null,
+        });
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching energy action:", error);
+        setError("Failed to load energy action data. Please try again.");
+        setIsLoading(false);
+      }
+    };
+
+    fetchEnergyAction();
+  }, [id]);
+
+  // Handle close button
   const handleClose = () => {
     navigate("/company/qms/draft-energy-action-plan");
   };
+
+  // Handle file view
+  const handleViewFile = () => {
+    if (formData.upload_attachment) {
+      window.open(formData.upload_attachment, "_blank");
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-white">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -42,7 +102,7 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Energy Action Plan No
             </label>
-            <div className="view-employee-data">{formData.eap_no}</div>
+            <div className="view-employee-data">{formData.action_plan}</div>
           </div>
 
           <div>
@@ -56,18 +116,23 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Associated Objective
             </label>
-            <div className="view-employee-data">
-              {formData.associated_objective}
-            </div>
+            <div className="view-employee-data">{formData.associative_objective}</div>
           </div>
 
           <div>
             <label className="block view-employee-label mb-[6px]">
               Attached Document
             </label>
-            <button className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center">
-              Click to view file <Eye size={17} />
-            </button>
+            {formData.upload_attachment ? (
+              <button
+                onClick={handleViewFile}
+                className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center"
+              >
+                Click to view file <Eye size={17} />
+              </button>
+            ) : (
+              <div className="view-employee-data">No attachment</div>
+            )}
           </div>
 
           <div>
@@ -81,9 +146,7 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Associated Legal Requirements
             </label>
-            <div className="view-employee-data">
-              {formData.associated_legal_requirements}
-            </div>
+            <div className="view-employee-data">{formData.legal_requirements}</div>
           </div>
 
           <div>
@@ -94,12 +157,10 @@ const QmsDraftViewEnergyAction = () => {
           </div>
 
           <div>
-            <div>
-              <label className="block view-employee-label mb-[6px]">
-                Target Date
-              </label>
-              <div className="view-employee-data">{formData.date}</div>
-            </div>
+            <label className="block view-employee-label mb-[6px]">
+              Target Date
+            </label>
+            <div className="view-employee-data">{formData.date}</div>
           </div>
 
           <div>
@@ -113,22 +174,19 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Statement on Energy Improvement Performance
             </label>
-            <div className="view-employee-data">
-              {formData.energy_improvement}
-            </div>
+            <div className="view-employee-data">{formData.energy_improvements}</div>
           </div>
 
           <div>
             <label className="block view-employee-label mb-[6px]">
               Statement on Result Verification
             </label>
-            <div className="view-employee-data">
-              {formData.result_verification}
-            </div>
+            <div className="view-employee-data">{formData.statement}</div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 export default QmsDraftViewEnergyAction;

@@ -4,6 +4,8 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from './Modals/SuccessModal';
+import ErrorModal from './Modals/ErrorModal';
 
 const QmsEditEnvironmentalImpact = () => {
   const { id } = useParams();
@@ -21,6 +23,11 @@ const QmsEditEnvironmentalImpact = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -155,6 +162,10 @@ const QmsEditEnvironmentalImpact = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
       setError("Failed to load users. Please check your connection and try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setUsers([]);
     }
   };
@@ -168,6 +179,10 @@ const QmsEditEnvironmentalImpact = () => {
     } catch (err) {
       console.error("Error fetching environmental impact details:", err);
       setError("Failed to load environmental impact details");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsInitialLoad(false);
       setLoading(false);
     }
@@ -339,9 +354,9 @@ const QmsEditEnvironmentalImpact = () => {
 
       Object.keys(apiFormData).forEach(key => {
         if (key !== 'send_notification_to_checked_by' &&
-            key !== 'send_email_to_checked_by' &&
-            key !== 'send_notification_to_approved_by' &&
-            key !== 'send_email_to_approved_by') {
+          key !== 'send_email_to_checked_by' &&
+          key !== 'send_notification_to_approved_by' &&
+          key !== 'send_email_to_approved_by') {
           submitData.append(key, apiFormData[key]);
         }
       });
@@ -357,10 +372,38 @@ const QmsEditEnvironmentalImpact = () => {
       });
 
       setLoading(false);
-      navigate('/company/qms/list-environmantal-impact'); 
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate('/company/qms/list-environmantal-impact');
+      }, 1500);
+      setSuccessMessage("Environmental Impact Updated Successfully")
     } catch (err) {
       setLoading(false);
-      setError(err.response?.data?.message || 'Failed to update environmental impact');
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        }
+        else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       console.error('Error updating environmental impact:', err);
     }
   };
@@ -407,11 +450,17 @@ const QmsEditEnvironmentalImpact = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
-          {error}
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal} 
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
       <div className="mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
         <div className="grid md:grid-cols-2 gap-5">

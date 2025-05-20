@@ -6,14 +6,14 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsDraftEditEnergyAction = () => {
-  const { id } = useParams(); // Get the EAP ID from URL
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [programFields, setProgramFields] = useState([{ id: 1, value: "" }]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
-  const navigate = useNavigate();
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -37,49 +37,55 @@ const QmsDraftEditEnergyAction = () => {
   const fetchUsers = async () => {
     try {
       const companyId = getUserCompanyId();
-      if (!companyId) return;
+      if (!companyId) {
+        setError("Company ID not found");
+        return;
+      }
 
-      const response = await axios.get(
-        `${BASE_URL}/company/users-active/${companyId}/`
-      );
-
+      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
       if (Array.isArray(response.data)) {
         setUsers(response.data);
       } else {
         setUsers([]);
-        console.error("Unexpected response format:", response.data);
+        setError("Unexpected response format for users");
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError(
-        "Failed to load users. Please check your connection and try again."
-      );
+      setError("Failed to load users. Please check your connection and try again.");
     }
   };
+
+  const [formData, setFormData] = useState({
+    action_plan: "",
+    title: "",
+    associative_objective: "",
+    upload_attachment: null,
+    legal_requirements: "",
+    means: "",
+    date: {
+      day: "",
+      month: "",
+      year: "",
+    },
+    responsible: "",
+    energy_improvements: "",
+    statement: "",
+  });
 
   const fetchEnergyAction = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL}/qms/targets/${id}/`);
+      const response = await axios.get(`${BASE_URL}/qms/energy-action/${id}/`);
 
-      // Parse the date from the response
       const dateParts = response.data.date
         ? response.data.date.split("-")
         : ["", "", ""];
 
-      // Parse programs if they exist
-      const programs = response.data.programs
-        ? response.data.programs
-            .split(",")
-            .map((p, i) => ({ id: i + 1, value: p.trim() }))
-        : [{ id: 1, value: "" }];
-
       setFormData({
-        eap_no: `EAP-${response.data.eap_no}`,
+        action_plan: response.data.action_plan || "",
         title: response.data.title || "",
-        associated_objective: response.data.associated_objective || "",
-        associated_legal_requirements:
-          response.data.associated_legal_requirements || "",
+        associative_objective: response.data.associative_objective || "",
+        legal_requirements: response.data.legal_requirements || "",
         means: response.data.means || "",
         date: {
           day: dateParts[2] || "",
@@ -87,15 +93,23 @@ const QmsDraftEditEnergyAction = () => {
           year: dateParts[0] || "",
         },
         responsible: response.data.responsible || "",
-        energy_improvement: response.data.energy_improvement || "",
-        result_verification: response.data.result_verification || "",
-        attachment: response.data.attachment || "",
+        energy_improvements: response.data.energy_improvements || "",
+        statement: response.data.statement || "",
+        upload_attachment: response.data.upload_attachment || null,
       });
 
-      setProgramFields(programs);
+      if (response.data.programs && Array.isArray(response.data.programs)) {
+        const programs = response.data.programs.map((program, index) => ({
+          id: index + 1,
+          value: program.Program || ""
+        }));
+        setProgramFields(programs.length > 0 ? programs : [{ id: 1, value: "" }]);
+      } else {
+        setProgramFields([{ id: 1, value: "" }]);
+      }
 
-      if (response.data.attachment) {
-        setExistingAttachment(response.data.attachment);
+      if (response.data.upload_attachment) {
+        setExistingAttachment(response.data.upload_attachment);
       }
 
       setIsLoading(false);
@@ -111,25 +125,6 @@ const QmsDraftEditEnergyAction = () => {
     fetchEnergyAction();
   }, [id]);
 
-  const companyId = getUserCompanyId();
-
-  const [formData, setFormData] = useState({
-    eap_no: "",
-    title: "",
-    associated_objective: "",
-    attachment: null,
-    associated_legal_requirements: "",
-    means: "",
-    date: {
-      day: "",
-      month: "",
-      year: "",
-    },
-    responsible: "",
-    energy_improvement: "",
-    result_verification: "",
-  });
-
   const handleListDraftEnergyAction = () => {
     navigate("/company/qms/draft-energy-action-plan");
   };
@@ -137,16 +132,15 @@ const QmsDraftEditEnergyAction = () => {
   const handleFileChange = (e) => {
     setFormData({
       ...formData,
-      attachment: e.target.files[0],
+      upload_attachment: e.target.files[0],
     });
-    setExistingAttachment(null); // Clear existing attachment when new file is selected
+    setExistingAttachment(null);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Prevent manual editing of eap_no
-    if (name === "eap_no") return;
+    if (name === "action_plan") return;
 
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -188,8 +182,14 @@ const QmsDraftEditEnergyAction = () => {
   };
 
   const formatDate = (dateObj) => {
-    if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
+    if (!dateObj.year || !dateObj.month || !dateObj.day) return "";
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
+  };
+
+  const handleViewFile = () => {
+    if (existingAttachment) {
+      window.open(existingAttachment, "_blank");
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -199,46 +199,41 @@ const QmsDraftEditEnergyAction = () => {
       setIsLoading(true);
       setError("");
       const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found");
+        setIsLoading(false);
+        return;
+      }
 
       const programs = programFields
-        .map((field) => field.value)
-        .filter(Boolean)
-        .join(", ");
+        .filter(field => field.value.trim() !== "")
+        .map(field => ({ Program: field.value }));
 
       const date = formatDate(formData.date);
 
       const submissionData = new FormData();
-      submissionData.append("company", companyId);
-      submissionData.append("eap_no", formData.eap_no.replace("EAP-", ""));
-      submissionData.append("title", formData.title);
-      submissionData.append(
-        "associated_objective",
-        formData.associated_objective
-      );
-      submissionData.append("programs", programs);
-      submissionData.append(
-        "associated_legal_requirements",
-        formData.associated_legal_requirements
-      );
-      submissionData.append("means", formData.means);
-      submissionData.append("date", date);
-      submissionData.append("responsible", formData.responsible);
-      submissionData.append("energy_improvement", formData.energy_improvement);
-      submissionData.append(
-        "result_verification",
-        formData.result_verification
-      );
+      console.log('rrrrrrrrrrrrrrrrrr', formData);
 
-      // Only append new attachment if one was selected
-      if (formData.attachment instanceof File) {
-        submissionData.append("attachment", formData.attachment);
-      } else if (existingAttachment) {
-        // Keep existing attachment if no new one was selected
-        submissionData.append("attachment", existingAttachment);
+      submissionData.append("company", companyId);
+      submissionData.append("title", formData.title);
+      submissionData.append("associative_objective", formData.associative_objective);
+
+      submissionData.append("legal_requirements", formData.legal_requirements);
+      submissionData.append("means", formData.means);
+      if (date) submissionData.append("date", date);
+      submissionData.append("responsible", formData.responsible.id || "");
+      submissionData.append("energy_improvements", formData.energy_improvements);
+      submissionData.append("statement", formData.statement);
+
+
+      if (formData.upload_attachment instanceof File) {
+        submissionData.append("upload_attachment", formData.upload_attachment);
       }
 
+      submissionData.append("programs", JSON.stringify(programs));
+
       const response = await axios.put(
-        `${BASE_URL}/qms/targets/${id}/`,
+        `${BASE_URL}/qms/energy-action/${id}/`,
         submissionData,
         {
           headers: {
@@ -248,11 +243,10 @@ const QmsDraftEditEnergyAction = () => {
       );
 
       console.log("Updated Energy Action:", response.data);
-      navigate("/company/qms/list-energy-action-plan");
+      navigate("/company/qms/draft-energy-action-plan");
     } catch (error) {
       console.error("Error submitting form:", error);
       setError("Failed to update. Please check your inputs and try again.");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -277,7 +271,7 @@ const QmsDraftEditEnergyAction = () => {
         <h1 className="add-training-head">Edit Draft Energy Action Plans</h1>
         <button
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-          onClick={() => handleListDraftEnergyAction()}
+          onClick={handleListDraftEnergyAction}
         >
           List Draft Energy Action Plans
         </button>
@@ -302,8 +296,8 @@ const QmsDraftEditEnergyAction = () => {
             </label>
             <input
               type="text"
-              name="eap_no"
-              value={formData.eap_no}
+              name="action_plan"
+              value={formData.action_plan}
               className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
               readOnly
               title="Existing EAP number"
@@ -328,8 +322,8 @@ const QmsDraftEditEnergyAction = () => {
             <label className="add-training-label">Associated Objective</label>
             <input
               type="text"
-              name="associated_objective"
-              value={formData.associated_objective}
+              name="associative_objective"
+              value={formData.associative_objective}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none"
             />
@@ -353,26 +347,25 @@ const QmsDraftEditEnergyAction = () => {
               </label>
             </div>
             <div className="flex justify-between items-center">
-              <button className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]">
-                Click to view file <Eye size={17} />
-              </button>
-              {formData.attachment instanceof File ? (
-                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                  {formData.attachment.name}
-                </p>
-              ) : existingAttachment ? (
-                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                  Current file: {existingAttachment.split("/").pop()}
-                </p>
-              ) : (
-                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                  No file chosen
-                </p>
+              {existingAttachment && (
+                <button
+                  type="button"
+                  onClick={handleViewFile}
+                  className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]"
+                >
+                  Click to view file <Eye size={17} />
+                </button>
               )}
+              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                {formData.upload_attachment instanceof File
+                  ? formData.upload_attachment.name
+                  : existingAttachment
+                    ? existingAttachment.split("/").pop()
+                    : "No file chosen"}
+              </p>
             </div>
           </div>
 
-          {/* Dynamic Program Fields */}
           {programFields.map((field, index) => (
             <div key={field.id} className="flex flex-col gap-3">
               <div className="flex items-center gap-2 justify-between last:pr-[57px]">
@@ -391,9 +384,7 @@ const QmsDraftEditEnergyAction = () => {
                 <input
                   type="text"
                   value={field.value}
-                  onChange={(e) =>
-                    handleProgramChange(field.id, e.target.value)
-                  }
+                  onChange={(e) => handleProgramChange(field.id, e.target.value)}
                   className="add-training-inputs focus:outline-none flex-1"
                 />
                 {index === programFields.length - 1 && (
@@ -410,13 +401,11 @@ const QmsDraftEditEnergyAction = () => {
           ))}
 
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Associated Legal Requirements
-            </label>
+            <label className="add-training-label">Associated Legal Requirements</label>
             <input
               type="text"
-              name="associated_legal_requirements"
-              value={formData.associated_legal_requirements}
+              name="legal_requirements"
+              value={formData.legal_requirements}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none"
             />
@@ -436,7 +425,6 @@ const QmsDraftEditEnergyAction = () => {
           <div className="flex flex-col gap-3">
             <label className="add-training-label">Target Date</label>
             <div className="grid grid-cols-3 gap-5">
-              {/* Day */}
               <div className="relative">
                 <select
                   name="date.day"
@@ -446,24 +434,16 @@ const QmsDraftEditEnergyAction = () => {
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 >
-                  <option value="" disabled>
-                    dd
-                  </option>
+                  <option value="" disabled>dd</option>
                   {generateOptions(1, 31)}
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                   ${
-                                     focusedDropdown === "date.day"
-                                       ? "rotate-180"
-                                       : ""
-                                   }`}
+                    ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
                   size={20}
                   color="#AAAAAA"
                 />
               </div>
-
-              {/* Month */}
               <div className="relative">
                 <select
                   name="date.month"
@@ -473,24 +453,16 @@ const QmsDraftEditEnergyAction = () => {
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 >
-                  <option value="" disabled>
-                    mm
-                  </option>
+                  <option value="" disabled>mm</option>
                   {generateOptions(1, 12)}
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                   ${
-                                     focusedDropdown === "date.month"
-                                       ? "rotate-180"
-                                       : ""
-                                   }`}
+                    ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
                   size={20}
                   color="#AAAAAA"
                 />
               </div>
-
-              {/* Year */}
               <div className="relative">
                 <select
                   name="date.year"
@@ -500,18 +472,12 @@ const QmsDraftEditEnergyAction = () => {
                   onBlur={() => setFocusedDropdown(null)}
                   className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 >
-                  <option value="" disabled>
-                    yyyy
-                  </option>
+                  <option value="" disabled>yyyy</option>
                   {generateOptions(2023, 2030)}
                 </select>
                 <ChevronDown
                   className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                   ${
-                                     focusedDropdown === "date.year"
-                                       ? "rotate-180"
-                                       : ""
-                                   }`}
+                    ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
                   size={20}
                   color="#AAAAAA"
                 />
@@ -537,69 +503,57 @@ const QmsDraftEditEnergyAction = () => {
               </option>
               {users && users.length > 0
                 ? users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.first_name} {user.last_name || ""}
-                    </option>
-                  ))
+                  <option key={user.id} value={user.id}>
+                    {user.full_name || user.username}
+                  </option>
+                ))
                 : !isLoading && (
-                    <option value="" disabled>
-                      No users found
-                    </option>
-                  )}
+                  <option value="" disabled>No users found</option>
+                )}
             </select>
             <ChevronDown
               className={`absolute right-3 top-[38%] transform transition-transform duration-300
-                           ${
-                             focusedDropdown === "responsible"
-                               ? "rotate-180"
-                               : ""
-                           }`}
+                ${focusedDropdown === "responsible" ? "rotate-180" : ""}`}
               size={20}
               color="#AAAAAA"
             />
           </div>
 
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Statement on Energy Improvement Performance
-            </label>
+            <label className="add-training-label">Statement on Energy Improvement Performance</label>
             <textarea
-              name="energy_improvement"
-              value={formData.energy_improvement}
+              name="energy_improvements"
+              value={formData.energy_improvements}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none !h-[98px]"
             />
           </div>
 
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Statement on Result Verification
-            </label>
+            <label className="add-training-label">Statement on Result Verification</label>
             <textarea
-              name="result_verification"
-              value={formData.result_verification}
+              name="statement"
+              value={formData.statement}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none !h-[98px]"
             />
           </div>
 
           <div className="md:col-span-2 flex gap-4 justify-end">
-            <div className="flex gap-5">
-              <button
-                type="button"
-                onClick={handleListDraftEnergyAction}
-                className="cancel-btn duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="save-btn duration-200"
-                disabled={isLoading}
-              >
-                {isLoading ? "Saving..." : "Save"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleListDraftEnergyAction}
+              className="cancel-btn duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="save-btn duration-200"
+              disabled={isLoading}
+            >
+              {isLoading ? "Saving..." : "Save"}
+            </button>
           </div>
         </form>
       )}

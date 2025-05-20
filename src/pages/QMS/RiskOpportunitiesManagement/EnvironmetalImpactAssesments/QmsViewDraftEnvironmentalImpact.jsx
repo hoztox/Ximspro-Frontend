@@ -133,14 +133,9 @@ const QmsViewDraftEnvironmentalImpact = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="mx-[18px] px-[104px] mt-4 p-2 bg-red-500 rounded text-white">
-                    {error}
-                </div>
-            )}
 
             {loading ? (
-                <div className="flex justify-center items-center h-64">
+                <div className="flex justify-center items-center h-64 not-found">
                     <p>Loading environmental impact data...</p>
                 </div>
             ) : (

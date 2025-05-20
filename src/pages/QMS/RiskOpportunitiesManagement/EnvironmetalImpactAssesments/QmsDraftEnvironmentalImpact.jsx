@@ -39,6 +39,25 @@ const QmsDraftEnvironmentalImpact = () => {
                 }, 1500);
             } catch (error) {
                 console.error("Error deleting environmental impact:", error);
+                let errorMsg = error.message;
+
+                if (error.response) {
+                    // Check for field-specific errors first
+                    if (error.response.data.date) {
+                        errorMsg = error.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
                 setShowDeleteDraftErrorModal(true);
                 setTimeout(() => {
                     setShowDeleteDraftErrorModal(false);
@@ -63,7 +82,7 @@ const QmsDraftEnvironmentalImpact = () => {
     };
 
     const handleEditDraft = (id) => {
-        navigate(`/company/qms/edit-draft-environmantal-impact/${id}`); 
+        navigate(`/company/qms/edit-draft-environmantal-impact/${id}`);
     };
 
     const getUserCompanyId = () => {
@@ -178,6 +197,7 @@ const QmsDraftEnvironmentalImpact = () => {
                 <DeleteQmsManualDraftErrorModal
                     showDeleteDraftManualErrorModal={showDeleteDraftErrorModal}
                     onClose={() => setShowDeleteDraftErrorModal(false)}
+                    error={error}
                 />
                 <div className="flex space-x-5 items-center">
                     <div className="relative">

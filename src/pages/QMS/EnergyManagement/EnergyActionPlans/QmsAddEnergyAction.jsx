@@ -210,36 +210,50 @@ const QmsAddEnergyAction = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  setIsLoading(true);
+  try {
+    const submissionData = prepareSubmissionData(false);
 
-    try {
-      setIsLoading(true);
-        const submissionData = prepareSubmissionData(false);
-      const formDataToSend = new FormData();
-
-      if (formData.upload_attachment) {
-        formDataToSend.append("upload_attachment", formData.upload_attachment);
+    
+    const formDataToSend = new FormData();
+    
+    
+    for (const key in submissionData) {
+      if (key === "programs") {
+        formDataToSend.append(key, JSON.stringify(submissionData[key]));
+      } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
+        formDataToSend.append(key, submissionData[key]);
       }
-
-      const response = await axios.post(
-        `${BASE_URL}/qms/energy-action/create/`, 
-        formDataToSend,
-        submissionData,
-         {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      console.log("Added Energy Action:", response.data);
-      navigate("/company/qms/list-energy-action-plan");
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setError("Failed to save. Please check your inputs and try again.");
-    } finally {
-      setIsLoading(false);
     }
-  };
 
+    // Add the file attachment if it exists
+    if (formData.upload_attachment) {
+      formDataToSend.append("upload_attachment", formData.upload_attachment);
+    }
+
+    // Use multipart/form-data content type for file uploads
+    const response = await axios.post(
+      `${BASE_URL}/qms/energy-action/create/`,
+      formDataToSend,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("Added Energy Action:", response.data);
+    navigate("/company/qms/list-energy-action-plan");
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    setError("Failed to save. Please check your inputs and try again.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+  
+  
   const handleSaveAsDraft = async (e) => {
     e.preventDefault();
 
@@ -248,6 +262,9 @@ const QmsAddEnergyAction = () => {
       const submissionData = prepareSubmissionData(true);
 
       const formDataToSend = new FormData();
+      console.log('aaaaaaaction', formData); 
+
+      
       for (const key in submissionData) {
         if (key === "programs") {
           formDataToSend.append(key, JSON.stringify(submissionData[key]));
@@ -555,7 +572,7 @@ const QmsAddEnergyAction = () => {
               )}
           </select>
           <ChevronDown
-            className={`absolute right-3 top-[60%] transform transition-transform duration-300
+            className={`absolute right-3 top-[55px] transform transition-transform duration-300
                          ${focusedDropdown === "responsible" ? "rotate-180" : ""
               }`}
             size={20}

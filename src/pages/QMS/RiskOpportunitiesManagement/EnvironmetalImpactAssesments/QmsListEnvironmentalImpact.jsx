@@ -152,7 +152,7 @@ const QmsListEnvironmentalImpact = () => {
         setLoading(false);
         return;
       }
-      const response = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`); 
+      const response = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`);
       const filteredImpacts = filterImpactsByVisibility(response.data);
       const sortedImpacts = filteredImpacts.sort((a, b) => {
         const dateA = new Date(a.date || 0);
@@ -250,6 +250,25 @@ const QmsListEnvironmentalImpact = () => {
       } catch (err) {
         console.error("Error deleting environmental impact:", err);
         setShowDeleteModal(false);
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          }
+          else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
         setShowDeleteManualErrorModal(true);
         setTimeout(() => {
           setShowDeleteManualErrorModal(false);
@@ -329,6 +348,25 @@ const QmsListEnvironmentalImpact = () => {
       }, 1500);
     } catch (error) {
       console.error("Error publishing environmental impact:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowPublishErrorModal(true);
       setTimeout(() => {
         setShowPublishErrorModal(false);
@@ -438,6 +476,7 @@ const QmsListEnvironmentalImpact = () => {
       <DeleteQmsManualErrorModal
         showDeleteManualErrorModal={showDeleteManualErrorModal}
         onClose={() => setShowDeleteManualErrorModal(false)}
+        error={error}
       />
       <PublishSuccessModal
         showPublishSuccessModal={showPublishSuccessModal}
@@ -446,20 +485,19 @@ const QmsListEnvironmentalImpact = () => {
       <PublishErrorModal
         showPublishErrorModal={showPublishErrorModal}
         onClose={() => setShowPublishErrorModal(false)}
+        error={error}
       />
 
       <div className="overflow-x-auto">
         {loading ? (
-          <div className="text-center py-4">Loading environmental impacts...</div>
-        ) : error ? (
-          <div className="text-center py-4 text-red-500">{error}</div>
+          <div className="text-center py-4 not-found">Loading environmental impacts...</div>
         ) : (
           <table className="w-full border-collapse">
             <thead className="bg-[#24242D]">
               <tr className="h-[48px]">
                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                 <th className="px-2 text-left add-manual-theads">Title</th>
-                <th className="px-2 text-left add-manual-theads">Impact Assessment No </th>
+                <th className="px-2 text-left add-manual-theads">Impact Assessment No</th>
                 <th className="px-2 text-left add-manual-theads">Approved By</th>
                 <th className="px-2 text-left add-manual-theads">Date</th>
                 <th className="px-2 text-left add-manual-theads">Status</th>
@@ -506,8 +544,8 @@ const QmsListEnvironmentalImpact = () => {
                             {impact.status === "Pending for Review/Checking"
                               ? "Review"
                               : impact.status === "Correction Requested"
-                              ? "Correct"
-                              : "Approve"}
+                                ? "Correct"
+                                : "Approve"}
                           </button>
                         ) : (
                           <span className="text-[#858585]">No Action Required</span>
@@ -564,9 +602,8 @@ const QmsListEnvironmentalImpact = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {number}
             </button>
@@ -574,9 +611,8 @@ const QmsListEnvironmentalImpact = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
           >
             Next
           </button>

@@ -776,11 +776,11 @@ const ThemedApp = () => {
 
           <Route path="qms/list-energy-action-plan" element={<QmsListEnergyAction />} />
           <Route path="qms/add-energy-action-plan" element={<QmsAddEnergyAction />} />
-          <Route path="qms/edit-energy-action-plan" element={<QmsEditEnergyAction />} />
-          <Route path="qms/view-energy-action-plan" element={<QmsViewEnergyAction />} />
+          <Route path="qms/edit-energy-action-plan/:id" element={<QmsEditEnergyAction />} />
+          <Route path="qms/view-energy-action-plan/:id" element={<QmsViewEnergyAction />} />
           <Route path="qms/draft-energy-action-plan" element={<QmsDraftEnergyAction />} />
-          <Route path="qms/edit-draft-energy-action-plan" element={<QmsDraftEditEnergyAction />} />
-          <Route path="qms/view-draft-energy-action-plan" element={<QmsDraftViewEnergyAction />} />
+          <Route path="qms/edit-draft-energy-action-plan/:id" element={<QmsDraftEditEnergyAction />} />
+          <Route path="qms/view-draft-energy-action-plan/:id" element={<QmsDraftViewEnergyAction />} />
 
 
 

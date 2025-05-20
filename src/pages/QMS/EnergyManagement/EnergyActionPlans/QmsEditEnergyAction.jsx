@@ -6,7 +6,7 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsEditEnergyAction = () => {
-  const { id } = useParams(); // Get the EAP ID from URL
+  const { id } = useParams(); // Get the Energy Action ID from URL
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -60,26 +60,20 @@ const QmsEditEnergyAction = () => {
   const fetchEnergyAction = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`${BASE_URL}/qms/targets/${id}/`);
-
+      // Fetch the energy action details
+      const response = await axios.get(`${BASE_URL}/qms/energy-action/${id}/`);
+      
       // Parse the date from the response
       const dateParts = response.data.date
         ? response.data.date.split("-")
         : ["", "", ""];
 
-      // Parse programs if they exist
-      const programs = response.data.programs
-        ? response.data.programs
-            .split(",")
-            .map((p, i) => ({ id: i + 1, value: p.trim() }))
-        : [{ id: 1, value: "" }];
-
+      // Set form data based on the response
       setFormData({
-        eap_no: `EAP-${response.data.eap_no}`,
+        action_plan: response.data.action_plan || "",
         title: response.data.title || "",
-        associated_objective: response.data.associated_objective || "",
-        associated_legal_requirements:
-          response.data.associated_legal_requirements || "",
+        associative_objective: response.data.associative_objective || "",
+        legal_requirements: response.data.legal_requirements || "",
         means: response.data.means || "",
         date: {
           day: dateParts[2] || "",
@@ -87,15 +81,24 @@ const QmsEditEnergyAction = () => {
           year: dateParts[0] || "",
         },
         responsible: response.data.responsible || "",
-        energy_improvement: response.data.energy_improvement || "",
-        result_verification: response.data.result_verification || "",
-        attachment: response.data.attachment || "",
+        energy_improvements: response.data.energy_improvements || "",
+        statement: response.data.statement || "",
+        upload_attachment: response.data.upload_attachment || null,
       });
 
-      setProgramFields(programs);
+      // Handle programs from response
+      if (response.data.programs && Array.isArray(response.data.programs)) {
+        const programs = response.data.programs.map((program, index) => ({
+          id: index + 1,
+          value: program.Program || ""
+        }));
+        setProgramFields(programs.length > 0 ? programs : [{ id: 1, value: "" }]);
+      } else {
+        setProgramFields([{ id: 1, value: "" }]);
+      }
 
-      if (response.data.attachment) {
-        setExistingAttachment(response.data.attachment);
+      if (response.data.upload_attachment) {
+        setExistingAttachment(response.data.upload_attachment);
       }
 
       setIsLoading(false);
@@ -114,11 +117,11 @@ const QmsEditEnergyAction = () => {
   const companyId = getUserCompanyId();
 
   const [formData, setFormData] = useState({
-    eap_no: "",
+    action_plan: "",
     title: "",
-    associated_objective: "",
-    attachment: null,
-    associated_legal_requirements: "",
+    associative_objective: "",
+    upload_attachment: null,
+    legal_requirements: "",
     means: "",
     date: {
       day: "",
@@ -126,8 +129,8 @@ const QmsEditEnergyAction = () => {
       year: "",
     },
     responsible: "",
-    energy_improvement: "",
-    result_verification: "",
+    energy_improvements: "",
+    statement: "",
   });
 
   const handleListEnergyAction = () => {
@@ -137,7 +140,7 @@ const QmsEditEnergyAction = () => {
   const handleFileChange = (e) => {
     setFormData({
       ...formData,
-      attachment: e.target.files[0],
+      upload_attachment: e.target.files[0],
     });
     setExistingAttachment(null); // Clear existing attachment when new file is selected
   };
@@ -145,8 +148,8 @@ const QmsEditEnergyAction = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Prevent manual editing of eap_no
-    if (name === "eap_no") return;
+    // Prevent manual editing of action_plan number
+    if (name === "action_plan") return;
 
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -194,61 +197,83 @@ const QmsEditEnergyAction = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
       setIsLoading(true);
       setError("");
       const companyId = getUserCompanyId();
-
-      const programs = programFields
-        .map((field) => field.value)
-        .filter(Boolean)
-        .join(", ");
-
+      const userId = localStorage.getItem("user_id") || null;
       const date = formatDate(formData.date);
-
-      const submissionData = new FormData();
-      submissionData.append("company", companyId);
-      submissionData.append("eap_no", formData.eap_no.replace("EAP-", ""));
-      submissionData.append("title", formData.title);
-      submissionData.append(
-        "associated_objective",
-        formData.associated_objective
-      );
-      submissionData.append("programs", programs);
-      submissionData.append(
-        "associated_legal_requirements",
-        formData.associated_legal_requirements
-      );
-      submissionData.append("means", formData.means);
-      submissionData.append("date", date);
-      submissionData.append("responsible", formData.responsible);
-      submissionData.append("energy_improvement", formData.energy_improvement);
-      submissionData.append(
-        "result_verification",
-        formData.result_verification
-      );
-
-      // Only append new attachment if one was selected
-      if (formData.attachment instanceof File) {
-        submissionData.append("attachment", formData.attachment);
-      } else if (existingAttachment) {
-        // Keep existing attachment if no new one was selected
-        submissionData.append("attachment", existingAttachment);
-      }
-
-      const response = await axios.put(
-        `${BASE_URL}/qms/targets/${id}/`,
-        submissionData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+  
+      // Prepare programs array
+      const programs = programFields
+        .filter(field => field.value.trim() !== "")
+        .map(field => ({ Program: field.value }));
+  
+      if (formData.upload_attachment instanceof File) {
+        // Create FormData to send file + data
+        const fileFormData = new FormData();
+        fileFormData.append("upload_attachment", formData.upload_attachment);
+        fileFormData.append("company", companyId);
+        fileFormData.append("user", userId);
+        fileFormData.append("title", formData.title);
+        fileFormData.append("associative_objective", formData.associative_objective);
+        fileFormData.append("legal_requirements", formData.legal_requirements);
+        fileFormData.append("means", formData.means);
+        fileFormData.append("date", date);
+        fileFormData.append("responsible", formData.responsible?.id || formData.responsible);
+        fileFormData.append("energy_improvements", formData.energy_improvements);
+        fileFormData.append("statement", formData.statement);
+  
+        if (formData.action_plan) {
+          fileFormData.append("action_plan", formData.action_plan);
         }
-      );
-
-      console.log("Updated Energy Action:", response.data);
+  
+        // Append programs array (if your backend expects it as JSON string)
+        fileFormData.append("programs", JSON.stringify(programs));
+  
+        // Send FormData with multipart/form-data headers
+        const response = await axios.put(
+          `${BASE_URL}/qms/energy-action/${id}/`,
+          fileFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+  
+        console.log("Updated Energy Action with file:", response.data);
+      } else {
+        // No file, send JSON
+        const requestPayload = {
+          company: companyId,
+          user: userId,
+          title: formData.title,
+          associative_objective: formData.associative_objective,
+          legal_requirements: formData.legal_requirements,
+          means: formData.means,
+          date: date,
+          responsible: formData.responsible?.id || formData.responsible,
+          energy_improvements: formData.energy_improvements,
+          statement: formData.statement,
+          programs: programs,
+        };
+  
+        if (formData.action_plan) {
+          requestPayload.action_plan = formData.action_plan;
+        }
+  
+        const response = await axios.put(
+          `${BASE_URL}/qms/energy-action/${id}/`,
+          requestPayload
+        );
+  
+        console.log("Updated Energy Action:", response.data);
+      }
+  
       navigate("/company/qms/list-energy-action-plan");
+  
     } catch (error) {
       console.error("Error submitting form:", error);
       setError("Failed to update. Please check your inputs and try again.");
@@ -256,6 +281,7 @@ const QmsEditEnergyAction = () => {
       setIsLoading(false);
     }
   };
+  
 
   const generateOptions = (start, end, prefix = "") => {
     const options = [];
@@ -274,7 +300,7 @@ const QmsEditEnergyAction = () => {
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-        <h1 className="add-training-head">Edit Energy Action Plans</h1>
+        <h1 className="add-training-head">Edit Energy Action Plan</h1>
         <button
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
           onClick={() => handleListEnergyAction()}
@@ -302,17 +328,17 @@ const QmsEditEnergyAction = () => {
             </label>
             <input
               type="text"
-              name="eap_no"
-              value={formData.eap_no}
+              name="action_plan"
+              value={formData.action_plan}
               className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
               readOnly
-              title="Existing EAP number"
+              title="Existing Energy Action Plan number"
             />
           </div>
 
           <div className="flex flex-col gap-3">
             <label className="add-training-label">
-              Action Plan Title/Name <span className="text-red-500">*</span>
+              Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -325,11 +351,11 @@ const QmsEditEnergyAction = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            <label className="add-training-label">Associated Objective</label>
+            <label className="add-training-label">Associative Objective</label>
             <input
               type="text"
-              name="associated_objective"
-              value={formData.associated_objective}
+              name="associative_objective"
+              value={formData.associative_objective}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none"
             />
@@ -353,12 +379,18 @@ const QmsEditEnergyAction = () => {
               </label>
             </div>
             <div className="flex justify-between items-center">
-              <button className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]">
-                Click to view file <Eye size={17} />
-              </button>
-              {formData.attachment instanceof File ? (
+              {existingAttachment && (
+                <button 
+                  type="button"
+                  className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]"
+                  onClick={() => window.open(existingAttachment, '_blank')}
+                >
+                  Click to view file <Eye size={17} />
+                </button>
+              )}
+              {formData.upload_attachment instanceof File ? (
                 <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                  {formData.attachment.name}
+                  {formData.upload_attachment.name}
                 </p>
               ) : existingAttachment ? (
                 <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
@@ -411,12 +443,12 @@ const QmsEditEnergyAction = () => {
 
           <div className="flex flex-col gap-3">
             <label className="add-training-label">
-              Associated Legal Requirements
+              Legal Requirements
             </label>
             <input
               type="text"
-              name="associated_legal_requirements"
-              value={formData.associated_legal_requirements}
+              name="legal_requirements"
+              value={formData.legal_requirements}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none"
             />
@@ -559,11 +591,11 @@ const QmsEditEnergyAction = () => {
 
           <div className="flex flex-col gap-3">
             <label className="add-training-label">
-              Statement on Energy Improvement Performance
+              Energy Improvements
             </label>
             <textarea
-              name="energy_improvement"
-              value={formData.energy_improvement}
+              name="energy_improvements"
+              value={formData.energy_improvements}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none !h-[98px]"
             />
@@ -574,8 +606,8 @@ const QmsEditEnergyAction = () => {
               Statement on Result Verification
             </label>
             <textarea
-              name="result_verification"
-              value={formData.result_verification}
+              name="statement"
+              value={formData.statement}
               onChange={handleChange}
               className="add-training-inputs focus:outline-none !h-[98px]"
             />

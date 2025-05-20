@@ -106,6 +106,10 @@ const QmsAddEnvironmentalImpact = () => {
         } catch (error) {
             console.error('Error fetching users:', error);
             setError('Failed to load users. Please check your connection and try again.');
+            setShowDraftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDraftManualErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -243,7 +247,29 @@ const QmsAddEnvironmentalImpact = () => {
 
         } catch (err) {
             setLoading(false);
-            setError(err.response?.data?.message || 'Failed to save environmental impact assessment');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowDraftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDraftManualErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -283,11 +309,29 @@ const QmsAddEnvironmentalImpact = () => {
             }, 1500);
         } catch (err) {
             setLoading(false);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             setShowDraftManualErrorModal(true);
             setTimeout(() => {
                 setShowDraftManualErrorModal(false);
             }, 3000);
-            setError(err.response?.data?.message || 'Failed to save draft');
         }
     };
 
@@ -320,7 +364,7 @@ const QmsAddEnvironmentalImpact = () => {
 
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white p-5">
-            <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
+            <div className="flex justify-between items-center px-[124px] pb-5">
                 <h1 className="add-training-head">Add Environmental Impact Assessment</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
@@ -341,9 +385,10 @@ const QmsAddEnvironmentalImpact = () => {
             <AddQmsManualDraftErrorModal
                 showDraftManualErrorModal={showDraftManualErrorModal}
                 onClose={() => setShowDraftManualErrorModal(false)}
+                error={error}
             />
 
-            {error && <div className="text-red-500 text-center mb-4">{error}</div>}
+
 
             <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                 <div className="grid md:grid-cols-2 gap-5">
