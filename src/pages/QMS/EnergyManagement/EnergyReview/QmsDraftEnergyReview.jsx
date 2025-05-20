@@ -5,6 +5,9 @@ import viewIcon from "../../../../assets/images/Company Documentation/view.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftEnergyReview = () => {
   // State
@@ -14,6 +17,14 @@ const QmsDraftEnergyReview = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [energyReviewToDelete, setEnergyReviewToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -27,6 +38,7 @@ const QmsDraftEnergyReview = () => {
   };
 
   const userId = getRelevantUserId();
+
   // Fetch draft energy reviews
   useEffect(() => {
     const fetchEnergyReviews = async () => {
@@ -38,7 +50,21 @@ const QmsDraftEnergyReview = () => {
         setEnergyReviews(response.data);
         setLoading(false);
       } catch (err) {
-        setError("Failed to fetch energy reviews. Please try again later.");
+        let errorMsg = err.message;
+        if (err.response) {
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          } else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        }
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setLoading(false);
       }
     };
@@ -88,15 +114,51 @@ const QmsDraftEnergyReview = () => {
     navigate(`/company/qms/edit-draft-energy-review/${id}`);
   };
 
-  // Delete energy review
-  const handleDeleteEnergyReview = async (id) => {
+  // Open delete confirmation modal
+  const openDeleteModal = (energyReview) => {
+    setEnergyReviewToDelete(energyReview);
+    setShowDeleteModal(true);
+    setDeleteMessage('Draft Energy Review');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!energyReviewToDelete) return;
+
     try {
-      await axios.delete(`${BASE_URL}/qms/energy-review/${id}/`);
-      setEnergyReviews(
-        energyReviews.filter((energyReview) => energyReview.id !== id)
-      );
+      await axios.delete(`${BASE_URL}/qms/energy-review/${energyReviewToDelete.id}/`);
+      setEnergyReviews(energyReviews.filter(item => item.id !== energyReviewToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Draft Energy Review Deleted Successfully");
     } catch (err) {
-      setError("Failed to delete energy review. Please try again.");
+      console.error('Error deleting energy review:', err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+      setError(errorMsg);
+      setShowDeleteModal(false);
     }
   };
 
@@ -180,14 +242,14 @@ const QmsDraftEnergyReview = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      onClick={()=>handleQmsDraftEditEnergyReview(energyReview.id)}
+                      onClick={() => handleQmsDraftEditEnergyReview(energyReview.id)}
                       className="text-[#1E84AF]"
                     >
                       Click to Continue
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={()=> handleQmsViewDraftEnergyReview(energyReview.id)}>
+                    <button onClick={() => handleQmsViewDraftEnergyReview(energyReview.id)}>
                       <img
                         src={viewIcon}
                         alt="View Icon"
@@ -201,7 +263,7 @@ const QmsDraftEnergyReview = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button
-                      onClick={() => handleDeleteEnergyReview(energyReview.id)}
+                      onClick={() => openDeleteModal(energyReview)}
                     >
                       <img src={deleteIcon} alt="Delete Icon" />
                     </button>
@@ -221,9 +283,8 @@ const QmsDraftEnergyReview = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -233,9 +294,8 @@ const QmsDraftEnergyReview = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {number}
                 </button>
@@ -245,15 +305,36 @@ const QmsDraftEnergyReview = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

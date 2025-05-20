@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListEnergyReview = () => {
     const [energyReviews, setEnergyReviews] = useState([]);
@@ -15,6 +18,15 @@ const QmsListEnergyReview = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [energyReviewToDelete, setEnergyReviewToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [draftCount, setDraftCount] = useState(0);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -35,7 +47,22 @@ const QmsListEnergyReview = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     useEffect(() => {
         fetchEnergyReviews();
@@ -52,9 +79,37 @@ const QmsListEnergyReview = () => {
 
             const response = await axios.get(`${BASE_URL}/qms/energy-review/company/${companyId}`);
             setEnergyReviews(response.data);
+
+            const draftResponse = await axios.get(
+                `${BASE_URL}/qms/energy-review/drafts-count/${userId}/` 
+            );
+            setDraftCount(draftResponse.data.count);
+
         } catch (error) {
             console.error('Error fetching energy reviews:', error);
-            setError('Failed to load energy reviews. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -98,17 +153,58 @@ const QmsListEnergyReview = () => {
         navigate(`/company/qms/edit-energy-review/${id}`);
     };
 
-    const handleDeleteEnergyReview = async (id) => {
-        setLoading(true);
-        setError('');
+    // Open delete confirmation modal
+    const openDeleteModal = (energyReview) => {
+        setEnergyReviewToDelete(energyReview);
+        setShowDeleteModal(true);
+        setDeleteMessage('Energy Review');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!energyReviewToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/energy-review/${id}/`);
-            setEnergyReviews(energyReviews.filter(energyReview => energyReview.id !== id));
+            await axios.delete(`${BASE_URL}/qms/energy-review/${energyReviewToDelete.id}/`);
+            setEnergyReviews(energyReviews.filter(item => item.id !== energyReviewToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Energy Review Deleted Successfully");
         } catch (error) {
             console.error('Error deleting energy review:', error);
-            setError('Failed to delete energy review. Please try again.');
-        } finally {
-            setLoading(false);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -149,6 +245,11 @@ const QmsListEnergyReview = () => {
                         onClick={handleDraftEnergyReview}
                     >
                         <span>Drafts</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[215px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -160,16 +261,9 @@ const QmsListEnergyReview = () => {
                 </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4">
-                    {error}
-                </div>
-            )}
-
             {/* Loading State */}
             {loading ? (
-                <div className="text-center text-[#AAAAAA]">Loading energy reviews...</div>
+                <div className="text-center not-found">Loading energy reviews...</div>
             ) : (
                 <>
                     {/* Table */}
@@ -211,7 +305,7 @@ const QmsListEnergyReview = () => {
                                                 </button>
                                             </td>
                                             <td className="px-2 add-manual-datas !text-center">
-                                                <button onClick={() => handleDeleteEnergyReview(energyReview.id)}>
+                                                <button onClick={() => openDeleteModal(energyReview)}>
                                                     <img src={deleteIcon} alt="Delete Icon" />
                                                 </button>
                                             </td>
@@ -255,6 +349,28 @@ const QmsListEnergyReview = () => {
                     </div>
                 </>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

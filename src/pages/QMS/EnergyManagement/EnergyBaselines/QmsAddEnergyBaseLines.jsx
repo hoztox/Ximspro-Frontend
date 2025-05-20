@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddEnergyBaseLines = () => {
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
@@ -14,7 +16,16 @@ const QmsAddEnergyBaseLines = () => {
     const [isDraftLoading, setIsDraftLoading] = useState(false);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const [formErrors, setFormErrors] = useState({
+        basline_title: '',
+        responsible: ''
+    });
     const navigate = useNavigate();
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         basline_title: '',
@@ -75,7 +86,29 @@ const QmsAddEnergyBaseLines = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -93,7 +126,29 @@ const QmsAddEnergyBaseLines = () => {
             }
         } catch (error) {
             console.error("Error fetching reviews:", error);
-            setError("Failed to load reviews. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -135,7 +190,31 @@ const QmsAddEnergyBaseLines = () => {
                 ...formData,
                 [name]: value
             });
+            if (name === "basline_title" || name === "responsible") {
+                setFormErrors({
+                    ...formErrors,
+                    [name]: ""
+                });
+            }
         }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.basline_title.trim()) {
+            errors.basline_title = "Baseline Title is required";
+            isValid = false;
+        }
+
+        if (!formData.responsible) {
+            errors.responsible = "Responsible is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
     };
 
     const handleOpenReviewTypeModal = () => {
@@ -176,6 +255,10 @@ const QmsAddEnergyBaseLines = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
         try {
             setIsLoading(true);
             setError('');
@@ -191,11 +274,38 @@ const QmsAddEnergyBaseLines = () => {
                 }
             });
 
-            console.log('Baseline created:', response.data);
-            navigate('/company/qms/list-energy-baselines');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-energy-baselines');
+            }, 1500);
+            setSuccessMessage("Energy Baselines Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError('Failed to save baseline. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -203,6 +313,10 @@ const QmsAddEnergyBaseLines = () => {
 
     const handleSaveAsDraft = async (e) => {
         e.preventDefault();
+        // if (!validateForm()) {
+        //     return;
+        // }
+
         try {
             setIsDraftLoading(true);
             setError('');
@@ -218,11 +332,38 @@ const QmsAddEnergyBaseLines = () => {
                 }
             });
 
-            console.log('Baseline saved as draft:', response.data);
-            navigate('/company/qms/draft-energy-baselines');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-energy-baselines');
+            }, 1500);
+            setSuccessMessage("Energy Baselines Drafted Successfully")
         } catch (error) {
             console.error('Error saving draft:', error);
-            setError('Failed to save baseline as draft. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsDraftLoading(false);
         }
@@ -257,15 +398,21 @@ const QmsAddEnergyBaseLines = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
             <ReviewTypeModal
                 isOpen={isReviewTypeModalOpen}
                 onClose={handleCloseReviewTypeModal}
+            />
+
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
             />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
@@ -278,9 +425,11 @@ const QmsAddEnergyBaseLines = () => {
                         name="basline_title"
                         value={formData.basline_title}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
-                        required
+                        className={`add-training-inputs focus:outline-none ${formErrors.basline_title ? "border-red-500" : ""}`}
                     />
+                    {formErrors.basline_title && (
+                        <p className="text-red-500 text-sm">{formErrors.basline_title}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -377,8 +526,7 @@ const QmsAddEnergyBaseLines = () => {
                         onChange={handleChange}
                         onFocus={() => setFocusedDropdown("responsible")}
                         onBlur={() => setFocusedDropdown(null)}
-                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
+                        className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
                     >
                         <option value="" disabled>
                             {isLoading ? "Loading..." : "Select Responsible"}
@@ -399,6 +547,9 @@ const QmsAddEnergyBaseLines = () => {
                         size={20}
                         color="#AAAAAA"
                     />
+                    {formErrors.responsible && (
+                        <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3 relative">

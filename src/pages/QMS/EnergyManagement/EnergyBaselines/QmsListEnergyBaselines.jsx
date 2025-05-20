@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListEnergyBaselines = () => {
     const [energyBaseLines, setEnergyBaseLines] = useState([]);
@@ -15,6 +18,15 @@ const QmsListEnergyBaselines = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [baselineToDelete, setBaselineToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+    const [draftCount, setDraftCount] = useState(0);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -35,7 +47,22 @@ const QmsListEnergyBaselines = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const fetchBaselines = async () => {
         try {
@@ -50,9 +77,35 @@ const QmsListEnergyBaselines = () => {
                 setEnergyBaseLines([]);
                 console.error("Unexpected response format:", response.data);
             }
+
+            const draftResponse = await axios.get(
+                `${BASE_URL}/qms/baselines/drafts-count/${userId}/` 
+            );
+            setDraftCount(draftResponse.data.count);
+
         } catch (error) {
             console.error("Error fetching baselines:", error);
-            setError("Failed to load baselines. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -101,28 +154,69 @@ const QmsListEnergyBaselines = () => {
         navigate(`/company/qms/edit-energy-baselines/${id}`);
     };
 
-    const handleDeleteEnergyBaseLines = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (baseline) => {
+        setBaselineToDelete(baseline);
+        setShowDeleteModal(true);
+        setDeleteMessage('Energy Baseline');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!baselineToDelete) return;
+
         try {
-            setIsLoading(true);
-            setError('');
-            await axios.delete(`${BASE_URL}/qms/baselines/${id}/`);
-            setEnergyBaseLines(energyBaseLines.filter(energyBaseLine => energyBaseLine.id !== id));
+            await axios.delete(`${BASE_URL}/qms/baselines/${baselineToDelete.id}/`);
+            setEnergyBaseLines(energyBaseLines.filter(item => item.id !== baselineToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Energy Baseline Deleted Successfully");
         } catch (error) {
-            console.error("Error deleting baseline:", error);
-            setError("Failed to delete baseline. Please try again.");
-        } finally {
-            setIsLoading(false);
+            console.error('Error deleting energy baseline:', error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    };
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 
     // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -152,6 +246,11 @@ const QmsListEnergyBaselines = () => {
                         onClick={handleDraftEnergyBaseLines}
                     >
                         <span>Drafts</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[183px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -162,13 +261,6 @@ const QmsListEnergyBaselines = () => {
                     </button>
                 </div>
             </div>
-
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
 
             {/* Table */}
             <div className="overflow-x-auto">
@@ -198,10 +290,10 @@ const QmsListEnergyBaselines = () => {
                             filteredEnergyBaseLines.map((energyBaseLine, index) => (
                                 <tr key={energyBaseLine.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{energyBaseLine.basline_title || 'No Title'}</td>
-                                    <td className="px-2 add-manual-datas">{energyBaseLine.energy_review?.title || 'None'}</td>
+                                    <td className="px-2 add-manual-datas">{energyBaseLine.basline_title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{energyBaseLine.energy_review?.title || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {energyBaseLine.responsible?.first_name} {energyBaseLine.responsible?.last_name || ''}
+                                        {energyBaseLine.responsible?.first_name} {energyBaseLine.responsible?.last_name || 'N/A '}
                                     </td>
                                     <td className="px-2 add-manual-datas">{formatDate(energyBaseLine.date || 'N/A')}</td>
                                     <td className="px-2 add-manual-datas !text-center">
@@ -215,7 +307,7 @@ const QmsListEnergyBaselines = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteEnergyBaseLines(energyBaseLine.id)}>
+                                        <button onClick={() => openDeleteModal(energyBaseLine)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -257,6 +349,28 @@ const QmsListEnergyBaselines = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

@@ -5,6 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewEnergyReview = () => {
     const [formData, setFormData] = useState({
@@ -22,6 +25,13 @@ const QmsViewEnergyReview = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
     const { id } = useParams();
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -65,19 +75,41 @@ const QmsViewEnergyReview = () => {
             const data = response.data;
 
             setFormData({
-                energy_name: data.energy_name || "",
-                review_no: data.review_no || "",
-                review_type: data.review_type?.name || data.review_type || "",
-                date: data.date || "",
+                energy_name: data.energy_name || "N/A",
+                review_no: data.review_no || "N/A",
+                review_type: data.review_type?.title || "N/A",
+                date: data.date || "N/A",
                 upload_attachment: data.upload_attachment || null,
-                relate_business_process: data.relate_business_process || "",
-                remarks: data.remarks || "",
-                relate_document_process: data.relate_document_process || "",
-                revision: data.revision || ""
+                relate_business_process: data.relate_business_process || "N/A",
+                remarks: data.remarks || "N/A",
+                relate_document_process: data.relate_document_process || "N/A",
+                revision: data.revision || "N/A"
             });
         } catch (error) {
             console.error("Error fetching energy review:", error);
-            setError("Failed to load energy review. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -91,15 +123,52 @@ const QmsViewEnergyReview = () => {
         navigate(`/company/qms/edit-energy-review/${id}`);
     };
 
-    const handleDelete = async () => {
+    const openDeleteModal = () => {
+        setShowDeleteModal(true);
+        setDeleteMessage("Energy Review");
+    };
+
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    const confirmDelete = async () => {
         setLoading(true);
         setError("");
         try {
             await axios.delete(`${BASE_URL}/qms/energy-review/${id}/`);
-            navigate("/company/qms/list-energy-review");
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Energy Review Deleted Successfully");
+            setTimeout(() => {
+                navigate("/company/qms/list-energy-review");
+            }, 2000);
         } catch (error) {
             console.error("Error deleting energy review:", error);
-            setError("Failed to delete energy review. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -132,14 +201,8 @@ const QmsViewEnergyReview = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 my-4">
-                    {error}
-                </div>
-            )}
-
             {loading ? (
-                <div className="text-center text-[#AAAAAA] p-5">Loading energy review...</div>
+                <div className="text-center not-found p-5">Loading energy review...</div>
             ) : (
                 <div className="pt-5 relative">
                     {/* Vertical divider line */}
@@ -164,7 +227,7 @@ const QmsViewEnergyReview = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Review Type
                             </label>
-                            <div className="view-employee-data">{formData.review_type.title}</div>
+                            <div className="view-employee-data">{formData.review_type}</div>
                         </div>
 
                         <div>
@@ -232,7 +295,7 @@ const QmsViewEnergyReview = () => {
 
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Delete
-                                <button onClick={handleDelete} disabled={loading}>
+                                <button onClick={openDeleteModal} disabled={loading}>
                                     <img
                                         src={deletes}
                                         alt="Delete Icon"
@@ -244,6 +307,28 @@ const QmsViewEnergyReview = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

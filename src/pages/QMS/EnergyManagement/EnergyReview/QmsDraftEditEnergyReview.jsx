@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEditEnergyReview = () => {
     const { id } = useParams();
@@ -13,8 +15,16 @@ const QmsDraftEditEnergyReview = () => {
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [reviewTypes, setReviewTypes] = useState([]);
-    const [selectedFile, setSelectedFile] = useState(null); // Added for file display
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [formErrors, setFormErrors] = useState({
+        energy_name: ''
+    });
     const navigate = useNavigate();
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         energy_name: '',
@@ -60,7 +70,29 @@ const QmsDraftEditEnergyReview = () => {
             setReviewTypes(response.data);
         } catch (error) {
             console.error('Error fetching review types:', error);
-            setError('Failed to load review types. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -105,7 +137,29 @@ const QmsDraftEditEnergyReview = () => {
 
             } catch (error) {
                 console.error('Error fetching energy review:', error);
-                setError('Failed to load energy review data.');
+                let errorMsg = error.message;
+
+                if (error.response) {
+                    // Check for field-specific errors first
+                    if (error.response.data.date) {
+                        errorMsg = error.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
             } finally {
                 setIsLoading(false);
             }
@@ -115,7 +169,15 @@ const QmsDraftEditEnergyReview = () => {
     }, [id]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
+
+        if (type === 'checkbox') {
+            setFormData({
+                ...formData,
+                [name]: checked
+            });
+            return;
+        }
 
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
@@ -131,6 +193,12 @@ const QmsDraftEditEnergyReview = () => {
                 ...formData,
                 [name]: value
             });
+            if (name === "energy_name") {
+                setFormErrors({
+                    ...formErrors,
+                    energy_name: ""
+                });
+            }
         }
     };
 
@@ -151,6 +219,19 @@ const QmsDraftEditEnergyReview = () => {
         }
     };
 
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.energy_name.trim()) {
+            errors.energy_name = "Energy Review Name/Title is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const handleOpenReviewTypeModal = () => {
         setIsReviewTypeModalOpen(true);
     };
@@ -169,6 +250,9 @@ const QmsDraftEditEnergyReview = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
 
         try {
             setIsLoading(true);
@@ -178,8 +262,6 @@ const QmsDraftEditEnergyReview = () => {
             const companyId = getUserCompanyId();
 
             const submissionData = new FormData();
-            console.log('formDataaaaa', formData);
-            
             submissionData.append('company', companyId);
             submissionData.append('energy_name', formData.energy_name);
             submissionData.append('review_no', formData.review_no);
@@ -200,12 +282,39 @@ const QmsDraftEditEnergyReview = () => {
                 }
             });
 
-            console.log('Energy Review updated:', response.data);
-            navigate('/company/qms/list-energy-review');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-energy-review');
+            }, 1500);
+            setSuccessMessage("Energy Review Saved Successfully")
 
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError('Failed to update energy review. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -234,15 +343,15 @@ const QmsDraftEditEnergyReview = () => {
         return options;
     };
 
-    if (isLoading) {
-        return (
-            <div className="bg-[#1C1C24] not-found p-5 rounded-lg">
-                <div className="flex justify-center items-center h-64">
-                    <p>Loading energy review data...</p>
-                </div>
-            </div>
-        );
-    }
+    // if (isLoading) {
+    //     return (
+    //         <div className="bg-[#1C1C24] not-found p-5 rounded-lg">
+    //             <div className="flex justify-center items-center h-64">
+    //                 <p>Loading energy review data...</p>
+    //             </div>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -256,30 +365,38 @@ const QmsDraftEditEnergyReview = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
             <ReviewTypeModal
                 isOpen={isReviewTypeModalOpen}
                 onClose={handleCloseReviewTypeModal}
             />
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Energy Review Name/Title
+                        Energy Review Name/Title <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         name="energy_name"
                         value={formData.energy_name}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
-                        required
+                        className={`add-training-inputs focus:outline-none ${formErrors.energy_name ? "border-red-500" : ""}`}
                     />
+                    {formErrors.energy_name && (
+                        <p className="text-red-500 text-sm">{formErrors.energy_name}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -292,7 +409,6 @@ const QmsDraftEditEnergyReview = () => {
                         value={formData.review_no}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none cursor-not-allowed"
-                        required
                         readOnly
                     />
                 </div>
@@ -394,7 +510,7 @@ const QmsDraftEditEnergyReview = () => {
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Upload Attachments</label>
-                    <div className="relative">
+                    <div className="relative -top-[9px]">
                         <input
                             type="file"
                             id="fileInput"

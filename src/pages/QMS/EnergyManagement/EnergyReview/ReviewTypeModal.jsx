@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
-
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DeleteConfimModal from '../Modals/DeleteConfimModal';
 
 const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
     const [animateClass, setAnimateClass] = useState('');
@@ -11,9 +13,18 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
+    const [formErrors, setFormErrors] = useState({
+        newReviewTitle: ''
+    });
 
-    // Animation effect when modal opens/closes
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [reviewToDelete, setReviewToDelete] = useState(null);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+
     useEffect(() => {
         if (isOpen) {
             setAnimateClass('opacity-100 scale-100');
@@ -37,12 +48,15 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
         } catch (error) {
             console.error('Error fetching review:', error);
             setError('Failed to load review. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
     };
 
-    // Get company ID from local storage
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -62,23 +76,59 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
         return null;
     };
 
-    // Handle delete cause
-    const handleDelete = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (reviewItem) => {
+        setReviewToDelete(reviewItem);
+        setShowDeleteModal(true);
+        setDeleteMessage('Review Type');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!reviewToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/review-type/${id}/`);
-            setReview(review.filter(item => item.id !== id));
-            setSuccessMessage('Cause deleted successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            await axios.delete(`${BASE_URL}/qms/review-type/${reviewToDelete.id}/`);
+            setReview(review.filter(item => item.id !== reviewToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Review Type Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (error) {
-            console.error('Error deleting cause:', error);
-            setError('Failed to delete cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            console.error('Error deleting review:', error);
+            setError('Failed to delete review. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
-    // Handle save new cause
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!newReviewTitle.trim()) {
+            errors.newReviewTitle = "Review title is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const handleSave = async () => {
-        if (!newReviewTitle.trim()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setIsAdding(true);
         try {
@@ -102,18 +152,25 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
             }
 
             setNewReviewTitle('');
-            setSuccessMessage('Review added successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            setShowSuccessModal(true);
+            setSuccessMessage("Review Added Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 1500);
+
         } catch (error) {
-            console.error('Error adding cause:', error);
-            setError('Failed to add cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            console.error('Error adding review:', error);
+            setError('Failed to add review. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+
         } finally {
             setIsAdding(false);
         }
     };
 
-    // Handle selecting a cause
     const handleSelectCause = (cause) => {
         if (onAddReview && typeof onAddReview === 'function') {
             onAddReview(cause);
@@ -121,28 +178,46 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
         }
     };
 
+    const handleInputChange = (e) => {
+        setNewReviewTitle(e.target.value);
+        setFormErrors({
+            ...formErrors,
+            newReviewTitle: ""
+        });
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
 
-                {/* Causes List Section */}
+                {/* Success Modal */}
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
+
+                {/* Error Modal */}
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
+                {/* Delete Confirmation Modal */}
+                <DeleteConfimModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={confirmDelete}
+                    onCancel={closeAllModals}
+                    deleteMessage={deleteMessage}
+                />
+
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Review List</h2>
                     {loading ? (
-                        <div className="text-center py-4">Loading...</div>
+                        <div className="text-center py-4 not-found">Loading...</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-gray-400">
@@ -168,7 +243,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                                                     <td className="px-3 agenda-data w-[60%]">{item.title}</td>
                                                     <td className="px-3 agenda-data text-center w-[15%]">
                                                         <div className="flex items-center justify-center h-[42px]">
-                                                            <button onClick={() => handleDelete(item.id)}>
+                                                            <button onClick={() => openDeleteModal(item)}>
                                                                 <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
                                                             </button>
                                                         </div>
@@ -183,7 +258,6 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                     )}
                 </div>
 
-                {/* Add Cause Section */}
                 <div className="bg-[#1C1C24] rounded-[4px]">
                     <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Review</h3>
 
@@ -194,10 +268,13 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                         <input
                             type="text"
                             value={newReviewTitle}
-                            onChange={(e) => setNewReviewTitle(e.target.value)}
-                            className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none"
+                            onChange={handleInputChange}
+                            className={`w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none ${formErrors.newReviewTitle ? "border border-red-500" : ""}`}
                             placeholder="Enter Review Title"
                         />
+                        {formErrors.newReviewTitle && (
+                            <p className="text-red-500 text-sm mt-1">{formErrors.newReviewTitle}</p>
+                        )}
                     </div>
 
                     <div className="flex gap-5 justify-end pb-5 px-5">
@@ -210,7 +287,7 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
                         <button
                             onClick={handleSave}
                             className="save-btn"
-                            disabled={!newReviewTitle.trim() || isAdding}
+                            disabled={isAdding}
                         >
                             {isAdding ? 'Saving...' : 'Save'}
                         </button>
@@ -221,5 +298,4 @@ const ReviewTypeModal = ({ isOpen, onClose, onAddReview }) => {
     );
 };
 
-
-export default ReviewTypeModal
+export default ReviewTypeModal;

@@ -56,13 +56,14 @@ const QmsViewDraftEnergyBaseLines = () => {
 
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
-        const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-    };
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -77,15 +78,9 @@ const QmsViewDraftEnergyBaseLines = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 my-4 rounded">
-                    {error}
-                </div>
-            )}
-
             <div className="p-5 relative">
                 {isLoading ? (
-                    <div className="text-center py-4">Loading...</div>
+                    <div className="text-center py-4 not-found">Loading...</div>
                 ) : (
                     <>
                         {/* Vertical divider line */}
@@ -125,7 +120,7 @@ const QmsViewDraftEnergyBaseLines = () => {
                                     Responsible
                                 </label>
                                 <div className="view-employee-data">
-                                    {formData.responsible.first_name} {formData.responsible.last_name || ''}
+                                    {formData.responsible.first_name} {formData.responsible.last_name || 'N/A'}
                                 </div>
                             </div>
 
@@ -133,7 +128,7 @@ const QmsViewDraftEnergyBaseLines = () => {
                                 <label className="block view-employee-label mb-[6px]">
                                     Related Energy Review
                                 </label>
-                                <div className="view-employee-data">{formData.energy_review.title || 'None'}</div>
+                                <div className="view-employee-data">{formData.energy_review.title || 'N/A'}</div>
                             </div>
 
                             <div>

@@ -6,6 +6,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftEnergyBaseLines = () => {
     const [energyBaseLines, setEnergyBaseLines] = useState([]);
@@ -14,6 +17,14 @@ const QmsDraftEnergyBaseLines = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [baselineToDelete, setBaselineToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -65,10 +76,30 @@ const QmsDraftEnergyBaseLines = () => {
                 console.error("Unexpected response format:", response.data);
             }
             console.log('Draft Baselines:', response.data);
-            
+
         } catch (error) {
             console.error("Error fetching draft baselines:", error);
-            setError("Failed to load draft baselines. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -113,17 +144,56 @@ const QmsDraftEnergyBaseLines = () => {
         navigate(`/company/qms/edit-draft-energy-baselines/${id}`);
     };
 
-    const handleDeleteEnergyBaseLines = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (baseline) => {
+        setBaselineToDelete(baseline);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Energy Baseline');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!baselineToDelete) return;
+
         try {
-            setIsLoading(true);
-            setError('');
-            await axios.delete(`${BASE_URL}/qms/baselines/${id}/`);
-            setEnergyBaseLines(energyBaseLines.filter(energyBaseLine => energyBaseLine.id !== id));
+            await axios.delete(`${BASE_URL}/qms/baselines/${baselineToDelete.id}/`);
+            setEnergyBaseLines(energyBaseLines.filter(item => item.id !== baselineToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Draft Energy Baseline Deleted Successfully");
         } catch (error) {
-            console.error("Error deleting draft baseline:", error);
-            setError("Failed to delete draft baseline. Please try again.");
-        } finally {
-            setIsLoading(false);
+            console.error('Error deleting draft energy baseline:', error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -156,13 +226,6 @@ const QmsDraftEnergyBaseLines = () => {
                 </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
-
             {/* Table */}
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
@@ -180,7 +243,7 @@ const QmsDraftEnergyBaseLines = () => {
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="8" className="text-center py-4">Loading...</td>
+                                <td colSpan="8" className="text-center py-4 not-found">Loading...</td>
                             </tr>
                         ) : filteredEnergyBaseLines.length === 0 ? (
                             <tr>
@@ -194,7 +257,7 @@ const QmsDraftEnergyBaseLines = () => {
                                     <td className="px-2 add-manual-datas">{energyBaseLine.energy_review?.title || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
                                         {energyBaseLine.responsible?.first_name} {energyBaseLine.responsible?.last_name || 'N/A'}
-                                    </td> 
+                                    </td>
                                     <td className="px-2 add-manual-datas">
                                         <button
                                             onClick={() => handleQmsEditEnergyBaseLines(energyBaseLine.id)}
@@ -209,7 +272,7 @@ const QmsDraftEnergyBaseLines = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteEnergyBaseLines(energyBaseLine.id)}>
+                                        <button onClick={() => openDeleteModal(energyBaseLine)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -251,6 +314,28 @@ const QmsDraftEnergyBaseLines = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

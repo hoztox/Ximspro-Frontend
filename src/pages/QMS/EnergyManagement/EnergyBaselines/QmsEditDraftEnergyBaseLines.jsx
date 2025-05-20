@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftEnergyBaseLines = () => {
     const [isReviewTypeModalOpen, setIsReviewTypeModalOpen] = useState(false);
@@ -13,8 +15,17 @@ const QmsEditDraftEnergyBaseLines = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+    const [formErrors, setFormErrors] = useState({
+        basline_title: '',
+        responsible: ''
+    });
     const navigate = useNavigate();
     const { id } = useParams();
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         basline_title: '',
@@ -29,14 +40,6 @@ const QmsEditDraftEnergyBaseLines = () => {
         energy_review: '',
         is_draft: false,
     });
-
-    // Log formData whenever it changes
-    useEffect(() => {
-        console.log('FormData updated:', formData);
-        console.log('Date values:', formData.date);
-        console.log('Responsible:', formData.responsible);
-        console.log('Energy Review:', formData.energy_review);
-    }, [formData]);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -83,7 +86,29 @@ const QmsEditDraftEnergyBaseLines = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -101,7 +126,29 @@ const QmsEditDraftEnergyBaseLines = () => {
             }
         } catch (error) {
             console.error("Error fetching reviews:", error);
-            setError("Failed to load reviews. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -128,8 +175,6 @@ const QmsEditDraftEnergyBaseLines = () => {
             };
 
             setFormData(newFormData);
-            console.log('Fetched baseline data:', baseline);
-            console.log('Setting formData to:', newFormData);
 
             setEnpiFields(baseline.enpis?.length > 0
                 ? baseline.enpis.map((enpi, index) => ({
@@ -139,7 +184,29 @@ const QmsEditDraftEnergyBaseLines = () => {
                 : [{ id: 1, value: '' }]);
         } catch (error) {
             console.error("Error fetching baseline:", error);
-            setError("Failed to load draft baseline. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -172,33 +239,45 @@ const QmsEditDraftEnergyBaseLines = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-
-        // Log which field is being changed
-        console.log(`Changing field: ${name} to value: ${value}`);
-
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
-            setFormData(prevFormData => {
-                const updatedFormData = {
-                    ...prevFormData,
-                    [parent]: {
-                        ...prevFormData[parent],
-                        [child]: value
-                    }
-                };
-                console.log(`Updated nested field ${parent}.${child}:`, updatedFormData[parent]);
-                return updatedFormData;
-            });
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                [parent]: {
+                    ...prevFormData[parent],
+                    [child]: value
+                }
+            }));
         } else {
-            setFormData(prevFormData => {
-                const updatedFormData = {
-                    ...prevFormData,
-                    [name]: value
-                };
-                console.log(`Updated field ${name}:`, updatedFormData[name]);
-                return updatedFormData;
-            });
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                [name]: value
+            }));
+            if (name === "basline_title" || name === "responsible") {
+                setFormErrors({
+                    ...formErrors,
+                    [name]: ""
+                });
+            }
         }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.basline_title.trim()) {
+            errors.basline_title = "Baseline Title is required";
+            isValid = false;
+        }
+
+        if (!formData.responsible) {
+            errors.responsible = "Responsible is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
     };
 
     const handleOpenReviewTypeModal = () => {
@@ -237,32 +316,59 @@ const QmsEditDraftEnergyBaseLines = () => {
             is_draft: formData.is_draft
         };
 
-        console.log('Prepared submission data:', submissionData);
         return submissionData;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('formDataaaaaa:', formData);
+        if (!validateForm()) {
+            return;
+        }
 
         try {
             setIsLoading(true);
             setError('');
 
             const submissionData = prepareSubmissionData();
-            console.log('Submitting data to API:', submissionData);
 
-            const response = await axios.put(`${BASE_URL}/qms/baselines/${id}/`, submissionData, {
+            await axios.put(`${BASE_URL}/qms/baselines/${id}/`, submissionData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
-            console.log('API Response:', response.data);
-            navigate('/company/qms/draft-energy-baselines');
+
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-energy-baselines');
+            }, 1500);
+            setSuccessMessage("Energy Baselines Saved Successfully")
         } catch (error) {
             console.error('Form submission error:', error);
-            console.error('Error response:', error.response?.data);
-            setError(`Failed to update baseline: ${error.message}`);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -297,19 +403,26 @@ const QmsEditDraftEnergyBaseLines = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
             <ReviewTypeModal
                 isOpen={isReviewTypeModalOpen}
                 onClose={handleCloseReviewTypeModal}
             />
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
+
             {isLoading ? (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             ) : (
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                     <div className="flex flex-col gap-3">
@@ -321,9 +434,11 @@ const QmsEditDraftEnergyBaseLines = () => {
                             name="basline_title"
                             value={formData.basline_title}
                             onChange={handleChange}
-                            className="add-training-inputs focus:outline-none"
-                            required
+                            className={`add-training-inputs focus:outline-none ${formErrors.basline_title ? "border-red-500" : ""}`}
                         />
+                        {formErrors.basline_title && (
+                            <p className="text-red-500 text-sm">{formErrors.basline_title}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3">
@@ -420,8 +535,7 @@ const QmsEditDraftEnergyBaseLines = () => {
                             onChange={handleChange}
                             onFocus={() => setFocusedDropdown("responsible")}
                             onBlur={() => setFocusedDropdown(null)}
-                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            required
+                            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
                         >
                             <option value="" disabled>
                                 {isLoading ? "Loading..." : "Select Responsible"}
@@ -442,6 +556,9 @@ const QmsEditDraftEnergyBaseLines = () => {
                             size={20}
                             color="#AAAAAA"
                         />
+                        {formErrors.responsible && (
+                            <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+                        )}
                     </div>
 
                     <div className="flex flex-col gap-3 relative">

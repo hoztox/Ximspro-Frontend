@@ -61,11 +61,10 @@ const QmsDraftViewEnergyReview = () => {
 
       <div className="p-5 relative">
         {/* Loading and Error States */}
-        {loading && <div className="text-center">Loading...</div>}
-        {error && <div className="text-center text-red-500">{error}</div>}
+        {loading && <div className="text-center not-found">Loading...</div>}
 
         {/* Data Display */}
-        {!loading && !error && energyReview && (
+        {!loading && energyReview && (
           <>
             {/* Vertical divider line */}
             <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840]"></div>

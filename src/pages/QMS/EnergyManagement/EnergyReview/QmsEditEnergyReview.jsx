@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import ReviewTypeModal from './ReviewTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditEnergyReview = () => {
     const { id } = useParams();
@@ -15,7 +17,15 @@ const QmsEditEnergyReview = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [originalFile, setOriginalFile] = useState(null);
     const [reviewTypes, setReviewTypes] = useState([]);
+    const [formErrors, setFormErrors] = useState({
+        energy_name: ''
+    });
     const navigate = useNavigate();
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         energy_name: '',
@@ -84,7 +94,6 @@ const QmsEditEnergyReview = () => {
                 day = dateParts[2];
             }
 
-            // Store the original file URL
             if (data.upload_attachment) {
                 setOriginalFile(data.upload_attachment);
                 setSelectedFile(data.upload_attachment.split('/').pop());
@@ -95,7 +104,7 @@ const QmsEditEnergyReview = () => {
                 review_no: data.review_no || '',
                 review_type: data.review_type?.id || data.review_type || '',
                 date: { day, month, year },
-                upload_attachment: null, // Important: Don't set the string URL here
+                upload_attachment: null,
                 relate_business_process: data.relate_business_process || '',
                 remarks: data.remarks || '',
                 relate_document_process: data.relate_document_process || '',
@@ -105,7 +114,29 @@ const QmsEditEnergyReview = () => {
 
         } catch (error) {
             console.error('Error fetching energy review:', error);
-            setError('Failed to load energy review data.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -123,7 +154,29 @@ const QmsEditEnergyReview = () => {
             setReviewTypes(response.data);
         } catch (error) {
             console.error('Error fetching review types:', error);
-            setError('Failed to load review types. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -157,7 +210,26 @@ const QmsEditEnergyReview = () => {
             });
         } else {
             setFormData({ ...formData, [name]: value });
+            if (name === "energy_name") {
+                setFormErrors({
+                    ...formErrors,
+                    energy_name: ""
+                });
+            }
         }
+    };
+
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.energy_name.trim()) {
+            errors.energy_name = "Energy Review Name/Title is required";
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
     };
 
     const handleOpenReviewTypeModal = () => {
@@ -178,7 +250,11 @@ const QmsEditEnergyReview = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
+        if (!validateForm()) {
+            return;
+        }
+
+        // setIsLoading(true);
         setError('');
 
         try {
@@ -190,10 +266,7 @@ const QmsEditEnergyReview = () => {
             const formattedDate = formatDate(formData.date);
             const submissionData = new FormData();
 
-            // Add company ID
             submissionData.append('company', companyId);
-
-            // Add text fields
             submissionData.append('energy_name', formData.energy_name);
             submissionData.append('review_no', formData.review_no);
             submissionData.append('review_type', formData.review_type);
@@ -204,15 +277,11 @@ const QmsEditEnergyReview = () => {
             submissionData.append('revision', formData.revision);
             submissionData.append('send_notification', formData.send_notification);
 
-            // Handle file upload - ONLY append if a new file was selected
             if (formData.upload_attachment instanceof File) {
                 submissionData.append('upload_attachment', formData.upload_attachment);
             } else if (originalFile === null) {
-                // If there was no original file and no new file selected, send null
                 submissionData.append('upload_attachment', '');
             }
-            // If there's an original file and no new file was selected, don't include the field
-            // This is key to fixing the issue - don't send the field if keeping the original file
 
             const response = await axios.put(
                 `${BASE_URL}/qms/energy-review/update/${id}/`,
@@ -222,18 +291,38 @@ const QmsEditEnergyReview = () => {
                 }
             );
 
-            console.log('Energy Review updated:', response.data);
-            navigate('/company/qms/list-energy-review');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-energy-review');
+            }, 1500);
+            setSuccessMessage("Energy Review Updated Successfully")
         } catch (error) {
             console.error('Error updating form:', error);
-            if (error.response && error.response.data) {
-                const errorMessages = Object.entries(error.response.data)
-                    .map(([key, value]) => `${key}: ${value}`)
-                    .join(', ');
-                setError(`Failed to update: ${errorMessages}`);
-            } else {
-                setError('Failed to update energy review. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
             }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -258,7 +347,7 @@ const QmsEditEnergyReview = () => {
 
     if (isLoading) {
         return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+            <div className="bg-[#1C1C24] not-found p-5 rounded-lg">
                 <div className="flex justify-center items-center h-64">
                     <p>Loading energy review data...</p>
                 </div>
@@ -278,30 +367,38 @@ const QmsEditEnergyReview = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
             <ReviewTypeModal
                 isOpen={isReviewTypeModalOpen}
                 onClose={handleCloseReviewTypeModal}
             />
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)} 
+                error={error}
+            />
+
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Energy Review Name/Title
+                        Energy Review Name/Title <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
                         name="energy_name"
                         value={formData.energy_name}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
-                        required
+                        className={`add-training-inputs focus:outline-none ${formErrors.energy_name ? "border-red-500" : ""}`}
                     />
+                    {formErrors.energy_name && (
+                        <p className="text-red-500 text-sm">{formErrors.energy_name}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -314,7 +411,6 @@ const QmsEditEnergyReview = () => {
                         value={formData.review_no}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
                 </div>
 

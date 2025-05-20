@@ -5,6 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewEnergyBaseLines = () => {
     const [formData, setFormData] = useState({
@@ -20,6 +23,13 @@ const QmsViewEnergyBaseLines = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const { id } = useParams();
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const fetchBaseline = async () => {
         try {
@@ -40,6 +50,7 @@ const QmsViewEnergyBaseLines = () => {
         } catch (error) {
             console.error("Error fetching baseline:", error);
             setError("Failed to load baseline. Please try again.");
+            setShowErrorModal(true);
         } finally {
             setIsLoading(false);
         }
@@ -59,25 +70,61 @@ const QmsViewEnergyBaseLines = () => {
         navigate(`/company/qms/edit-energy-baselines/${id}`);
     };
 
-    const handleDelete = async () => {
+    const openDeleteModal = () => {
+        setShowDeleteModal(true);
+        setDeleteMessage('Energy Baseline');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    const confirmDelete = async () => {
         try {
             setIsLoading(true);
             setError('');
             await axios.delete(`${BASE_URL}/qms/baselines/${id}/`);
-            navigate("/company/qms/list-energy-baselines");
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Energy Baseline Deleted Successfully");
+            setTimeout(() => {
+                navigate("/company/qms/list-energy-baselines");
+            }, 2000);
         } catch (error) {
             console.error("Error deleting baseline:", error);
-            setError("Failed to delete baseline. Please try again.");
+            let errorMsg = "Failed to delete baseline. Please try again.";
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
+            setShowErrorModal(true);
         } finally {
             setIsLoading(false);
         }
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
         const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-based
+        const month = String(date.getMonth() + 1).padStart(2, "0");
         const year = date.getFullYear();
         return `${day}-${month}-${year}`;
     };
@@ -95,15 +142,9 @@ const QmsViewEnergyBaseLines = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 my-4 rounded">
-                    {error}
-                </div>
-            )}
-
             <div className="p-5 relative">
                 {isLoading ? (
-                    <div className="text-center py-4">Loading...</div>
+                    <div className="text-center py-4 not-found">Loading...</div>
                 ) : (
                     <>
                         {/* Vertical divider line */}
@@ -114,7 +155,7 @@ const QmsViewEnergyBaseLines = () => {
                                 <label className="block view-employee-label mb-[6px]">
                                     Baseline Title
                                 </label>
-                                <div className="view-employee-data">{formData.basline_title || 'No Title'}</div>
+                                <div className="view-employee-data">{formData.basline_title || 'N/A'}</div>
                             </div>
 
                             <div>
@@ -143,7 +184,7 @@ const QmsViewEnergyBaseLines = () => {
                                     Responsible
                                 </label>
                                 <div className="view-employee-data">
-                                    {formData.responsible.first_name} {formData.responsible.last_name || ''}
+                                    {formData.responsible.first_name} {formData.responsible.last_name || 'N/A'}
                                 </div>
                             </div>
 
@@ -151,7 +192,7 @@ const QmsViewEnergyBaseLines = () => {
                                 <label className="block view-employee-label mb-[6px]">
                                     Related Energy Review
                                 </label>
-                                <div className="view-employee-data">{formData.energy_review.title || 'None'}</div>
+                                <div className="view-employee-data">{formData.energy_review.title || 'N/A'}</div>
                             </div>
 
                             <div>
@@ -166,7 +207,7 @@ const QmsViewEnergyBaseLines = () => {
                                             ))}
                                         </ul>
                                     ) : (
-                                        'None'
+                                        'N/A'
                                     )}
                                 </div>
                             </div>
@@ -185,7 +226,7 @@ const QmsViewEnergyBaseLines = () => {
 
                                 <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                     Delete
-                                    <button onClick={handleDelete} disabled={isLoading}>
+                                    <button onClick={openDeleteModal} disabled={isLoading}>
                                         <img
                                             src={deletes}
                                             alt="Delete Icon"
@@ -198,6 +239,28 @@ const QmsViewEnergyBaseLines = () => {
                     </>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={closeAllModals}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={closeAllModals}
+                error={error}
+            />
         </div>
     );
 };
