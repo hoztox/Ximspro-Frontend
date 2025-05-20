@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EnergySourceTypeModal from './EnergySourceTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditSignificantEnergy = () => {
     const { id } = useParams();
@@ -46,6 +48,12 @@ const QmsEditSignificantEnergy = () => {
     const [energySources, setEnergySources] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -111,7 +119,29 @@ const QmsEditSignificantEnergy = () => {
             setExistingAttachment(data.upload_attachment || null);
         } catch (error) {
             console.error('Error fetching significant energy:', error);
-            setError('Failed to load significant energy data. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -127,7 +157,29 @@ const QmsEditSignificantEnergy = () => {
             setEnergySources(response.data);
         } catch (error) {
             console.error('Error fetching energy sources:', error);
-            setError('Failed to load energy sources. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -185,6 +237,18 @@ const QmsEditSignificantEnergy = () => {
                 [name]: value
             });
         }
+
+        if (name === 'title') {
+            setFormError('');
+        }
+    };
+
+    const validateForm = () => {
+        if (!formData.title.trim()) {
+            setFormError('Significant Energy Use Name/Title is required');
+            return false;
+        }
+        return true;
     };
 
     const formatDate = (dateObj) => {
@@ -194,8 +258,7 @@ const QmsEditSignificantEnergy = () => {
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
-        if (asDraft) {
-            handleDraftSave(e);
+        if (!validateForm()) {
             return;
         }
 
@@ -204,10 +267,6 @@ const QmsEditSignificantEnergy = () => {
             setError('');
             if (!companyId || !userId || !id) {
                 setError('Company, user, or record ID not found. Please try again.');
-                return;
-            }
-            if (!formData.significant) {
-                setError('Significant Energy Use Number is required.');
                 return;
             }
 
@@ -228,17 +287,44 @@ const QmsEditSignificantEnergy = () => {
             formDataToSend.append('remarks', formData.remarks);
             formDataToSend.append('revision', formData.revision);
             formDataToSend.append('is_notification', formData.is_notification);
-            formDataToSend.append('is_draft', false);
+            formDataToSend.append('is_draft', asDraft);
 
-            const response = await axios.put(`${BASE_URL}/qms/significant/update/${id}/`, formDataToSend, {
+            await axios.put(`${BASE_URL}/qms/significant/update/${id}/`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            console.log('Updated Significant Energy:', response.data);
-            navigate('/company/qms/list-significant-energy');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-significant-energy');
+            }, 1500);
+            setSuccessMessage("Significant Energy Updated Successfully")
         } catch (error) {
             console.error('Error updating form:', error);
-            setError('Failed to update. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -269,35 +355,40 @@ const QmsEditSignificantEnergy = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
-            {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-white">Loading...</p>
-                </div>
-            ) : (
                 <>
                     <EnergySourceTypeModal
                         isOpen={isEnergySourceModalOpen}
                         onClose={handleEnergySourceModal}
                     />
 
+                    <SuccessModal
+                        showSuccessModal={showSuccessModal}
+                        onClose={() => setShowSuccessModal(false)}
+                        successMessage={successMessage}
+                    />
+
+                    <ErrorModal
+                        showErrorModal={showErrorModal}
+                        onClose={() => setShowErrorModal(false)}
+                        error={error}
+                    />
+
+
                     <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                         <div className="flex flex-col gap-3">
                             <label className="add-training-label">
-                                Significant Energy Use Name/Title
+                                Significant Energy Use Name/Title <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 name="title"
                                 value={formData.title}
                                 onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
+                                className={`add-training-inputs focus:outline-none ${formError ? "border-red-500" : ""}`}
                             />
+                            {formError && (
+                                <p className="text-red-500 text-sm">{formError}</p>
+                            )}
                         </div>
 
                         <div className="flex flex-col gap-3">
@@ -571,13 +662,13 @@ const QmsEditSignificantEnergy = () => {
                                     className="save-btn duration-200"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? 'Saving...' : 'Save'}
+                                    {isLoading ? 'Updating...' : 'Update'}
                                 </button>
                             </div>
                         </div>
                     </form>
                 </>
-            )}
+          
         </div>
     );
 };

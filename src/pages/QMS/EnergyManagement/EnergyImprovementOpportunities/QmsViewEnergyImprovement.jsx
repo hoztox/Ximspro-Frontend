@@ -5,10 +5,13 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewEnergyImprovement = () => {
     const [formData, setFormData] = useState({
-        eio: "",
+        eio: "", 
         eio_title: "",
         target: "",
         associated_objective: "",
@@ -23,6 +26,13 @@ const QmsViewEnergyImprovement = () => {
     const [error, setError] = useState("");
     const navigate = useNavigate();
     const { id } = useParams();
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -76,6 +86,10 @@ const QmsViewEnergyImprovement = () => {
         } catch (error) {
             console.error("Error fetching improvement:", error);
             setError("Failed to load energy improvement details. Please try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -93,22 +107,59 @@ const QmsViewEnergyImprovement = () => {
         navigate(`/company/qms/edit-energy-improvement-opportunities/${id}`);
     };
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this energy improvement?")) {
-            return;
-        }
+    // Open delete confirmation modal
+    const openDeleteModal = () => {
+        setShowDeleteModal(true);
+        setDeleteMessage('Energy Improvement Opportunity');
+    };
 
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
         try {
             await axios.delete(`${BASE_URL}/qms/energy-improvements/${id}/`);
-            navigate("/company/qms/list-energy-improvement-opportunities");
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Energy Improvement Opportunity Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate("/company/qms/list-energy-improvement-opportunities");
+            }, 3000);
         } catch (error) {
             console.error("Error deleting improvement:", error);
-            setError("Failed to delete energy improvement. Please try again.");
+            setShowDeleteModal(false);
+            setShowErrorModal(true);
+            
+            let errorMsg = error.message;
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+            
+            setError(errorMsg);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
         return date.toLocaleDateString("en-GB", {
             day: "2-digit",
@@ -131,14 +182,8 @@ const QmsViewEnergyImprovement = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 m-5 rounded">
-                    {error}
-                </div>
-            )}
-
             {isLoading ? (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             ) : (
                 <div className="p-5 relative">
                     {/* Vertical divider line */}
@@ -149,35 +194,35 @@ const QmsViewEnergyImprovement = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 EIO Number
                             </label>
-                            <div className="view-employee-data">{formData.eio || "-"}</div>
+                            <div className="view-employee-data">{formData.eio || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 EIO Title
                             </label>
-                            <div className="view-employee-data">{formData.eio_title || "-"}</div>
+                            <div className="view-employee-data">{formData.eio_title || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Target
                             </label>
-                            <div className="view-employee-data">{formData.target || "-"}</div>
+                            <div className="view-employee-data">{formData.target || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Associated Objective
                             </label>
-                            <div className="view-employee-data">{formData.associated_objective || "-"}</div>
+                            <div className="view-employee-data">{formData.associated_objective || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Results
                             </label>
-                            <div className="view-employee-data">{formData.results || "-"}</div>
+                            <div className="view-employee-data">{formData.results || "N/A"}</div>
                         </div>
 
                         <div>
@@ -193,7 +238,7 @@ const QmsViewEnergyImprovement = () => {
                             </label>
                             <div className="view-employee-data">
                                 {formData.responsible
-                                    ? `${formData.responsible.first_name} ${formData.responsible.last_name || ""}`
+                                    ? `${formData.responsible.first_name} ${formData.responsible.last_name || "N/A"}`
                                     : "-"}
                             </div>
                         </div>
@@ -202,7 +247,7 @@ const QmsViewEnergyImprovement = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Status
                             </label>
-                            <div className="view-employee-data">{formData.status || "-"}</div>
+                            <div className="view-employee-data">{formData.status || "N/A"}</div>
                         </div>
 
                         <div>
@@ -219,7 +264,7 @@ const QmsViewEnergyImprovement = () => {
                                     Click to view file <Eye size={17} />
                                 </a>
                             ) : (
-                                <div className="view-employee-data">-</div>
+                                <div className="view-employee-data">N/A</div>
                             )}
                         </div>
 
@@ -237,7 +282,7 @@ const QmsViewEnergyImprovement = () => {
 
                             <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                 Delete
-                                <button onClick={()=>handleDelete(id)}>
+                                <button onClick={openDeleteModal}>
                                     <img
                                         src={deletes}
                                         alt="Delete Icon"
@@ -249,6 +294,28 @@ const QmsViewEnergyImprovement = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EnergySourceTypeModal from './EnergySourceTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddSignificantEnergy = () => {
     const getUserCompanyId = () => {
@@ -47,6 +49,7 @@ const QmsAddSignificantEnergy = () => {
     const [isDraftLoading, setIsDraftLoading] = useState(false);
     const [significantNo, setSignificantNo] = useState("SEU-1");
     const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -71,6 +74,11 @@ const QmsAddSignificantEnergy = () => {
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
 
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     useEffect(() => {
         fetchEnergySources();
         fetchNextSignificantNumber();
@@ -87,7 +95,29 @@ const QmsAddSignificantEnergy = () => {
             setEnergySources(response.data);
         } catch (error) {
             console.error('Error fetching energy sources:', error);
-            setError('Failed to load energy sources. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -163,6 +193,18 @@ const QmsAddSignificantEnergy = () => {
                 [name]: value
             });
         }
+
+        if (name === 'title') {
+            setFormError('');
+        }
+    };
+
+    const validateForm = () => {
+        if (!formData.title.trim()) {
+            setFormError('Significant Energy Use Name/Title is required');
+            return false;
+        }
+        return true;
     };
 
     const formatDate = (dateObj) => {
@@ -172,6 +214,10 @@ const QmsAddSignificantEnergy = () => {
 
     const handleDraftSave = async (e) => {
         e.preventDefault();
+        // if (!validateForm()) {
+        //     return;
+        // }
+
         try {
             setIsDraftLoading(true);
             setError('');
@@ -180,16 +226,9 @@ const QmsAddSignificantEnergy = () => {
                 return;
             }
 
-            // Add defensive check for significant
-            if (!formData.significant) {
-                setError('Significant Energy Use Number is required. Please refresh the page.');
-                return;
-            }
-
             const date = formatDate(formData.date);
             const formDataToSend = new FormData();
-            console.log('ttttttttttt', formData);
-            
+
             formDataToSend.append('company', companyId);
             formDataToSend.append('user', userId);
             formDataToSend.append('title', formData.title);
@@ -207,15 +246,42 @@ const QmsAddSignificantEnergy = () => {
             formDataToSend.append('is_notification', formData.is_notification);
             formDataToSend.append('is_draft', true);
 
-            const response = await axios.post(`${BASE_URL}/qms/significant/draft-create/`, formDataToSend, {
+            await axios.post(`${BASE_URL}/qms/significant/draft-create/`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            console.log('Saved Significant Energy Draft:', response.data);
-            navigate('/company/qms/draft-significant-energy');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-significant-energy');
+            }, 1500);
+            setSuccessMessage("Significant Energy Drafted Successfully")
         } catch (error) {
             console.error('Error saving draft:', error);
-            setError('Failed to save draft. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsDraftLoading(false);
         }
@@ -223,6 +289,10 @@ const QmsAddSignificantEnergy = () => {
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
         if (asDraft) {
             handleDraftSave(e);
             return;
@@ -233,12 +303,6 @@ const QmsAddSignificantEnergy = () => {
             setError('');
             if (!companyId || !userId) {
                 setError('Company or user ID not found. Please log in again.');
-                return;
-            }
-
-            // Add defensive check for significant
-            if (!formData.significant) {
-                setError('Significant Energy Use Number is required. Please refresh the page.');
                 return;
             }
 
@@ -261,12 +325,17 @@ const QmsAddSignificantEnergy = () => {
             formDataToSend.append('is_notification', formData.is_notification);
             formDataToSend.append('is_draft', false);
 
-            const response = await axios.post(`${BASE_URL}/qms/significant/create/`, formDataToSend, {
+            await axios.post(`${BASE_URL}/qms/significant/create/`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            console.log('Added Significant Energy:', response.data);
-            navigate('/company/qms/list-significant-energy');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-significant-energy');
+            }, 1500);
+            setSuccessMessage("Significant Energy Added Successfully")
 
             setFormData({
                 title: '',
@@ -288,7 +357,29 @@ const QmsAddSignificantEnergy = () => {
             fetchNextSignificantNumber();
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError('Failed to save. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsSaveLoading(false);
         }
@@ -323,27 +414,36 @@ const QmsAddSignificantEnergy = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
-
             <EnergySourceTypeModal
                 isOpen={isEnergySourceModalOpen}
                 onClose={handleEnergySourceModal}
             />
 
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
             <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Significant Energy Use Name/Title</label>
+                    <label className="add-training-label">Significant Energy Use Name/Title <span className="text-red-500">*</span></label>
                     <input
                         type="text"
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className={`add-training-inputs focus:outline-none ${formError ? "border-red-500" : ""}`}
                     />
+                    {formError && (
+                        <p className="text-red-500 text-sm">{formError}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">

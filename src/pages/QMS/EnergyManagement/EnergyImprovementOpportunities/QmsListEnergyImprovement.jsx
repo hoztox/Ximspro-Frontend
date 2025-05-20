@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListEnergyImprovement = () => {
     const [improvements, setImprovements] = useState([]);
@@ -15,7 +18,15 @@ const QmsListEnergyImprovement = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [showDrafts, setShowDrafts] = useState(false);
+    const [draftCount, setDraftCount] = useState(0);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [improvementToDelete, setImprovementToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -36,7 +47,22 @@ const QmsListEnergyImprovement = () => {
         return null;
     };
 
+    const getRelevantUserId = () => {
+        const userRole = localStorage.getItem("role");
+
+        if (userRole === "user") {
+            const userId = localStorage.getItem("user_id");
+            if (userId) return userId;
+        }
+
+        const companyId = localStorage.getItem("company_id");
+        if (companyId) return companyId;
+
+        return null;
+    };
+
     const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
     const fetchImprovements = async () => {
         if (!companyId) {
@@ -49,9 +75,34 @@ const QmsListEnergyImprovement = () => {
         try {
             const response = await axios.get(`${BASE_URL}/qms/energy-improvements/company/${companyId}`);
             setImprovements(response.data);
+
+            const draftResponse = await axios.get(
+                `${BASE_URL}/qms/energy-improvements/drafts-count/${userId}/`
+            );
+            setDraftCount(draftResponse.data.count);
         } catch (error) {
             console.error("Error fetching improvements:", error);
-            setError("Failed to load energy improvements. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -66,13 +117,56 @@ const QmsListEnergyImprovement = () => {
         setCurrentPage(1);
     };
 
-    const handleDeleteImprovement = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (improvement) => {
+        setImprovementToDelete(improvement);
+        setShowDeleteModal(true);
+        setDeleteMessage('Energy Improvement Opportunity');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!improvementToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/energy-improvements/${id}/`);
-            setImprovements(improvements.filter(improvement => improvement.id !== id));
+            await axios.delete(`${BASE_URL}/qms/energy-improvements/${improvementToDelete.id}/`);
+            setImprovements(improvements.filter(improvement => improvement.id !== improvementToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Energy Improvement Opportunity Deleted Successfully");
         } catch (error) {
-            console.error("Error deleting improvement:", error);
-            setError("Failed to delete improvement. Please try again.");
+            console.error('Error deleting energy improvement:', error);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -81,7 +175,7 @@ const QmsListEnergyImprovement = () => {
     };
 
     const handleDraftImprovements = () => {
-         navigate('/company/qms/draft-energy-improvement-opportunities');
+        navigate('/company/qms/draft-energy-improvement-opportunities');
     };
 
     const handleQmsViewImprovement = (id) => {
@@ -112,7 +206,7 @@ const QmsListEnergyImprovement = () => {
 
     // Format date for display
     const formatDate = (dateString) => {
-        if (!dateString) return '-';
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -145,10 +239,15 @@ const QmsListEnergyImprovement = () => {
                         </div>
                     </div>
                     <button
-                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-                        onClick={ handleDraftImprovements}
+                        className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px] relative"
+                        onClick={handleDraftImprovements}
                     >
                         <span>Drafts</span>
+                        {draftCount > 0 && (
+                            <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[-8px] right-[-8px]">
+                                {draftCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -160,14 +259,8 @@ const QmsListEnergyImprovement = () => {
                 </div>
             </div>
 
-            {/* Error and Loading */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
             {isLoading && (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             )}
 
             {/* Table */}
@@ -199,14 +292,14 @@ const QmsListEnergyImprovement = () => {
                             {filteredImprovements.map((improvement, index) => (
                                 <tr key={improvement.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.eio_title || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.eio || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.target || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.eio_title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.eio || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.target || 'N/A'}</td> 
                                     <td className="px-2 add-manual-datas">{formatDate(improvement.date)}</td>
                                     <td className="px-2 add-manual-datas">
                                         {improvement.responsible
                                             ? `${improvement.responsible.first_name} ${improvement.responsible.last_name || ''}`
-                                            : '-'}
+                                            : 'N/A'}
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
                                         <span
@@ -233,7 +326,7 @@ const QmsListEnergyImprovement = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteImprovement(improvement.id)}>
+                                        <button onClick={() => openDeleteModal(improvement)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -275,6 +368,28 @@ const QmsListEnergyImprovement = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

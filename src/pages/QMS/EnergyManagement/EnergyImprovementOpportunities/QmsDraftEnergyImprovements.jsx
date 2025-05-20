@@ -6,6 +6,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftEnergyImprovements = () => {
     const [improvements, setImprovements] = useState([]);
@@ -14,6 +17,14 @@ const QmsDraftEnergyImprovements = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [improvementToDelete, setImprovementToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -51,6 +62,10 @@ const QmsDraftEnergyImprovements = () => {
     const fetchDraftImprovements = async () => {
         if (!companyId) {
             setError("No company ID found. Please log in again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             return;
         }
 
@@ -63,7 +78,27 @@ const QmsDraftEnergyImprovements = () => {
             setImprovements(response.data);
         } catch (error) {
             console.error("Error fetching draft improvements:", error);
-            setError("Failed to load draft energy improvements. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -78,17 +113,57 @@ const QmsDraftEnergyImprovements = () => {
         setCurrentPage(1);
     };
 
-    const handleDeleteDraftImprovement = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this draft?")) {
-            return;
-        }
+    // Open delete confirmation modal
+    const openDeleteModal = (improvement) => {
+        setImprovementToDelete(improvement);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Energy Improvement Opportunity');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!improvementToDelete) return;
 
         try {
-            await axios.delete(`${BASE_URL}/qms/energy-improvements/${id}/`);
-            setImprovements(improvements.filter(improvement => improvement.id !== id));
+            await axios.delete(`${BASE_URL}/qms/energy-improvements/${improvementToDelete.id}/`);
+            setImprovements(improvements.filter(improvement => improvement.id !== improvementToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Draft Energy Improvement Opportunity Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (error) {
-            console.error("Error deleting draft improvement:", error);
-            setError("Failed to delete draft improvement. Please try again.");
+            console.error('Error deleting draft improvement:', error);
+            setShowDeleteModal(false);
+            setShowErrorModal(true);
+
+            let errorMsg = error.message;
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -124,7 +199,7 @@ const QmsDraftEnergyImprovements = () => {
 
     // Format date for display
     const formatDate = (dateString) => {
-        if (!dateString) return '-';
+        if (!dateString) return 'N/A';
         const date = new Date(dateString);
         return date.toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -162,14 +237,8 @@ const QmsDraftEnergyImprovements = () => {
                 </div>
             </div>
 
-            {/* Error and Loading */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
             {isLoading && (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             )}
 
             {/* Table */}
@@ -199,13 +268,13 @@ const QmsDraftEnergyImprovements = () => {
                             {filteredImprovements.map((improvement, index) => (
                                 <tr key={improvement.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.eio_title || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.eio || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.target || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.eio_title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.eio || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{improvement.target || 'N/A'}</td> 
                                     <td className="px-2 add-manual-datas">{formatDate(improvement.date)}</td>
                                     <td className="px-2 add-manual-datas">
                                         <button onClick={() => handleQmsEditDraftImprovement(improvement.id)} className='text-[#1E84AF]'>
-                                           Click to Continue
+                                            Click to Continue
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
@@ -214,7 +283,7 @@ const QmsDraftEnergyImprovements = () => {
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteDraftImprovement(improvement.id)}>
+                                        <button onClick={() => openDeleteModal(improvement)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -256,6 +325,28 @@ const QmsDraftEnergyImprovements = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

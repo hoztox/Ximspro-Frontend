@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EnergySourceTypeModal from './EnergySourceTypeModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditDraftSignificantEnergy = () => {
     const { id } = useParams();
@@ -46,6 +48,7 @@ const QmsEditDraftSignificantEnergy = () => {
     const [energySources, setEnergySources] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
 
     const [formData, setFormData] = useState({
         title: '',
@@ -68,8 +71,13 @@ const QmsEditDraftSignificantEnergy = () => {
         is_draft: false
     });
 
-    const [existingAttachment, setExistingAttachment] = useState(null); 
+    const [existingAttachment, setExistingAttachment] = useState(null);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     useEffect(() => {
         fetchSignificantEnergy();
@@ -116,6 +124,10 @@ const QmsEditDraftSignificantEnergy = () => {
         } catch (error) {
             console.error('Error fetching draft significant energy:', error);
             setError('Failed to load draft significant energy data. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -132,6 +144,10 @@ const QmsEditDraftSignificantEnergy = () => {
         } catch (error) {
             console.error('Error fetching energy sources:', error);
             setError('Failed to load energy sources. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -189,6 +205,18 @@ const QmsEditDraftSignificantEnergy = () => {
                 [name]: value
             });
         }
+
+        if (name === 'title') {
+            setFormError('');
+        }
+    };
+
+    const validateForm = () => {
+        if (!formData.title.trim()) {
+            setFormError('Significant Energy Use Name/Title is required');
+            return false;
+        }
+        return true;
     };
 
     const formatDate = (dateObj) => {
@@ -198,6 +226,10 @@ const QmsEditDraftSignificantEnergy = () => {
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+
         if (asDraft) {
             handleDraftSave(e);
             return;
@@ -208,10 +240,6 @@ const QmsEditDraftSignificantEnergy = () => {
             setError('');
             if (!companyId || !userId || !id) {
                 setError('Company, user, or record ID not found. Please try again.');
-                return;
-            }
-            if (!formData.significant) {
-                setError('Significant Energy Use Number is required.');
                 return;
             }
 
@@ -234,15 +262,42 @@ const QmsEditDraftSignificantEnergy = () => {
             formDataToSend.append('is_notification', formData.is_notification);
             formDataToSend.append('is_draft', false);
 
-            const response = await axios.put(`${BASE_URL}/qms/significant-draft/update/${id}/`, formDataToSend, {
+            await axios.put(`${BASE_URL}/qms/significant-draft/update/${id}/`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            console.log('Published Significant Energy:', response.data);
-            navigate('/company/qms/list-significant-energy');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-significant-energy');
+            }, 1500);
+            setSuccessMessage("Significant Energy Saved Successfully")
         } catch (error) {
             console.error('Error publishing form:', error);
-            setError('Failed to publish. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -273,315 +328,319 @@ const QmsEditDraftSignificantEnergy = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
 
-            {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <p className="text-white">Loading...</p>
-                </div>
-            ) : (
-                <>
-                    <EnergySourceTypeModal
-                        isOpen={isEnergySourceModalOpen}
-                        onClose={handleEnergySourceModal}
-                    />
+            <>
+                <EnergySourceTypeModal
+                    isOpen={isEnergySourceModalOpen}
+                    onClose={handleEnergySourceModal}
+                />
 
-                    <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Significant Energy Use Name/Title
-                            </label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
 
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Significant Energy Use Number <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="significant"
-                                value={formData.significant}
-                                className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
-                                readOnly
-                                title="Significant number cannot be changed"
-                            />
-                        </div>
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
 
-                        <div className="flex flex-col gap-3 relative">
-                            <label className="add-training-label">Energy Source Type</label>
-                            <select
-                                name="source_type"
-                                value={formData.source_type}
-                                onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("source_type")}
-                                onBlur={() => setFocusedDropdown(null)}
-                                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                            >
-                                <option value="" disabled>
-                                    Select Energy Source
-                                </option>
-                                {energySources && energySources.length > 0 ? (
-                                    energySources.map(source => (
-                                        <option key={source.id} value={source.id}>
-                                            {source.title}
-                                        </option>
-                                    ))
-                                ) : (
-                                    <option value="" disabled>No Energy Source Found</option>
-                                )}
-                            </select>
-                            <ChevronDown
-                                className={`absolute right-3 top-[40%] transform transition-transform duration-300 
+                <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Significant Energy Use Name/Title <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="title"
+                            value={formData.title}
+                            onChange={handleChange}
+                            className={`add-training-inputs focus:outline-none ${formError ? "border-red-500" : ""}`}
+                        />
+                        {formError && (
+                            <p className="text-red-500 text-sm">{formError}</p>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Significant Energy Use Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="significant"
+                            value={formData.significant}
+                            className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
+                            readOnly
+                            title="Significant number cannot be changed"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3 relative">
+                        <label className="add-training-label">Energy Source Type</label>
+                        <select
+                            name="source_type"
+                            value={formData.source_type}
+                            onChange={handleChange}
+                            onFocus={() => setFocusedDropdown("source_type")}
+                            onBlur={() => setFocusedDropdown(null)}
+                            className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                        >
+                            <option value="" disabled>
+                                Select Energy Source
+                            </option>
+                            {energySources && energySources.length > 0 ? (
+                                energySources.map(source => (
+                                    <option key={source.id} value={source.id}>
+                                        {source.title}
+                                    </option>
+                                ))
+                            ) : (
+                                <option value="" disabled>No Energy Source Found</option>
+                            )}
+                        </select>
+                        <ChevronDown
+                            className={`absolute right-3 top-[40%] transform transition-transform duration-300 
                                     ${focusedDropdown === "source_type" ? "rotate-180" : ""}`}
-                                size={20}
-                                color="#AAAAAA"
+                            size={20}
+                            color="#AAAAAA"
+                        />
+                        <button
+                            className='flex justify-start add-training-label !text-[#1E84AF] mt-1'
+                            onClick={handleOpenEnergySourceModal}
+                            type="button"
+                        >
+                            View / Add Energy Source Type
+                        </button>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">Date</label>
+                        <div className="grid grid-cols-3 gap-5">
+                            <div className="relative">
+                                <select
+                                    name="date.day"
+                                    value={formData.date.day}
+                                    onChange={handleChange}
+                                    onFocus={() => setFocusedDropdown("date.day")}
+                                    onBlur={() => setFocusedDropdown(null)}
+                                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                >
+                                    <option value="" disabled>dd</option>
+                                    {generateOptions(1, 31)}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                        ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
+                                    size={20}
+                                    color="#AAAAAA"
+                                />
+                            </div>
+                            <div className="relative">
+                                <select
+                                    name="date.month"
+                                    value={formData.date.month}
+                                    onChange={handleChange}
+                                    onFocus={() => setFocusedDropdown("date.month")}
+                                    onBlur={() => setFocusedDropdown(null)}
+                                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                >
+                                    <option value="" disabled>mm</option>
+                                    {generateOptions(1, 12)}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                        ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
+                                    size={20}
+                                    color="#AAAAAA"
+                                />
+                            </div>
+                            <div className="relative">
+                                <select
+                                    name="date.year"
+                                    value={formData.date.year}
+                                    onChange={handleChange}
+                                    onFocus={() => setFocusedDropdown("date.year")}
+                                    onBlur={() => setFocusedDropdown(null)}
+                                    className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                                >
+                                    <option value="" disabled>yyyy</option>
+                                    {generateOptions(2023, 2030)}
+                                </select>
+                                <ChevronDown
+                                    className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                        ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
+                                    size={20}
+                                    color="#AAAAAA"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">Attach Document</label>
+                        <div className="flex">
+                            <input
+                                type="file"
+                                id="file-upload"
+                                onChange={handleFileChange}
+                                className="hidden"
                             />
-                            <button
-                                className='flex justify-start add-training-label !text-[#1E84AF] mt-1'
-                                onClick={handleOpenEnergySourceModal}
-                                type="button"
+                            <label
+                                htmlFor="file-upload"
+                                className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
                             >
-                                View / Add Energy Source Type
+                                <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                                <img src={file} alt="" />
+                            </label>
+                        </div>
+                        <div className='flex justify-between items-center'>
+                            {existingAttachment && (
+                                <button
+                                    onClick={handleViewFile}
+                                    className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'
+                                    type="button"
+                                >
+                                    Click to view file <Eye size={17} />
+                                </button>
+                            )}
+                            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                                {formData.upload_attachment
+                                    ? formData.upload_attachment.name
+                                    : existingAttachment
+                                        ? 'Existing file attached'
+                                        : 'No file chosen'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Facility/Process/Activity
+                        </label>
+                        <input
+                            type="text"
+                            name="facility"
+                            value={formData.facility}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Average Consumption
+                        </label>
+                        <input
+                            type="text"
+                            name="consumption"
+                            value={formData.consumption}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Action Required
+                        </label>
+                        <input
+                            type="text"
+                            name="action"
+                            value={formData.action}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Potential Consequences of Energy Use
+                        </label>
+                        <input
+                            type="text"
+                            name="consequences"
+                            value={formData.consequences}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Impact on Processes/Activity/Cost
+                        </label>
+                        <input
+                            type="text"
+                            name="impact"
+                            value={formData.impact}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Significant Energy Use Remarks
+                        </label>
+                        <textarea
+                            name="remarks"
+                            value={formData.remarks}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <label className="add-training-label">
+                            Revision
+                        </label>
+                        <input
+                            type="text"
+                            name="revision"
+                            value={formData.revision}
+                            onChange={handleChange}
+                            className="add-training-inputs focus:outline-none"
+                        />
+                    </div>
+
+                    <div className="flex items-end justify-end mt-3 col-span-2">
+                        <label className="flex items-center">
+                            <input
+                                type="checkbox"
+                                name="is_notification"
+                                className="mr-2 form-checkboxes"
+                                checked={formData.is_notification}
+                                onChange={handleChange}
+                            />
+                            <span className="permissions-texts cursor-pointer">
+                                Send Notification
+                            </span>
+                        </label>
+                    </div>
+
+                    <div className="md:col-span-2 flex gap-4 justify-end">
+                        <div className="flex gap-5">
+                            <button
+                                type="button"
+                                onClick={handleListDraftSignificantEnergy}
+                                className="cancel-btn duration-200"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                className="save-btn duration-200"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Saving...' : 'Save'}
                             </button>
                         </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">Date</label>
-                            <div className="grid grid-cols-3 gap-5">
-                                <div className="relative">
-                                    <select
-                                        name="date.day"
-                                        value={formData.date.day}
-                                        onChange={handleChange}
-                                        onFocus={() => setFocusedDropdown("date.day")}
-                                        onBlur={() => setFocusedDropdown(null)}
-                                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                    >
-                                        <option value="" disabled>dd</option>
-                                        {generateOptions(1, 31)}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
-                                        size={20}
-                                        color="#AAAAAA"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <select
-                                        name="date.month"
-                                        value={formData.date.month}
-                                        onChange={handleChange}
-                                        onFocus={() => setFocusedDropdown("date.month")}
-                                        onBlur={() => setFocusedDropdown(null)}
-                                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                    >
-                                        <option value="" disabled>mm</option>
-                                        {generateOptions(1, 12)}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
-                                        size={20}
-                                        color="#AAAAAA"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <select
-                                        name="date.year"
-                                        value={formData.date.year}
-                                        onChange={handleChange}
-                                        onFocus={() => setFocusedDropdown("date.year")}
-                                        onBlur={() => setFocusedDropdown(null)}
-                                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                    >
-                                        <option value="" disabled>yyyy</option>
-                                        {generateOptions(2023, 2030)}
-                                    </select>
-                                    <ChevronDown
-                                        className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                        ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
-                                        size={20}
-                                        color="#AAAAAA"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">Attach Document</label>
-                            <div className="flex">
-                                <input
-                                    type="file"
-                                    id="file-upload"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                />
-                                <label
-                                    htmlFor="file-upload"
-                                    className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-                                >
-                                    <span className="text-[#AAAAAA] choose-file">Choose File</span>
-                                    <img src={file} alt="" />
-                                </label>
-                            </div>
-                            <div className='flex justify-between items-center'>
-                                {existingAttachment && (
-                                    <button
-                                        onClick={handleViewFile}
-                                        className='click-view-file-btn flex items-center gap-2 text-[#1E84AF]'
-                                        type="button"
-                                    >
-                                        Click to view file <Eye size={17} />
-                                    </button>
-                                )}
-                                <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                                    {formData.upload_attachment
-                                        ? formData.upload_attachment.name
-                                        : existingAttachment
-                                            ? 'Existing file attached'
-                                            : 'No file chosen'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Facility/Process/Activity
-                            </label>
-                            <input
-                                type="text"
-                                name="facility"
-                                value={formData.facility}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Average Consumption
-                            </label>
-                            <input
-                                type="text"
-                                name="consumption"
-                                value={formData.consumption}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Action Required
-                            </label>
-                            <input
-                                type="text"
-                                name="action"
-                                value={formData.action}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Potential Consequences of Energy Use
-                            </label>
-                            <input
-                                type="text"
-                                name="consequences"
-                                value={formData.consequences}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Impact on Processes/Activity/Cost
-                            </label>
-                            <input
-                                type="text"
-                                name="impact"
-                                value={formData.impact}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Significant Energy Use Remarks
-                            </label>
-                            <textarea
-                                name="remarks"
-                                value={formData.remarks}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex flex-col gap-3">
-                            <label className="add-training-label">
-                                Revision
-                            </label>
-                            <input
-                                type="text"
-                                name="revision"
-                                value={formData.revision}
-                                onChange={handleChange}
-                                className="add-training-inputs focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="flex items-end justify-end mt-3 col-span-2">
-                            <label className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    name="is_notification"
-                                    className="mr-2 form-checkboxes"
-                                    checked={formData.is_notification}
-                                    onChange={handleChange}
-                                />
-                                <span className="permissions-texts cursor-pointer">
-                                    Send Notification
-                                </span>
-                            </label>
-                        </div>
-
-                        <div className="md:col-span-2 flex gap-4 justify-end">
-                            <div className="flex gap-5">
-                                <button
-                                    type="button"
-                                    onClick={handleListDraftSignificantEnergy}
-                                    className="cancel-btn duration-200"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="save-btn duration-200"
-                                    disabled={isLoading}
-                                >
-                                    {isLoading ? 'Saving...' : 'Save'}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </>
-            )}
+                    </div>
+                </form>
+            </>
         </div>
     );
 };

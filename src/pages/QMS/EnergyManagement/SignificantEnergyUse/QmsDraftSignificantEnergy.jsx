@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftSignificantEnergy = () => {
     const navigate = useNavigate();
@@ -13,6 +16,14 @@ const QmsDraftSignificantEnergy = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -72,7 +83,27 @@ const QmsDraftSignificantEnergy = () => {
             setSignificantEnergy(formattedData);
         } catch (error) {
             console.error('Error fetching draft significant energy:', error);
-            setError('Failed to load draft significant energy data. Please try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -87,7 +118,7 @@ const QmsDraftSignificantEnergy = () => {
     // Pagination
     const itemsPerPage = 10;
     const totalItems = significantEnergy.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const totalPages = Math.ceil(totalItems / itemsPerPage); 
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = significantEnergy.slice(indexOfFirstItem, indexOfLastItem);
@@ -110,17 +141,56 @@ const QmsDraftSignificantEnergy = () => {
         navigate(`/company/qms/edit-draft-significant-energy/${id}`);
     };
 
-    const handleDeleteDraftSignificantEnergy = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this draft significant energy record?')) return;
+    // Open delete confirmation modal
+    const openDeleteModal = (item) => {
+        setItemToDelete(item);
+        setShowDeleteModal(true);
+        setDeleteMessage('Draft Significant Energy Use');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!itemToDelete) return;
+
         try {
-            setIsLoading(true);
-            await axios.delete(`${BASE_URL}/qms/significant/${id}/`);
-            setSignificantEnergy(significantEnergy.filter(item => item.id !== id));
+            await axios.delete(`${BASE_URL}/qms/significant/${itemToDelete.id}/`);
+            setSignificantEnergy(significantEnergy.filter(item => item.id !== itemToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+            setSuccessMessage("Draft Significant Energy Use Deleted Successfully");
         } catch (error) {
             console.error('Error deleting draft significant energy:', error);
-            setError('Failed to delete draft record. Please try again.');
-        } finally {
-            setIsLoading(false);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -152,16 +222,9 @@ const QmsDraftSignificantEnergy = () => {
                 </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
-
             {/* Loading State */}
             {isLoading && (
-                <div className="text-center py-4">
+                <div className="text-center py-4 not-found">
                     Loading...
                 </div>
             )}
@@ -207,7 +270,7 @@ const QmsDraftSignificantEnergy = () => {
                                             </button>
                                         </td>
                                         <td className="px-2 add-manual-datas !text-center">
-                                            <button onClick={() => handleDeleteDraftSignificantEnergy(item.id)}>
+                                            <button onClick={() => openDeleteModal(item)}>
                                                 <img src={deleteIcon} alt="Delete Icon" />
                                             </button>
                                         </td>
@@ -256,6 +319,28 @@ const QmsDraftSignificantEnergy = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

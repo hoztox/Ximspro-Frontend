@@ -4,15 +4,26 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddEnergyImprovement = () => {
     const [users, setUsers] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingDraft, setIsSavingDraft] = useState(false);
     const [error, setError] = useState('');
+    const [formErrors, setFormErrors] = useState({
+        eio_title: '',
+        responsible: ''
+    });
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [nextEioNo, setNextEioNo] = useState("EIO-1");
     const navigate = useNavigate();
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -64,14 +75,11 @@ const QmsAddEnergyImprovement = () => {
                     ...prevData,
                     eio: eioNumber
                 }));
-
-                console.log('Next EIO number:', eioNumber);
-                
             } else {
-                setNextEioNo();
+                setNextEioNo("EIO-1");
                 setFormData(prevData => ({
                     ...prevData,
-                    eio: ""
+                    eio: "EIO-1"
                 }));
             }
         } catch (error) {
@@ -98,7 +106,29 @@ const QmsAddEnergyImprovement = () => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -145,6 +175,13 @@ const QmsAddEnergyImprovement = () => {
                 [name]: value
             });
         }
+
+        if (name === 'eio_title' || name === 'responsible') {
+            setFormErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }));
+        }
     };
 
     const handleFileChange = (e) => {
@@ -154,6 +191,24 @@ const QmsAddEnergyImprovement = () => {
         });
     };
 
+    const validateForm = () => {
+        const errors = {};
+        let isValid = true;
+
+        if (!formData.eio_title.trim()) {
+            errors.eio_title = 'EIO Title is required';
+            isValid = false;
+        }
+
+        if (!formData.responsible) {
+            errors.responsible = 'Responsible is required';
+            isValid = false;
+        }
+
+        setFormErrors(errors);
+        return isValid;
+    };
+
     const formatDate = (dateObj) => {
         if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
@@ -161,19 +216,19 @@ const QmsAddEnergyImprovement = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
 
         try {
             setIsSaving(true);
             setError('');
 
             const formattedDate = formatDate(formData.date);
-            console.log('aaaaaa', formData);
-            
 
             const submissionData = new FormData();
             submissionData.append('user', userId);
             submissionData.append('company', companyId);
-            // submissionData.append('eio', formData.eio);
             submissionData.append('eio_title', formData.eio_title);
             submissionData.append('target', formData.target);
             submissionData.append('associated_objective', formData.associated_objective);
@@ -186,18 +241,44 @@ const QmsAddEnergyImprovement = () => {
                 submissionData.append('upload_attachment', formData.upload_attachment);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/energy-improvements/create/`, submissionData, {
+            await axios.post(`${BASE_URL}/qms/energy-improvements/create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
-            console.log('Energy Review created:', response.data);
-            navigate('/company/qms/list-energy-improvement-opportunities');
 
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-energy-improvement-opportunities');
+            }, 1500);
+            setSuccessMessage("Energy Improvements Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError('Failed to save energy review. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsSaving(false);
         }
@@ -205,6 +286,9 @@ const QmsAddEnergyImprovement = () => {
 
     const handleSaveDraft = async (e) => {
         e.preventDefault();
+        // if (!validateForm()) {
+        //     return;
+        // }
 
         try {
             setIsSavingDraft(true);
@@ -228,18 +312,44 @@ const QmsAddEnergyImprovement = () => {
                 submissionData.append('upload_attachment', formData.upload_attachment);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/energy-improvements/draft-create/`, submissionData, {  
+            await axios.post(`${BASE_URL}/qms/energy-improvements/draft-create/`, submissionData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
 
-            console.log('Energy Review draft saved:', response.data);
-            navigate('/company/qms/list-energy-improvement-opportunities');
 
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-energy-improvement-opportunities');
+            }, 1500);
+            setSuccessMessage("Energy Improvements Drafted Successfully")
         } catch (error) {
             console.error('Error saving draft:', error);
-            setError('Failed to save draft. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsSavingDraft(false);
         }
@@ -274,11 +384,17 @@ const QmsAddEnergyImprovement = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
@@ -296,15 +412,20 @@ const QmsAddEnergyImprovement = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">EIO Title <span className="text-red-500">*</span></label>
+                    <label className="add-training-label">
+                        EIO Title <span className="text-red-500">*</span>
+                    </label>
                     <input
                         type="text"
                         name="eio_title"
                         value={formData.eio_title}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className={`add-training-inputs focus:outline-none ${formErrors.eio_title ? "border-red-500" : ""}`}
                         maxLength={50}
                     />
+                    {formErrors.eio_title && (
+                        <p className="text-red-500 text-sm">{formErrors.eio_title}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -407,15 +528,16 @@ const QmsAddEnergyImprovement = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Responsible <span className="text-red-500">*</span></label>
+                    <label className="add-training-label">
+                        Responsible <span className="text-red-500">*</span>
+                    </label>
                     <select
                         name="responsible"
                         value={formData.responsible}
                         onChange={handleChange}
                         onFocus={() => setFocusedDropdown("responsible")}
                         onBlur={() => setFocusedDropdown(null)}
-                        className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
+                        className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
                     >
                         <option value="" disabled>
                             {users.length === 0 ? "Loading..." : "Select Responsible"}
@@ -431,11 +553,14 @@ const QmsAddEnergyImprovement = () => {
                         )}
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[55px] transform transition-transform duration-300
                                         ${focusedDropdown === "responsible" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
+                    {formErrors.responsible && (
+                        <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3 relative">
@@ -447,7 +572,6 @@ const QmsAddEnergyImprovement = () => {
                         onFocus={() => setFocusedDropdown("status")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
                     >
                         <option value="" disabled>Select Status</option>
                         <option value="On Going">On Going</option>

@@ -117,14 +117,8 @@ const QmsViewDraftSignificantEnergy = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
-
             {isLoading ? (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             ) : (
                 <div className="p-5 relative">
                     {/* Vertical divider line */}

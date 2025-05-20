@@ -5,6 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewSignificantEnergy = () => {
     const { id } = useParams();
@@ -25,6 +28,13 @@ const QmsViewSignificantEnergy = () => {
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
 
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
@@ -85,7 +95,27 @@ const QmsViewSignificantEnergy = () => {
             });
         } catch (error) {
             console.error("Error fetching significant energy:", error);
-            setError("Failed to load significant energy data. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -99,15 +129,48 @@ const QmsViewSignificantEnergy = () => {
         navigate(`/company/qms/edit-significant-energy/${id}`);
     };
 
+    const openDeleteModal = () => {
+        setDeleteMessage("Significant Energy Use");
+        setShowDeleteModal(true);
+    };
+
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+        setShowErrorModal(false);
+    };
+
     const handleDelete = async () => {
-        if (!window.confirm("Are you sure you want to delete this significant energy record?")) return;
         try {
             setIsLoading(true);
             await axios.delete(`${BASE_URL}/qms/significant/${id}/`);
-            navigate("/company/qms/list-significant-energy");
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Significant Energy Use Deleted Successfully");
+            setTimeout(() => {
+                navigate("/company/qms/list-significant-energy");
+            }, 2000);
         } catch (error) {
             console.error("Error deleting significant energy:", error);
-            setError("Failed to delete record. Please try again.");
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
+            setShowErrorModal(true);
         } finally {
             setIsLoading(false);
         }
@@ -118,6 +181,10 @@ const QmsViewSignificantEnergy = () => {
             window.open(formData.upload_attachment, "_blank");
         } else {
             setError("No file attached to this record.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -133,14 +200,8 @@ const QmsViewSignificantEnergy = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-4 py-2 mb-4 rounded">
-                    {error}
-                </div>
-            )}
-
             {isLoading ? (
-                <div className="text-center py-4">Loading...</div>
+                <div className="text-center py-4 not-found">Loading...</div>
             ) : (
                 <div className="p-5 relative">
                     {/* Vertical divider line */}
@@ -255,7 +316,7 @@ const QmsViewSignificantEnergy = () => {
 
                                 <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                                     Delete
-                                    <button onClick={handleDelete}>
+                                    <button onClick={openDeleteModal}>
                                         <img
                                             src={deletes}
                                             alt="Delete Icon"
@@ -268,6 +329,28 @@ const QmsViewSignificantEnergy = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={handleDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={closeAllModals}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={closeAllModals}
+                error={error}
+            />
         </div>
     );
 };
