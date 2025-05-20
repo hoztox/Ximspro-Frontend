@@ -38,7 +38,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        next_hsi_no: '',
+        incident_no: '',
         root_cause: '',
         report_by: '',
         description: '',
@@ -70,7 +70,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
     const fetchIncidentDetails = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/car/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety_incidents/${id}/`);
             const incident = response.data;
 
             // Parse dates
@@ -78,14 +78,14 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             const dateCompleted = parseDate(incident.date_completed);
 
             // Format HSI number with prefix if not present
-            const hsiNumber = incident.next_hsi_no.startsWith('HSI-')
-                ? incident.next_hsi_no
-                : `HSI-${incident.next_hsi_no}`;
+            const hsiNumber = incident.incident_no.startsWith('HSI-')
+                ? incident.incident_no
+                : `HSI-${incident.incident_no}`;
 
             setFormData({
                 source: incident.source || '',
                 title: incident.title || '',
-                next_hsi_no: hsiNumber,
+                incident_no: hsiNumber,
                 root_cause: incident.root_cause || '',
                 report_by: incident.report_by || '',
                 description: incident.description || '',
@@ -142,7 +142,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         try {
             setIsLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety-root/company/${companyId}/`);
             setRootCauses(response.data);
             setIsLoading(false);
         } catch (error) {
@@ -172,7 +172,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'next_hsi_no') return; // Prevent editing HSI number
+        if (name === 'incident_no') return; // Prevent editing HSI number
 
         // Handle nested objects (dates)
         if (name.includes('.')) {
@@ -217,7 +217,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             const dateCompleted = formatDate(formData.date_completed);
 
             // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
+            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
 
             // Prepare submission data
             const submissionData = {
@@ -230,7 +230,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                 date_completed: dateCompleted,
                 status: formData.status,
                 report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                incident_no: rawHsiNumber, // Send just the number part
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -238,7 +238,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             };
 
             // Update the draft
-            const response = await axios.put(`${BASE_URL}/qms/car/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/safety_incidents-draft/update/${id}/`, submissionData);
 
             console.log('Updated Draft:', response.data);
 
@@ -272,7 +272,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             const dateCompleted = formatDate(formData.date_completed);
 
             // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
+            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
 
             // Prepare submission data
             const submissionData = {
@@ -285,7 +285,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                 date_completed: dateCompleted,
                 status: formData.status,
                 report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                incident_no: rawHsiNumber, // Send just the number part
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -293,7 +293,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             };
 
             // Update the record
-            const response = await axios.put(`${BASE_URL}/qms/car/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/safety_incidents-draft/update/${id}/`, submissionData);
 
             console.log('Updated:', response.data);
 
@@ -322,7 +322,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         return options;
     };
 
-    // if (isLoading && !formData.next_hsi_no) {
+    // if (isLoading && !formData.incident_no) {
     //     return (
     //         <div className="bg-[#1C1C24] text-white p-5 rounded-lg min-h-[300px] flex items-center justify-center">
     //             <p>Loading incident details...</p>
@@ -388,8 +388,8 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                     </label>
                     <input
                         type="text"
-                        name="next_hsi_no"
-                        value={formData.next_hsi_no}
+                        name="incident_no"
+                        value={formData.incident_no}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
                         title="HSI number cannot be changed"

@@ -696,43 +696,43 @@ const ThemedApp = () => {
 
           <Route path="qms/list-environmantal-incident" element={<QmsListEnvironmentalIncidents />} />
           <Route path="qms/add-environmantal-incident" element={<QmsAddEnvironmentalIncidents />} />
-          <Route path="qms/edit-environmantal-incident" element={<QmsEditEnvironmentalIncidents />} />
-          <Route path="qms/view-environmantal-incident" element={<QmsViewEnvironmentalIncidents />} />
+          <Route path="qms/edit-environmantal-incident/:id" element={<QmsEditEnvironmentalIncidents />} />
+          <Route path="qms/view-environmantal-incident/:id" element={<QmsViewEnvironmentalIncidents />} />
           <Route path="qms/draft-environmantal-incident" element={<QmsDraftEnvironmentalIncidents />} />
-          <Route path="qms/edit-draft-environmantal-incident" element={<QmsDraftEditEnvironmentalIncidents />} />
-          <Route path="qms/view-draft-environmantal-incident" element={<QmsDraftViewEnvironmentalIncidents />} />
+          <Route path="qms/edit-draft-environmantal-incident/:id" element={<QmsDraftEditEnvironmentalIncidents />} />
+          <Route path="qms/view-draft-environmantal-incident/:id" element={<QmsDraftViewEnvironmentalIncidents />} />
 
           <Route path="qms/list-environmantal-waste-management" element={<QmsListEnvironmentalWasteManagement />} />
           <Route path="qms/add-environmantal-waste-management" element={<QmsAddEnvironmentalWasteManagement />} />
-          <Route path="qms/edit-environmantal-waste-management" element={<QmsEditEnvironmentalWasteManagement />} />
-          <Route path="qms/view-environmantal-waste-management" element={<QmsViewEnvironmentalWasteManagement />} />
+          <Route path="qms/edit-environmantal-waste-management/:id" element={<QmsEditEnvironmentalWasteManagement />} />
+          <Route path="qms/view-environmantal-waste-management/:id" element={<QmsViewEnvironmentalWasteManagement />} />
           <Route path="qms/draft-environmantal-waste-management" element={<QmsDraftEnvironmentalWasteManagement />} />
-          <Route path="qms/edit-draft-environmantal-waste-management" element={<QmsDraftEditEnvironmentalWasteManagement />} />
-          <Route path="qms/view-draft-environmantal-waste-management" element={<QmsDraftViewEnvironmentalWasteManagement />} />
+          <Route path="qms/edit-draft-environmantal-waste-management/:id" element={<QmsDraftEditEnvironmentalWasteManagement />} />
+          <Route path="qms/view-draft-environmantal-waste-management/:id" element={<QmsDraftViewEnvironmentalWasteManagement />} />
 
           <Route path="qms/list-health-safety-hazards" element={<QmsListHealthSafetyHazards />} />
           <Route path="qms/add-health-safety-hazards" element={<QmsAddHealthSafetyHazards />} />
-          <Route path="qms/edit-health-safety-hazards" element={<QmsEditHealthSafetyHazards />} />
-          <Route path="qms/view-health-safety-hazards" element={<QmsViewHealthSafetyHazards />} />
+          <Route path="qms/edit-health-safety-hazards/:id" element={<QmsEditHealthSafetyHazards />} />
+          <Route path="qms/view-health-safety-hazards/:id" element={<QmsViewHealthSafetyHazards />} />
           <Route path="qms/draft-health-safety-hazards" element={<QmsDraftHealthSafetyHazards />} />
-          <Route path="qms/edit-draft-health-safety-hazards" element={<QmsDraftEditHealthSafetyHazards />} />
-          <Route path="qms/view-draft-health-safety-hazards" element={<QmsDraftViewHealthSafetyHazards />} />
+          <Route path="qms/edit-draft-health-safety-hazards/:id" element={<QmsDraftEditHealthSafetyHazards />} />
+          <Route path="qms/view-draft-health-safety-hazards/:id" element={<QmsDraftViewHealthSafetyHazards />} />
 
           <Route path="qms/list-health-safety-assessments" element={<QmsListHealthSafetyRiskAssessments />} />
           <Route path="qms/add-health-safety-assessments" element={<QmsAddHealthSafetyRiskAssessments />} />
-          <Route path="qms/edit-health-safety-assessments" element={<QmsEditHealthSafetyRiskAssessments />} />
-          <Route path="qms/view-health-safety-assessments" element={<QmsViewHealthSafetyRiskAssessments />} />
+          <Route path="qms/edit-health-safety-assessments/:id" element={<QmsEditHealthSafetyRiskAssessments />} />
+          <Route path="qms/view-health-safety-assessments/:id" element={<QmsViewHealthSafetyRiskAssessments />} />
           <Route path="qms/draft-health-safety-assessments" element={<QmsDraftHealthSafetyRiskAssessments />} />
-          <Route path="qms/edit-draft-health-safety-assessments" element={<QmsEditDraftHealthSafetyRiskAssessments />} />
-          <Route path="qms/view-draft-health-safety-assessments" element={<QmsViewDraftHealthSafetyRiskAssessments />} />
+          <Route path="qms/edit-draft-health-safety-assessments/:id" element={<QmsEditDraftHealthSafetyRiskAssessments />} />
+          <Route path="qms/view-draft-health-safety-assessments/:id" element={<QmsViewDraftHealthSafetyRiskAssessments />} />
 
           <Route path="qms/list-health-safety-incidents" element={<QmsListHealthSafetyIncidents />} />
           <Route path="qms/add-health-safety-incidents" element={<QmsAddHealthSafetyIncidents />} />
-          <Route path="qms/edit-health-safety-incidents" element={<QmsEditHealthSafetyIncidents />} />
-          <Route path="qms/view-health-safety-incidents" element={<QmsViewHealthSafetyIncidents />} />
+          <Route path="qms/edit-health-safety-incidents/:id" element={<QmsEditHealthSafetyIncidents />} />
+          <Route path="qms/view-health-safety-incidents/:id" element={<QmsViewHealthSafetyIncidents />} />  
           <Route path="qms/draft-health-safety-incidents" element={<QmsDraftHealthSafetyIncidents />} />
-          <Route path="qms/edit-draft-health-safety-incidents" element={<QmsDraftEditHealthSafetyIncidents />} />
-          <Route path="qms/view-draft-health-safety-incidents" element={<QmsDraftViewHealthSafetyIncidents />} />
+          <Route path="qms/edit-draft-health-safety-incidents/:id" element={<QmsDraftEditHealthSafetyIncidents />} />
+          <Route path="qms/view-draft-health-safety-incidents/:id" element={<QmsDraftViewHealthSafetyIncidents />} />
 
 
 

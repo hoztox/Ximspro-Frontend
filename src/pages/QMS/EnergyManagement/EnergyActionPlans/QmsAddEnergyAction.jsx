@@ -4,12 +4,25 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsAddEnergyAction = () => {
   const [nextActionNo, setNextActionNo] = useState("EAP-1");
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    title: "",
+    responsible: ""
+  });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+
   const [programFields, setProgramFields] = useState([{ id: 1, value: "" }]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const navigate = useNavigate();
@@ -43,9 +56,6 @@ const QmsAddEnergyAction = () => {
     if (companyId) return companyId;
     return null;
   };
-
-  // const companyId = getUserCompanyId();
-  // const userId = getRelevantUserId();
 
   const fetchNextActionNumber = async () => {
     try {
@@ -95,6 +105,10 @@ const QmsAddEnergyAction = () => {
       setError(
         "Failed to load users. Please check your connection and try again."
       );
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -102,8 +116,6 @@ const QmsAddEnergyAction = () => {
     fetchUsers();
     fetchNextActionNumber();
   }, []);
-
-
 
   const [formData, setFormData] = useState({
     action_plan: '',
@@ -153,6 +165,13 @@ const QmsAddEnergyAction = () => {
         [name]: value,
       });
     }
+
+    if (name === "title" || name === "responsible") {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ""
+      }));
+    }
   };
 
   const handleProgramChange = (id, value) => {
@@ -175,6 +194,24 @@ const QmsAddEnergyAction = () => {
     if (programFields.length > 1) {
       setProgramFields(programFields.filter((field) => field.id !== id));
     }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!formData.title.trim()) {
+      errors.title = "Action Plan Title/Name is required";
+      isValid = false;
+    }
+
+    if (!formData.responsible) {
+      errors.responsible = "Please select responsible";
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
   const formatDate = (dateObj) => {
@@ -210,61 +247,18 @@ const QmsAddEnergyAction = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  try {
-    const submissionData = prepareSubmissionData(false);
-
-    
-    const formDataToSend = new FormData();
-    
-    
-    for (const key in submissionData) {
-      if (key === "programs") {
-        formDataToSend.append(key, JSON.stringify(submissionData[key]));
-      } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
-        formDataToSend.append(key, submissionData[key]);
-      }
-    }
-
-    // Add the file attachment if it exists
-    if (formData.upload_attachment) {
-      formDataToSend.append("upload_attachment", formData.upload_attachment);
-    }
-
-    // Use multipart/form-data content type for file uploads
-    const response = await axios.post(
-      `${BASE_URL}/qms/energy-action/create/`,
-      formDataToSend,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
-
-    console.log("Added Energy Action:", response.data);
-    navigate("/company/qms/list-energy-action-plan");
-  } catch (error) {
-    console.error("Error submitting form:", error);
-    setError("Failed to save. Please check your inputs and try again.");
-  } finally {
-    setIsLoading(false);
-  }
-};
-  
-  
-  const handleSaveAsDraft = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
 
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const submissionData = prepareSubmissionData(true);
+      const submissionData = prepareSubmissionData(false);
 
       const formDataToSend = new FormData();
-      console.log('aaaaaaaction', formData); 
 
-      
       for (const key in submissionData) {
         if (key === "programs") {
           formDataToSend.append(key, JSON.stringify(submissionData[key]));
@@ -277,7 +271,79 @@ const QmsAddEnergyAction = () => {
         formDataToSend.append("upload_attachment", formData.upload_attachment);
       }
 
-      const response = await axios.post(
+      await axios.post(
+        `${BASE_URL}/qms/energy-action/create/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-energy-action-plan");
+      }, 1500);
+      setSuccessMessage("Energy Action Plans Added Successfully")
+    } catch (error) {
+      console.error("Error submitting energy action:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveAsDraft = async (e) => {
+    e.preventDefault();
+    // if (!validateForm()) {
+    //   setIsLoading(false);
+    //   return;
+    // }
+
+    try {
+      setIsLoading(true);
+      const submissionData = prepareSubmissionData(true);
+
+      const formDataToSend = new FormData();
+
+      for (const key in submissionData) {
+        if (key === "programs") {
+          formDataToSend.append(key, JSON.stringify(submissionData[key]));
+        } else if (submissionData[key] !== null && submissionData[key] !== undefined) {
+          formDataToSend.append(key, submissionData[key]);
+        }
+      }
+
+      if (formData.upload_attachment) {
+        formDataToSend.append("upload_attachment", formData.upload_attachment);
+      }
+
+      await axios.post(
         `${BASE_URL}/qms/energy-action/draft-create/`,
         formDataToSend,
         {
@@ -287,11 +353,37 @@ const QmsAddEnergyAction = () => {
         }
       );
 
-      console.log("Saved Energy Action as Draft:", response.data);
-      navigate("/company/qms/list-energy-action-plan");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-energy-action-plan");
+      }, 1500);
+      setSuccessMessage("Energy Action Plans Drafted Successfully")
     } catch (error) {
       console.error("Error saving draft:", error);
-      setError("Failed to save draft. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -323,315 +415,326 @@ const QmsAddEnergyAction = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-          {error}
-        </div>
-      )}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
-      >
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Energy Action Plan No <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="action_plan"
-            value={formData.action_plan}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
-            readOnly
-            required
-            title="Auto-generated EAP number"
-          />
-        </div>
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
 
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Action Plan Title/Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">Associated Objective</label>
-          <input
-            type="text"
-            name="associative_objective"
-            value={formData.associative_objective}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">Upload Attachment</label>
-          <div className="flex">
-            <input
-              type="file"
-              id="file-upload"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <label
-              htmlFor="file-upload"
-              className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
-            >
-              <span className="text-[#AAAAAA] choose-file">Choose File</span>
-              <img src={file} alt="" />
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
+        >
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">
+              Energy Action Plan No <span className="text-red-500">*</span>
             </label>
+            <input
+              type="text"
+              name="action_plan"
+              value={formData.action_plan}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
+              readOnly
+              title="Auto-generated EAP number"
+            />
           </div>
-          {formData.upload_attachment && (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-              {formData.upload_attachment.name}
-            </p>
-          )}
-          {!formData.upload_attachment && (
-            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-              No file chosen
-            </p>
-          )}
-        </div>
 
-        {programFields.map((field, index) => (
-          <div key={field.id} className="flex flex-col gap-3">
-            <div className="flex items-center gap-2 justify-between last:pr-[57px]">
-              <label className="add-training-label">
-                Program(s)
-              </label>
-              {index > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeProgramField(field.id)}
-                  className="text-red-500 text-xs"
-                >
-                  <X size={17} />
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">
+              Action Plan Title/Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
+            />
+            {formErrors.title && (
+              <p className="text-red-500 text-sm">{formErrors.title}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">Associated Objective</label>
+            <input
+              type="text"
+              name="associative_objective"
+              value={formData.associative_objective}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">Upload Attachment</label>
+            <div className="flex">
               <input
-                type="text"
-                value={field.value}
-                onChange={(e) => handleProgramChange(field.id, e.target.value)}
-                className="add-training-inputs focus:outline-none flex-1"
+                type="file"
+                id="file-upload"
+                onChange={handleFileChange}
+                className="hidden"
               />
-              {index === programFields.length - 1 && (
-                <button
-                  type="button"
-                  onClick={addProgramField}
-                  className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+              <label
+                htmlFor="file-upload"
+                className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+              >
+                <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                <img src={file} alt="" />
+              </label>
+            </div>
+            {formData.upload_attachment && (
+              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                {formData.upload_attachment.name}
+              </p>
+            )}
+            {!formData.upload_attachment && (
+              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                No file chosen
+              </p>
+            )}
+          </div>
+
+          {programFields.map((field, index) => (
+            <div key={field.id} className="flex flex-col gap-3">
+              <div className="flex items-center gap-2 justify-between last:pr-[57px]">
+                <label className="add-training-label">
+                  Program(s)
+                </label>
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => removeProgramField(field.id)}
+                    className="text-red-500 text-xs"
+                  >
+                    <X size={17} />
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={field.value}
+                  onChange={(e) => handleProgramChange(field.id, e.target.value)}
+                  className="add-training-inputs focus:outline-none flex-1"
+                />
+                {index === programFields.length - 1 && (
+                  <button
+                    type="button"
+                    onClick={addProgramField}
+                    className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+                  >
+                    <Plus className="text-white" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">
+              Associated Legal Requirements
+            </label>
+            <input
+              type="text"
+              name="legal_requirements"
+              value={formData.legal_requirements}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">Means/Method</label>
+            <input
+              type="text"
+              name="means"
+              value={formData.means}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">Target Date</label>
+            <div className="grid grid-cols-3 gap-5">
+              <div className="relative">
+                <select
+                  name="date.day"
+                  value={formData.date.day}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedDropdown("date.day")}
+                  onBlur={() => setFocusedDropdown(null)}
+                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
                 >
-                  <Plus className="text-white" />
-                </button>
-              )}
+                  <option value="" disabled>
+                    dd
+                  </option>
+                  {generateOptions(1, 31)}
+                </select>
+                <ChevronDown
+                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                   ${focusedDropdown === "date.day"
+                      ? "rotate-180"
+                      : ""
+                    }`}
+                  size={20}
+                  color="#AAAAAA"
+                />
+              </div>
+
+              <div className="relative">
+                <select
+                  name="date.month"
+                  value={formData.date.month}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedDropdown("date.month")}
+                  onBlur={() => setFocusedDropdown(null)}
+                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                >
+                  <option value="" disabled>
+                    mm
+                  </option>
+                  {generateOptions(1, 12)}
+                </select>
+                <ChevronDown
+                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                   ${focusedDropdown === "date.month"
+                      ? "rotate-180"
+                      : ""
+                    }`}
+                  size={20}
+                  color="#AAAAAA"
+                />
+              </div>
+
+              <div className="relative">
+                <select
+                  name="date.year"
+                  value={formData.date.year}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedDropdown("date.year")}
+                  onBlur={() => setFocusedDropdown(null)}
+                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+                >
+                  <option value="" disabled>
+                    yyyy
+                  </option>
+                  {generateOptions(2023, 2030)}
+                </select>
+                <ChevronDown
+                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                                   ${focusedDropdown === "date.year"
+                      ? "rotate-180"
+                      : ""
+                    }`}
+                  size={20}
+                  color="#AAAAAA"
+                />
+              </div>
             </div>
           </div>
-        ))}
 
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Associated Legal Requirements
-          </label>
-          <input
-            type="text"
-            name="legal_requirements"
-            value={formData.legal_requirements}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">Means/Method</label>
-          <input
-            type="text"
-            name="means"
-            value={formData.means}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">Target Date</label>
-          <div className="grid grid-cols-3 gap-5">
-            <div className="relative">
-              <select
-                name="date.day"
-                value={formData.date.day}
-                onChange={handleChange}
-                onFocus={() => setFocusedDropdown("date.day")}
-                onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              >
-                <option value="" disabled>
-                  dd
-                </option>
-                {generateOptions(1, 31)}
-              </select>
-              <ChevronDown
-                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${focusedDropdown === "date.day"
-                    ? "rotate-180"
-                    : ""
-                  }`}
-                size={20}
-                color="#AAAAAA"
-              />
-            </div>
-
-            <div className="relative">
-              <select
-                name="date.month"
-                value={formData.date.month}
-                onChange={handleChange}
-                onFocus={() => setFocusedDropdown("date.month")}
-                onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              >
-                <option value="" disabled>
-                  mm
-                </option>
-                {generateOptions(1, 12)}
-              </select>
-              <ChevronDown
-                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${focusedDropdown === "date.month"
-                    ? "rotate-180"
-                    : ""
-                  }`}
-                size={20}
-                color="#AAAAAA"
-              />
-            </div>
-
-            <div className="relative">
-              <select
-                name="date.year"
-                value={formData.date.year}
-                onChange={handleChange}
-                onFocus={() => setFocusedDropdown("date.year")}
-                onBlur={() => setFocusedDropdown(null)}
-                className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              >
-                <option value="" disabled>
-                  yyyy
-                </option>
-                {generateOptions(2023, 2030)}
-              </select>
-              <ChevronDown
-                className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                 ${focusedDropdown === "date.year"
-                    ? "rotate-180"
-                    : ""
-                  }`}
-                size={20}
-                color="#AAAAAA"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 relative">
-          <label className="add-training-label">
-            Responsible <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="responsible"
-            value={formData.responsible}
-            onChange={handleChange}
-            onFocus={() => setFocusedDropdown("responsible")}
-            onBlur={() => setFocusedDropdown(null)}
-            className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
-          >
-            <option value="" disabled>
-              {isLoading ? "Loading..." : "Select Responsible"}
-            </option>
-            {users && users.length > 0
-              ? users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.first_name} {user.last_name || ""}
-                </option>
-              ))
-              : !isLoading && (
-                <option value="" disabled>
-                  No users found
-                </option>
-              )}
-          </select>
-          <ChevronDown
-            className={`absolute right-3 top-[55px] transform transition-transform duration-300
-                         ${focusedDropdown === "responsible" ? "rotate-180" : ""
-              }`}
-            size={20}
-            color="#AAAAAA"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Statement on Energy Improvement Performance
-          </label>
-          <textarea
-            name="energy_improvements"
-            value={formData.energy_improvements}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none !h-[98px]"
-          />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <label className="add-training-label">
-            Statement on Result Verification
-          </label>
-          <textarea
-            name="statement"
-            value={formData.statement}
-            onChange={handleChange}
-            className="add-training-inputs focus:outline-none !h-[98px]"
-          />
-        </div>
-
-        <div className="md:col-span-2 flex gap-4 justify-between">
-          <div>
-            <button
-              type="button"
-              onClick={handleSaveAsDraft}
-              className="request-correction-btn duration-200"
+          <div className="flex flex-col gap-3 relative">
+            <label className="add-training-label">
+              Responsible <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="responsible"
+              value={formData.responsible}
+              onChange={handleChange}
+              onFocus={() => setFocusedDropdown("responsible")}
+              onBlur={() => setFocusedDropdown(null)}
+              className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
             >
-              Save as Draft
-            </button>
+              <option value="" disabled>
+                {isLoading ? "Loading..." : "Select Responsible"}
+              </option>
+              {users && users.length > 0
+                ? users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.first_name} {user.last_name || ""}
+                  </option>
+                ))
+                : !isLoading && (
+                  <option value="" disabled>
+                    No users found
+                  </option>
+                )}
+            </select>
+            <ChevronDown
+              className={`absolute right-3 top-[55px] transform transition-transform duration-300
+                           ${focusedDropdown === "responsible" ? "rotate-180" : ""
+                }`}
+              size={20}
+              color="#AAAAAA"
+            />
+            {formErrors.responsible && (
+              <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+            )}
           </div>
-          <div className="flex gap-5">
-            <button
-              type="button"
-              onClick={handleListEnergyAction}
-              className="cancel-btn duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="save-btn duration-200"
-              disabled={isLoading}
-            >
-              {isLoading ? "Saving..." : "Save"}
-            </button>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">
+              Statement on Energy Improvement Performance
+            </label>
+            <textarea
+              name="energy_improvements"
+              value={formData.energy_improvements}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none !h-[98px]"
+            />
           </div>
-        </div>
-      </form>
+
+          <div className="flex flex-col gap-3">
+            <label className="add-training-label">
+              Statement on Result Verification
+            </label>
+            <textarea
+              name="statement"
+              value={formData.statement}
+              onChange={handleChange}
+              className="add-training-inputs focus:outline-none !h-[98px]"
+            />
+          </div>
+
+          <div className="md:col-span-2 flex gap-4 justify-between">
+            <div>
+              <button
+                type="button"
+                onClick={handleSaveAsDraft}
+                className="request-correction-btn duration-200"
+                disabled={isLoading}
+              >
+                Save as Draft
+              </button>
+            </div>
+            <div className="flex gap-5">
+              <button
+                type="button"
+                onClick={handleListEnergyAction}
+                className="cancel-btn duration-200"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="save-btn duration-200"
+                disabled={isLoading}
+              >
+                {isLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </form>
     </div>
   );
 };

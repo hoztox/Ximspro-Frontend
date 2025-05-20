@@ -35,12 +35,13 @@ const QmsEditHealthSafetyIncidents = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Initialize form data based on HealthIncidents model
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        next_hsi_no: '',
+        incident_no: '', // Changed from next_hsi_no to incident_no to match the model
         root_cause: '',
-        report_by: '',
+        reported_by: '', // Changed from report_by to reported_by to match the model
         description: '',
         action: '',
         date_raised: {
@@ -70,24 +71,19 @@ const QmsEditHealthSafetyIncidents = () => {
     const fetchIncidentDetails = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`${BASE_URL}/qms/car/${id}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety_incidents/${id}/`);
             const incident = response.data;
 
             // Parse dates
             const dateRaised = parseDate(incident.date_raised);
             const dateCompleted = parseDate(incident.date_completed);
 
-            // Format HSI number with prefix if not present
-            const hsiNumber = incident.next_hsi_no.startsWith('HSI-')
-                ? incident.next_hsi_no
-                : `HSI-${incident.next_hsi_no}`;
-
             setFormData({
                 source: incident.source || '',
                 title: incident.title || '',
-                next_hsi_no: hsiNumber,
+                incident_no: incident.incident_no || '',
                 root_cause: incident.root_cause || '',
-                report_by: incident.report_by || '',
+                reported_by: incident.reported_by || '',
                 description: incident.description || '',
                 action: incident.action || '',
                 date_raised: dateRaised,
@@ -142,7 +138,7 @@ const QmsEditHealthSafetyIncidents = () => {
         try {
             setIsLoading(true);
             const companyId = getUserCompanyId();
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety-root/company/${companyId}/`);
             setRootCauses(response.data);
             setIsLoading(false);
         } catch (error) {
@@ -172,7 +168,7 @@ const QmsEditHealthSafetyIncidents = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'next_hsi_no') return; // Prevent editing HSI number
+        if (name === 'incident_no') return; // Prevent editing incident number
 
         // Handle nested objects (dates)
         if (name.includes('.')) {
@@ -216,9 +212,6 @@ const QmsEditHealthSafetyIncidents = () => {
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
-
             // Prepare submission data
             const submissionData = {
                 company: companyId,
@@ -229,8 +222,8 @@ const QmsEditHealthSafetyIncidents = () => {
                 date_raised: dateRaised,
                 date_completed: dateCompleted,
                 status: formData.status,
-                report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                reported_by: formData.reported_by,
+                incident_no: formData.incident_no,
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -238,14 +231,14 @@ const QmsEditHealthSafetyIncidents = () => {
             };
 
             // Update the draft
-            const response = await axios.put(`${BASE_URL}/qms/car/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
 
             console.log('Updated Draft:', response.data);
 
             setIsLoading(false);
 
             // Navigate after successful update
-            navigate('/company/qms/draft-correction-actions');
+            navigate('/company/qms/draft-health-safety-incidents');
 
         } catch (error) {
             console.error('Error saving draft:', error);
@@ -271,9 +264,6 @@ const QmsEditHealthSafetyIncidents = () => {
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
-
             // Prepare submission data
             const submissionData = {
                 company: companyId,
@@ -284,8 +274,8 @@ const QmsEditHealthSafetyIncidents = () => {
                 date_raised: dateRaised,
                 date_completed: dateCompleted,
                 status: formData.status,
-                report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                reported_by: formData.reported_by,
+                incident_no: formData.incident_no,
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -293,7 +283,7 @@ const QmsEditHealthSafetyIncidents = () => {
             };
 
             // Update the record
-            const response = await axios.put(`${BASE_URL}/qms/car/${id}/`, submissionData);
+            const response = await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
 
             console.log('Updated:', response.data);
 
@@ -322,7 +312,7 @@ const QmsEditHealthSafetyIncidents = () => {
         return options;
     };
 
-    if (isLoading && !formData.next_hsi_no) {
+    if (isLoading && !formData.incident_no) {
         return (
             <div className="bg-[#1C1C24] text-white p-5 rounded-lg min-h-[300px] flex items-center justify-center">
                 <p>Loading incident details...</p>
@@ -388,11 +378,11 @@ const QmsEditHealthSafetyIncidents = () => {
                     </label>
                     <input
                         type="text"
-                        name="next_hsi_no"
-                        value={formData.next_hsi_no}
+                        name="incident_no"
+                        value={formData.incident_no}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
-                        title="HSI number cannot be changed"
+                        title="Incident number cannot be changed"
                     />
                 </div>
 
@@ -457,19 +447,18 @@ const QmsEditHealthSafetyIncidents = () => {
                     </button>
                 </div>
 
-                {/* Rest of the form remains the same */}
                 <div className="flex flex-col gap-3 relative">
-                    <label className="add-training-label">Report By</label>
+                    <label className="add-training-label">Reported By</label>
                     <select
-                        name="report_by"
-                        value={formData.report_by}
+                        name="reported_by"
+                        value={formData.reported_by}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("report_by")}
+                        onFocus={() => setFocusedDropdown("reported_by")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
                         <option value="" disabled>
-                            {isLoading ? "Loading..." : "Select Executor"}
+                            {isLoading ? "Loading..." : "Select Reporter"}
                         </option>
                         {users && users.length > 0 ? (
                             users.map(user => (
@@ -483,7 +472,7 @@ const QmsEditHealthSafetyIncidents = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                        ${focusedDropdown === "report_by" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "reported_by" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -582,7 +571,7 @@ const QmsEditHealthSafetyIncidents = () => {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <label className="add-training-label">Complete By</label>
+                    <label className="add-training-label">Date Completed</label>
                     <div className="grid grid-cols-3 gap-5">
                         {/* Day */}
                         <div className="relative">
@@ -680,6 +669,7 @@ const QmsEditHealthSafetyIncidents = () => {
                 {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
                     <div className='flex gap-5'>
+                   
                         <button
                             type="button"
                             onClick={handleListHealthSafetyIncidents}
@@ -700,4 +690,5 @@ const QmsEditHealthSafetyIncidents = () => {
         </div>
     );
 };
-export default QmsEditHealthSafetyIncidents
+
+export default QmsEditHealthSafetyIncidents;

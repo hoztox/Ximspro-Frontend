@@ -67,7 +67,7 @@ const QmsAddHealthSafetyIncidents = () => {
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        next_hsi_no: '',
+        incident_no: '',
         root_cause: '',
         report_by: '',
         description: '',
@@ -95,51 +95,52 @@ const QmsAddHealthSafetyIncidents = () => {
     }
 
     // Modified function to fetch and format the next available HSI number
-    const fetchNextHsiNumber = async () => {
-        try {
-            const companyId = getUserCompanyId();
-            if (!companyId) {
-                // If no company ID, default to HSI-1
-                setNextHsiNo("HSI-1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_hsi_no: "HSI-1"
-                }));
-                return;
-            }
-
-            const response = await axios.get(`${BASE_URL}/qms/safety_incidents/next-action/${companyId}/`);
-            if (response.data && response.data.next_hsi_no) {
-                // Format the number with HSI- prefix
-                const rawNumber = String(response.data.next_hsi_no);
-                const formattedNumber = `HSI-${rawNumber}`;
-
-                setNextHsiNo(formattedNumber);
-                console.log('HSI Number:', formattedNumber);
-
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_hsi_no: formattedNumber
-                }));
-            } else {
-                // Default to HSI-1 if no valid number received
-                setNextHsiNo("HSI-1");
-                setFormData(prevData => ({
-                    ...prevData,
-                    next_hsi_no: "HSI-1"
-                }));
-            }
-        } catch (error) {
-            console.error('Error fetching next hsi number:', error);
-            // Set a fallback value if the API fails
+    // Modified function to fetch and format the next available HSI number
+const fetchNextHsiNumber = async () => {
+    try {
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+            // If no company ID, default to HSI-1
             setNextHsiNo("HSI-1");
             setFormData(prevData => ({
                 ...prevData,
-                next_hsi_no: "HSI-1"
+                incident_no: "HSI-1"
+            }));
+            return;
+        }
+
+        const response = await axios.get(`${BASE_URL}/qms/safety_incidents/next-action/${companyId}/`);
+        
+        // Check for next_incident_no in the response 
+        if (response.data && response.data.next_incident_no) {
+            // The API returns the formatted number already as "HSI-2"
+            const formattedNumber = response.data.next_incident_no;
+            
+            setNextHsiNo(formattedNumber);
+            console.log('HSI Number:', formattedNumber);
+
+            setFormData(prevData => ({
+                ...prevData,
+                incident_no: formattedNumber
+            }));
+        } else {
+            // Default to HSI-1 if no valid number received
+            setNextHsiNo("HSI-1");
+            setFormData(prevData => ({
+                ...prevData,
+                incident_no: "HSI-1"
             }));
         }
-    };
-
+    } catch (error) {
+        console.error('Error fetching next hsi number:', error);
+        // Set a fallback value if the API fails
+        setNextHsiNo("HSI-1");
+        setFormData(prevData => ({
+            ...prevData,
+            incident_no: "HSI-1"
+        }));
+    }
+};
     const fetchRootCauses = async () => {
         try {
             setIsLoading(true);
@@ -174,7 +175,7 @@ const QmsAddHealthSafetyIncidents = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'next_hsi_no') return;
+        if (name === 'incident_no') return;
 
         // Handle nested objects (dates)
         if (name.includes('.')) {
@@ -219,12 +220,12 @@ const QmsAddHealthSafetyIncidents = () => {
             const dateCompleted = formatDate(formData.date_completed);
 
             // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
+            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
 
             // Prepare submission data
             const submissionData = {
                 company: companyId,
-                userId:userId,
+                user:userId,
                 title: formData.title,
                 source: formData.source,
                 root_cause: formData.root_cause,
@@ -233,7 +234,7 @@ const QmsAddHealthSafetyIncidents = () => {
                 date_completed: dateCompleted,
                 status: formData.status,
                 report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                incident_no: rawHsiNumber, // Send just the number part
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -241,14 +242,14 @@ const QmsAddHealthSafetyIncidents = () => {
             };
 
             // Submit to draft-specific API endpoint
-            const response = await axios.post(`${BASE_URL}/qms/safety_incidents//draft-create/`, submissionData);
+            const response = await axios.post(`${BASE_URL}/qms/safety_incidents/draft-create/`, submissionData);
 
             console.log('Saved Draft:', response.data);
 
             setIsLoading(false);
 
             // Show success message or navigate
-            navigate('/company/qms/draft-correction-actions');
+            navigate('/company/qms/list-health-safety-incidents');
 
         } catch (error) {
             console.error('Error saving draft:', error);
@@ -274,8 +275,8 @@ const QmsAddHealthSafetyIncidents = () => {
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Extract just the number part for submission (remove HSI- prefix)
-            const rawHsiNumber = formData.next_hsi_no.replace('HSI-', '');
+        
+            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
 
             // Prepare submission data
             const submissionData = {
@@ -289,7 +290,7 @@ const QmsAddHealthSafetyIncidents = () => {
                 date_completed: dateCompleted,
                 status: formData.status,
                 report_by: formData.report_by,
-                next_hsi_no: rawHsiNumber, // Send just the number part
+                incident_no: rawHsiNumber, 
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -309,7 +310,7 @@ const QmsAddHealthSafetyIncidents = () => {
             setFormData({
                 source: '',
                 title: '',
-                next_hsi_no: 'HSI-1', // Reset to default with HSI- prefix
+                incident_no: 'HSI-1', // Reset to default with HSI- prefix
                 root_cause: '',
                 report_by: '',
                 description: '',
@@ -405,8 +406,8 @@ const QmsAddHealthSafetyIncidents = () => {
                     </label>
                     <input
                         type="text"
-                        name="next_hsi_no"
-                        value={formData.next_hsi_no}
+                        name="incident_no"
+                        value={formData.incident_no}
                         className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
                         readOnly
                         title="Auto-generated HSI number"

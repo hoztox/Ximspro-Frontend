@@ -18,8 +18,6 @@ const QmsDraftHealthSafetyIncidents = () => {
         return null;
     };
 
-    const id = getRelevantUserId();
-
     // State
     const [nonConformity, setNonConformity] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,28 +27,23 @@ const QmsDraftHealthSafetyIncidents = () => {
     const [currentPage, setCurrentPage] = useState(1);
 
     // Fetch draft nonConformity from API
+    const fetchDraftNonConformity = async () => {
+        try {
+            const userId = getRelevantUserId();
+            const response = await axios.get(`${BASE_URL}/qms/safety_incidents/draft/${userId}/`);
+            console.log('Draft Non Conformity:', response.data);
+            setNonConformity(response.data);
+            setLoading(false);
+        } catch (err) {
+            console.error("Error fetching draft Non Conformity:", err);
+            setError("Failed to load draft Non Conformity");
+            setLoading(false);
+        }
+    };
+    
     useEffect(() => {
-        const fetchDraftNonConformity = async () => {
-            if (!id) {
-                setError("User/Company ID not found");
-                setLoading(false);
-                return;
-            }
-
-            try {
-                const response = await axios.get(`${BASE_URL}/qms/car_no/company/${id}/`);
-                console.log('Draft Non Conformity:', response.data);
-                setNonConformity(response.data);
-                setLoading(false);
-            } catch (err) {
-                console.error("Error fetching draft Non Conformity:", err);
-                setError("Failed to load draft Non Conformity");
-                setLoading(false);
-            }
-        };
-
         fetchDraftNonConformity();
-    }, [id]);
+    }, []);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -93,7 +86,7 @@ const QmsDraftHealthSafetyIncidents = () => {
     const handleDeleteDraftNonConformity = async (id) => {
         if (window.confirm("Are you sure you want to delete this draft Non Conformities?")) {
             try {
-                await axios.delete(`${BASE_URL}/qms/car-numbers/${id}/`);
+                await axios.delete(`${BASE_URL}/qms/safety_incidents/${id}/`);
                 setNonConformity(nonConformity.filter(nonConformities => nonConformities.id !== id));
             } catch (err) {
                 console.error("Error deleting draft Non Conformities:", err);
@@ -152,7 +145,7 @@ const QmsDraftHealthSafetyIncidents = () => {
                     </thead>
                     <tbody>
                         {filteredNonConformity.length > 0 ? (
-                            filteredNonConformity.map((nonConformities) => (
+                            filteredNonConformity.map((nonConformities, index) => (
                                 <tr key={nonConformities.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                                     <td className="px-2 add-manual-datas">{nonConformities.title || '-'}</td>
@@ -227,4 +220,4 @@ const QmsDraftHealthSafetyIncidents = () => {
     );
 };
 
-export default QmsDraftHealthSafetyIncidents
+export default QmsDraftHealthSafetyIncidents;

@@ -29,7 +29,7 @@ const QmsViewHealthSafetyIncidents = () => {
         const fetchNcrNumber = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${BASE_URL}/qms/car-numbers/${id}/`);
+                const response = await fetch(`${BASE_URL}/qms/safety_incidents/${id}/`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch data");
                 }
@@ -59,7 +59,7 @@ const QmsViewHealthSafetyIncidents = () => {
     const handleDelete = async (id) => {
         if (window.confirm("Are you sure you want to delete this item?")) {
             try {
-                const response = await fetch(`${BASE_URL}/qms/car-numbers/${id}/`, {
+                const response = await fetch(`${BASE_URL}/qms/safety_incidents/${id}/`, {
                     method: 'DELETE',
                 });
                 if (!response.ok) {
@@ -205,7 +205,7 @@ const QmsViewHealthSafetyIncidents = () => {
 
                         <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                             Delete
-                            <button onClick={() => handleDelete(id)}>
+                            <button onClick={() => handleDelete(id)}> 
                                 <img src={deletes} alt="Delete Icon" />
                             </button>
                         </div>

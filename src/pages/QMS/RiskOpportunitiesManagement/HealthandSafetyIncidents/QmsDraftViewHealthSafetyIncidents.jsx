@@ -27,7 +27,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
         const fetchNcrNumber = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`${BASE_URL}/qms/car-numbers/${id}/`);
+                const response = await fetch(`${BASE_URL}/qms/safety_incidents/${id}/`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch data");
                 }
@@ -61,7 +61,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
             <p className="text-red-500">{error}</p>
             <button
                 className="mt-4 bg-blue-600 px-4 py-2 rounded-md"
-                onClick={() => navigate("/company/qms/list-correction-actions")}
+                onClick={() => navigate("/company/qms/draft-health-safety-incidents")}
             >
                 Back to List
             </button>
