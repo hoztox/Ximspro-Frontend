@@ -8,6 +8,7 @@ import view from "../../../../assets/images/Company Documentation/view.svg";
 import DeleteConfimModal from "../Modals/DeleteConfimModal";
 import SuccessModal from "../Modals/SuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
+import CarDetailsModal from "./CarDetailsModal"; // Import CarDetailsModal
 
 const QmsDraftComplaints = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -26,6 +27,8 @@ const QmsDraftComplaints = () => {
     const [deleteMessage, setDeleteMessage] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showCarModal, setShowCarModal] = useState(false); // State for CAR modal
+    const [selectedCarDetails, setSelectedCarDetails] = useState(null); // State for CAR details
 
     // Get user ID from localStorage
     const getRelevantUserId = () => {
@@ -63,12 +66,9 @@ const QmsDraftComplaints = () => {
                 let errorMsg = err.message;
 
                 if (err.response) {
-                    // Check for field-specific errors first
                     if (err.response.data.date) {
                         errorMsg = err.response.data.date[0];
-                    }
-                    // Check for non-field errors
-                    else if (err.response.data.detail) {
+                    } else if (err.response.data.detail) {
                         errorMsg = err.response.data.detail;
                     } else if (err.response.data.message) {
                         errorMsg = err.response.data.message;
@@ -89,6 +89,37 @@ const QmsDraftComplaints = () => {
         fetchComplaints();
     }, [userId]);
 
+    // Handle CAR click
+    const handleCarClick = async (carNo) => {
+        if (!carNo) return;
+
+        try {
+            const response = await axios.get(`${BASE_URL}/qms/car-numbers/${carNo.id}/`);
+            console.log('Clicked CAR:', response.data);
+            
+            setSelectedCarDetails(response.data);
+            setShowCarModal(true);
+        } catch (error) {
+            console.error("Error fetching CAR details:", error);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                } else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setShowCarModal(true); // Optionally show modal with no details
+        }
+    };
+
     const itemsPerPage = 10;
     const totalItems = complaints.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -98,7 +129,7 @@ const QmsDraftComplaints = () => {
         (item.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.user?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.executor?.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.no_car?.car_number || '').toLowerCase().includes(searchQuery.toLowerCase())
+        (item.no_car?.action_no || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     // Get current page items
@@ -121,6 +152,7 @@ const QmsDraftComplaints = () => {
     const closeAllModals = () => {
         setShowDeleteModal(false);
         setShowSuccessModal(false);
+        setShowCarModal(false); // Close CAR modal
     };
 
     // Handle delete confirmation
@@ -141,12 +173,9 @@ const QmsDraftComplaints = () => {
             let errorMsg = err.message;
 
             if (err.response) {
-                // Check for field-specific errors first
                 if (err.response.data.date) {
                     errorMsg = err.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (err.response.data.detail) {
+                } else if (err.response.data.detail) {
                     errorMsg = err.response.data.detail;
                 } else if (err.response.data.message) {
                     errorMsg = err.response.data.message;
@@ -178,16 +207,16 @@ const QmsDraftComplaints = () => {
 
     // Format date to DD-MM-YYYY
     const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
-  };
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, "/");
+    };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
     if (error && !showErrorModal) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
@@ -242,14 +271,19 @@ const QmsDraftComplaints = () => {
                                     <td className="px-3 list-awareness-training-datas">
                                         {item.executor ? `${item.executor.first_name || ''} ${item.executor.last_name || ''}`.trim() || item.executor.username || "N/A" : "N/A"}
                                     </td>
-                                    <td className="px-3 list-awareness-training-datas">{item.no_car?.car_number || 'N/A'}</td>
+                                    <td
+                                        className={`px-3 list-awareness-training-datas ${item.no_car ? "!text-[#1E84AF] cursor-pointer" : "cursor-not-allowed"}`}
+                                        onClick={() => item.no_car && handleCarClick(item.no_car)}
+                                    >
+                                        {item.no_car?.action_no || 'N/A'}
+                                    </td>
                                     <td className="px-3 list-awareness-training-datas">{formatDate(item.date)}</td>
                                     <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
                                         <button onClick={() => handleEditDraftComplaints(item.id)}>
                                             Click to Continue
                                         </button>
                                     </td>
-                                    <td className="list-awareness-training-datas text-center ">
+                                    <td className="list-awareness-training-datas text-center">
                                         <div className='flex justify-center items-center h-[50px]'>
                                             <button onClick={() => handleViewDraftComplaints(item.id)}>
                                                 <img src={view} alt="View Icon" className='w-[16px] h-[16px]' />
@@ -328,8 +362,15 @@ const QmsDraftComplaints = () => {
                 onClose={() => setShowErrorModal(false)}
                 error={error}
             />
+
+            {/* CAR Details Modal */}
+            <CarDetailsModal
+                isOpen={showCarModal}
+                onClose={() => setShowCarModal(false)}
+                carDetails={selectedCarDetails}
+            />
         </div>
     );
 };
 
-export default QmsDraftComplaints;
+export default QmsDraftComplaints;  

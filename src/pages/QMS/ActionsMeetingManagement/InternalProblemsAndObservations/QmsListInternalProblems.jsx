@@ -10,6 +10,7 @@ import { BASE_URL } from "../../../../Utils/Config";
 import ErrorModal from "../Modals/ErrorModal";
 import DeleteInternalConfirmModal from "../Modals/DeleteInternalConfirmModal";
 import DeleteInternalSuccessModal from "../Modals/DeleteInternalSuccessModal";
+import CarDetailsModal from "./CarDetailsModal";
 
 const QmsListInternalProblems = () => {
   const navigate = useNavigate();
@@ -30,6 +31,10 @@ const QmsListInternalProblems = () => {
   const [showDeletetInternalSuccessModal, setShowDeletetInternalSuccessModal] =
     useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // CAR Details Modal state
+  const [showCarModal, setShowCarModal] = useState(false);
+  const [selectedCarDetails, setSelectedCarDetails] = useState(null);
 
   // Get user company ID from local storage
   const getUserCompanyId = () => {
@@ -80,99 +85,90 @@ const QmsListInternalProblems = () => {
 
   // Fetch internal problems
   useEffect(() => {
-  const delayDebounceFn = setTimeout(() => {
-    const fetchInternalProblems = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const companyId = getUserCompanyId();
-        const userId = getRelevantUserId();
-        if (!companyId) {
-          setError("Company ID not found. Please log in again.");
+    const delayDebounceFn = setTimeout(() => {
+      const fetchInternalProblems = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const companyId = getUserCompanyId();
+          const userId = getRelevantUserId();
+          if (!companyId) {
+            setError("Company ID not found. Please log in again.");
+            setLoading(false);
+            return;
+          }
+
+          // Add parameters for filtering and pagination if needed
+          const response = await axios.get(
+            `${BASE_URL}/qms/internal-problems/company/${companyId}/`,
+            {
+              params: {
+                search: searchTerm,
+                page: currentPage,
+                is_draft: false, // Exclude drafts from main list
+              },
+            }
+          );
+
+          const draftResponse = await axios.get(
+            `${BASE_URL}/qms/internal-problems/drafts-count/${userId}/`
+          );
+          setDraftCount(draftResponse.data.count);
+
+          // Process the response data
+          if (response.data.results) {
+            // If API returns paginated response
+            const sortedProblems = response.data.results.sort((a, b) => a.id - b.id);
+            setInternalProblems(sortedProblems);
+            setTotalItems(response.data.count);
+          } else {
+            // If API returns simple array
+            const sortedProblems = response.data.sort((a, b) => a.id - b.id);
+            setInternalProblems(sortedProblems);
+            setTotalItems(response.data.length);
+          }
+
           setLoading(false);
-          return;
+        } catch (error) {
+          console.error("Error fetching internal problems:", error);
+          let errorMsg = error.message;
+
+          if (error.response) {
+            // Check for field-specific errors first
+            if (error.response.data.date) {
+              errorMsg = error.response.data.date[0];
+            }
+            // Check for non-field errors
+            else if (error.response.data.detail) {
+              errorMsg = error.response.data.detail;
+            }
+            else if (error.response.data.message) {
+              errorMsg = error.response.data.message;
+            }
+          } else if (error.message) {
+            errorMsg = error.message;
+          }
+
+          setError(errorMsg);
+          setShowErrorModal(true);
+          setTimeout(() => {
+            setShowErrorModal(false);
+          }, 2000);
+          setLoading(false);
         }
+      };
 
-        // Add parameters for filtering and pagination if needed
-        const response = await axios.get(
-          `${BASE_URL}/qms/internal-problems/company/${companyId}/`,
-          {
-            params: {
-              search: searchTerm,
-              page: currentPage,
-              is_draft: false, // Exclude drafts from main list
-            },
-          }
-        );
+      fetchInternalProblems();
+    }, 500);
 
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/internal-problems/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-
-        // Process the response data
-        if (response.data.results) {
-          // If API returns paginated response
-          const sortedProblems = response.data.results.sort((a, b) => a.id - b.id);
-          setInternalProblems(sortedProblems);
-          setTotalItems(response.data.count);
-        } else {
-          // If API returns simple array
-          const sortedProblems = response.data.sort((a, b) => a.id - b.id);
-          setInternalProblems(sortedProblems);
-          setTotalItems(response.data.length);
-        }
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching internal problems:", error);
-        let errorMsg = error.message;
-
-        if (error.response) {
-          // Check for field-specific errors first
-          if (error.response.data.date) {
-            errorMsg = error.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (error.response.data.detail) {
-            errorMsg = error.response.data.detail;
-          }
-          else if (error.response.data.message) {
-            errorMsg = error.response.data.message;
-          }
-        } else if (error.message) {
-          errorMsg = error.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 2000);
-        setLoading(false);
-      }
-    };
-
-    fetchInternalProblems();
-  }, 500);
-
-  return () => clearTimeout(delayDebounceFn);
-}, [searchTerm, currentPage]);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm, currentPage]);
 
   // Handle search
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1); // Reset to first page on new search
   };
-
-  // Debounce search to prevent too many API calls
-  // useEffect(() => {
-  //   const delayDebounceFn = setTimeout(() => {
-  //     fetchInternalProblems();
-  //   }, 500);
-
-  //   return () => clearTimeout(delayDebounceFn);
-  // }, [searchTerm]);
 
   // Navigation handlers
   const handleAddInternalProblems = () => {
@@ -204,7 +200,30 @@ const QmsListInternalProblems = () => {
       await axios.delete(`${BASE_URL}/qms/internal-problems/${itemToDelete}/`);
       setShowDeleteModal(false);
       setShowDeletetInternalSuccessModal(true);
-      fetchInternalProblems(); // Refresh the list
+
+      // Refresh the list after successful deletion
+      const companyId = getUserCompanyId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/internal-problems/company/${companyId}/`,
+        {
+          params: {
+            search: searchTerm,
+            page: currentPage,
+            is_draft: false,
+          },
+        }
+      );
+
+      if (response.data.results) {
+        const sortedProblems = response.data.results.sort((a, b) => a.id - b.id);
+        setInternalProblems(sortedProblems);
+        setTotalItems(response.data.count);
+      } else {
+        const sortedProblems = response.data.sort((a, b) => a.id - b.id);
+        setInternalProblems(sortedProblems);
+        setTotalItems(response.data.length);
+      }
+
       setTimeout(() => {
         setShowDeletetInternalSuccessModal(false);
       }, 3000);
@@ -231,10 +250,28 @@ const QmsListInternalProblems = () => {
     }
   };
 
+  // Handle CAR details modal
+  const handleCarClick = async (carNo) => {
+    if (!carNo) return;
+
+    try {
+      // Fetch CAR details from API
+      const response = await axios.get(`${BASE_URL}/qms/car-numbers/${carNo.id}/`);
+      console.log('clicked car', response.data);
+      
+      setSelectedCarDetails(response.data);
+      setShowCarModal(true);
+    } catch (error) {
+      console.error("Error fetching CAR details:", error);
+      setShowCarModal(true);
+    }
+  };
+
   // Close all modals
   const closeAllModals = () => {
     setShowDeleteModal(false);
     setShowDeletetInternalSuccessModal(false);
+    setShowCarModal(false);
   };
 
   // Pagination
@@ -263,6 +300,13 @@ const QmsListInternalProblems = () => {
       <DeleteInternalSuccessModal
         showDeletetInternalSuccessModal={showDeletetInternalSuccessModal}
         onClose={() => setShowDeletetInternalSuccessModal(false)}
+      />
+
+      {/* CAR Details Modal */}
+      <CarDetailsModal
+        isOpen={showCarModal}
+        onClose={() => setShowCarModal(false)}
+        carDetails={selectedCarDetails}
       />
 
       {/* Header */}
@@ -350,7 +394,10 @@ const QmsListInternalProblems = () => {
                     <td className="px-2 add-manual-datas">
                       {formatDate(problem.date)}
                     </td>
-                    <td className="px-2 add-manual-datas">
+                    <td
+                      className={`px-2 add-manual-datas  ${problem.car_no ? "!text-[#1E84AF] cursor-pointer" : "cursor-not-allowed"}`}
+                      onClick={() => problem.car_no && handleCarClick(problem.car_no)}
+                    >
                       {problem.car_no?.action_no || "N/A"}
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
@@ -464,4 +511,4 @@ const QmsListInternalProblems = () => {
   );
 };
 
-export default QmsListInternalProblems;
+export default QmsListInternalProblems; 

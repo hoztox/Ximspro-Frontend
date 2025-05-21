@@ -8,6 +8,7 @@ import axios from 'axios';
 import ErrorModal from "../Modals/ErrorModal";
 import DeleteInternalConfirmModal from "../Modals/DeleteInternalConfirmModal";
 import DeleteInternalSuccessModal from "../Modals/DeleteInternalSuccessModal";
+import CarDetailsModal from "./CarDetailsModal"; // Import the CarDetailsModal component
 
 const QmsDraftInternalProblems = () => {
     // State management
@@ -18,26 +19,26 @@ const QmsDraftInternalProblems = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [totalItems, setTotalItems] = useState(0);
-    const navigate = useNavigate();
-
-    // Delete modal states
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [showDeletetInternalSuccessModal, setShowDeletetInternalSuccessModal] = useState(false);
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showCarModal, setShowCarModal] = useState(false); // State for CAR modal
+    const [selectedCarDetails, setSelectedCarDetails] = useState(null); // State for selected CAR details
+    const navigate = useNavigate();
 
     // Format date function
     const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
-  };
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, "/");
+    };
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -91,15 +92,11 @@ const QmsDraftInternalProblems = () => {
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (error.response.data.detail) {
+                } else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
-                }
-                else if (error.response.data.message) {
+                } else if (error.response.data.message) {
                     errorMsg = error.response.data.message;
                 }
             } else if (error.message) {
@@ -115,6 +112,23 @@ const QmsDraftInternalProblems = () => {
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
         setCurrentPage(1); // Reset to first page on new search
+    };
+
+    // Handle CAR details modal
+    const handleCarClick = async (carNo) => {
+        if (!carNo) return;
+
+        try {
+            // Fetch CAR details from API
+            const response = await axios.get(`${BASE_URL}/qms/car-numbers/${carNo.id}/`);
+            console.log('clicked car', response.data);
+            
+            setSelectedCarDetails(response.data);
+            setShowCarModal(true);
+        } catch (error) {
+            console.error("Error fetching CAR details:", error);
+            setShowCarModal(true); // Show modal even if there's an error (optional)
+        }
     };
 
     useEffect(() => {
@@ -160,15 +174,11 @@ const QmsDraftInternalProblems = () => {
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
-                }
-                // Check for non-field errors
-                else if (error.response.data.detail) {
+                } else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
-                }
-                else if (error.response.data.message) {
+                } else if (error.response.data.message) {
                     errorMsg = error.response.data.message;
                 }
             } else if (error.message) {
@@ -188,6 +198,7 @@ const QmsDraftInternalProblems = () => {
     const closeAllModals = () => {
         setShowDeleteModal(false);
         setShowDeletetInternalSuccessModal(false);
+        setShowCarModal(false); // Close CAR modal
     };
 
     // Pagination
@@ -222,6 +233,13 @@ const QmsDraftInternalProblems = () => {
                 onClose={() => setShowDeletetInternalSuccessModal(false)}
             />
 
+            {/* CAR Details Modal */}
+            <CarDetailsModal
+                isOpen={showCarModal}
+                onClose={() => setShowCarModal(false)}
+                carDetails={selectedCarDetails}
+            />
+
             {/* Header */}
             <div className="flex justify-between items-center mb-6">
                 <h1 className="list-manual-head">Draft Internal Problems and Observations</h1>
@@ -253,7 +271,7 @@ const QmsDraftInternalProblems = () => {
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads w-[35%]">Description</th>
                                 <th className="px-2 text-left add-manual-theads">Date</th>
-                                <th className="px-2 text-left add-manual-theads">Corrective Action</th>
+                                <th className="px-2 text-left add-manual-theads">CAR</th>
                                 <th className="px-2 text-left add-manual-theads">Solved</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>
                                 <th className="px-2 text-center add-manual-theads">View</th>
@@ -267,7 +285,12 @@ const QmsDraftInternalProblems = () => {
                                         <td className="pl-5 pr-2 add-manual-datas">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{problem.problem ? problem.problem.substring(0, 100) + (problem.problem.length > 100 ? '...' : '') : 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(problem.date)}</td>
-                                        <td className="px-2 add-manual-datas">{problem.corrective_action_need || 'N/A'}</td>
+                                        <td
+                                            className={`px-2 add-manual-datas ${problem.car_no ? "!text-[#1E84AF] cursor-pointer" : "cursor-not-allowed"}`}
+                                            onClick={() => problem.car_no && handleCarClick(problem.car_no)}
+                                        >
+                                            {problem.car_no?.action_no || "N/A"}
+                                        </td>
                                         <td className="px-2 add-manual-datas">{problem.solve_after_action || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                                             <button
@@ -327,7 +350,6 @@ const QmsDraftInternalProblems = () => {
                         </button>
 
                         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                            // Show at most 5 page numbers centered around the current page
                             let pageNum;
                             if (totalPages <= 5) {
                                 pageNum = i + 1;
@@ -335,7 +357,6 @@ const QmsDraftInternalProblems = () => {
                                 let start = Math.max(1, currentPage - 2);
                                 let end = Math.min(totalPages, currentPage + 2);
 
-                                // Adjust start and end if needed
                                 if (end - start < 4) {
                                     if (start === 1) {
                                         end = Math.min(5, totalPages);
@@ -373,4 +394,4 @@ const QmsDraftInternalProblems = () => {
     );
 };
 
-export default QmsDraftInternalProblems;
+export default QmsDraftInternalProblems; 

@@ -10,6 +10,7 @@ import axios from 'axios';
 import DeleteConfimModal from "../Modals/DeleteConfimModal";
 import SuccessModal from "../Modals/SuccessModal";
 import ErrorModal from "../Modals/ErrorModal";
+import CarDetailsModal from "./CarDetailsModal"; 
 
 const QmsListComplaints = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +29,10 @@ const QmsListComplaints = () => {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [draftCount, setDraftCount] = useState(0);
+
+  // CAR Details Modal state
+  const [showCarModal, setShowCarModal] = useState(false);
+  const [selectedCarDetails, setSelectedCarDetails] = useState(null);
 
   // Get company ID from localStorage
   const getUserCompanyId = () => {
@@ -64,15 +69,14 @@ const QmsListComplaints = () => {
   const companyId = getUserCompanyId();
 
   const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  if (isNaN(date)) return "N/A"; // handle invalid date formats
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
-
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    if (isNaN(date)) return "N/A"; // handle invalid date formats
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   // Fetch complaints data
   useEffect(() => {
@@ -123,7 +127,7 @@ const QmsListComplaints = () => {
     };
 
     fetchComplaints();
-  }, [companyId]); 
+  }, [companyId]);
 
   // Open delete confirmation modal
   const openDeleteModal = (complaint) => {
@@ -136,6 +140,7 @@ const QmsListComplaints = () => {
   const closeAllModals = () => {
     setShowDeleteModal(false);
     setShowSuccessModal(false);
+    setShowCarModal(false); // Close CAR modal
   };
 
   // Handle delete confirmation
@@ -173,6 +178,38 @@ const QmsListComplaints = () => {
 
       setError(errorMsg);
       setShowDeleteModal(false);
+    }
+  };
+
+  // Handle CAR click
+  const handleCarClick = async (carNo) => {
+    if (!carNo) return;
+
+    try {
+      // Fetch CAR details from API
+      const response = await axios.get(`${BASE_URL}/qms/car-numbers/${carNo.id}/`);
+      console.log('Clicked CAR:', response.data);
+
+      setSelectedCarDetails(response.data);
+      setShowCarModal(true);
+    } catch (error) {
+      console.error("Error fetching CAR details:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      setShowCarModal(true); // Optionally show modal with no details or handle differently
     }
   };
 
@@ -222,7 +259,7 @@ const QmsListComplaints = () => {
     return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading complaints data...</div>;
   }
 
-  if (error) {
+  if (error && !showErrorModal) {
     return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">{error}</div>;
   }
 
@@ -273,7 +310,6 @@ const QmsListComplaints = () => {
               <th className="px-3 text-left list-awareness-training-thead">Executor</th>
               <th className="px-3 text-left list-awareness-training-thead w-[10%]">CAR</th>
               <th className="px-3 text-left list-awareness-training-thead">Date</th>
-
               <th className="px-3 text-center list-awareness-training-thead">View</th>
               <th className="px-3 text-center list-awareness-training-thead">Edit</th>
               <th className="px-3 text-center list-awareness-training-thead">Delete</th>
@@ -290,12 +326,15 @@ const QmsListComplaints = () => {
                   <td className="px-3 list-awareness-training-datas">
                     {item.user ? `${item.user.first_name || ''} ${item.user.last_name || ''}`.trim() || item.user.username || "N/A" : "N/A"}
                   </td>
-
                   <td className="px-3 list-awareness-training-datas">
                     {item.executor ? `${item.executor.first_name || ''} ${item.executor.last_name || ''}`.trim() || item.executor.username || "N/A" : "N/A"}
                   </td>
-
-                  <td className="px-3 list-awareness-training-datas">{item.no_car?.action_no || "N/A"}</td>
+                  <td
+                    className={`px-3 list-awareness-training-datas ${item.no_car ? "!text-[#1E84AF] cursor-pointer" : "cursor-not-allowed"}`}
+                    onClick={() => item.no_car && handleCarClick(item.no_car)}
+                  >
+                    {item.no_car?.action_no || "N/A"}
+                  </td>
                   <td className="px-3 list-awareness-training-datas">{formatDate(item.date || "N/A")}</td>
                   <td className="list-awareness-training-datas text-center">
                     <div className='flex justify-center items-center h-[50px]'>
@@ -384,6 +423,13 @@ const QmsListComplaints = () => {
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
         error={error}
+      />
+
+      {/* CAR Details Modal */}
+      <CarDetailsModal
+        isOpen={showCarModal}
+        onClose={() => setShowCarModal(false)}
+        carDetails={selectedCarDetails}
       />
     </div>
   );
