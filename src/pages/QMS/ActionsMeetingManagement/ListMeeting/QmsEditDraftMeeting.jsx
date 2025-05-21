@@ -63,12 +63,14 @@ const QmsEditDraftMeeting = () => {
 
   useEffect(() => {
     if (agendaItems.length > 0) {
-      const filtered = agendaItems.filter((agenda) =>
-        agenda.title.toLowerCase().includes(agendaSearchTerm.toLowerCase())
-      );
-      setFilteredAgendaItems(filtered);
+        const filtered = agendaItems.filter(agenda =>
+            agenda.title.toLowerCase().includes(agendaSearchTerm.toLowerCase())
+        );
+        setFilteredAgendaItems(filtered);
+    } else {
+        setFilteredAgendaItems([]);
     }
-  }, [agendaSearchTerm, agendaItems]);
+}, [agendaSearchTerm, agendaItems]); // Re-runs when agendaItems changes
 
   useEffect(() => {
     const fetchData = async () => {
@@ -221,12 +223,17 @@ const QmsEditDraftMeeting = () => {
     setIsModalOpen(false);
   };
 
-  const handleAddAgenda = (selectedAgendas) => {
-    setSelectedAgendas(selectedAgendas);
-    setFormData({
-      ...formData,
-      agendas: selectedAgendas,
-    });
+  const handleAddAgenda = (newAgendaItem, deletedAgendaId) => {
+    if (newAgendaItem) {
+      // Case: New agenda added
+      setAgendaItems((prevItems) => [...prevItems, newAgendaItem]);
+    } else if (deletedAgendaId) {
+      // Case: Agenda deleted
+      setAgendaItems((prevItems) =>
+        prevItems.filter((item) => item.id !== deletedAgendaId)
+      );
+      setSelectedAgendas((prev) => prev.filter((id) => id !== deletedAgendaId));
+    }
   };
 
   const handleAgendaChange = (agendaId) => {
@@ -383,7 +390,7 @@ const QmsEditDraftMeeting = () => {
       <CausesModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onAddCause={handleAddAgenda}
+        onAddCause={handleAddAgenda} 
         agendaItems={agendaItems}
         selectedAgendas={selectedAgendas}
       />
@@ -554,7 +561,7 @@ const QmsEditDraftMeeting = () => {
                 </div>
               ))
             ) : (
-              <div className="text-sm text-[#AAAAAA] p-2">No agendas found</div>
+              <div className="not-found p-2">No Agenda Found</div>
             )}
           </div>
           <button

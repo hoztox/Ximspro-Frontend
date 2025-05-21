@@ -225,7 +225,7 @@ const QmsListComplaints = () => {
             <input
               type="text"
               placeholder="Search..."
-              className="bg-[#1C1C24] text-white px-[10px] h-[42px] rounded-md w-[333px] border border-[#383840] outline-none"
+              className="bg-[#1C1C24] text-white px-[10px] h-[42px] rounded-md w-[245px] 3xl-custom:w-[333px] border border-[#383840] outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />

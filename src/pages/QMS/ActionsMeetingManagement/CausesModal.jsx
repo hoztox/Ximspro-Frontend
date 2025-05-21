@@ -1,35 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import deletes from "../../../assets/images/Company Documentation/delete.svg";
 import "./causesmodal.css";
 import { BASE_URL } from "../../../Utils/Config";
-import axios from 'axios';
-import AddAgendaSuccessModal from './Modals/AddAgendaSuccessModal';
-import ErrorModal from './Modals/ErrorModal';
-import DeleteAgendaSuccessModal from './Modals/DeleteAgendaSuccessModal';
-import DeleteAgendaConfirmModal from './Modals/DeleteAgendaConfirmModal';
-
+import axios from "axios";
+import AddAgendaSuccessModal from "./Modals/AddAgendaSuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
+import DeleteAgendaSuccessModal from "./Modals/DeleteAgendaSuccessModal";
+import DeleteAgendaConfirmModal from "./Modals/DeleteAgendaConfirmModal";
 
 const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
-  const [animateClass, setAnimateClass] = useState('');
+  const [animateClass, setAnimateClass] = useState("");
   const [agendaItems, setAgendaItems] = useState([]);
   const [newAgendaTitle, setNewAgendaTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const [showAddAgendaSuccessModal, setShowAddAgendaSuccessModal] = useState(false);
+  const [showAddAgendaSuccessModal, setShowAddAgendaSuccessModal] =
+    useState(false);
   const [agendaToDelete, setAgendaToDelete] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteAgendaSuccessModal, setShowDeleteAgendaSuccessModal] = useState(false);
+  const [showDeleteAgendaSuccessModal, setShowDeleteAgendaSuccessModal] =
+    useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   // Animation effect when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setAnimateClass('opacity-100 scale-100');
+      setAnimateClass("opacity-100 scale-100");
       fetchAgendaItems();
     } else {
-      setAnimateClass('opacity-0 scale-95');
+      setAnimateClass("opacity-0 scale-95");
     }
   }, [isOpen]);
 
@@ -38,14 +39,16 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
     try {
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setError('Company ID not found. Please log in again.');
+        setError("Company ID not found. Please log in again.");
         return;
       }
 
-      const response = await axios.get(`${BASE_URL}/qms/agenda/company/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/agenda/company/${companyId}/`
+      );
       setAgendaItems(response.data);
     } catch (error) {
-      console.error('Error fetching agenda items:', error);
+      console.error("Error fetching agenda items:", error);
       let errorMsg = error.message;
 
       if (error.response) {
@@ -56,8 +59,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
         // Check for non-field errors
         else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
+        } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
       } else if (error.message) {
@@ -117,19 +119,21 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
     try {
       await axios.delete(`${BASE_URL}/qms/agenda/${agendaToDelete}/`);
-      // Update local state to reflect deletion
-      setAgendaItems(agendaItems.filter(item => item.id !== agendaToDelete));
+      const updatedAgendas = agendaItems.filter(
+        (item) => item.id !== agendaToDelete
+      );
+      setAgendaItems(updatedAgendas);
 
-      // Close confirmation modal and show success modal
+      // Notify parent (QmsEditDraftMeeting)
+      if (onAddCause) {
+        onAddCause(null, agendaToDelete); // Pass deleted agenda ID
+      }
+
       setShowDeleteModal(false);
       setShowDeleteAgendaSuccessModal(true);
-
-      // Auto-close success modal after a delay
-      setTimeout(() => {
-        setShowDeleteAgendaSuccessModal(false);
-      }, 1500);
+      setTimeout(() => setShowDeleteAgendaSuccessModal(false), 1500);
     } catch (error) {
-      console.error('Error deleting agenda item:', error);
+      console.error("Error deleting agenda item:", error);
       let errorMsg = error.message;
 
       if (error.response) {
@@ -140,8 +144,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
         // Check for non-field errors
         else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
+        } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
       } else if (error.message) {
@@ -170,37 +173,28 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
     setIsAdding(true);
     try {
-      const companyId = getUserCompanyId();
-      const userId = getRelevantUserId();
-
-      if (!companyId) {
-        setError('Company ID not found. Please log in again.');
-        setIsAdding(false);
-        return;
-      }
-
       const response = await axios.post(`${BASE_URL}/qms/agenda/create/`, {
-        company: companyId,
-        user: userId,
-        title: newAgendaTitle.trim()
+        company: getUserCompanyId(),
+        user: getRelevantUserId(),
+        title: newAgendaTitle.trim(),
       });
 
-      // Add the new agenda to the list
-      setAgendaItems([...agendaItems, response.data]);
+      const newAgendaItem = response.data;
+      setAgendaItems([...agendaItems, newAgendaItem]);
+      setNewAgendaTitle("");
 
-      // If callback exists, call it with the new agenda item
-      if (onAddCause && typeof onAddCause === 'function') {
-        onAddCause(response.data);
+      // Notify parent (QmsEditDraftMeeting)
+      if (onAddCause) {
+        onAddCause(newAgendaItem, null); // Pass new agenda, no deletion
       }
 
-      setNewAgendaTitle('');
       setShowAddAgendaSuccessModal(true);
       setTimeout(() => {
         setShowAddAgendaSuccessModal(false);
         onClose();
       }, 1500);
     } catch (error) {
-      console.error('Error adding agenda item:', error);
+      console.error("Error adding agenda item:", error);
       let errorMsg = error.message;
 
       if (error.response) {
@@ -211,8 +205,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
         // Check for non-field errors
         else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
+        } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
       } else if (error.message) {
@@ -231,7 +224,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
   // Handle selecting an agenda item
   const handleSelectAgenda = (agenda) => {
-    if (onAddCause && typeof onAddCause === 'function') {
+    if (onAddCause && typeof onAddCause === "function") {
       onAddCause(agenda);
       onClose();
     }
@@ -241,7 +234,9 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
-      <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
+      <div
+        className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}
+      >
         {/* Success or error messages */}
         <AddAgendaSuccessModal
           showAddAgendaSuccessModal={showAddAgendaSuccessModal}
@@ -283,7 +278,9 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
                   <tr className="rounded-[4px]">
                     <th className="px-3 w-[10%] agenda-thead">No</th>
                     <th className="px-3 w-[60%] agenda-thead">Title</th>
-                    <th className="px-3 text-center w-[15%] agenda-thead">Delete</th>
+                    <th className="px-3 text-center w-[15%] agenda-thead">
+                      Delete
+                    </th>
                   </tr>
                 </thead>
               </table>
@@ -292,17 +289,30 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
                   <tbody>
                     {agendaItems.length === 0 ? (
                       <tr>
-                        <td colSpan="4" className="text-center py-4 not-found">No agenda items found</td>
+                        <td colSpan="4" className="text-center py-4 not-found">
+                          No agenda items found
+                        </td>
                       </tr>
                     ) : (
                       agendaItems.map((item, index) => (
-                        <tr key={item.id} className="border-b border-[#383840] h-[42px]">
-                          <td className="px-3 agenda-data w-[10%]">{index + 1}</td>
-                          <td className="px-3 agenda-data w-[60%]">{item.title}</td>
+                        <tr
+                          key={item.id}
+                          className="border-b border-[#383840] h-[42px]"
+                        >
+                          <td className="px-3 agenda-data w-[10%]">
+                            {index + 1}
+                          </td>
+                          <td className="px-3 agenda-data w-[60%]">
+                            {item.title}
+                          </td>
                           <td className="px-3 agenda-data text-center w-[15%]">
                             <div className="flex items-center justify-center h-[42px]">
                               <button onClick={() => confirmDelete(item.id)}>
-                                <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
+                                <img
+                                  src={deletes}
+                                  alt="Delete Icon"
+                                  className="w-[16px] h-[16px]"
+                                />
                               </button>
                             </div>
                           </td>
@@ -318,7 +328,9 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
 
         {/* Add Agenda Section */}
         <div className="bg-[#1C1C24] rounded-[4px]">
-          <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Agenda</h3>
+          <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">
+            Add Agenda
+          </h3>
 
           <div className="mb-4 px-5">
             <label className="block mb-3 agenda-list-label">
@@ -334,10 +346,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
           </div>
 
           <div className="flex gap-5 justify-end pb-5 px-5">
-            <button
-              onClick={onClose}
-              className="cancel-btn"
-            >
+            <button onClick={onClose} className="cancel-btn">
               Cancel
             </button>
             <button
@@ -345,7 +354,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
               className="save-btn"
               disabled={!newAgendaTitle.trim() || isAdding}
             >
-              {isAdding ? 'Saving...' : 'Save'}
+              {isAdding ? "Saving..." : "Save"}
             </button>
           </div>
         </div>
