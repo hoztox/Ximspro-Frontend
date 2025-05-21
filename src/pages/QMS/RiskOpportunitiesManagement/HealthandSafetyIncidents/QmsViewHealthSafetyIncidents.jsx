@@ -93,10 +93,16 @@ const QmsViewHealthSafetyIncidents = () => {
 
     // Format dates for display
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return date.toLocaleDateString();
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">

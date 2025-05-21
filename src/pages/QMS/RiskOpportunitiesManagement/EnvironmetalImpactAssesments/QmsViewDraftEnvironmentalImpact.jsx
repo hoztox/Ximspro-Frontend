@@ -90,7 +90,7 @@ const QmsViewDraftEnvironmentalImpact = () => {
                             month: "2-digit",
                             year: "numeric",
                         })
-                        .replace(/\//g, "-")
+                        .replace(/\//g, "/")
                     : "N/A",
                 upload_attachment: data.upload_attachment || "",
             });

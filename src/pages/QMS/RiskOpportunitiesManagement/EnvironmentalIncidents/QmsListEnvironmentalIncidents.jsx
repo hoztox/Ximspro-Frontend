@@ -89,6 +89,8 @@ const QmsListEnvironmentalIncidents = () => {
     }
   };
 
+  
+
   // Initial fetch and refetch on search, page, or draft toggle
   useEffect(() => {
     fetchIncidents(currentPage, searchQuery, showDrafts);
@@ -241,7 +243,7 @@ const QmsListEnvironmentalIncidents = () => {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        }).replace(/\//g, '-')
+                        }).replace(/\//g, '/')
                       : '-'}
                   </td>
                   <td className="px-2 add-manual-datas">
@@ -250,7 +252,7 @@ const QmsListEnvironmentalIncidents = () => {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        }).replace(/\//g, '-')
+                        }).replace(/\//g, '/')
                       : '-'}
                   </td>
                   <td className="px-2 add-manual-datas !text-center">

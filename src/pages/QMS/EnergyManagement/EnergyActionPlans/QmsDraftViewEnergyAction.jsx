@@ -72,14 +72,18 @@ const QmsDraftViewEnergyAction = () => {
       window.open(formData.upload_attachment, "_blank");
     }
   };
-
-  if (isLoading) {
-    return <div className="text-white">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
+ const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+   
 
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -160,7 +164,7 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Target Date
             </label>
-            <div className="view-employee-data">{formData.date}</div>
+            <div className="view-employee-data">{formatDate(formData.date)}</div>
           </div>
 
           <div>

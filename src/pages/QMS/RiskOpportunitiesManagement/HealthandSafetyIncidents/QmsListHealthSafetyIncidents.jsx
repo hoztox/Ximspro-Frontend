@@ -48,12 +48,12 @@ const QmsListHealthSafetyIncidents = () => {
                 // Format data for display
                 const formattedData = response.data.map(incident => ({
                     id: incident.id,
-                    title: incident.title || 'Anonymous',
-                    source: incident.source || 'Anonymous',
+                    title: incident.title || 'N/A',
+                    source: incident.source || 'N/A',
                     incident_no: incident.incident_no,
-                    date_raised: incident.date_raised ? formatDate(incident.date_raised) : '-',
-                    completed_by: incident.date_completed ? formatDate(incident.date_completed) : '-',
-                    report_by: incident.reported_by ? incident.reported_by.username : 'Anonymous',
+                    date_raised: incident.date_raised ? formatDate(incident.date_raised) : 'N/A',
+                    completed_by: incident.date_completed ? formatDate(incident.date_completed) : 'N/A',
+                    report_by: incident.reported_by ? incident.reported_by.username : 'N/A',
                     status: incident.status
                 }));
                 
@@ -78,7 +78,7 @@ const QmsListHealthSafetyIncidents = () => {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }).replace(/\//g, '-');
+        }).replace(/\//g, '/');
     };
 
     const handleSearchChange = (e) => {

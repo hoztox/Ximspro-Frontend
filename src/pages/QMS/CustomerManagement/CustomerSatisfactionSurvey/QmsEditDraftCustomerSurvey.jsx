@@ -194,7 +194,7 @@ const QmsEditDraftCustomerSurvey = () => {
       setShowEditDraftEmployeeSatisfactionSuccessModal(true);
       setTimeout(() => {
         setShowEditDraftEmployeeSatisfactionSuccessModal(false);
-        navigate("/company/qms/draft-customer-survey");
+        navigate("/company/qms/drafts-customer-survey");
       }, 1500);
     } catch (err) {
       console.error("Error updating customer survey:", err);
@@ -225,11 +225,11 @@ const QmsEditDraftCustomerSurvey = () => {
   };
 
   const handleListDraftCustomerSurvey = () => {
-    navigate("/company/qms/draft-customer-survey");
+    navigate("/company/qms/drafts-customer-survey");
   };
 
   const handleCancel = () => {
-    navigate("/company/qms/draft-customer-survey");
+    navigate("/company/qms/drafts-customer-survey");
   };
 
   // Generate date options

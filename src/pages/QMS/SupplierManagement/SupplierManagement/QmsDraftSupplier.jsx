@@ -130,6 +130,18 @@ const QmsDraftSupplier = () => {
     setShowSuccessModal(false);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
   // Handle delete confirmation
   const confirmDelete = async () => {
     if (!supplierToDelete) return;
@@ -290,7 +302,7 @@ const QmsDraftSupplier = () => {
                     {supplier.supplier_name}
                   </td>
                   <td className="px-2 add-manual-datas">{supplier.product}</td>
-                  <td className="px-2 add-manual-datas">{supplier.date}</td>
+                  <td className="px-2 add-manual-datas">{formatDate(supplier.date)}</td>
                   <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                     <button
                       onClick={() => handleEditSupplier(supplier.supplier_id)}

@@ -87,24 +87,25 @@ const QmsViewDraftMeeting = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
+      <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-64">
         <p>Loading meeting information...</p>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-64">
-        <p>{error}</p>
-      </div>
-    );
-  }
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
-  // Format date if it exists
-  const formattedDate = meeting.date
-    ? new Date(meeting.date).toLocaleDateString()
-    : "N/A";
+
 
   // Format times if they exist
   const formatTime = (timeString) => {
@@ -157,7 +158,7 @@ const QmsViewDraftMeeting = () => {
 
           <div>
             <label className="block view-employee-label mb-[6px]">Date</label>
-            <div className="view-employee-data">{formattedDate}</div>
+            <div className="view-employee-data">{formatDate(meeting.date)}</div>
           </div>
 
           <div>

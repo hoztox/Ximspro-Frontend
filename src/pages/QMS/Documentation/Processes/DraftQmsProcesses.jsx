@@ -59,6 +59,18 @@ const DraftQmsProcesses = ({ userId }) => {
     return null;
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -298,7 +310,7 @@ const DraftQmsProcesses = ({ userId }) => {
                     {item.type}
                   </td>
                   <td className="px-4 qms-interested-parties-data">
-                    {item.created_at?.slice(0, 10)}
+                    {formatDate(item.created_at)}
                   </td>
                   <td className="px-4 qms-interested-parties-data">
                     <button

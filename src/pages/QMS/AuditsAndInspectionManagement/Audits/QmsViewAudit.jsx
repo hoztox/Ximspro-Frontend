@@ -80,10 +80,16 @@ const QmsViewAudit = () => {
     }, [id]);
 
     const formatDate = (dateString) => {
-        if (!dateString) return "Not specified";
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString(undefined, options);
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     const handleClose = () => {
         navigate("/company/qms/list-audit");

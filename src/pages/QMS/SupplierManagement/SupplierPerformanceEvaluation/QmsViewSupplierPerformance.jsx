@@ -122,11 +122,13 @@ const QmsViewSupplierPerformance = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return `${date.getDate().toString().padStart(2, "0")}-${(
-      date.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}-${date.getFullYear()}`;
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
 
   if (loading) {

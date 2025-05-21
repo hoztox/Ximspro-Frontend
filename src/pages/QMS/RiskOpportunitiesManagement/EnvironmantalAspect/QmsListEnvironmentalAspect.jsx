@@ -51,7 +51,7 @@ const QmsListEnvironmentalAspect = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   // Get current user

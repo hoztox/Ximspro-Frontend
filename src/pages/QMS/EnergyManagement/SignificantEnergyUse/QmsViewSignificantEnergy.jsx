@@ -57,6 +57,17 @@ const QmsViewSignificantEnergy = () => {
 
     const companyId = getUserCompanyId();
 
+    const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+
     useEffect(() => {
         fetchSignificantEnergy();
     }, [id]);
@@ -233,7 +244,7 @@ const QmsViewSignificantEnergy = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Date
                             </label>
-                            <div className="view-employee-data">{formData.date || "N/A"}</div>
+                            <div className="view-employee-data">{formatDate(formData.date || "N/A")}</div>
                         </div>
 
                         <div>

@@ -97,7 +97,7 @@ const QmsListDraftSystemMessaging = () => {
         year: "numeric",
       })
       .split("/")
-      .join("-");
+      .join("/");
     const timeStr = date
       .toLocaleTimeString("en-US", {
         hour: "2-digit",

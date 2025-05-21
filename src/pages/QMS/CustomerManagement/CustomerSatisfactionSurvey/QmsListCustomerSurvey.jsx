@@ -963,7 +963,7 @@ const QmsListCustomerSurvey = () => {
 
   // Go to drafts
   const handleDraftCustomerSurvey = () => {
-    navigate("/company/qms/draft-customer-survey");
+    navigate("/company/qms/drafts-customer-survey");
   };
 
   // View survey
@@ -1061,12 +1061,12 @@ const QmsListCustomerSurvey = () => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date
-      .toLocaleDateString("en-US", {
+      .toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/(\d+)\/(\d+)\/(\d+)/, "$2-$1-$3");
+      .replace(/\//g, "/");
   };
 
   // Pagination

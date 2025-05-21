@@ -595,7 +595,7 @@ const ThemedApp = () => {
           <Route path="qms/add-customer-survey" element={<QmsAddCustomerSurvey />} />
           <Route path="qms/edits-customer-survey/:id" element={<QmsEditCustomerSurvey />} />
           <Route path="qms/view-customer-survey/:id" element={<QmsViewCustomerSurvey />} />
-          <Route path="qms/draft-customer-survey" element={<QmsDraftCustomerSurvey />} />
+          <Route path="qms/drafts-customer-survey" element={<QmsDraftCustomerSurvey />} />
           <Route path="qms/edit-draft-customer-survey/:id" element={<QmsEditDraftCustomerSurvey />} />
           <Route path="qms/view-draft-customer-survey/:id" element={<QmsViewDraftCustomerSurvey />} />
 

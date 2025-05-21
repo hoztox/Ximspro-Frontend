@@ -189,7 +189,7 @@ const QmsDraftSupplierPerformance = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   // Truncate description for display

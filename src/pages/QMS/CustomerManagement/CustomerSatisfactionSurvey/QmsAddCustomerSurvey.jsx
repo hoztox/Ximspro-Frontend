@@ -252,7 +252,7 @@ const QmsAddCustomerSurvey = () => {
       setShowDraftEmployeeSatisfactionSuccessModal(true);
       setTimeout(() => {
         setShowDraftEmployeeSatisfactionSuccessModal(false);
-        navigate("/company/qms/draft-customer-survey");
+        navigate("/company/qms/drafts-customer-survey");
       }, 1500);
     } catch (err) {
       setDraftLoading(false);

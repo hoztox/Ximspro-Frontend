@@ -115,6 +115,16 @@ const QmsDraftSignificantEnergy = () => {
         setCurrentPage(1);
     };
 
+    const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
     // Pagination
     const itemsPerPage = 10;
     const totalItems = significantEnergy.length;
@@ -251,7 +261,7 @@ const QmsDraftSignificantEnergy = () => {
                                         <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
                                         <td className="px-2 add-manual-datas">{item.title || 'Untitled'}</td>
                                         <td className="px-2 add-manual-datas">{item.significant || 'N/A'}</td>
-                                        <td className="px-2 add-manual-datas">{item.date || 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{formatDate(item.date || 'N/A')}</td>
                                         <td className="px-2 add-manual-datas">
                                             <button
                                                 onClick={() => handleQmsEditDraftSignificantEnergy(item.id)}

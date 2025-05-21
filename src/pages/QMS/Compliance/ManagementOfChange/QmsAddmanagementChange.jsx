@@ -141,16 +141,31 @@ const QmsAddmanagementChange = () => {
         return;
       }
 
+        let dateString = null;
+      if (formData.year && formData.month && formData.day) {
+        dateString = `${formData.year}-${formData.month.padStart(
+          2,
+          "0"
+        )}-${formData.day.padStart(2, "0")}`;
+      }
+
       const submitData = new FormData();
+      console.log('ddddddddddddddd', formData);
+
       submitData.append("company", companyId);
       submitData.append("user", userId);
       submitData.append("is_draft", true);
 
       Object.keys(formData).forEach((key) => {
+        if (["day", "month", "year"].includes(key)) return;
         if (formData[key] !== null && formData[key] !== "") {
           submitData.append(key, formData[key]);
         }
       });
+
+      if (dateString) {
+        submitData.append("date", dateString);
+      }
 
       console.log(
         "Sending draft data:",
@@ -388,9 +403,8 @@ const QmsAddmanagementChange = () => {
                 <option value="System/Process">System/Process</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                  dropdowns.moc_type ? "rotate-180" : ""
-                }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.moc_type ? "rotate-180" : ""
+                  }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -419,9 +433,8 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.day ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -446,9 +459,8 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.month ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -470,9 +482,8 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
-                    dropdowns.year ? "rotate-180" : ""
-                  }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
+                    }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -574,7 +585,7 @@ const QmsAddmanagementChange = () => {
               name="rivision"
               value={formData.rivision}
               onChange={handleInputChange}
-              className="w-full add-compliance-inputs !h-[95px] !py-2" 
+              className="w-full add-compliance-inputs !h-[95px] !py-2"
             />
           </div>
           <div></div>

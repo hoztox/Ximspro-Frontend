@@ -203,7 +203,7 @@ const QmsDraftEnvironmentalIncidents = () => {
             <tbody>
               {environmentalIncidents.length === 0 && (
                 <tr>
-                  <td colSpan="12" className="text-center py-4 add-manual-datas">
+                  <td colSpan="12" className="text-center py-4 not-found">
                     No draft incidents found.
                   </td>
                 </tr>
@@ -228,7 +228,7 @@ const QmsDraftEnvironmentalIncidents = () => {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        }).replace(/\//g, '-')
+                        }).replace(/\//g, '/')
                       : '-'}
                   </td>
                   <td className="px-2 add-manual-datas">
@@ -237,7 +237,7 @@ const QmsDraftEnvironmentalIncidents = () => {
                           day: '2-digit',
                           month: '2-digit',
                           year: 'numeric',
-                        }).replace(/\//g, '-')
+                        }).replace(/\//g, '/')
                       : '-'}
                   </td>
                   <td className="px-2 add-manual-datas !text-center">

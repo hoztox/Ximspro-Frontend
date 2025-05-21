@@ -174,7 +174,7 @@ const QmsDraftPreventiveActions = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   if (loading)

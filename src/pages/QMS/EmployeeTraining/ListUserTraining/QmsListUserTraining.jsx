@@ -97,7 +97,7 @@ const QmsListUserTraining = () => {
             month: '2-digit',
             day: '2-digit',
             year: 'numeric'
-        }).replace(/\//g, '-');
+        }).replace(/\//g, '/');
     };
 
     // Get user's company ID from storage/context

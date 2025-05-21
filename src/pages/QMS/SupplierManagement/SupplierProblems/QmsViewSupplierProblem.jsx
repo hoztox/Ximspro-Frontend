@@ -131,13 +131,18 @@ const QmsViewSupplierProblem = () => {
     setShowErrorModal(false);
   };
 
-  if (loading) {
-    return (
-      <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-64">
-        <p>Loading...</p>
-      </div>
-    );
-  }
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
 
   return (
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -169,7 +174,7 @@ const QmsViewSupplierProblem = () => {
 
           <div>
             <label className="block view-employee-label mb-[6px]">Date</label>
-            <div className="view-employee-data">{formData.date || "N/A"}</div>
+            <div className="view-employee-data">{formatDate(formData.date || "N/A")}</div>
           </div>
 
           <div>

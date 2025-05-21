@@ -64,19 +64,16 @@ const QmsViewDraftInspection = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "Not specified";
-
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        } catch (error) {
-            return dateString;
-        }
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     // Format procedures list for display
     const formatProcedures = () => {

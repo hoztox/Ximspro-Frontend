@@ -195,6 +195,17 @@ const QmsDraftNonConformityReport = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`; 
+};
+
+
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () =>
@@ -269,7 +280,7 @@ const QmsDraftNonConformityReport = () => {
                     {nonConformities.executor?.last_name}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {nonConformities.date_raised || "N/A"}
+                    {formatDate(nonConformities.date_raised || "N/A")}
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button

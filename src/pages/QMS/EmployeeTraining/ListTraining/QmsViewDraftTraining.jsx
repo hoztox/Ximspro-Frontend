@@ -42,15 +42,22 @@ const QmsViewDraftTraining = () => {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }).replace(/\//g, '-');
+        }).replace(/\//g, '/');
     };
 
     // Format time from HH:MM:SS to readable format
     const formatTime = (timeString) => {
-        if (!timeString) return '';
-        const [hours, minutes] = timeString.split(':');
-        return `${hours} hour${hours !== '1' ? 's' : ''}, ${minutes} minute${minutes !== '1' ? 's' : ''}`;
-    };
+    if (!timeString) return "N/A";
+    try {
+      const [hours, minutes] = timeString.split(":");
+      return new Date(0, 0, 0, hours, minutes).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return timeString;
+    }
+  };
 
     useEffect(() => {
         // Fetch training data when component mounts

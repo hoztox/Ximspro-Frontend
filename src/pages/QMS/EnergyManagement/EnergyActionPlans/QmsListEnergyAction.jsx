@@ -49,7 +49,7 @@ const QmsListEnergyAction = () => {
       try {
         if (!companyId) {
           setError("Company ID not found. Please log in again.");
-          setIsLoading(false); 
+          setIsLoading(false);
           return;
         }
         const response = await axios.get(`${BASE_URL}/qms/energy-action/company/${companyId}/`);
@@ -62,9 +62,11 @@ const QmsListEnergyAction = () => {
               day: "2-digit",
               month: "2-digit",
               year: "numeric"
-            }).split("/").join("-") : "",
+            }).split("/").join("/") : "",
             responsible_name: item.responsible ? item.responsible.name || "N/A" : "N/A"
           }));
+          console.log('kkkkkkkkkkkk', response.data);
+          
         setEnergyActions(sortedData);
       } catch (error) {
         console.error("Error fetching energy actions:", error);
@@ -101,6 +103,9 @@ const QmsListEnergyAction = () => {
       (energyAction.responsible_name && energyAction.responsible_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (energyAction.action_plan && energyAction.action_plan.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+   
+
 
   const handleAddEnergyAction = () => {
     navigate("/company/qms/add-energy-action-plan");
@@ -242,7 +247,7 @@ const QmsListEnergyAction = () => {
                           {energyAction.responsible_name || "N/A"}
                         </td>
                         <td className="px-2 add-manual-datas">
-                          {energyAction.date || "N/A"}
+                          {energyAction.date || "N/A"} 
                         </td>
                         <td className="px-2 add-manual-datas !text-center">
                           <button onClick={() => handleQmsViewEnergyAction(energyAction.id)}>

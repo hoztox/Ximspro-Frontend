@@ -56,6 +56,18 @@ const QmsViewSupplier = () => {
     setDeleteMessage("Supplier");
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
   const confirmDelete = async () => {
     try {
       await axios.delete(`${BASE_URL}/qms/suppliers/${id}/`);
@@ -300,7 +312,7 @@ const QmsViewSupplier = () => {
                 Approval Date
               </label>
               <div className="view-employee-data">
-                {renderFieldValue(supplier.approved_date)}
+                {formatDate(renderFieldValue(supplier.approved_date))}
               </div>
             </div>
           </div>

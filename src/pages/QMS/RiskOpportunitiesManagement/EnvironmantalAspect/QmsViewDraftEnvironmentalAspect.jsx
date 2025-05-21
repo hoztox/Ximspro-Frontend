@@ -68,7 +68,7 @@ const QmsViewDraftEnvironmentalAspect = () => {
                 month: "2-digit",
                 year: "numeric",
               })
-              .replace(/\//g, "-")
+              .replace(/\//g, "/")
           : "N/A",
         level_of_impact: data.level_of_impact || "N/A",
       });

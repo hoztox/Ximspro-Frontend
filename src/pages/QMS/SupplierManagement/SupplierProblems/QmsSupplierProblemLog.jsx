@@ -237,20 +237,15 @@ const QmsSupplierProblemLog = () => {
 
   // Format date to readable format
   const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-      const date = new Date(dateString);
-      return date
-        .toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        })
-        .replace(/\//g, "-");
-    } catch (e) {
-      console.error("Error formatting date:", e);
-      return dateString;
-    }
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
 
   // Change page

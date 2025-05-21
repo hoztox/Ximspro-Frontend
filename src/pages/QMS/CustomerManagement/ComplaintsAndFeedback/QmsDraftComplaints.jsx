@@ -178,14 +178,16 @@ const QmsDraftComplaints = () => {
 
     // Format date to DD-MM-YYYY
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        }).replace(/\//g, '-');
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     if (loading) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Loading...</div>;
     if (error && !showErrorModal) return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;

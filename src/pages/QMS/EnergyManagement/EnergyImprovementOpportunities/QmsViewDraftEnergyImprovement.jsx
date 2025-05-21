@@ -91,20 +91,21 @@ const QmsViewDraftEnergyImprovement = () => {
     };
 
     const formatDate = (dateString) => {
-        if (!dateString) return "-";
+        if (!dateString) return "N/A";
         const date = new Date(dateString);
-        return date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-        }).split("/").join("-");
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
     };
+
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
                 <h2 className="view-employee-head">
-                    Draft Energy Improvement Opportunities Information {formData.is_draft ? "(Draft)" : ""}
+                    Energy Improvement Opportunities Information
                 </h2>
                 <button
                     onClick={handleClose}
@@ -126,42 +127,42 @@ const QmsViewDraftEnergyImprovement = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 EIO Number
                             </label>
-                            <div className="view-employee-data">{formData.eio || "-"}</div>
+                            <div className="view-employee-data">{formData.eio || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 EIO Title
                             </label>
-                            <div className="view-employee-data">{formData.eio_title || "-"}</div>
+                            <div className="view-employee-data">{formData.eio_title || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Target
                             </label>
-                            <div className="view-employee-data">{formData.target || "-"}</div>
+                            <div className="view-employee-data">{formData.target || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Associated Objective
                             </label>
-                            <div className="view-employee-data">{formData.associated_objective || "-"}</div>
+                            <div className="view-employee-data">{formData.associated_objective || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Results
                             </label>
-                            <div className="view-employee-data">{formData.results || "-"}</div>
+                            <div className="view-employee-data">{formData.results || "N/A"}</div>
                         </div>
 
                         <div>
                             <label className="block view-employee-label mb-[6px]">
                                 Target Date
                             </label>
-                            <div className="view-employee-data">{formatDate(formData.date)}</div>
+                            <div className="view-employee-data">{formatDate(formData.date || "N/A")}</div>
                         </div>
 
                         <div>
@@ -170,8 +171,8 @@ const QmsViewDraftEnergyImprovement = () => {
                             </label>
                             <div className="view-employee-data">
                                 {formData.responsible
-                                    ? `${formData.responsible.first_name} ${formData.responsible.last_name || ""}`
-                                    : "-"}
+                                    ? `${formData.responsible.first_name} ${formData.responsible.last_name || "N/A"}`
+                                    : "N/A"}
                             </div>
                         </div>
 
@@ -179,7 +180,7 @@ const QmsViewDraftEnergyImprovement = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Status
                             </label>
-                            <div className="view-employee-data">{formData.status || "-"}</div>
+                            <div className="view-employee-data">{formData.status || "N/A"}</div>
                         </div>
 
                         <div>
@@ -196,7 +197,7 @@ const QmsViewDraftEnergyImprovement = () => {
                                     Click to view file <Eye size={17} />
                                 </a>
                             ) : (
-                                <div className="view-employee-data">-</div>
+                                <div className="view-employee-data">N/A</div>
                             )}
                         </div>
                     </div>

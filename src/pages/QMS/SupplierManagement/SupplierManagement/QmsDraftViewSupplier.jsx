@@ -43,15 +43,21 @@ const QmsDraftViewSupplier = () => {
         }
     };
 
-    if (loading) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-            Loading draft supplier data...
-        </div>
-    );
+    const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
-    if (error) return (
-        <div className="bg-[#1C1C24] text-white rounded-lg p-5 flex justify-center items-center h-96">
-            {error}
+    if (loading) return (
+        <div className="bg-[#1C1C24] not-found rounded-lg p-5 flex justify-center items-center h-96">
+            Loading draft supplier data...
         </div>
     );
 
@@ -64,7 +70,7 @@ const QmsDraftViewSupplier = () => {
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
             <div className="flex justify-between items-center border-b border-[#383840] pb-5">
-                <h2 className="view-employee-head">Supplier Information (Draft)</h2>
+                <h2 className="view-employee-head">Supplier Information</h2>
                 <button
                     onClick={handleClose}
                     className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -205,7 +211,7 @@ const QmsDraftViewSupplier = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Approval Date
                             </label>
-                            <div className="view-employee-data">{supplier.approved_date || supplier.approval_date}</div>
+                            <div className="view-employee-data">{formatDate(supplier.approved_date)}</div>
                         </div>
                     </div>
                     <div className="flex justify-between">

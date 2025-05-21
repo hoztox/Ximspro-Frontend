@@ -63,6 +63,17 @@ const QmsListComplaints = () => {
 
   const companyId = getUserCompanyId();
 
+  const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  if (isNaN(date)) return "N/A"; // handle invalid date formats
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+
   // Fetch complaints data
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -285,7 +296,7 @@ const QmsListComplaints = () => {
                   </td>
 
                   <td className="px-3 list-awareness-training-datas">{item.no_car?.action_no || "N/A"}</td>
-                  <td className="px-3 list-awareness-training-datas">{item.date || "N/A"}</td>
+                  <td className="px-3 list-awareness-training-datas">{formatDate(item.date || "N/A")}</td>
                   <td className="list-awareness-training-datas text-center">
                     <div className='flex justify-center items-center h-[50px]'>
                       <button onClick={() => handleViewComplaints(item.id)}>

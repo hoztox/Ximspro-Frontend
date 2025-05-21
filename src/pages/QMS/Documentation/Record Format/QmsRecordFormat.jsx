@@ -52,7 +52,7 @@ const QmsRecordFormat = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   const getCurrentUser = () => {
@@ -353,8 +353,8 @@ const QmsRecordFormat = () => {
       (manual.rivision?.toLowerCase() || "").includes(
         searchQuery.toLowerCase()
       ) ||
-      (formatDate(manual.date)?.replace(/^0+/, "") || "").includes(
-        searchQuery.replace(/^0+/, "")
+      (formatDate(manual.date)?.replace(/^0+/, "") || "N/A").includes(
+        searchQuery.replace(/^0+/, "/")
       )
   );
 

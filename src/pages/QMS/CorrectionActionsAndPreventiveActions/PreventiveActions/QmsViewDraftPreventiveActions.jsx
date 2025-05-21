@@ -50,14 +50,15 @@ const QmsViewDraftPreventiveActions = () => {
   // Format date to display in readable format
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString();
-    } catch (error) {
-      return dateString || "N/A";
-    }
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
-
   if (loading)
     return (
       <div className="bg-[#1C1C24] not-found rounded-lg p-5">Loading...</div>

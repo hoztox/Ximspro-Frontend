@@ -70,11 +70,13 @@ const QmsViewInternalProblems = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
 
   const handleClose = () => {
@@ -223,7 +225,7 @@ const QmsViewInternalProblems = () => {
 
           <div>
             <label className="block view-employee-label mb-[6px]">
-              Date Problem
+              Date
             </label>
             <div className="view-employee-data">{formatDate(problem.date)}</div>
           </div>

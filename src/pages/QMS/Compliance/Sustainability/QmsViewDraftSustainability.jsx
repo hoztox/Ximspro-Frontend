@@ -306,7 +306,7 @@ const QmsViewDraftSustainability = () => {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }).replace(/\//g, '-');
+        }).replace(/\//g, '/');
     };
 
     // Format date to display how long ago the correction was made

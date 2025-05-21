@@ -51,7 +51,7 @@ const QmsListSustainability = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   const getCurrentUser = () => {

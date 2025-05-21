@@ -30,9 +30,15 @@ const QmsViewDraftManagementChange = () => {
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
 
   useEffect(() => {
@@ -41,9 +47,9 @@ const QmsViewDraftManagementChange = () => {
       try {
         setLoading(true);
         const response = await axios.get(`${BASE_URL}/qms/changes-get/${id}/`);
-        
+
         console.log("API Response:", response.data); // Debug log
-        
+
         // Map API response to component state
         const data = response.data;
         setFormData({

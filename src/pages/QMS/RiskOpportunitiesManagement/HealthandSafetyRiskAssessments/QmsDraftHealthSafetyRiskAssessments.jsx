@@ -62,7 +62,7 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
             day: '2-digit',
             month: '2-digit',
             year: 'numeric'
-        }).replace(/\//g, '-');
+        }).replace(/\//g, '/');
     };
     const handleEditDraft = (id) => {
         navigate(`/company/qms/edit-draft-health-safety-assessments/${id}`);

@@ -69,7 +69,7 @@ const DraftQmsRecordFormat = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
   const handleEditDraft = (id) => {
     navigate(`/company/qms/editrecordformat/${id}`);

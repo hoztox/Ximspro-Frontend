@@ -69,11 +69,13 @@ const QmsListInternalProblems = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
   };
 
   // Fetch internal problems
@@ -316,7 +318,7 @@ const QmsListInternalProblems = () => {
                 </th>
                 <th className="px-2 text-left add-manual-theads">Cause</th>
                 <th className="px-2 text-left add-manual-theads">
-                  Date Problem
+                  Date
                 </th>
                 <th className="px-2 text-left add-manual-theads">CAR</th>
                 <th className="px-2 text-center add-manual-theads">Status</th>

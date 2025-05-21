@@ -344,7 +344,7 @@ const QmsViewDraftEvaluationCompliance = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   // // Format date to display how long ago the correction was made
@@ -687,7 +687,7 @@ const QmsViewDraftEvaluationCompliance = () => {
             </div>
             <div>
               <label className="viewmanuallabels">Date</label>
-              {/* <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p> */}
+              <p className="viewmanuasdata">{formatDate(manualDetails.date)}</p>
             </div>
             <div>
               <label className="viewmanuallabels">Review Frequency</label>

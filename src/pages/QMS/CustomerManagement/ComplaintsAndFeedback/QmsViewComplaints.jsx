@@ -74,6 +74,18 @@ const QmsViewComplaints = () => {
         }
     }, [id]);
 
+    const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
     const handleClose = () => {
         navigate("/company/qms/list-complaints");
     };
@@ -220,7 +232,7 @@ const QmsViewComplaints = () => {
                                 Date
                             </label>
                             <div className="view-employee-data">
-                                {complaint.date ? new Date(complaint.date).toLocaleDateString() : "N/A"}
+                                {formatDate(complaint.date || "N/A")}
                             </div>
                         </div>
 

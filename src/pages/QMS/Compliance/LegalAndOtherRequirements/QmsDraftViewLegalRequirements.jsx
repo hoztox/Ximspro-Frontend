@@ -21,19 +21,16 @@ const QmsDraftViewLegalRequirements = () => {
 
     // Format date from API (YYYY-MM-DD) to display format (DD-MM-YYYY)
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            }).replace(/\//g, '-');
-        } catch (error) {
-            console.error("Date formatting error:", error);
-            return dateString;
-        }
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     useEffect(() => {
         // Fetch legal requirement data when component mounts

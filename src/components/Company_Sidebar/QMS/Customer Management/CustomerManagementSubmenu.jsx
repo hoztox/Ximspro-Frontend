@@ -68,7 +68,7 @@ const CustomerManagementSubmenu = (props) => {
                 "/company/qms/add-customer-survey",
                 "/company/qms/edits-customer-survey",
                 "/company/qms/view-customer-survey",
-                "/company/qms/draft-customer-survey",
+                "/company/qms/drafts-customer-survey",
                 "/company/qms/edit-draft-customer-survey",
                 "/company/qms/view-draft-customer-survey",
             ]

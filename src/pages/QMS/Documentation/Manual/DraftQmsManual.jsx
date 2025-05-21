@@ -69,7 +69,7 @@ const DraftQmsManual = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
   const handleEditDraft = (id) => {
     navigate(`/company/qms/editdraftmanual/${id}`);

@@ -34,15 +34,16 @@ const QmsViewDraftInternalProblems = () => {
 
     // Format date function
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
-
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
     const handleClose = () => {
         navigate("/company/qms/draft-internal-problem");
     };
@@ -130,7 +131,7 @@ const QmsViewDraftInternalProblems = () => {
                     
                     <div>
                         <label className="block view-employee-label mb-[6px]">
-                            Date Problem
+                            Date
                         </label>
                         <div className="view-employee-data">
                             {formatDate(problem.date)}

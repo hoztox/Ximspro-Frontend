@@ -40,7 +40,7 @@ const QmsDraftHealthSafetyIncidents = () => {
             setLoading(false);
         }
     };
-    
+
     useEffect(() => {
         fetchDraftNonConformity();
     }, []);
@@ -148,12 +148,15 @@ const QmsDraftHealthSafetyIncidents = () => {
                             filteredNonConformity.map((nonConformities, index) => (
                                 <tr key={nonConformities.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.title || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.source || '-'}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.hsi_no || '-'}</td>
+                                    <td className="px-2 add-manual-datas">{nonConformities.title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{nonConformities.source || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{nonConformities.hsi_no || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {nonConformities.report_by?.first_name} {nonConformities.report_by?.last_name}
+                                        {nonConformities.report_by
+                                            ? `${nonConformities.report_by.first_name} ${nonConformities.report_by.last_name}`
+                                            : "N/A"} 
                                     </td>
+
                                     <td className="px-2 add-manual-datas">
                                         <button
                                             onClick={() => handleQmsEditDraftnonConformity(nonConformities.id)}

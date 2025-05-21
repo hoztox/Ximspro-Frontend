@@ -28,14 +28,16 @@ const QmsDraftInternalProblems = () => {
 
     // Format date function
     const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -250,7 +252,7 @@ const QmsDraftInternalProblems = () => {
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Description</th>
-                                <th className="px-2 text-left add-manual-theads">Date Problem</th>
+                                <th className="px-2 text-left add-manual-theads">Date</th>
                                 <th className="px-2 text-left add-manual-theads">Corrective Action</th>
                                 <th className="px-2 text-left add-manual-theads">Solved</th>
                                 <th className="px-2 text-left add-manual-theads">Action</th>

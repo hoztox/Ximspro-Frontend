@@ -31,15 +31,15 @@ const QmsDraftManagementChange = () => {
 
   // Format date function
   const formatDate = (dateString) => {
-    if (!dateString) return "";
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date
-      .toLocaleDateString("en-US", {
+      .toLocaleDateString("en-GB", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   // Get user ID or company ID from localStorage

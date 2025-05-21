@@ -135,7 +135,7 @@ const QmsProcesses = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
 
   const filteredData = formData.filter((item) =>

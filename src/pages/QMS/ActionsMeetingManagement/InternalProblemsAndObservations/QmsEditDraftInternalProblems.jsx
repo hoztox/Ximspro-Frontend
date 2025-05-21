@@ -482,7 +482,7 @@ const QmsEditDraftInternalProblems = () => {
         </div>
 
         <div className="flex flex-col gap-3">
-          <label className="add-training-label">Date Problem</label>
+          <label className="add-training-label">Date</label>
           <div className="grid grid-cols-3 gap-5">
             <div className="relative">
               <select

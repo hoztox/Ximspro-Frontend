@@ -33,19 +33,21 @@ const QmsViewDraftCustomerSurvey = () => {
     }, [id]);
 
     const handleClose = () => {
-        navigate('/company/qms/draft-customer-survey');
+        navigate('/company/qms/drafts-customer-survey');
     };
 
     // Format date function
     const formatDate = (dateString) => {
-        if (!dateString) return "N/A";
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        }).replace(/\//g, '-');
-    };
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">

@@ -86,7 +86,7 @@ const QmsDraftEvaluationCompliance = () => {
         month: "2-digit",
         year: "numeric",
       })
-      .replace(/\//g, "-");
+      .replace(/\//g, "/");
   };
   const handleEditDraft = (id) => {
     navigate(`/company/qms/edit-draft-evaluation-compliance/${id}`);
