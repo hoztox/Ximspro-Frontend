@@ -5,6 +5,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsViewEnergyAction = () => {
   const [formData, setFormData] = useState({
@@ -24,11 +27,16 @@ const QmsViewEnergyAction = () => {
   const [error, setError] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
   const [responsibleUser, setResponsibleUser] = useState("");
+
+  // Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("Energy Action Plan");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const navigate = useNavigate();
   const { id } = useParams();
-
 
   // Format date to display in DD-MM-YYYY format
   const formatDate = (dateString) => {
@@ -43,13 +51,12 @@ const QmsViewEnergyAction = () => {
       .replace(/\//g, "/");
   };
 
- 
   const fetchEnergyAction = async () => {
     try {
       setIsLoading(true);
       // Fetch the energy action details
       const response = await axios.get(`${BASE_URL}/qms/energy-action/${id}/`);
-      
+
       // Set form data based on the response
       setFormData({
         action_plan: response.data.action_plan || "",
@@ -63,7 +70,7 @@ const QmsViewEnergyAction = () => {
         statement: response.data.statement || "",
         upload_attachment: response.data.upload_attachment || null,
       });
-          console.log("sssssssss",response.data)
+
       // Handle programs from response
       if (response.data.programs && Array.isArray(response.data.programs)) {
         const programs = response.data.programs.map((program, index) => ({
@@ -96,8 +103,6 @@ const QmsViewEnergyAction = () => {
     }
   }, [id]);
 
- 
-
   const handleClose = () => {
     navigate("/company/qms/list-energy-action-plan");
   };
@@ -114,12 +119,31 @@ const QmsViewEnergyAction = () => {
     try {
       await axios.delete(`${BASE_URL}/qms/energy-action/${id}/`);
       setShowDeleteModal(false);
-      navigate("/company/qms/list-energy-action-plan", { 
-        state: { message: "Energy Action Plan deleted successfully" } 
-      });
+      setSuccessMessage("Energy Action Plan deleted successfully");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        navigate("/company/qms/list-energy-action-plan");
+      }, 2000);
     } catch (error) {
       console.error("Error deleting energy action:", error);
-      setError("Failed to delete energy action. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
       setShowDeleteModal(false);
     }
   };
@@ -128,6 +152,12 @@ const QmsViewEnergyAction = () => {
     if (existingAttachment) {
       window.open(existingAttachment, "_blank");
     }
+  };
+
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+    setShowErrorModal(false);
   };
 
   if (isLoading) {
@@ -191,7 +221,7 @@ const QmsViewEnergyAction = () => {
               Attached Document
             </label>
             {existingAttachment ? (
-              <button 
+              <button
                 className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center"
                 onClick={openAttachment}
               >
@@ -208,15 +238,15 @@ const QmsViewEnergyAction = () => {
             </label>
             <div className="view-employee-data">
               {programFields.length > 0 ? (
-                <ul className="list-disc pl-4">
+                <ol className="list-decimal pl-4">
                   {programFields.map((program, index) => (
                     <li key={program.id}>{program.value || "Not specified"}</li>
                   ))}
-                </ul>
+                </ol>
               ) : (
                 "No programs specified"
               )}
-            </div>
+            </div> 
           </div>
 
           <div>
@@ -251,7 +281,7 @@ const QmsViewEnergyAction = () => {
 
           <div>
             <label className="block view-employee-label mb-[6px]">
-              Statement on Energy Improvement Performance 
+              Statement on Energy Improvement Performance
             </label>
             <div className="view-employee-data">{formData.energy_improvements || "Not specified"}</div>
           </div>
@@ -290,30 +320,28 @@ const QmsViewEnergyAction = () => {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-[#1C1C24] text-white p-6 rounded-lg w-80">
-            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-            <p className="mb-6">Are you sure you want to delete this Energy Action Plan?</p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-[#24242D] rounded hover:bg-gray-700"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={closeAllModals}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={closeAllModals}
+        error={error}
+      />
     </div>
   );
 };
 
-export default QmsViewEnergyAction;
+export default QmsViewEnergyAction; 

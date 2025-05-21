@@ -7,6 +7,9 @@ import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListEnergyAction = () => {
   // State
@@ -16,6 +19,15 @@ const QmsListEnergyAction = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [draftCount, setDraftCount] = useState(0);
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [energyActionToDelete, setEnergyActionToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -36,11 +48,22 @@ const QmsListEnergyAction = () => {
     return null;
   };
 
-  const companyId = getUserCompanyId();
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
 
-  // useEffect(() => {
-  //   fetchEnergyActions();
-  // }, [companyId]);
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
+  const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
 
   useEffect(() => {
     const fetchEnergyActions = async () => {
@@ -52,6 +75,8 @@ const QmsListEnergyAction = () => {
           setIsLoading(false);
           return;
         }
+
+        // Fetch energy actions
         const response = await axios.get(`${BASE_URL}/qms/energy-action/company/${companyId}/`);
         // Sort energy actions by id in ascending order and format data
         const sortedData = response.data
@@ -65,19 +90,45 @@ const QmsListEnergyAction = () => {
             }).split("/").join("/") : "",
             responsible_name: item.responsible ? item.responsible.name || "N/A" : "N/A"
           }));
-          console.log('kkkkkkkkkkkk', response.data);
-          
+
         setEnergyActions(sortedData);
+
+        // Fetch draft count
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/energy-action/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
       } catch (error) {
         console.error("Error fetching energy actions:", error);
-        setError("Failed to load energy action plans. Please try again.");
+        let errorMsg = error.message;
+
+        if (error.response) {
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        // setShowErrorModal(true);
+        // setTimeout(() => {
+        //   setShowErrorModal(false);
+        // }, 3000);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchEnergyActions();
-  }, [companyId]);
+  }, [companyId, userId]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -104,9 +155,6 @@ const QmsListEnergyAction = () => {
       (energyAction.action_plan && energyAction.action_plan.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-   
-
-
   const handleAddEnergyAction = () => {
     navigate("/company/qms/add-energy-action-plan");
   };
@@ -123,20 +171,58 @@ const QmsListEnergyAction = () => {
     navigate(`/company/qms/edit-energy-action-plan/${id}`);
   };
 
+  // Open delete confirmation modal
+  const openDeleteModal = (energyAction) => {
+    setEnergyActionToDelete(energyAction);
+    setShowDeleteModal(true);
+    setDeleteMessage('Energy Action Plan');
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
   // Delete energy action
-  const handleDeleteEnergyAction = async (id) => {
-    if (window.confirm("Are you sure you want to delete this energy action plan?")) {
-      setIsLoading(true);
-      try {
-        await axios.delete(`${BASE_URL}/qms/energy-action/${id}/`);
-        setEnergyActions(energyActions.filter(action => action.id !== id));
-        alert("Energy action plan deleted successfully");
-      } catch (error) {
-        console.error("Error deleting energy action:", error);
-        alert("Failed to delete energy action plan. Please try again.");
-      } finally {
-        setIsLoading(false);
+  const confirmDelete = async () => {
+    if (!energyActionToDelete) return;
+
+    setIsLoading(true);
+    try {
+      await axios.delete(`${BASE_URL}/qms/energy-action/${energyActionToDelete.id}/`);
+      setEnergyActions(energyActions.filter(action => action.id !== energyActionToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Energy Action Plan deleted successfully");
+    } catch (error) {
+      console.error("Error deleting energy action:", error);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
       }
+
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -164,10 +250,15 @@ const QmsListEnergyAction = () => {
             </div>
           </div>
           <button
-            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
+            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px] relative"
             onClick={handleDraftEnergyAction}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[-8px] right-[-8px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -183,23 +274,16 @@ const QmsListEnergyAction = () => {
         </div>
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div className="bg-red-600 p-3 rounded mb-4 text-white">
-          {error}
-        </div>
-      )}
-
       {isLoading ? (
         <div className="flex justify-center items-center not-found">
-          Lodaing
+          Loading Energy Action Plans
         </div>
       ) : (
         <>
           {/* Empty state */}
           {energyActions.length === 0 ? (
             <div className="text-center not-found">
-              <p>No energy action plans found</p>
+              <p>No Energy Action Plans Found</p>
             </div>
           ) : (
             <>
@@ -244,10 +328,11 @@ const QmsListEnergyAction = () => {
                           ) : "N/A"}
                         </td>
                         <td className="px-2 add-manual-datas">
-                          {energyAction.responsible_name || "N/A"}
+                          {(energyAction.responsible?.first_name || "N/A") + " " + (energyAction.responsible?.last_name || "")}
                         </td>
+
                         <td className="px-2 add-manual-datas">
-                          {energyAction.date || "N/A"} 
+                          {energyAction.date || "N/A"}
                         </td>
                         <td className="px-2 add-manual-datas !text-center">
                           <button onClick={() => handleQmsViewEnergyAction(energyAction.id)}>
@@ -267,7 +352,7 @@ const QmsListEnergyAction = () => {
                           </button>
                         </td>
                         <td className="px-2 add-manual-datas !text-center">
-                          <button onClick={() => handleDeleteEnergyAction(energyAction.id)}>
+                          <button onClick={() => openDeleteModal(energyAction)}>
                             <img src={deleteIcon} alt="Delete Icon" />
                           </button>
                         </td>
@@ -372,6 +457,28 @@ const QmsListEnergyAction = () => {
           )}
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };

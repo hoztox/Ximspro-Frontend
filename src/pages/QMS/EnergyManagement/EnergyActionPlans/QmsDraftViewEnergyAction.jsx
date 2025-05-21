@@ -11,7 +11,7 @@ const QmsDraftViewEnergyAction = () => {
     action_plan: "",
     title: "",
     associative_objective: "",
-    programs: "",
+    programs: [],
     legal_requirements: "",
     means: "",
     date: "",
@@ -40,8 +40,8 @@ const QmsDraftViewEnergyAction = () => {
           title: response.data.title || "N/A",
           associative_objective: response.data.associative_objective || "N/A",
           programs: Array.isArray(response.data.programs)
-            ? response.data.programs.map((p) => p.Program || "N/A").join(", ")
-            : "N/A",
+            ? response.data.programs
+            : [],
           legal_requirements: response.data.legal_requirements || "N/A",
           means: response.data.means || "N/A",
           date: response.data.date || "N/A",
@@ -72,7 +72,8 @@ const QmsDraftViewEnergyAction = () => {
       window.open(formData.upload_attachment, "_blank");
     }
   };
- const formatDate = (dateString) => {
+  
+  const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
     return date
@@ -143,7 +144,17 @@ const QmsDraftViewEnergyAction = () => {
             <label className="block view-employee-label mb-[6px]">
               Program(s)
             </label>
-            <div className="view-employee-data">{formData.programs}</div>
+            <div className="view-employee-data">
+              {formData.programs && formData.programs.length > 0 ? (
+                <ol className="list-decimal pl-5">
+                  {formData.programs.map((program, index) => (
+                    <li key={index}>{program.Program || "N/A"}</li>
+                  ))}
+                </ol>
+              ) : (
+                "N/A"
+              )}
+            </div>
           </div>
 
           <div>
@@ -193,4 +204,4 @@ const QmsDraftViewEnergyAction = () => {
   );
 };
 
-export default QmsDraftViewEnergyAction;
+export default QmsDraftViewEnergyAction; 

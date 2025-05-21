@@ -4,6 +4,8 @@ import file from "../../../../assets/images/Company Documentation/file-icon.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftEditEnergyAction = () => {
   const { id } = useParams();
@@ -18,6 +20,11 @@ const QmsDraftEditEnergyAction = () => {
   const [programFields, setProgramFields] = useState([{ id: 1, value: "" }]);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
   const [existingAttachment, setExistingAttachment] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -56,6 +63,10 @@ const QmsDraftEditEnergyAction = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
       setError("Failed to load users. Please check your connection and try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -118,6 +129,10 @@ const QmsDraftEditEnergyAction = () => {
     } catch (error) {
       console.error("Error fetching energy action:", error);
       setError("Failed to load energy action data. Please try again.");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -272,10 +287,34 @@ const QmsDraftEditEnergyAction = () => {
         }
       );
 
-      navigate("/company/qms/draft-energy-action-plan");
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-energy-action-plan");
+      }, 1500);
+      setSuccessMessage("Energy Action Plans Saved Successfully");
     } catch (error) {
       console.error("Error updating draft energy action:", error);
-      setError("Failed to update. Please check your inputs and try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        } else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -307,281 +346,294 @@ const QmsDraftEditEnergyAction = () => {
         </button>
       </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
-        >
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Energy Action Plan No <span className="text-red-500">*</span>
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
+
+      <form
+        onSubmit={handleSubmit}
+        className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
+      >
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">
+            Energy Action Plan No <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="action_plan"
+            value={formData.action_plan}
+            className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
+            readOnly
+            title="Existing EAP number"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">
+            Action Plan Title/Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
+          />
+          {formErrors.title && (
+            <p className="text-red-500 text-sm">{formErrors.title}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Associated Objective</label>
+          <input
+            type="text"
+            name="associative_objective"
+            value={formData.associative_objective}
+            onChange={handleChange}
+            className="add-training-inputs focus:outline-none"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Upload Attachment</label>
+          <div className="flex">
+            <input
+              type="file"
+              id="file-upload"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <label
+              htmlFor="file-upload"
+              className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+            >
+              <span className="text-[#AAAAAA] choose-file">Choose File</span>
+              <img src={file} alt="" />
             </label>
-            <input
-              type="text"
-              name="action_plan"
-              value={formData.action_plan}
-              className="add-training-inputs focus:outline-none cursor-not-allowed bg-gray-800"
-              readOnly
-              title="Existing EAP number"
-            />
           </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">
-              Action Plan Title/Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              className={`add-training-inputs focus:outline-none ${formErrors.title ? "border-red-500" : ""}`}
-            />
-            {formErrors.title && (
-              <p className="text-red-500 text-sm">{formErrors.title}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Associated Objective</label>
-            <input
-              type="text"
-              name="associative_objective"
-              value={formData.associative_objective}
-              onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Upload Attachment</label>
-            <div className="flex">
-              <input
-                type="file"
-                id="file-upload"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <label
-                htmlFor="file-upload"
-                className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+          <div className="flex justify-between items-center">
+            {existingAttachment && (
+              <button
+                type="button"
+                onClick={handleViewFile}
+                className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]"
               >
-                <span className="text-[#AAAAAA] choose-file">Choose File</span>
-                <img src={file} alt="" />
-              </label>
-            </div>
-            <div className="flex justify-between items-center">
-              {existingAttachment && (
+                Click to view file <Eye size={17} />
+              </button>
+            )}
+            <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+              {formData.upload_attachment instanceof File
+                ? formData.upload_attachment.name
+                : existingAttachment
+                  ? existingAttachment.split("/").pop()
+                  : "No file chosen"}
+            </p>
+          </div>
+        </div>
+
+        {programFields.map((field, index) => (
+          <div key={field.id} className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 justify-between last:pr-[57px]">
+              <label className="add-training-label">Program(s)</label>
+              {index > 0 && (
                 <button
                   type="button"
-                  onClick={handleViewFile}
-                  className="click-view-file-btn flex items-center gap-2 text-[#1E84AF]"
+                  onClick={() => removeProgramField(field.id)}
+                  className="text-red-500 text-xs"
                 >
-                  Click to view file <Eye size={17} />
+                  <X size={17} />
                 </button>
               )}
-              <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
-                {formData.upload_attachment instanceof File
-                  ? formData.upload_attachment.name
-                  : existingAttachment
-                    ? existingAttachment.split("/").pop()
-                    : "No file chosen"}
-              </p>
             </div>
-          </div>
-
-          {programFields.map((field, index) => (
-            <div key={field.id} className="flex flex-col gap-3">
-              <div className="flex items-center gap-2 justify-between last:pr-[57px]">
-                <label className="add-training-label">Program(s)</label>
-                {index > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => removeProgramField(field.id)}
-                    className="text-red-500 text-xs"
-                  >
-                    <X size={17} />
-                  </button>
-                )}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={field.value}
-                  onChange={(e) => handleProgramChange(field.id, e.target.value)}
-                  className="add-training-inputs focus:outline-none flex-1"
-                />
-                {index === programFields.length - 1 && (
-                  <button
-                    type="button"
-                    onClick={addProgramField}
-                    className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
-                  >
-                    <Plus className="text-white" />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Associated Legal Requirements</label>
-            <input
-              type="text"
-              name="legal_requirements"
-              value={formData.legal_requirements}
-              onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Means/Method</label>
-            <input
-              type="text"
-              name="means"
-              value={formData.means}
-              onChange={handleChange}
-              className="add-training-inputs focus:outline-none"
-            />
-          </div>
-
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Target Date</label>
-            <div className="grid grid-cols-3 gap-5">
-              <div className="relative">
-                <select
-                  name="date.day"
-                  value={formData.date.day}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedDropdown("date.day")}
-                  onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={field.value}
+                onChange={(e) => handleProgramChange(field.id, e.target.value)}
+                className="add-training-inputs focus:outline-none flex-1"
+              />
+              {index === programFields.length - 1 && (
+                <button
+                  type="button"
+                  onClick={addProgramField}
+                  className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
                 >
-                  <option value="" disabled>dd</option>
-                  {generateOptions(1, 31)}
-                </select>
-                <ChevronDown
-                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                  <Plus className="text-white" />
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Associated Legal Requirements</label>
+          <input
+            type="text"
+            name="legal_requirements"
+            value={formData.legal_requirements}
+            onChange={handleChange}
+            className="add-training-inputs focus:outline-none"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Means/Method</label>
+          <input
+            type="text"
+            name="means"
+            value={formData.means}
+            onChange={handleChange}
+            className="add-training-inputs focus:outline-none"
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Target Date</label>
+          <div className="grid grid-cols-3 gap-5">
+            <div className="relative">
+              <select
+                name="date.day"
+                value={formData.date.day}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("date.day")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>dd</option>
+                {generateOptions(1, 31)}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-[35%] transform transition-transform duration-300
                     ${focusedDropdown === "date.day" ? "rotate-180" : ""}`}
-                  size={20}
-                  color="#AAAAAA"
-                />
-              </div>
-              <div className="relative">
-                <select
-                  name="date.month"
-                  value={formData.date.month}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedDropdown("date.month")}
-                  onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                >
-                  <option value="" disabled>mm</option>
-                  {generateOptions(1, 12)}
-                </select>
-                <ChevronDown
-                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+            <div className="relative">
+              <select
+                name="date.month"
+                value={formData.date.month}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("date.month")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>mm</option>
+                {generateOptions(1, 12)}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-[35%] transform transition-transform duration-300
                     ${focusedDropdown === "date.month" ? "rotate-180" : ""}`}
-                  size={20}
-                  color="#AAAAAA"
-                />
-              </div>
-              <div className="relative">
-                <select
-                  name="date.year"
-                  value={formData.date.year}
-                  onChange={handleChange}
-                  onFocus={() => setFocusedDropdown("date.year")}
-                  onBlur={() => setFocusedDropdown(null)}
-                  className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                >
-                  <option value="" disabled>yyyy</option>
-                  {generateOptions(2023, 2030)}
-                </select>
-                <ChevronDown
-                  className={`absolute right-3 top-[35%] transform transition-transform duration-300
+                size={20}
+                color="#AAAAAA"
+              />
+            </div>
+            <div className="relative">
+              <select
+                name="date.year"
+                value={formData.date.year}
+                onChange={handleChange}
+                onFocus={() => setFocusedDropdown("date.year")}
+                onBlur={() => setFocusedDropdown(null)}
+                className="add-training-inputs appearance-none pr-10 cursor-pointer"
+              >
+                <option value="" disabled>yyyy</option>
+                {generateOptions(2023, 2030)}
+              </select>
+              <ChevronDown
+                className={`absolute right-3 top-[35%] transform transition-transform duration-300
                     ${focusedDropdown === "date.year" ? "rotate-180" : ""}`}
-                  size={20}
-                  color="#AAAAAA"
-                />
-              </div>
+                size={20}
+                color="#AAAAAA"
+              />
             </div>
           </div>
+        </div>
 
-          <div className="flex flex-col gap-3 relative">
-            <label className="add-training-label">
-              Responsible <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="responsible"
-              value={formData.responsible}
-              onChange={handleChange}
-              onFocus={() => setFocusedDropdown("responsible")}
-              onBlur={() => setFocusedDropdown(null)}
-              className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
-            >
-              <option value="" disabled>
-                {isLoading ? "Loading..." : "Select Responsible"}
-              </option>
-              {users && users.length > 0
-                ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
-                : !isLoading && (
-                  <option value="" disabled>No users found</option>
-                )}
-            </select>
-            <ChevronDown
-              className={`absolute right-3 top-[55px] transform transition-transform duration-300
+        <div className="flex flex-col gap-3 relative">
+          <label className="add-training-label">
+            Responsible <span className="text-red-500">*</span>
+          </label>
+          <select
+            name="responsible"
+            value={formData.responsible}
+            onChange={handleChange}
+            onFocus={() => setFocusedDropdown("responsible")}
+            onBlur={() => setFocusedDropdown(null)}
+            className={`add-training-inputs appearance-none pr-10 cursor-pointer ${formErrors.responsible ? "border-red-500" : ""}`}
+          >
+            <option value="" disabled>
+              {isLoading ? "Loading..." : "Select Responsible"}
+            </option>
+            {users && users.length > 0
+              ? users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
+              : !isLoading && (
+                <option value="" disabled>No users found</option>
+              )}
+          </select>
+          <ChevronDown
+            className={`absolute right-3 top-[55px] transform transition-transform duration-300
                 ${focusedDropdown === "responsible" ? "rotate-180" : ""}`}
-              size={20}
-              color="#AAAAAA"
-            />
-            {formErrors.responsible && (
-              <p className="text-red-500 text-sm">{formErrors.responsible}</p>
-            )}
-          </div>
+            size={20}
+            color="#AAAAAA"
+          />
+          {formErrors.responsible && (
+            <p className="text-red-500 text-sm">{formErrors.responsible}</p>
+          )}
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Statement on Energy Improvement Performance</label>
-            <textarea
-              name="energy_improvements"
-              value={formData.energy_improvements}
-              onChange={handleChange}
-              className="add-training-inputs focus:outline-none !h-[98px]"
-            />
-          </div>
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Statement on Energy Improvement Performance</label>
+          <textarea
+            name="energy_improvements"
+            value={formData.energy_improvements}
+            onChange={handleChange}
+            className="add-training-inputs focus:outline-none !h-[98px]"
+          />
+        </div>
 
-          <div className="flex flex-col gap-3">
-            <label className="add-training-label">Statement on Result Verification</label>
-            <textarea
-              name="statement"
-              value={formData.statement}
-              onChange={handleChange}
-              className="add-training-inputs focus:outline-none !h-[98px]"
-            />
-          </div>
+        <div className="flex flex-col gap-3">
+          <label className="add-training-label">Statement on Result Verification</label>
+          <textarea
+            name="statement"
+            value={formData.statement}
+            onChange={handleChange}
+            className="add-training-inputs focus:outline-none !h-[98px]"
+          />
+        </div>
 
-          <div className="md:col-span-2 flex gap-4 justify-end">
-            <button
-              type="button"
-              onClick={handleListDraftEnergyAction}
-              className="cancel-btn duration-200"
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="save-btn duration-200"
-              disabled={isLoading}
-            >
-              {isLoading ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </form>
+        <div className="md:col-span-2 flex gap-4 justify-end">
+          <button
+            type="button"
+            onClick={handleListDraftEnergyAction}
+            className="cancel-btn duration-200"
+            disabled={isLoading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="save-btn duration-200"
+            disabled={isLoading}
+          >
+            {isLoading ? "Saving..." : "Save"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

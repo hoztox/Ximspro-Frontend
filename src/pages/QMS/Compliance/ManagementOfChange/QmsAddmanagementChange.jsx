@@ -39,7 +39,8 @@ const QmsAddmanagementChange = () => {
   const [showDraftManagementErrorModal, setShowDraftManagementErrorModal] =
     useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [saveDraftLoading, setSaveDraftLoading] = useState(false); // Loading state for Save as Draft
+  const [saveLoading, setSaveLoading] = useState(false); // Loading state for Save
   const [error, setError] = useState("");
   const [errors, setErrors] = useState({
     moc_title: "",
@@ -160,14 +161,14 @@ const QmsAddmanagementChange = () => {
 
   const handleSaveAsDraft = async () => {
     try {
-      setLoading(true);
+      setSaveDraftLoading(true); // Set Save as Draft loading state
 
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
 
       if (!companyId || !userId) {
         setError("Company ID or User ID not found. Please log in again.");
-        setLoading(false);
+        setSaveDraftLoading(false);
         return;
       }
 
@@ -205,14 +206,14 @@ const QmsAddmanagementChange = () => {
         }
       );
 
-      setLoading(false);
+      setSaveDraftLoading(false);
       setShowDraftManagementSuccessModal(true);
       setTimeout(() => {
         setShowDraftManagementSuccessModal(false);
         navigate("/company/qms/draft-management-change");
       }, 1500);
     } catch (err) {
-      setLoading(false);
+      setSaveDraftLoading(false);
       let errorMsg = err.message;
 
       if (err.response) {
@@ -238,14 +239,14 @@ const QmsAddmanagementChange = () => {
     e.preventDefault();
 
     try {
-      setLoading(true);
+      setSaveLoading(true); // Set Save loading state
       setError("");
 
       if (!formData.moc_title.trim()) {
         setErrors({
           moc_title: "MOC Name / Title is required",
         });
-        setLoading(false);
+        setSaveLoading(false);
         return;
       }
 
@@ -255,7 +256,7 @@ const QmsAddmanagementChange = () => {
       const companyId = getUserCompanyId();
       if (!companyId) {
         setError("Company ID not found. Please log in again.");
-        setLoading(false);
+        setSaveLoading(false);
         return;
       }
 
@@ -299,14 +300,14 @@ const QmsAddmanagementChange = () => {
         }
       );
 
-      setLoading(false);
+      setSaveLoading(false);
       setShowAddManagementSuccessModal(true);
       setTimeout(() => {
         setShowAddManagementSuccessModal(false);
         navigate("/company/qms/list-management-change");
       }, 1500);
     } catch (error) {
-      setLoading(false);
+      setSaveLoading(false);
       let errorMsg = error.message;
 
       if (error.response) {
@@ -624,9 +625,9 @@ const QmsAddmanagementChange = () => {
               type="button"
               onClick={handleSaveAsDraft}
               className="request-correction-btn duration-200"
-              disabled={loading}
+              disabled={saveDraftLoading}
             >
-              Save as Draft
+              {saveDraftLoading ? "Saving Draft..." : "Save as Draft"}
             </button>
           </div>
           <div className="flex items-end gap-5">
@@ -634,23 +635,18 @@ const QmsAddmanagementChange = () => {
               type="button"
               onClick={handleCancel}
               className="cancel-btn duration-200 !w-full"
-              disabled={loading}
+              disabled={saveLoading || saveDraftLoading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="save-btn duration-200 !w-full"
-              disabled={loading}
+              disabled={saveLoading}
             >
-              {loading ? "Saving..." : "Save"}
+              {saveLoading ? "Saving..." : "Save"}
             </button>
           </div>
-          {error && (
-            <div className="col-span-2 text-red-500 text-center mt-2">
-              {error}
-            </div>
-          )}
         </div>
       </form>
     </div>

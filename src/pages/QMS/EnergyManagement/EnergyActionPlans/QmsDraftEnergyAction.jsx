@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Search, X } from "lucide-react";
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftEnergyAction = () => {
   const navigate = useNavigate();
@@ -15,8 +16,13 @@ const QmsDraftEnergyAction = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [energyActionToDelete, setEnergyActionToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState(""); 
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -28,17 +34,30 @@ const QmsDraftEnergyAction = () => {
     if (companyId) return companyId;
     return null;
   };
+
   // Fetch draft energy actions from the API
   useEffect(() => {
     const fetchDraftEnergyActions = async () => {
       try {
         setIsLoading(true);
-        const userId = getRelevantUserId()
+        const userId = getRelevantUserId();
         const response = await axios.get(`${BASE_URL}/qms/energy-action-draft/${userId}/`);
         setEnergyActions(response.data);
         setIsLoading(false);
       } catch (err) {
-        setError("Failed to fetch draft energy actions");
+        let errorMsg = err.message;
+        if (err.response) {
+          if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        }
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         setIsLoading(false);
       }
     };
@@ -80,13 +99,49 @@ const QmsDraftEnergyAction = () => {
     navigate(`/company/qms/edit-draft-energy-action-plan/${id}`);
   };
 
+  // Open delete confirmation modal
+  const openDeleteModal = (energyAction) => {
+    setEnergyActionToDelete(energyAction);
+    setShowDeleteModal(true);
+    setDeleteMessage("Draft Energy Action Plan");
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
   // Delete energy action
-  const handleDeleteDraftEnergyAction = async (id) => {
+  const confirmDelete = async () => {
+    if (!energyActionToDelete) return;
+
+    setIsLoading(true);
     try {
-      await axios.delete(`http://localhost:8000/api/draft-energy-actions/${id}/`);
-      setEnergyActions(energyActions.filter((action) => action.id !== id));
+      await axios.delete(`${BASE_URL}/qms/energy-action/${energyActionToDelete.id}/`);
+      setEnergyActions(energyActions.filter((action) => action.id !== energyActionToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setSuccessMessage("Draft Energy Action Plan deleted successfully");
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
     } catch (err) {
-      setError("Failed to delete energy action");
+      let errorMsg = err.message;
+      if (err.response) {
+        if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -97,10 +152,6 @@ const QmsDraftEnergyAction = () => {
 
   if (isLoading) {
     return <div className="text-white">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
   }
 
   return (
@@ -143,12 +194,12 @@ const QmsDraftEnergyAction = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredEnergyActions.map((energyAction) => (
+            {filteredEnergyActions.map((energyAction, index) => (
               <tr
                 key={energyAction.id}
                 className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
               >
-                <td className="pl-5 pr-2 add-manual-datas">{energyAction.id}</td>
+                <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td> 
                 <td className="px-2 add-manual-datas">{energyAction.title}</td>
                 <td className="px-2 add-manual-datas">{energyAction.statement}</td>
                 <td className="px-2 add-manual-datas">
@@ -172,7 +223,7 @@ const QmsDraftEnergyAction = () => {
                   </button>
                 </td>
                 <td className="px-2 add-manual-datas !text-center">
-                  <button onClick={() => handleDeleteDraftEnergyAction(energyAction.id)}>
+                  <button onClick={() => openDeleteModal(energyAction)}>
                     <img src={deleteIcon} alt="Delete Icon" />
                   </button>
                 </td>
@@ -211,6 +262,28 @@ const QmsDraftEnergyAction = () => {
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
