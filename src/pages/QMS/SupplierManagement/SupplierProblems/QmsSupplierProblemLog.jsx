@@ -69,64 +69,59 @@ const QmsSupplierProblemLog = () => {
 
   // Fetch supplier problems from API
   useEffect(() => {
-    const fetchSupplierProblems = async () => {
-      try {
-        setLoading(true);
-        if (!companyId) {
-          setError("Company ID not found. Please log in again.");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/supplier-problems/company/${companyId}/`
-        );
-        console.log("Supplier Problems:", response.data);
-
-        // Filter out drafts for the main view
-        const activeProblems = response.data.filter(
-          (problem) => !problem.is_draft
-        );
-
-        // Sort by date (newest first)
-        activeProblems.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        setSuppliers(activeProblems);
-
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/ssupplier-problems/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching supplier problems:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          } else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
+  const fetchSupplierProblems = async () => {
+    try {
+      setLoading(true);
+      if (!companyId) {
+        setError("Company ID not found. Please log in again.");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchSupplierProblems();
-  }, [companyId]);
+      const response = await axios.get(
+        `${BASE_URL}/qms/supplier-problems/company/${companyId}/`
+      );
+      console.log("Supplier Problems:", response.data);
+
+      // Sort by id in ascending order
+      const sortedProblems = response.data.sort((a, b) => a.id - b.id);
+
+      setSuppliers(sortedProblems);
+
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/ssupplier-problems/drafts-count/${userId}/` // Corrected typo
+      );
+      setDraftCount(draftResponse.data.count);
+
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching supplier problems:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) { 
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSupplierProblems();
+}, [companyId]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;

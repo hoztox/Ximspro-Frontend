@@ -181,11 +181,7 @@ const QmsListEnvironmentalImpact = () => {
         // Fetch environmental impacts
         const impactsResponse = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`);
         const filteredImpacts = filterImpactsByVisibility(impactsResponse.data);
-        const sortedImpacts = filteredImpacts.sort((a, b) => {
-          const dateA = new Date(a.date || 0);
-          const dateB = new Date(b.date || 0);
-          return dateB - dateA;
-        });
+        const sortedImpacts = filteredImpacts.sort((a, b) => a.id - b.id) 
         setEnvironmentalImpacts(sortedImpacts);
 
         // Fetch corrections for each impact

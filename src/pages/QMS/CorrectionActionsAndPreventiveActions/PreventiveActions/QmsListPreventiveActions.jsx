@@ -9,7 +9,7 @@ import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import DeleteConfimModal from "../DeleteConfimModal";
 import SuccessModal from "../SuccessModal";
-import ErrorModal from "../ErrorModal"; 
+import ErrorModal from "../ErrorModal";
 
 const QmsListPreventiveActions = () => {
   // State
@@ -69,12 +69,20 @@ const QmsListPreventiveActions = () => {
   // Fetch preventive actions from backend
   useEffect(() => {
     const fetchPreventiveActions = async () => {
+      if (!companyId) {
+        setError("Company ID not found");
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         const response = await axios.get(
           `${BASE_URL}/qms/preventive/${companyId}/`
         );
-        setPreventiveActions(response.data);
+        // Sort preventive actions by id in ascending order
+        const sortedPreventiveActions = response.data.sort((a, b) => a.id - b.id);
+        setPreventiveActions(sortedPreventiveActions);
 
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/preventive/drafts-count/${userId}/`
@@ -89,13 +97,8 @@ const QmsListPreventiveActions = () => {
       }
     };
 
-    if (companyId) {
-      fetchPreventiveActions();
-    } else {
-      setError("Company ID not found");
-      setLoading(false);
-    }
-  }, [companyId, userId]);
+    fetchPreventiveActions();
+  }, [companyId, userId]); 
 
   const handleError = (error, defaultMessage) => {
     let errorMsg = defaultMessage || error.message;
@@ -323,10 +326,10 @@ const QmsListPreventiveActions = () => {
                     <td className="px-2 add-manual-datas !text-center">
                       <span
                         className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${preventive.status === "Completed"
-                            ? "bg-[#36DDAE11] text-[#36DDAE]"
-                            : preventive.status === "Pending"
-                              ? "bg-[#1E84AF11] text-[#1E84AF]"
-                              : "bg-gray-100 text-gray-500"
+                          ? "bg-[#36DDAE11] text-[#36DDAE]"
+                          : preventive.status === "Pending"
+                            ? "bg-[#1E84AF11] text-[#1E84AF]"
+                            : "bg-gray-100 text-gray-500"
                           }`}
                       >
                         {preventive.status}

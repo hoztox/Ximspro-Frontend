@@ -64,37 +64,40 @@ const QmsListEnergyReview = () => {
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
 
-    useEffect(() => {
-        fetchEnergyReviews();
-    }, []);
+    // useEffect(() => {
+    //     fetchEnergyReviews();
+    // }, []);
 
+   useEffect(() => {
     const fetchEnergyReviews = async () => {
         setLoading(true);
         setError('');
         try {
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
+                setLoading(false);
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/energy-review/company/${companyId}`);
-            setEnergyReviews(response.data);
+            const response = await axios.get(`${BASE_URL}/qms/energy-review/company/${companyId}`); 
+            // Sort energy reviews by id in ascending order
+            const sortedEnergyReviews = response.data.sort((a, b) => a.id - b.id);
+            setEnergyReviews(sortedEnergyReviews);
 
             const draftResponse = await axios.get(
-                `${BASE_URL}/qms/energy-review/drafts-count/${userId}/` 
+                `${BASE_URL}/qms/energy-review/drafts-count/${userId}/`
             );
             setDraftCount(draftResponse.data.count);
 
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching energy reviews:', error);
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
                 }
-                // Check for non-field errors
                 else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
                 }
@@ -110,10 +113,12 @@ const QmsListEnergyReview = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-        } finally {
             setLoading(false);
         }
     };
+
+    fetchEnergyReviews();
+}, [companyId, userId]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;

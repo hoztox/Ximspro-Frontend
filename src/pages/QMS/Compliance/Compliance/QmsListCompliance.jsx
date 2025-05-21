@@ -47,35 +47,36 @@ const QmsListCompliance = () => {
     return null;
   };
   useEffect(() => {
-    const fetchComplianceData = async () => {
-      setIsLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/compliance/${companyId}/`
-        );
-        const formattedData = response.data.map((item) => ({
+  const fetchComplianceData = async () => {
+    setIsLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/compliance/${companyId}/`
+      );
+      const formattedData = response.data
+        .map((item) => ({
           id: item.id,
           title: item.compliance_name,
           complianceNo: item.compliance_no,
-          revision: item.rivision,
+          revision: item.rivision,  
           date: formatDate(item.date),
           complianceType: item.compliance_type,
           isDraft: item.is_draft,
-        }));
-        setComplianceData(formattedData);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load compliance data");
-        console.error("Error fetching compliance data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        }))
+        .sort((a, b) => a.id - b.id); 
+      setComplianceData(formattedData);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load compliance data");
+      console.error("Error fetching compliance data:", err);
+    } finally { 
+      setIsLoading(false);
+    }
+  };
 
-    fetchComplianceData();
-  }, []);
-
+  fetchComplianceData();
+}, []);
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
     if (userRole === "user") {

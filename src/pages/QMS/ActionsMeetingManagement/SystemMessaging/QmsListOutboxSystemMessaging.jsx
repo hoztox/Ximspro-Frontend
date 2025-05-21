@@ -46,75 +46,76 @@ const QmsListOutboxSystemMessaging = () => {
 
   // Fetch all sent messages (outbox)
   useEffect(() => {
-    const fetchMessages = async () => {
-      setLoading(true);
-      const userId = getRelevantUserId();
+  const fetchMessages = async () => {
+    setLoading(true);
+    const userId = getRelevantUserId();
 
-      if (!userId) {
-        setError("User ID or Company ID not found");
-        setShowErrorModal(true);
-        setLoading(false);
-        return;
+    if (!userId) {
+      setError("User ID or Company ID not found");
+      setShowErrorModal(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${BASE_URL}/qms/messages/outbox/${userId}/`
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        // Process messages to determine their type (original, reply, forward)
+        const processedMessages = response.data.map((msg) => {
+          let messageType = "original";
+
+          // Check if message is a reply or forward based on parent and thread_root
+          if (msg.parent) {
+            // If it has both parent and is in a thread, it's likely a reply
+            messageType = "reply";
+          }
+
+          return {
+            ...msg,
+            messageType,
+          };
+        });
+
+        // Sort messages by id in ascending order
+        const sortedMessages = processedMessages.sort((a, b) => b.id - a.id); 
+        setAllMessages(sortedMessages);
+      } else {
+        setAllMessages([]);
+      }
+    } catch (err) {
+      console.error("Error fetching outbox messages:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
 
-      try {
-        const response = await axios.get(
-          `${BASE_URL}/qms/messages/outbox/${userId}/`
-        );
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (response.data && Array.isArray(response.data)) {
-          // Process messages to determine their type (original, reply, forward)
-          const processedMessages = response.data.map((msg) => {
-            let messageType = "original";
-
-            // Check if message is a reply or forward based on parent and thread_root
-            if (msg.parent) {
-              // If it has both parent and is in a thread, it's likely a reply
-              messageType = "reply";
-            }
-
-            return {
-              ...msg,
-              messageType,
-            };
-          });
-
-          setAllMessages(processedMessages);
-        } else {
-          setAllMessages([]);
-        }
-      } catch (err) {
-        console.error("Error fetching outbox messages:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
-  }, []);
-
+  fetchMessages();
+}, []);
   // Format date from created_at
   const formatDate = (dateString) => {
     const date = new Date(dateString);

@@ -56,36 +56,38 @@ const QmsListUserTraining = () => {
 
 
     useEffect(() => {
-        const fetchTrainingData = async () => {
-            if (!selectedUser) {
-                setTrainingData([]);
-                return;
-            }
+  const fetchTrainingData = async () => {
+    if (!selectedUser) {
+      setTrainingData([]);
+      return;
+    }
 
-            setLoading(true);
-            try {
-                const response = await axios.get(`${BASE_URL}/qms/training/by-attendee/${selectedUser}/`);
+    setLoading(true);
+    try {
+      const response = await axios.get(`${BASE_URL}/qms/training/by-attendee/${selectedUser}/`);
 
-                const formattedData = response.data.map((item, index) => ({
-                    id: index + 1,
-                    userId: selectedUser,
-                    title: item.training_title || 'Untitled Training',
-                    type: item.type_of_training || 'N/A',
-                    datePlanned: item.date_planned ? formatDate(item.date_planned) : 'N/A',
-                    status: item.status || 'N/A'
-                }));
-                setTrainingData(formattedData);
-            } catch (error) {
-                console.error('Error fetching training data:', error);
-                setTrainingData([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+      const formattedData = response.data.map((item) => ({
+        id: item.id, // Use the actual id from the API response
+        userId: selectedUser,
+        title: item.training_title || 'Untitled Training',
+        type: item.type_of_training || 'N/A',
+        datePlanned: item.date_planned ? formatDate(item.date_planned) : 'N/A',
+        status: item.status || 'N/A',
+      }));
+      // Sort by id in ascending order
+      const sortedData = formattedData.sort((a, b) => a.id - b.id);
+      setTrainingData(sortedData); // Use sorted data
+    } catch (error) {
+      console.error('Error fetching training data:', error);
+      setTrainingData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        fetchTrainingData();
-        setCurrentPage(1); // Reset to page 1 on user change
-    }, [selectedUser]);
+  fetchTrainingData();
+  setCurrentPage(1); // Reset to page 1 on user change
+}, [selectedUser]);
 
     // Helper function to format date
     const formatDate = (dateString) => {

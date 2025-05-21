@@ -138,16 +138,18 @@ const QmsListTargets = () => {
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
 
     // Filter targets based on search query
-    const filteredTargets = targets
-        .filter(target => {
-            const searchLower = searchQuery.toLowerCase();
-            return (
-                (target.target && target.target.toLowerCase().includes(searchLower)) ||
-                (target.responsible && target.responsible.toLowerCase().includes(searchLower)) ||
-                (target.status && target.status.toLowerCase().includes(searchLower))
-            );
-        })
-        .slice(indexOfFirstItem, indexOfLastItem);
+    // Filter and sort targets based on search query and id
+const filteredTargets = targets
+    .filter(target => {
+        const searchLower = searchQuery.toLowerCase();
+        return (
+            (target.target && target.target.toLowerCase().includes(searchLower)) ||
+            (target.responsible && target.responsible.toLowerCase().includes(searchLower)) ||
+            (target.status && target.status.toLowerCase().includes(searchLower))
+        );
+    })
+    .sort((a, b) => a.id - b.id) // Sort by id in ascending order
+    .slice(indexOfFirstItem, indexOfLastItem); 
 
     // Navigation handlers
     const handleAddTargets = () => {

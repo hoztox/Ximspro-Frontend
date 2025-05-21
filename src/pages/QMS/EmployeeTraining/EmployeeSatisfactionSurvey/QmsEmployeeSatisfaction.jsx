@@ -309,9 +309,9 @@ const EvaluationModal = ({
                           {item.first_name && item.last_name
                             ? `${item.first_name} ${item.last_name}`
                             : item.first_name ||
-                              item.last_name ||
-                              item.username ||
-                              item.email}
+                            item.last_name ||
+                            item.username ||
+                            item.email}
                         </option>
                       ))}
                     </select>
@@ -319,9 +319,8 @@ const EvaluationModal = ({
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${
-                          isDropdownOpen ? "rotate-180" : ""
-                        }`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180" : ""
+                          }`}
                       />
                     </div>
                   </div>
@@ -394,11 +393,10 @@ const EvaluationModal = ({
                                                 rating
                                               )
                                             }
-                                            className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${
-                                              rating === 10
+                                            className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${rating === 10
                                                 ? "border border-[#1E84AF] !text-[#1E84AF]"
                                                 : "border border-[#5B5B5B] !text-[#5B5B5B]"
-                                            } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
+                                              } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
                                           >
                                             {rating}
                                           </button>
@@ -843,7 +841,9 @@ const QmsEmployeeSatisfaction = () => {
         const response = await axios.get(
           `${BASE_URL}/qms/survey/${companyId}/`
         );
-        setSurveys(response.data);
+        // Sort surveys by id in ascending order
+        const sortedSurveys = response.data.sort((a, b) => a.id - b.id);
+        setSurveys(sortedSurveys);
 
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/survey/drafts-count/${userId}/`
@@ -855,12 +855,9 @@ const QmsEmployeeSatisfaction = () => {
         let errorMsg = err.message;
 
         if (err.response) {
-          // Check for field-specific errors first
           if (err.response.data.date) {
             errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
+          } else if (err.response.data.detail) {
             errorMsg = err.response.data.detail;
           } else if (err.response.data.message) {
             errorMsg = err.response.data.message;
@@ -871,7 +868,7 @@ const QmsEmployeeSatisfaction = () => {
 
         setError(errorMsg);
         console.error("Error fetching employee survey data:", err);
-      } finally {
+      } finally { 
         setLoading(false);
       }
     };
@@ -1162,9 +1159,8 @@ const QmsEmployeeSatisfaction = () => {
           </div>
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
             >
@@ -1177,18 +1173,17 @@ const QmsEmployeeSatisfaction = () => {
                 currentPage <= 2
                   ? i + 1
                   : currentPage >= totalPages - 1
-                  ? totalPages - 3 + i
-                  : currentPage - 2 + i;
+                    ? totalPages - 3 + i
+                    : currentPage - 2 + i;
 
               if (pageToShow <= totalPages) {
                 return (
                   <button
                     key={pageToShow}
-                    className={`${
-                      currentPage === pageToShow
+                    className={`${currentPage === pageToShow
                         ? "pagin-active"
                         : "pagin-inactive"
-                    }`}
+                      }`}
                     onClick={() => setCurrentPage(pageToShow)}
                   >
                     {pageToShow}
@@ -1199,9 +1194,8 @@ const QmsEmployeeSatisfaction = () => {
             })}
 
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }

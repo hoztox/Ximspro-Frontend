@@ -68,47 +68,49 @@ const QmsListAwarenessTraining = () => {
   };
 
   useEffect(() => {
-    const fetchAwarenessTrainingData = async () => {
-      setIsLoading(true);
-      try {
-        const userId = getRelevantUserId();
-        const companyId = getUserCompanyId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/awareness/${companyId}/`
-        );
-        setTrainingItems(response.data);
-        setError(null);
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/awareness/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-      } catch (err) {
-        let errorMsg = err.message;
+  const fetchAwarenessTrainingData = async () => {
+    setIsLoading(true);
+    try {
+      const userId = getRelevantUserId();
+      const companyId = getUserCompanyId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/awareness/${companyId}/`
+      );
+      // Sort trainingItems by id in ascending order
+      const sortedTrainingItems = response.data.sort((a, b) => a.id - b.id);
+      setTrainingItems(sortedTrainingItems);
+      setError(null);
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/awareness/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+    } catch (err) {
+      let errorMsg = err.message;
 
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
         }
-
-        setError(errorMsg);
-        console.error("Error fetching awareness training data:", err);
-      } finally {
-        setIsLoading(false);
+        // Check for non-field errors
+        else if (err.response.data.detail) { 
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    };
 
-    fetchAwarenessTrainingData();
-  }, []);
+      setError(errorMsg);
+      console.error("Error fetching awareness training data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchAwarenessTrainingData();
+}, []);
 
   const itemsPerPage = 10;
   const totalItems = trainingItems.length;

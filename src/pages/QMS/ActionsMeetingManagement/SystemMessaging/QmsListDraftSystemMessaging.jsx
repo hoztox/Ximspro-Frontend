@@ -41,47 +41,49 @@ const QmsListDraftSystemMessaging = () => {
 
   // Fetch draft messages from the backend
   useEffect(() => {
-    const fetchDrafts = async () => {
-      try {
-        const userId = getRelevantUserId();
-        if (!userId) {
-          console.error("No user or company ID found");
-          return;
-        }
-        const response = await axios.get(
-          `${BASE_URL}/qms/messages/drafts/${userId}/`
-        );
-        const drafts = Array.isArray(response.data) ? response.data : [];
-        setMessages(drafts);
-        setTotalItems(drafts.length);
-      } catch (error) {
-        console.error("Error fetching drafts:", error);
-        let errorMsg = error.message;
-
-        if (error.response) {
-          // Check for field-specific errors first
-          if (error.response.data.date) {
-            errorMsg = error.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (error.response.data.detail) {
-            errorMsg = error.response.data.detail;
-          } else if (error.response.data.message) {
-            errorMsg = error.response.data.message;
-          }
-        } else if (error.message) {
-          errorMsg = error.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
+  const fetchDrafts = async () => {
+    try {
+      const userId = getRelevantUserId();
+      if (!userId) {
+        console.error("No user or company ID found");
+        return;
       }
-    };
-    fetchDrafts();
-  }, [currentPage]);
+      const response = await axios.get(
+        `${BASE_URL}/qms/messages/drafts/${userId}/`
+      );
+      const drafts = Array.isArray(response.data) ? response.data : [];
+      // Sort messages by id in ascending order
+      const sortedDrafts = drafts.sort((a, b) => b.id - a.id);
+      setMessages(sortedDrafts);
+      setTotalItems(sortedDrafts.length);
+    } catch (error) {
+      console.error("Error fetching drafts:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    }
+  };
+  fetchDrafts();
+}, [currentPage]);
 
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 

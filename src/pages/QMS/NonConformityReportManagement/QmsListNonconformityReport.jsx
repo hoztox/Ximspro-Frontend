@@ -68,57 +68,60 @@ const QmsListNonconformityReport = () => {
 
   // Fetch data from API
   useEffect(() => {
-    const fetchData = async () => {
-      if (!companyId) {
-        setError("Company ID not found");
-        setLoading(false);
-        return;
-      }
+  const fetchData = async () => {
+    if (!companyId) {
+      setError("Company ID not found");
+      setLoading(false);
+      return;
+    }
 
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${BASE_URL}/qms/conformity/company/${companyId}/`
-        );
-        setNonConformity(response.data);
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}/qms/conformity/company/${companyId}/`
+      );
+      
+      // Sort reports by id in ascending order
+      const sortedData = response.data.sort((a, b) => a.id - b.id);
+      
+      setNonConformity(sortedData);
 
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/conformity/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/conformity/drafts-count/${userId}/` 
+      );
+      setDraftCount(draftResponse.data.count);
 
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching nonconformity reports:", err);
+      let errorMsg = err.message;
 
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching nonconformity reports:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
         }
-
-        setError(errorMsg);
-        setLoading(false);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    };
 
-    fetchData();
-  }, [companyId]);
+      setError(errorMsg);
+      setLoading(false);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    }
+  };
+
+  fetchData();
+}, [companyId]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;

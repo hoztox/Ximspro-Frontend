@@ -79,7 +79,8 @@ const QmsListAudit = () => {
             const companyId = getUserCompanyId();
             const userId = getRelevantUserId();
             const response = await axios.get(`${BASE_URL}/qms/audit/company/${companyId}/`);
-            setAudits(response.data);
+            const sortedAudits = response.data.sort((a, b) => a.id - b.id);
+            setAudits(sortedAudits);
 
             const draftResponse = await axios.get(
                 `${BASE_URL}/qms/audit/drafts-count/${userId}/`
@@ -157,7 +158,7 @@ const QmsListAudit = () => {
             setTimeout(() => {
                 setShowErrorModal(false);
             }, 3000);
-            let errorMsg =  error.message;
+            let errorMsg = error.message;
 
             if (error.response) {
                 // Check for field-specific errors first

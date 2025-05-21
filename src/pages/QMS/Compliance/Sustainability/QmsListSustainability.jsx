@@ -206,13 +206,8 @@ const QmsListSustainability = () => {
       // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
 
-      // Sort manuals by creation date (newest first)
-      const sortedManuals = filteredManuals.sort((a, b) => {
-        // Use created_at if available, otherwise fall back to date field
-        const dateA = new Date(a.created_at || a.date || 0);
-        const dateB = new Date(b.created_at || b.date || 0);
-        return dateB - dateA; // Descending order (newest first)
-      });
+      // Sort manuals by id in ascending order
+      const sortedManuals = filteredManuals.sort((a, b) => a.id - b.id);
 
       setManuals(sortedManuals);
       console.log("Filtered and Sorted Manuals Data:", sortedManuals);
@@ -222,8 +217,8 @@ const QmsListSustainability = () => {
       setError("Failed to load record format. Please try again.");
       setLoading(false);
     }
-  };
-
+  }; 
+  
   useEffect(() => {
     // Fetch all required data in a single useEffect
     const fetchAllData = async () => {
@@ -241,11 +236,14 @@ const QmsListSustainability = () => {
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
         console.log("Filtered manuals:", filteredManuals);
 
-        // Set filtered manuals
-        setManuals(filteredManuals);
+        // Sort manuals by id in ascending order
+        const sortedManuals = filteredManuals.sort((a, b) => a.id - b.id);
+
+        // Set filtered and sorted manuals
+        setManuals(sortedManuals);
 
         // Then fetch corrections for visible manuals
-        const correctionsPromises = filteredManuals.map(async (manual) => {
+        const correctionsPromises = sortedManuals.map(async (manual) => {
           try {
             console.log(`Fetching corrections for manual ID ${manual.id}`);
             const correctionResponse = await axios.get(
@@ -711,8 +709,8 @@ const QmsListSustainability = () => {
                             {manual.status === "Pending for Review/Checking"
                               ? "Review"
                               : manual.status === "Correction Requested"
-                              ? "Click to Approve"
-                              : "Click to Approve"}
+                                ? "Click to Approve"
+                                : "Click to Approve"}
                           </button>
                         ) : (
                           <span className="text-[#858585]">
@@ -768,9 +766,8 @@ const QmsListSustainability = () => {
                       <button
                         onClick={handlePrevious}
                         disabled={currentPage === 1}
-                        className={`cursor-pointer swipe-text ${
-                          currentPage === 1 ? "opacity-50" : ""
-                        }`}
+                        className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                          }`}
                       >
                         Previous
                       </button>
@@ -779,11 +776,10 @@ const QmsListSustainability = () => {
                           <button
                             key={page}
                             onClick={() => handlePageClick(page)}
-                            className={`${
-                              currentPage === page
+                            className={`${currentPage === page
                                 ? "pagin-active"
                                 : "pagin-inactive"
-                            }`}
+                              }`}
                           >
                             {page}
                           </button>
@@ -794,11 +790,10 @@ const QmsListSustainability = () => {
                         disabled={
                           currentPage === totalPages || totalPages === 0
                         }
-                        className={`cursor-pointer swipe-text ${
-                          currentPage === totalPages || totalPages === 0
+                        className={`cursor-pointer swipe-text ${currentPage === totalPages || totalPages === 0
                             ? "opacity-50"
                             : ""
-                        }`}
+                          }`}
                       >
                         Next
                       </button>

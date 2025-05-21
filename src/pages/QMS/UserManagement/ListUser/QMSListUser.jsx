@@ -68,47 +68,40 @@ const QMSListUser = () => {
   // Modify the fetchUsers function to sort by latest added first
 
   const fetchUsers = async () => {
-    try {
-      const companyId = getUserCompanyId(); // Fetch company ID dynamically
+  try {
+    const companyId = getUserCompanyId(); // Fetch company ID dynamically
 
-      if (!companyId) return;
+    if (!companyId) return;
 
-      const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`, {
-        params: {
-          search: searchQuery,
-          page: currentPage,
-          limit: usersPerPage,
-          order_by: "created_at", // Request server-side sorting if API supports it
-          order: "desc"           // Sort in descending order (newest first)
-        },
-      });
+    const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`, {
+      params: {
+        search: searchQuery,
+        page: currentPage,
+        limit: usersPerPage,
+      },
+    });
 
-      console.log("API Response:", response.data);
+    console.log("API Response:", response.data);
 
-      let usersList = [];
+    let usersList = [];
 
-      if (Array.isArray(response.data)) {
-        usersList = response.data;
-        setTotalPages(1);
-      } else if (response.data.users) {
-        usersList = response.data.users;
-        setTotalPages(response.data.total_pages || 1);
-      }
-
-      // If server doesn't support sorting, sort locally
-      // Sort by created_at or registration_date (adjust field name if different)
-      const sortedUsers = usersList.sort((a, b) => {
-        const dateA = new Date(a.created_at || a.registration_date || 0);
-        const dateB = new Date(b.created_at || b.registration_date || 0);
-        return dateB - dateA; // Descending order (newest first)
-      });
-
-      setUsers(sortedUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      toast.error("Failed to load users.");
+    if (Array.isArray(response.data)) {
+      usersList = response.data;
+      setTotalPages(1);
+    } else if (response.data.users) {
+      usersList = response.data.users;
+      setTotalPages(response.data.total_pages || 1);
     }
-  };
+
+    // Sort by id in ascending order
+    const sortedUsers = usersList.sort((a, b) => a.id - b.id);
+
+    setUsers(sortedUsers);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    toast.error("Failed to load users.");
+  }
+};
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);

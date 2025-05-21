@@ -74,7 +74,10 @@ const QmsListComplaints = () => {
 
       try {
         const response = await axios.get(`${BASE_URL}/qms/complaints/company/${companyId}/`);
-        setComplaints(response.data);
+        // Sort complaints by id in ascending order
+        const sortedComplaints = response.data.sort((a, b) => a.id - b.id);
+        setComplaints(sortedComplaints);
+        console.log('Sorted complaints:', sortedComplaints);
 
         const userId = getRelevantUserId();
 
@@ -85,18 +88,14 @@ const QmsListComplaints = () => {
         setLoading(false);
       } catch (error) {
         console.error("Error fetching complaints:", error);
-        let errorMsg =  error.message;
+        let errorMsg = error.message;
 
         if (error.response) {
-          // Check for field-specific errors first
           if (error.response.data.date) {
             errorMsg = error.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (error.response.data.detail) {
+          } else if (error.response.data.detail) {
             errorMsg = error.response.data.detail;
-          }
-          else if (error.response.data.message) {
+          } else if (error.response.data.message) {
             errorMsg = error.response.data.message;
           }
         } else if (error.message) {
@@ -113,7 +112,7 @@ const QmsListComplaints = () => {
     };
 
     fetchComplaints();
-  }, [companyId]);
+  }, [companyId]); 
 
   // Open delete confirmation modal
   const openDeleteModal = (complaint) => {

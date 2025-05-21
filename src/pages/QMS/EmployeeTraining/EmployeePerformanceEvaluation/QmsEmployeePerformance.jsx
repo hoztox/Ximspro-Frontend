@@ -845,37 +845,30 @@ const QmsEmployeePerformance = () => {
           setLoading(false);
           return;
         }
-
         const response = await axios.get(
           `${BASE_URL}/qms/performance/${companyId}/`
         );
-        setPerformances(response.data);
-
+        // Sort performances by id in ascending order
+        const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
+        setPerformances(sortedPerformances);
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/performance/drafts-count/${userId}/`
         );
         setDraftCount(draftResponse.data.count);
-        console.log("eeeeeeee", draftResponse.data.count);
-
         setError(null);
       } catch (err) {
         let errorMsg = err.message;
-
         if (err.response) {
-          // Check for field-specific errors first
           if (err.response.data.date) {
             errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
+          } else if (err.response.data.detail) {
             errorMsg = err.response.data.detail;
           } else if (err.response.data.message) {
             errorMsg = err.response.data.message;
           }
         } else if (err.message) {
-          errorMsg = err.message;
+          errorMsg = err.message; 
         }
-
         setError(errorMsg);
         console.error("Error fetching employee performance data:", err);
       } finally {

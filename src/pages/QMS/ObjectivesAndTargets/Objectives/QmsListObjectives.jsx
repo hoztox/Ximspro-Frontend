@@ -69,52 +69,55 @@ const QmsListObjectives = () => {
   }, []);
 
   const fetchObjectives = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(
-        `${BASE_URL}/qms/objectives/${companyId}`
-      );
+  try {
+    setIsLoading(true);
+    const response = await axios.get(
+      `${BASE_URL}/qms/objectives/${companyId}`
+    );
 
-      if (Array.isArray(response.data)) {
-        setObjectives(response.data);
-      } else {
-        setObjectives([]);
-        console.error("Unexpected response format:", response.data);
-      }
-      const draftResponse = await axios.get(
-        `${BASE_URL}/qms/objectives/drafts-count/${userId}/`
-      );
-      setDraftCount(draftResponse.data.count);
-
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching objectives:", error);
-      let errorMsg = error.message;
-
-      if (error.response) {
-        // Check for field-specific errors first
-        if (error.response.data.date) {
-          errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
-          errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
-          errorMsg = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-
-      setError(errorMsg);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
-      setIsLoading(false);
+    let objectivesData = [];
+    if (Array.isArray(response.data)) {
+      // Sort by id in ascending order
+      objectivesData = response.data.sort((a, b) => a.id - b.id);
+    } else {
+      console.error("Unexpected response format:", response.data);
     }
-  };
+
+    setObjectives(objectivesData);
+
+    const draftResponse = await axios.get(
+      `${BASE_URL}/qms/objectives/drafts-count/${userId}/`
+    );
+    setDraftCount(draftResponse.data.count);
+
+    setIsLoading(false);
+  } catch (error) {
+    console.error("Error fetching objectives:", error);
+    let errorMsg = error.message;
+
+    if (error.response) {
+      // Check for field-specific errors first
+      if (error.response.data.date) {
+        errorMsg = error.response.data.date[0];
+      }
+      // Check for non-field errors
+      else if (error.response.data.detail) {
+        errorMsg = error.response.data.detail;
+      } else if (error.response.data.message) {
+        errorMsg = error.response.data.message;
+      }
+    } else if (error.message) {
+      errorMsg = error.message;
+    }
+
+    setError(errorMsg);
+    setShowErrorModal(true);
+    setTimeout(() => {
+      setShowErrorModal(false);
+    }, 3000);
+    setIsLoading(false);
+  }
+}; 
 
   const handleSearchChange = (e) => {
     const value = e.target.value;

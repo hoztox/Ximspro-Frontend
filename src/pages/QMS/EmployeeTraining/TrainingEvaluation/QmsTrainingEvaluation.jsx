@@ -876,56 +876,57 @@ const QmsTrainingEvaluation = () => {
 
   // Fetch employee performance data
   useEffect(() => {
-    const fetchPerformanceData = async () => {
-      setLoading(true);
-      try {
-        const userId = getRelevantUserId();
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/training-evaluation/${companyId}/`
-        );
-
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-        console.log("count......", draftResponse);
-
-        setPerformances(response.data);
-        setError(null);
-      } catch (err) {
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        console.error("Error fetching training evaluation data:", err);
-      } finally {
+  const fetchPerformanceData = async () => {
+    setLoading(true);
+    try {
+      const userId = getRelevantUserId();
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchPerformanceData();
-  }, []);
+      const response = await axios.get(
+        `${BASE_URL}/qms/training-evaluation/${companyId}/`
+      );
+
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
+      // Sort performances by id in ascending order
+      const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
+      setPerformances(sortedPerformances);
+      setError(null);
+    } catch (err) {
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      console.error("Error fetching training evaluation data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchPerformanceData();
+}, []);
 
   // Handle search
   const handleSearch = (e) => {

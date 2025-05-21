@@ -73,7 +73,13 @@ const QmsListCustomer = () => {
         const response = await axios.get(
           `${BASE_URL}/qms/customer/company/${companyId}/`
         );
-        const formattedData = response.data.map((customer, index) => ({
+
+        // Sort by created_at in descending order (newest first)
+        const sortedData = response.data.sort((a, b) => 
+          new Date(a.created_at) - new Date(b.created_at) 
+        );
+
+        const formattedData = sortedData.map((customer, index) => ({
           id: index + 1,
           customer_id: customer.id,
           name: customer.name || "Anonymous",
@@ -86,21 +92,17 @@ const QmsListCustomer = () => {
           country: customer.country || "N/A",
           zipcode: customer.zipcode || "N/A",
           is_draft: customer.is_draft,
-          date: customer.created_at
-            ? formatDate(customer.created_at)
-            : formatDate(new Date()),
+          created_at: formatDate(customer.created_at),
         }));
         setCustomers(formattedData);
-
+ 
         const userId = getRelevantUserId();
-
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/customer/drafts-count/${userId}/`
         );
         setDraftCount(draftResponse.data.count);
 
         setError(null);
-        console.log("customers", response);
       } catch (err) {
         let errorMsg = err.message;
 
@@ -337,7 +339,7 @@ const QmsListCustomer = () => {
                     {item.address}
                   </td>
                   <td className="px-3 list-awareness-training-datas">
-                    {item.date}
+                    {item.created_at}
                   </td>
                   <td className="list-awareness-training-datas text-center ">
                     <div className="flex justify-center items-center h-[50px]">

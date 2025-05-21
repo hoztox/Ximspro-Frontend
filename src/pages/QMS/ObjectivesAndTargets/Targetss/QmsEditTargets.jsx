@@ -358,10 +358,6 @@ const QmsEditTargets = () => {
                 error={error}
             />
 
-            {isLoading && (
-                <div className="text-center px-[104px] py-5 not-found">Loading...</div>
-            )}
-
 
             {!isLoading && (
                 <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">

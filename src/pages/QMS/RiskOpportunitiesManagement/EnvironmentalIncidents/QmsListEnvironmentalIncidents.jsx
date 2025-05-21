@@ -216,8 +216,8 @@ const QmsListEnvironmentalIncidents = () => {
             <tbody>
               {environmentalIncidents.length === 0 && (
                 <tr>
-                  <td colSpan="11" className="text-center py-4 add-manual-datas">
-                    No incidents found.
+                  <td colSpan="11" className="text-center py-4 not-found">
+                    No Environmental Incidents Found
                   </td>
                 </tr>
               )}

@@ -73,56 +73,58 @@ const QmsListTraining = () => {
   };
 
   useEffect(() => {
-    const fetchTrainingData = async () => {
-      setIsLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        const userId = getRelevantUserId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/training/${companyId}/`
-        );
-        const formattedData = response.data.map((item) => ({
-          id: item.id,
-          title: item.training_title,
-          type: item.type_of_training,
-          venue: item.venue,
-          datePlanned: formatDate(item.date_planned),
-          status: item.status,
-          isDraft: item.is_draft,
-        }));
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/training/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-        setTrainings(formattedData);
-        setError(null);
-      } catch (err) {
-        let errorMsg = err.message;
+  const fetchTrainingData = async () => {
+    setIsLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/training/${companyId}/`
+      );
+      const formattedData = response.data.map((item) => ({
+        id: item.id,
+        title: item.training_title,
+        type: item.type_of_training,
+        venue: item.venue,
+        datePlanned: formatDate(item.date_planned),
+        status: item.status,
+        isDraft: item.is_draft,
+      }));
+      // Sort by id in ascending order
+      const sortedData = formattedData.sort((a, b) => a.id - b.id); 
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/training/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+      setTrainings(sortedData); // Use sorted data
+      setError(null);
+    } catch (err) {
+      let errorMsg = err.message;
 
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
         }
-
-        setError(errorMsg);
-        console.error("Error fetching training data:", err);
-      } finally {
-        setIsLoading(false);
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    };
 
-    fetchTrainingData();
-  }, []);
+      setError(errorMsg);
+      console.error("Error fetching training data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchTrainingData();
+}, []);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;

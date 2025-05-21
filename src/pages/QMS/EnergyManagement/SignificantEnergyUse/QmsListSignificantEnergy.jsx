@@ -64,29 +64,33 @@ const QmsListSignificantEnergy = () => {
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
 
-    useEffect(() => {
-        fetchSignificantEnergy();
-    }, []);
+    // useEffect(() => {
+    //     fetchSignificantEnergy();
+    // }, []); 
 
+    useEffect(() => {
     const fetchSignificantEnergy = async () => {
         setIsLoading(true);
         setError('');
         try {
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
+                setIsLoading(false);
                 return;
             }
             const response = await axios.get(`${BASE_URL}/qms/significant/company/${companyId}/`);
-            // Format date as DD-MM-YYYY
-            const formattedData = response.data.map(item => ({ 
-                ...item,
-                date: item.date ? new Date(item.date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }).split('/').join('-') : ''
-            }));
-            setSignificantEnergy(formattedData);
+            // Sort significant energy by id in ascending order and format date
+            const sortedData = response.data
+                .sort((a, b) => a.id - b.id)
+                .map(item => ({
+                    ...item,
+                    date: item.date ? new Date(item.date).toLocaleDateString('en-GB', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }).split('/').join('-') : ''
+                }));
+            setSignificantEnergy(sortedData);
 
             const draftResponse = await axios.get(
                 `${BASE_URL}/qms/significant/drafts-count/${userId}/`
@@ -120,6 +124,9 @@ const QmsListSignificantEnergy = () => {
             setIsLoading(false);
         }
     };
+
+    fetchSignificantEnergy();
+}, [companyId, userId]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;

@@ -45,6 +45,7 @@ const QmsListTrashSystemMessaging = () => {
   };
 
   // Fetch trashed messages
+  useEffect(() => {
   const fetchTrashedMessages = async () => {
     try {
       setLoading(true);
@@ -55,8 +56,10 @@ const QmsListTrashSystemMessaging = () => {
       const response = await axios.get(
         `${BASE_URL}/qms/messages/trash/user/${userId}/`
       );
-      setTrashedMessages(response.data);
-      console.log('trashhhhhhh:', response.data);
+      // Sort trashedMessages by id in ascending order
+      const sortedMessages = response.data.sort((a, b) => b.id - a.id);
+      setTrashedMessages(sortedMessages);
+      console.log('trashhhhhhh:', sortedMessages);
       
       setError(null);
     } catch (error) {
@@ -87,6 +90,9 @@ const QmsListTrashSystemMessaging = () => {
       setLoading(false);
     }
   };
+
+  fetchTrashedMessages();
+}, []);
 
   // Open restore confirmation modal
   const openRestoreModal = (message) => {
@@ -200,10 +206,10 @@ const QmsListTrashSystemMessaging = () => {
     }
   };
 
-  // Fetch messages on component mount
-  useEffect(() => {
-    fetchTrashedMessages();
-  }, []);
+  // // Fetch messages on component mount
+  // useEffect(() => {
+  //   fetchTrashedMessages();
+  // }, []);
 
   // Format date from created_at
   const formatDate = (dateString) => {

@@ -45,7 +45,9 @@ const QmsListMeeting = () => {
         const response = await axios.get(
           `${BASE_URL}/qms/meeting/company/${companyId}/`
         );
-        setMeetings(response.data);
+        // Sort meetings by id in ascending order
+        const sortedMeetings = response.data.sort((a, b) => a.id - b.id);
+        setMeetings(sortedMeetings);
 
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/meeting/drafts-count/${userId}/`
@@ -444,9 +446,8 @@ const QmsListMeeting = () => {
           <div className="text-white total-text">Total: {totalItems}</div>
           <div className="flex items-center gap-5">
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
               disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             >
@@ -457,9 +458,8 @@ const QmsListMeeting = () => {
               (number) => (
                 <button
                   key={number}
-                  className={`w-8 h-8 rounded-md ${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`w-8 h-8 rounded-md ${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                   onClick={() => handlePageChange(number)}
                 >
                   {number}
@@ -468,9 +468,8 @@ const QmsListMeeting = () => {
             )}
 
             <button
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
               disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             >

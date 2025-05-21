@@ -82,7 +82,7 @@ const QmsListManagementChange = () => {
   }, []);
 
   const formatDate = (dateString) => {
-    if (!dateString) return "-";
+    if (!dateString) return "N/A";
 
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return dateString; // Return as is if invalid date
@@ -97,49 +97,51 @@ const QmsListManagementChange = () => {
   };
 
   useEffect(() => {
-    const fetchManagementChanges = async () => {
-      setIsLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          throw new Error("Company ID not found");
-        }
+  const fetchManagementChanges = async () => {
+    setIsLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
 
-        const response = await axios.get(
-          `${BASE_URL}/qms/changes/${companyId}/`
-        );
+      const response = await axios.get(
+        `${BASE_URL}/qms/changes/${companyId}/`
+      );
 
-        const formattedData = response.data.map((item) => ({
+      const formattedData = response.data
+        .map((item) => ({
           id: item.id,
-          title: item.moc_title || "-",
-          mocNo: item.moc_no || "-",
-          revision: item.rivision || "Revision",
+          title: item.moc_title || "N/A",
+          mocNo: item.moc_no || "N/A",
+          revision: item.rivision || "Revision", // Note: Typo in 'rivision' (should be 'revision')
           date: formatDate(item.date),
           mocType: item.moc_type,
           attachDocument: item.attach_document,
           relatedRecordFormat: item.related_record_format,
-          purposeOfChange: item.purpose_of_chnage,
-          potentialConsequences: item.potential_cosequences,
+          purposeOfChange: item.purpose_of_chnage, // Note: Typo in 'chnage' (should be 'change')
+          potentialConsequences: item.potential_cosequences, // Note: Typo in 'cosequences' (should be 'consequences')
           mocRemarks: item.moc_remarks,
           resourcesRequired: item.resources_required,
           impactOnProcess: item.impact_on_process,
           sendNotification: item.send_notification,
           isDraft: item.is_draft,
-        }));
+        }))
+        .sort((a, b) => a.id - b.id); // Sort by id in ascending order
 
-        // Filter out drafts for the main list
-        setManagementChanges(formattedData.filter((item) => !item.isDraft));
-        setError(null);
-      } catch (err) {
-        setError("Failed to load management changes data");
-        console.error("Error fetching management changes data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      // Filter out drafts for the main list
+      setManagementChanges(formattedData.filter((item) => !item.isDraft));
+      setError(null);
+    } catch (err) {
+      setError("Failed to load management changes data");
+      console.error("Error fetching management changes data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchManagementChanges();
-  }, []);
+  fetchManagementChanges();
+}, []);
 
   // Update the handleDelete function to use modals instead of window.confirm
   const handleDelete = (id) => {

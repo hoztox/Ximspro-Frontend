@@ -54,41 +54,43 @@ const QmsListLegalRequirements = () => {
 
   // Fetch legal requirements data
   useEffect(() => {
-    const fetchLegalData = async () => {
-      setIsLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          throw new Error("Company ID not found");
-        }
+  const fetchLegalData = async () => {
+    setIsLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
 
-        const response = await axios.get(`${BASE_URL}/qms/legal/${companyId}/`);
+      const response = await axios.get(`${BASE_URL}/qms/legal/${companyId}/`);
 
-        const formattedData = response.data.map((item) => ({
+      const formattedData = response.data
+        .map((item) => ({
           id: item.id,
           title: item.legal_name,
           legalNo: item.legal_no,
-          revision: item.rivision,
+          revision: item.rivision, // Note: Typo in 'rivision' (should be 'revision')
           date: formatDate(item.date),
           documentType: item.document_type,
           attachDocument: item.attach_document,
-          relatedRecordFormat: item.related_record_format,
+          relatedRecordFormat: item.related_record_format, 
           sendNotification: item.send_notification,
           isDraft: item.is_draft,
-        }));
+        }))
+        .sort((a, b) => a.id - b.id); // Sort by id in ascending order
 
-        setLegalRequirements(formattedData);
-        setError(null);
-      } catch (err) {
-        setError("Failed to load legal requirements data");
-        console.error("Error fetching legal requirements data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setLegalRequirements(formattedData);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load legal requirements data");
+      console.error("Error fetching legal requirements data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchLegalData();
-  }, []);
+  fetchLegalData();
+}, []);  
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");

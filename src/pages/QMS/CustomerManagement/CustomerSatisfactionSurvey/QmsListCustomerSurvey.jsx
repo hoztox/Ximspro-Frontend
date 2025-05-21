@@ -100,52 +100,63 @@ const EvaluationModal = ({
   }, [isOpen, surveyId]);
 
   useEffect(() => {
-    const fetchSurveyData = async () => {
-      setLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/customer/survey/${companyId}/`
-        );
-        setSurveys(response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching customer survey data:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
+  const fetchSurveyData = async () => {
+    setLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
+      if (!companyId) {
+        setError("Company ID not found");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchSurveyData();
-  }, []);
+      // Fetch survey data
+      const response = await axios.get(
+        `${BASE_URL}/qms/customer/survey/${companyId}/`
+      );
+      // Sort surveys by id in ascending order
+      const sortedSurveys = response.data.sort((a, b) => a.id - b.id);
+      setSurveys(sortedSurveys);
+
+      // Fetch draft count
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/customer/survey/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching customer survey data:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSurveyData();
+}, []); 
 
   // Fetch questions when modal opens
   useEffect(() => {

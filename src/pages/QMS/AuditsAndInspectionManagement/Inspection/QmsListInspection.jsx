@@ -97,6 +97,9 @@ const QmsListInspection = () => {
             const response = await axios.get(`${BASE_URL}/qms/inspection/company/${companyId}/`);
             setInspections(response.data);
 
+             const sortedInspections = response.data.sort((a, b) => a.id - b.id);
+            setInspections(sortedInspections); 
+
             const draftResponse = await axios.get(
                 `${BASE_URL}/qms/inspection/drafts-count/${userId}/`
             );

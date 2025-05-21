@@ -64,56 +64,63 @@ const QmsListEnergyBaselines = () => {
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
 
-    const fetchBaselines = async () => {
-        try {
-            setIsLoading(true);
-            setError('');
-            if (!companyId) return;
-
-            const response = await axios.get(`${BASE_URL}/qms/baselines/company/${companyId}/`);
-            if (Array.isArray(response.data)) {
-                setEnergyBaseLines(response.data);
-            } else {
-                setEnergyBaseLines([]);
-                console.error("Unexpected response format:", response.data);
-            }
-
-            const draftResponse = await axios.get(
-                `${BASE_URL}/qms/baselines/drafts-count/${userId}/` 
-            );
-            setDraftCount(draftResponse.data.count);
-
-        } catch (error) {
-            console.error("Error fetching baselines:", error);
-            let errorMsg = error.message;
-
-            if (error.response) {
-                if (error.response.data.date) {
-                    errorMsg = error.response.data.date[0];
-                }
-                else if (error.response.data.detail) {
-                    errorMsg = error.response.data.detail;
-                }
-                else if (error.response.data.message) {
-                    errorMsg = error.response.data.message;
-                }
-            } else if (error.message) {
-                errorMsg = error.message;
-            }
-
-            setError(errorMsg);
-            setShowErrorModal(true);
-            setTimeout(() => {
-                setShowErrorModal(false);
-            }, 3000);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
+        const fetchBaselines = async () => {
+            try {
+                setIsLoading(true);
+                setError('');
+                if (!companyId) {
+                    setError('Company ID not found. Please log in again.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                const response = await axios.get(`${BASE_URL}/qms/baselines/company/${companyId}/`);
+                // Sort energy baselines by id in ascending order
+                const sortedEnergyBaseLines = Array.isArray(response.data)
+                    ? response.data.sort((a, b) => a.id - b.id)
+                    : [];
+                setEnergyBaseLines(sortedEnergyBaseLines);
+
+                const draftResponse = await axios.get(
+                    `${BASE_URL}/qms/baselines/drafts-count/${userId}/`
+                );
+                setDraftCount(draftResponse.data.count);
+
+            } catch (error) {
+                console.error("Error fetching baselines:", error);
+                let errorMsg = error.message;
+
+                if (error.response) {
+                    if (error.response.data.date) {
+                        errorMsg = error.response.data.date[0];
+                    }
+                    else if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchBaselines();
-    }, []);
+    }, [companyId, userId]);
+
+    // useEffect(() => {
+    //     fetchBaselines();
+    // }, []);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -208,14 +215,14 @@ const QmsListEnergyBaselines = () => {
     };
 
     const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
-  const date = new Date(dateString);
-  if (isNaN(date)) return "N/A"; // handle invalid date formats
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        if (isNaN(date)) return "N/A"; // handle invalid date formats
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
 
 
     // Change page

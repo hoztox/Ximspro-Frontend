@@ -93,49 +93,58 @@ const EvaluationModal = ({
   }, [isOpen, evaluationId]);
 
   useEffect(() => {
-    const fetchEvaluationData = async () => {
-      setLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/supplier/evaluation/${companyId}/`
-        );
-        setEvaluations(response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching supplier evaluation data:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          } else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
+  const fetchEvaluationData = async () => {
+    setLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
+      if (!companyId) {
+        setError("Company ID not found");
         setLoading(false);
+        return;
       }
-    };
 
-    fetchEvaluationData();
-  }, []);
+      const response = await axios.get(
+        `${BASE_URL}/qms/supplier/evaluation/${companyId}/`
+      );
+      // Sort evaluations by id in ascending order
+      const sortedEvaluations = response.data.sort((a, b) => a.id - b.id); 
+      setEvaluations(sortedEvaluations);
+
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/supplier/evaluation/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
+      setError(null);
+    } catch (err) {
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      console.error("Error fetching supplier evaluation data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchEvaluationData();
+}, []);
 
   // Fetch questions when modal opens
   useEffect(() => {

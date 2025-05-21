@@ -73,58 +73,61 @@ const QmsListSupplier = () => {
 
   // Fetch suppliers data
   useEffect(() => {
-    const fetchSuppliers = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${BASE_URL}/qms/suppliers/company/${companyId}/`
-        );
-        const formattedData = response.data.map((supplier, index) => ({
-          id: index + 1,
+  const fetchSuppliers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}/qms/suppliers/company/${companyId}/`
+      );
+      // Sort suppliers by supplier_id in ascending order
+      const sortedData = response.data
+        .map((supplier, index) => ({
+          id: index + 1, // Display index
           supplier_id: supplier.id,
           supplier_name: supplier.company_name || "Anonymous",
           product: supplier.qualified_to_supply || "Anonymous",
           date: supplier.approved_date || "N/A",
           status: supplier.status || "Not Approved",
           active: supplier.active === "active",
-        }));
-        setSuppliers(formattedData);
+        }))
+        .sort((a, b) => a.supplier_id - b.supplier_id); // Sort by supplier_id
+      setSuppliers(sortedData);
 
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/suppliers/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/suppliers/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
 
-        setError(null);
-        console.log("suppliers", response);
-      } catch (err) {
-        let errorMsg = err.message;
+      setError(null);
+      console.log("suppliers", response);
+    } catch (err) {
+      let errorMsg = err.message;
 
-        if (err.response) {
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          } else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
         }
-
-        setError(errorMsg);
-        console.error("Error fetching suppliers:", err);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
-        setLoading(false);
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    };
 
-    fetchSuppliers();
-  }, [companyId]);
+      setError(errorMsg);
+      console.error("Error fetching suppliers:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchSuppliers();
+}, [companyId]);
 
   // Handle search
   const handleSearchChange = (e) => {
@@ -310,6 +313,18 @@ const QmsListSupplier = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date
+      .toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .replace(/\//g, "/");
+  };
+
   // Pagination handlers
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () =>
@@ -372,8 +387,8 @@ const QmsListSupplier = () => {
           <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-              <th className="px-2 text-left add-manual-theads w-[23%]">Supplier</th>
-              <th className="px-2 text-left add-manual-theads w-[28%]">
+              <th className="px-2 text-left add-manual-theads w-[10%]">Supplier</th>
+              <th className="px-2 text-left add-manual-theads w-[32%]">
                 Product / Service
               </th>
               <th className="px-2 text-left add-manual-theads">Date</th>
@@ -398,7 +413,7 @@ const QmsListSupplier = () => {
                     {supplier.supplier_name}
                   </td>
                   <td className="px-2 add-manual-datas">{supplier.product}</td>
-                  <td className="px-2 add-manual-datas">{supplier.date}</td>
+                  <td className="px-2 add-manual-datas">{formatDate(supplier.date)}</td>
                   <td className="px-2 add-manual-datas !text-center">
                     <span
                       className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${getStatusColor(

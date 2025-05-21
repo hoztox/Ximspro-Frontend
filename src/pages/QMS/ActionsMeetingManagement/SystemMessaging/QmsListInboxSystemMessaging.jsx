@@ -48,56 +48,58 @@ const QmsListInboxSystemMessaging = () => {
   };
 
   useEffect(() => {
-    const fetchMessages = async () => {
-      setLoading(true);
-      try {
-        const userId = getRelevantUserId();
-        if (!userId) {
-          throw new Error("User ID not found");
-        }
-        const response = await axios.get(
-          `${BASE_URL}/qms/messages/received/${userId}`
-        );
-
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/messages/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
-
-        setMessages(response.data);
-        console.log("sssssssssssss", response.data);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching messages:", err);
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first 
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
-        setLoading(false);
+  const fetchMessages = async () => {
+    setLoading(true);
+    try {
+      const userId = getRelevantUserId();
+      if (!userId) {
+        throw new Error("User ID not found");
       }
-    };
+      const response = await axios.get(
+        `${BASE_URL}/qms/messages/received/${userId}`
+      );
 
-    fetchMessages();
-  }, [currentPage]);
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/messages/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
+
+      // Sort messages by id in ascending order
+      const sortedMessages = response.data.sort((a, b) => b.id - a.id);
+      setMessages(sortedMessages);
+      console.log("sssssssssssss", sortedMessages);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        // Check for field-specific errors first
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchMessages();
+}, [currentPage]);
 
   // Format date from created_at
   const formatDate = (dateString) => {

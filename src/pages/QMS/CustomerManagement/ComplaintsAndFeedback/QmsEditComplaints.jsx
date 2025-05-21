@@ -760,7 +760,7 @@ const QmsEditComplaints = () => {
             value={formData.details}
             onChange={handleChange}
             className="add-training-inputs !h-[98px]"
-            required
+             
           />
         </div>
 
@@ -785,7 +785,7 @@ const QmsEditComplaints = () => {
             onFocus={() => setFocusedDropdown("executor")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
+             
           >
             <option value="" disabled>
               Select User
@@ -821,7 +821,7 @@ const QmsEditComplaints = () => {
                 onFocus={() => setFocusedDropdown("date.day")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   dd
@@ -849,7 +849,7 @@ const QmsEditComplaints = () => {
                 onFocus={() => setFocusedDropdown("date.month")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   mm
@@ -877,7 +877,7 @@ const QmsEditComplaints = () => {
                 onFocus={() => setFocusedDropdown("date.year")}
                 onBlur={() => setFocusedDropdown(null)}
                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                required
+                 
               >
                 <option value="" disabled>
                   yyyy
@@ -908,7 +908,7 @@ const QmsEditComplaints = () => {
             onFocus={() => setFocusedDropdown("solved_after_action")}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
+             
           >
             <option value="Yes">Yes</option>
             <option value="No">No</option>
@@ -938,7 +938,7 @@ const QmsEditComplaints = () => {
               onFocus={() => setFocusedDropdown("corrective_action_need")}
               onBlur={() => setFocusedDropdown(null)}
               className="add-training-inputs appearance-none pr-10 cursor-pointer"
-              required
+               
             >
               <option value="Yes">Yes</option>
               <option value="No">No</option>

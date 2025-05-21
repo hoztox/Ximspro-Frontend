@@ -64,53 +64,60 @@ const QmsListEnergyImprovement = () => {
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
 
-    const fetchImprovements = async () => {
-        if (!companyId) {
-            setError("No company ID found. Please log in again.");
-            return;
-        }
-
-        setIsLoading(true);
-        setError('');
-        try {
-            const response = await axios.get(`${BASE_URL}/qms/energy-improvements/company/${companyId}`);
-            setImprovements(response.data);
-
-            const draftResponse = await axios.get(
-                `${BASE_URL}/qms/energy-improvements/drafts-count/${userId}/`
-            );
-            setDraftCount(draftResponse.data.count);
-        } catch (error) {
-            console.error("Error fetching improvements:", error);
-            let errorMsg = error.message;
-
-            if (error.response) {
-                if (error.response.data.date) {
-                    errorMsg = error.response.data.date[0];
-                }
-                else if (error.response.data.detail) {
-                    errorMsg = error.response.data.detail;
-                }
-                else if (error.response.data.message) {
-                    errorMsg = error.response.data.message;
-                }
-            } else if (error.message) {
-                errorMsg = error.message;
+    useEffect(() => {
+        const fetchImprovements = async () => {
+            if (!companyId) {
+                setError("No company ID found. Please log in again.");
+                setIsLoading(false);
+                return;
             }
 
-            setError(errorMsg);
-            setShowErrorModal(true);
-            setTimeout(() => {
-                setShowErrorModal(false);
-            }, 3000);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            setIsLoading(true);
+            setError('');
+            try {
+                const response = await axios.get(`${BASE_URL}/qms/energy-improvements/company/${companyId}`);
+                // Sort improvements by id in ascending order
+                const sortedImprovements = response.data.sort((a, b) => a.id - b.id);
+                setImprovements(sortedImprovements);
 
-    useEffect(() => {
+                const draftResponse = await axios.get(
+                    `${BASE_URL}/qms/energy-improvements/drafts-count/${userId}/`
+                );
+                setDraftCount(draftResponse.data.count);
+            } catch (error) {
+                console.error("Error fetching improvements:", error);
+                let errorMsg = error.message;
+
+                if (error.response) {
+                    if (error.response.data.date) {
+                        errorMsg = error.response.data.date[0];
+                    }
+                    else if (error.response.data.detail) {
+                        errorMsg = error.response.data.detail;
+                    }
+                    else if (error.response.data.message) {
+                        errorMsg = error.response.data.message;
+                    }
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+
+                setError(errorMsg);
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
+            } finally {
+                setIsLoading(false);
+            }
+        }; 
+
         fetchImprovements();
-    }, []);
+    }, [companyId, userId]);
+
+    // useEffect(() => {
+    //     fetchImprovements();
+    // }, []);
 
     const handleSearchChange = (e) => {
         setSearchQuery(e.target.value);
@@ -294,7 +301,7 @@ const QmsListEnergyImprovement = () => {
                                     <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-2 add-manual-datas">{improvement.eio_title || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">{improvement.eio || 'N/A'}</td>
-                                    <td className="px-2 add-manual-datas">{improvement.target || 'N/A'}</td> 
+                                    <td className="px-2 add-manual-datas">{improvement.target || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">{formatDate(improvement.date)}</td>
                                     <td className="px-2 add-manual-datas">
                                         {improvement.responsible

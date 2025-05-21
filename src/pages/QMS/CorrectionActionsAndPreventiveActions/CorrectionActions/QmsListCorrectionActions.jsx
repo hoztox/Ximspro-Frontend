@@ -76,7 +76,9 @@ const QmsListCorrectionActions = () => {
                 const response = await axios.get(`${BASE_URL}/qms/car_no/company/${companyId}/`);
                 console.log('car list:', response);
 
-                setCorrections(response.data);
+                // Sort corrections by id in ascending order
+                const sortedCorrections = response.data.sort((a, b) => a.id - b.id);
+                setCorrections(sortedCorrections);
 
                 const draftResponse = await axios.get(
                     `${BASE_URL}/qms/car/drafts-count/${userId}/`
@@ -112,7 +114,7 @@ const QmsListCorrectionActions = () => {
         };
 
         fetchData();
-    }, [companyId, BASE_URL]);
+    }, [companyId, userId]);
 
     const handleSearchChange = (e) => {
         const value = e.target.value;
@@ -305,7 +307,7 @@ const QmsListCorrectionActions = () => {
                                     <td className="px-2 add-manual-datas">{correction.action_no || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">{correction.executor?.first_name && correction.executor?.last_name ?
                                         `${correction.executor.first_name} ${correction.executor.last_name}` : "N/A"}
-                                    </td> 
+                                    </td>
                                     <td className="px-2 add-manual-datas">
                                         {correction.date_raised ? formatDate(correction.date_raised) : 'N/A'}
                                     </td>

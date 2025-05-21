@@ -77,75 +77,85 @@ const QmsListInternalProblems = () => {
   };
 
   // Fetch internal problems
-  const fetchInternalProblems = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const companyId = getUserCompanyId();
-      const userId = getRelevantUserId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
+  useEffect(() => {
+  const delayDebounceFn = setTimeout(() => {
+    const fetchInternalProblems = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const companyId = getUserCompanyId();
+        const userId = getRelevantUserId();
+        if (!companyId) {
+          setError("Company ID not found. Please log in again.");
+          setLoading(false);
+          return;
+        }
+
+        // Add parameters for filtering and pagination if needed
+        const response = await axios.get(
+          `${BASE_URL}/qms/internal-problems/company/${companyId}/`,
+          {
+            params: {
+              search: searchTerm,
+              page: currentPage,
+              is_draft: false, // Exclude drafts from main list
+            },
+          }
+        );
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/internal-problems/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
+        // Process the response data
+        if (response.data.results) {
+          // If API returns paginated response
+          const sortedProblems = response.data.results.sort((a, b) => a.id - b.id);
+          setInternalProblems(sortedProblems);
+          setTotalItems(response.data.count);
+        } else {
+          // If API returns simple array
+          const sortedProblems = response.data.sort((a, b) => a.id - b.id);
+          setInternalProblems(sortedProblems);
+          setTotalItems(response.data.length);
+        }
+
         setLoading(false);
-        return;
+      } catch (error) {
+        console.error("Error fetching internal problems:", error);
+        let errorMsg = error.message;
+
+        if (error.response) {
+          // Check for field-specific errors first
+          if (error.response.data.date) {
+            errorMsg = error.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          }
+          else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        } else if (error.message) {
+          errorMsg = error.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 2000);
+        setLoading(false);
       }
+    };
 
-      // Add parameters for filtering and pagination if needed
-      const response = await axios.get(
-        `${BASE_URL}/qms/internal-problems/company/${companyId}/`,
-        {
-          params: {
-            search: searchTerm,
-            page: currentPage,
-            is_draft: false, // Exclude drafts from main list
-          },
-        }
-      );
+    fetchInternalProblems();
+  }, 500);
 
-      const draftResponse = await axios.get(
-        `${BASE_URL}/qms/internal-problems/drafts-count/${userId}/`
-      );
-      setDraftCount(draftResponse.data.count);
-
-      // Process the response data
-      if (response.data.results) {
-        // If API returns paginated response
-        setInternalProblems(response.data.results);
-        setTotalItems(response.data.count);
-      } else {
-        // If API returns simple array
-        setInternalProblems(response.data);
-        setTotalItems(response.data.length);
-      }
-
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching internal problems:", error);
-      let errorMsg = error.message;
-
-      if (error.response) {
-        // Check for field-specific errors first
-        if (error.response.data.date) {
-          errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
-          errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
-          errorMsg = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-
-      setError(errorMsg);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 2000);
-      setLoading(false);
-    }
-  };
+  return () => clearTimeout(delayDebounceFn);
+}, [searchTerm, currentPage]);
 
   // Handle search
   const handleSearchChange = (e) => {
@@ -154,13 +164,13 @@ const QmsListInternalProblems = () => {
   };
 
   // Debounce search to prevent too many API calls
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      fetchInternalProblems();
-    }, 500);
+  // useEffect(() => {
+  //   const delayDebounceFn = setTimeout(() => {
+  //     fetchInternalProblems();
+  //   }, 500);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm]);
+  //   return () => clearTimeout(delayDebounceFn);
+  // }, [searchTerm]);
 
   // Navigation handlers
   const handleAddInternalProblems = () => {

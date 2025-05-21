@@ -16,7 +16,7 @@ const QmsListEnergyAction = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
@@ -38,37 +38,44 @@ const QmsListEnergyAction = () => {
 
   const companyId = getUserCompanyId();
 
+  // useEffect(() => {
+  //   fetchEnergyActions();
+  // }, [companyId]);
+
   useEffect(() => {
+    const fetchEnergyActions = async () => {
+      setIsLoading(true);
+      setError("");
+      try {
+        if (!companyId) {
+          setError("Company ID not found. Please log in again.");
+          setIsLoading(false); 
+          return;
+        }
+        const response = await axios.get(`${BASE_URL}/qms/energy-action/company/${companyId}/`);
+        // Sort energy actions by id in ascending order and format data
+        const sortedData = response.data
+          .sort((a, b) => a.id - b.id)
+          .map(item => ({
+            ...item,
+            date: item.date ? new Date(item.date).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric"
+            }).split("/").join("-") : "",
+            responsible_name: item.responsible ? item.responsible.name || "N/A" : "N/A"
+          }));
+        setEnergyActions(sortedData);
+      } catch (error) {
+        console.error("Error fetching energy actions:", error);
+        setError("Failed to load energy action plans. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchEnergyActions();
   }, [companyId]);
-
-  const fetchEnergyActions = async () => {
-    setIsLoading(true);
-    setError("");
-    try {
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        return;
-      }
-      const response = await axios.get(`${BASE_URL}/qms/energy-action/company/${companyId}/`);
- 
-      const formattedData = response.data.map(item => ({
-        ...item,
-        date: item.date ? new Date(item.date).toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric"
-        }).split("/").join("-") : "",
-        responsible_name: item.responsible ? item.responsible.name || "N/A" : "N/A"
-      }));
-      setEnergyActions(formattedData);
-    } catch (error) {
-      console.error("Error fetching energy actions:", error);
-      setError("Failed to load energy action plans. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -226,8 +233,8 @@ const QmsListEnergyAction = () => {
                         </td>
                         <td className="px-2 add-manual-datas">
                           {energyAction.statement ? (
-                            energyAction.statement.length > 50 ? 
-                              `${energyAction.statement.substring(0, 50)}...` : 
+                            energyAction.statement.length > 50 ?
+                              `${energyAction.statement.substring(0, 50)}...` :
                               energyAction.statement
                           ) : "N/A"}
                         </td>
@@ -272,9 +279,8 @@ const QmsListEnergyAction = () => {
                   <button
                     onClick={prevPage}
                     disabled={currentPage === 1}
-                    className={`cursor-pointer swipe-text ${
-                      currentPage === 1 ? "opacity-50" : ""
-                    }`}
+                    className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                      }`}
                   >
                     Previous
                   </button>
@@ -284,9 +290,8 @@ const QmsListEnergyAction = () => {
                       <button
                         key={number}
                         onClick={() => paginate(number)}
-                        className={`${
-                          currentPage === number ? "pagin-active" : "pagin-inactive"
-                        }`}
+                        className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                          }`}
                       >
                         {number}
                       </button>
@@ -296,16 +301,15 @@ const QmsListEnergyAction = () => {
                       {/* First page */}
                       <button
                         onClick={() => paginate(1)}
-                        className={`${
-                          currentPage === 1 ? "pagin-active" : "pagin-inactive"
-                        }`}
+                        className={`${currentPage === 1 ? "pagin-active" : "pagin-inactive"
+                          }`}
                       >
                         1
                       </button>
-                      
+
                       {/* Ellipsis if we're not at the start */}
                       {currentPage > 3 && <span className="text-gray-400">...</span>}
-                      
+
                       {/* Pages around current page */}
                       {Array.from(
                         { length: Math.min(totalPages, 3) },
@@ -326,24 +330,22 @@ const QmsListEnergyAction = () => {
                           <button
                             key={number}
                             onClick={() => paginate(number)}
-                            className={`${
-                              currentPage === number ? "pagin-active" : "pagin-inactive"
-                            }`}
+                            className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                              }`}
                           >
                             {number}
                           </button>
                         ))}
-                      
+
                       {/* Ellipsis if we're not at the end */}
                       {currentPage < totalPages - 2 && <span className="text-gray-400">...</span>}
-                      
+
                       {/* Last page */}
                       {totalPages > 1 && (
                         <button
                           onClick={() => paginate(totalPages)}
-                          className={`${
-                            currentPage === totalPages ? "pagin-active" : "pagin-inactive"
-                          }`}
+                          className={`${currentPage === totalPages ? "pagin-active" : "pagin-inactive"
+                            }`}
                         >
                           {totalPages}
                         </button>
@@ -354,9 +356,8 @@ const QmsListEnergyAction = () => {
                   <button
                     onClick={nextPage}
                     disabled={currentPage === totalPages}
-                    className={`cursor-pointer swipe-text ${
-                      currentPage === totalPages ? "opacity-50" : ""
-                    }`}
+                    className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                      }`}
                   >
                     Next
                   </button>
