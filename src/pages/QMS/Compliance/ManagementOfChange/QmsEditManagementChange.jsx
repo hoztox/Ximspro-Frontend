@@ -283,7 +283,8 @@ const QmsEditManagementChange = () => {
               name="moc_no"
               value={formData.moc_no}
               onChange={handleInputChange}
-              className="w-full add-compliance-inputs"
+              className="w-full add-compliance-inputs cursor-not-allowed"
+              readOnly 
             />
           </div>
           <div>

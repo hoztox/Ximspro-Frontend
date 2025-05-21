@@ -410,7 +410,8 @@ const QmsEditEnergyReview = () => {
                         name="review_no"
                         value={formData.review_no}
                         onChange={handleChange}
-                        className="add-training-inputs focus:outline-none"
+                        className="add-training-inputs focus:outline-none cursor-not-allowed"
+                        readOnly
                     />
                 </div>
 

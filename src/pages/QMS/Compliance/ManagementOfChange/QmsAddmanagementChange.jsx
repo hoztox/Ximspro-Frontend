@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,7 @@ const QmsAddmanagementChange = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     moc_title: "",
-    moc_no: "",
+    moc_no: "MOC-1",
     moc_type: "",
     day: "",
     month: "",
@@ -82,6 +82,45 @@ const QmsAddmanagementChange = () => {
     return null;
   };
 
+  const companyId = getUserCompanyId();
+
+  useEffect(() => {
+    const fetchNextMocNumber = async () => {
+      try {
+        if (!companyId) {
+          setFormData((prev) => ({ ...prev, moc_no: "MOC-1" }));
+          return;
+        }
+
+        const response = await axios.get(
+          `${BASE_URL}/qms/changes/next-action/${companyId}/`
+        );
+        const nextNumber = response.data?.next_moc_no || "1";
+        setFormData((prev) => ({ ...prev, moc_no: `${nextNumber}` }));
+      } catch (error) {
+        console.error("Error fetching next MOC number:", error);
+        setFormData((prev) => ({ ...prev, moc_no: "MOC-1" }));
+        let errorMsg = error.message;
+
+        if (error.response) {
+          if (error.response.data.detail) {
+            errorMsg = error.response.data.detail;
+          } else if (error.response.data.message) {
+            errorMsg = error.response.data.message;
+          }
+        }
+
+        setError(errorMsg);
+        setShowAddManagementErrorModal(true);
+        setTimeout(() => {
+          setShowAddManagementErrorModal(false);
+        }, 3000);
+      }
+    };
+
+    fetchNextMocNumber();
+  }, [companyId]);
+
   const handleDropdownFocus = (key) => {
     setDropdowns((prev) => ({ ...prev, [key]: true }));
   };
@@ -92,6 +131,7 @@ const QmsAddmanagementChange = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "moc_no") return; // Prevent manual changes to moc_no
     setFormData({
       ...formData,
       [name]: type === "checkbox" ? checked : value,
@@ -122,16 +162,6 @@ const QmsAddmanagementChange = () => {
     try {
       setLoading(true);
 
-      //   if (!formData.moc_title.trim()) {
-      //     setErrors({
-      //       moc_title: "MOC Name / Title is required",
-      //     });
-      //     setLoading(false);
-      //     return;
-      //   }
-
-      //   setErrors({ moc_title: "" });
-
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
 
@@ -141,7 +171,7 @@ const QmsAddmanagementChange = () => {
         return;
       }
 
-        let dateString = null;
+      let dateString = null;
       if (formData.year && formData.month && formData.day) {
         dateString = `${formData.year}-${formData.month.padStart(
           2,
@@ -150,8 +180,6 @@ const QmsAddmanagementChange = () => {
       }
 
       const submitData = new FormData();
-      console.log('ddddddddddddddd', formData);
-
       submitData.append("company", companyId);
       submitData.append("user", userId);
       submitData.append("is_draft", true);
@@ -166,11 +194,6 @@ const QmsAddmanagementChange = () => {
       if (dateString) {
         submitData.append("date", dateString);
       }
-
-      console.log(
-        "Sending draft data:",
-        Object.fromEntries(submitData.entries())
-      );
 
       const response = await axios.post(
         `${BASE_URL}/qms/changes/draft-create/`,
@@ -193,18 +216,13 @@ const QmsAddmanagementChange = () => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         }
-      } else if (err.message) {
-        errorMsg = err.message;
       }
 
       setError(errorMsg);
@@ -281,29 +299,24 @@ const QmsAddmanagementChange = () => {
         }
       );
 
-      console.log("Management change added successfully:", response.data);
+      setLoading(false);
       setShowAddManagementSuccessModal(true);
       setTimeout(() => {
         setShowAddManagementSuccessModal(false);
         navigate("/company/qms/list-management-change");
       }, 1500);
     } catch (error) {
-      console.error("Error adding management change:", error);
+      setLoading(false);
       let errorMsg = error.message;
 
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
-      } else if (error.message) {
-        errorMsg = error.message;
       }
 
       setError(errorMsg);
@@ -311,8 +324,7 @@ const QmsAddmanagementChange = () => {
       setTimeout(() => {
         setShowAddManagementErrorModal(false);
       }, 3000);
-    } finally {
-      setLoading(false);
+      console.error("Error adding management change:", error);
     }
   };
 
@@ -378,8 +390,8 @@ const QmsAddmanagementChange = () => {
               type="text"
               name="moc_no"
               value={formData.moc_no}
-              onChange={handleInputChange}
-              className="w-full add-compliance-inputs"
+              className="w-full add-compliance-inputs cursor-not-allowed bg-gray-800"
+              readOnly
             />
           </div>
           <div>
@@ -403,8 +415,9 @@ const QmsAddmanagementChange = () => {
                 <option value="System/Process">System/Process</option>
               </select>
               <div
-                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.moc_type ? "rotate-180" : ""
-                  }`}
+                className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                  dropdowns.moc_type ? "rotate-180" : ""
+                }`}
               >
                 <ChevronDown size={20} />
               </div>
@@ -433,8 +446,9 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.day ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 top-[12px] right-0 flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.day ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -459,8 +473,9 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.month ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.month ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>
@@ -482,8 +497,9 @@ const QmsAddmanagementChange = () => {
                   ))}
                 </select>
                 <div
-                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${dropdowns.year ? "rotate-180" : ""
-                    }`}
+                  className={`pointer-events-none absolute inset-y-0 right-0 top-[12px] flex items-center px-2 text-[#AAAAAA] transition-transform duration-300 ${
+                    dropdowns.year ? "rotate-180" : ""
+                  }`}
                 >
                   <ChevronDown size={20} />
                 </div>

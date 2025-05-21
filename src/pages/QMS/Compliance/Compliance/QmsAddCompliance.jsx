@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import file from "../../../../assets/images/Company Documentation/file-icon.svg";
+import file from "../../../../assets/images/Company Documentation/file-icon.svg"; 
 import "./qmsaddcompliance.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -14,7 +14,7 @@ const QmsAddCompliance = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     compliance_name: "",
-    compliance_no: "",
+    compliance_no: "C-1", // Default value
     compliance_type: "",
     date: null,
     day: "",
@@ -31,28 +31,92 @@ const QmsAddCompliance = () => {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({
     compliance_name: false,
+    compliance_no: false, // Added for compliance number validation
   });
 
-  const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] =
-    useState(false);
-  const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] =
-    useState(false);
-
-  const [showDraftComplianceSuccessModal, setShowDraftComplianceSuccessModal] =
-    useState(false);
-  const [showDraftComplianceErrorModal, setShowDraftComplianceErrorModal] =
-    useState(false);
-
+  const [showAddComplianceSuccessModal, setShowAddComplianceSuccessModal] = useState(false);
+  const [showAddComplianceErrorModal, setShowAddComplianceErrorModal] = useState(false);
+  const [showDraftComplianceSuccessModal, setShowDraftComplianceSuccessModal] = useState(false);
+  const [showDraftComplianceErrorModal, setShowDraftComplianceErrorModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-
   const [dropdowns, setDropdowns] = useState({
     compliance_type: false,
     day: false,
     month: false,
     year: false,
   });
+
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
+  const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
+
+  useEffect(() => {
+    fetchNextComplianceNumber();
+  }, []);
+
+  const fetchNextComplianceNumber = async () => {
+    try {
+      if (!companyId) {
+        setFormData(prev => ({ ...prev, compliance_no: "C-1" }));
+        return;
+      }
+
+      const response = await axios.get(`${BASE_URL}/qms/compliances/next-action/${companyId}/`);
+      const nextNumber = response.data?.next_compliance_no || "1";
+      setFormData(prev => ({ ...prev, compliance_no: `${nextNumber}` }));
+    } catch (error) {
+      console.error('Error fetching next compliance number:', error);
+      setFormData(prev => ({ ...prev, compliance_no: "C-1" }));
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowAddComplianceErrorModal(true);
+      setTimeout(() => {
+        setShowAddComplianceErrorModal(false);
+      }, 3000);
+    }
+  };
 
   const handleDropdownFocus = (key) => {
     setDropdowns((prev) => ({ ...prev, [key]: true }));
@@ -69,9 +133,11 @@ const QmsAddCompliance = () => {
       [name]: type === "checkbox" ? checked : value,
     });
 
-    // Clear error when user starts typing
     if (name === "compliance_name" && value) {
       setFieldErrors((prev) => ({ ...prev, compliance_name: false }));
+    }
+    if (name === "compliance_no" && value) {
+      setFieldErrors((prev) => ({ ...prev, compliance_no: false }));
     }
   };
 
@@ -91,47 +157,11 @@ const QmsAddCompliance = () => {
       });
     }
   };
-  const getUserCompanyId = () => {
-    // First check if company_id is stored directly
-    const storedCompanyId = localStorage.getItem("company_id");
-    if (storedCompanyId) return storedCompanyId;
 
-    // If user data exists with company_id
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      // Try to get company_id from user data that was stored during login
-      const userData = localStorage.getItem("user_company_id");
-      if (userData) {
-        try {
-          return JSON.parse(userData);
-        } catch (e) {
-          console.error("Error parsing user company ID:", e);
-          return null;
-        }
-      }
-    }
-    return null;
-  };
-  const getRelevantUserId = () => {
-    const userRole = localStorage.getItem("role");
-
-    if (userRole === "user") {
-      const userId = localStorage.getItem("user_id");
-      if (userId) return userId;
-    }
-
-    const companyId = localStorage.getItem("company_id");
-    if (companyId) return companyId;
-
-    return null;
-  };
   useEffect(() => {
     const { day, month, year } = formData;
     if (day && month && year) {
-      const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(
-        2,
-        "0"
-      )}`;
+      const formattedDate = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
       setFormData((prev) => ({ ...prev, date: formattedDate }));
     }
   }, [formData.day, formData.month, formData.year]);
@@ -140,6 +170,9 @@ const QmsAddCompliance = () => {
     const errors = {};
     if (!formData.compliance_name.trim()) {
       errors.compliance_name = true;
+    }
+    if (!formData.compliance_no.trim()) {
+      errors.compliance_no = true;
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -155,25 +188,19 @@ const QmsAddCompliance = () => {
     setLoading(true);
 
     try {
-      const userId = getRelevantUserId();
-      const companyId = getUserCompanyId();
       if (!companyId) {
         setError("Company ID not found. Please log in again.");
         setLoading(false);
         return;
       }
       const submissionData = new FormData();
+      console.log('eeeeeee', formData);
+      
       submissionData.append("company", companyId);
       submissionData.append("user", userId);
-      console.log("fdsgfsdgfsdgf", formData);
 
       for (const key in formData) {
-        if (
-          key !== "day" &&
-          key !== "month" &&
-          key !== "year" &&
-          formData[key] !== null
-        ) {
+        if (key !== "day" && key !== "month" && key !== "year" && formData[key] !== null) {
           submissionData.append(key, formData[key]);
         }
       }
@@ -187,6 +214,8 @@ const QmsAddCompliance = () => {
           },
         }
       );
+      console.log('added complianceeeeee', response.data);
+      
 
       setShowAddComplianceSuccessModal(true);
       setTimeout(() => {
@@ -198,12 +227,9 @@ const QmsAddCompliance = () => {
       let errorMsg = error.message;
 
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
@@ -226,9 +252,6 @@ const QmsAddCompliance = () => {
     try {
       setDraftLoading(true);
 
-      const companyId = getUserCompanyId();
-      const userId = getRelevantUserId();
-
       if (!companyId || !userId) {
         setError("Company ID or User ID not found. Please log in again.");
         setDraftLoading(false);
@@ -236,7 +259,6 @@ const QmsAddCompliance = () => {
       }
 
       const submitData = new FormData();
-
       submitData.append("company", companyId);
       submitData.append("user", userId);
       submitData.append("is_draft", true);
@@ -246,15 +268,6 @@ const QmsAddCompliance = () => {
           submitData.append(key, formData[key]);
         }
       });
-
-      if (formData.file) {
-        submitData.append("upload_attachment", formData.file);
-      }
-
-      console.log(
-        "Sending draft data:",
-        Object.fromEntries(submitData.entries())
-      );
 
       const response = await axios.post(
         `${BASE_URL}/qms/compliance/draft-create/`,
@@ -281,12 +294,9 @@ const QmsAddCompliance = () => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -384,9 +394,16 @@ const QmsAddCompliance = () => {
               type="text"
               name="compliance_no"
               value={formData.compliance_no}
-              onChange={handleInputChange}
-              className="w-full add-compliance-inputs"
+              className={`w-full add-compliance-inputs cursor-not-allowed bg-gray-800 ${
+                fieldErrors.compliance_no ? "border-red-500" : ""
+              }`}
+              readOnly
             />
+            {fieldErrors.compliance_no && (
+              <p className="text-red-500 text-sm mt-1">
+                Compliance/Obligation Number is required
+              </p>
+            )}
           </div>
 
           {/* Type */}

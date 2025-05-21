@@ -279,7 +279,8 @@ const QmsEditCompliance = () => {
               name="compliance_no"
               value={formData.compliance_no || ""}
               onChange={handleInputChange}
-              className="w-full add-compliance-inputs"
+              className="w-full add-compliance-inputs cursor-not-allowed"
+              readOnly
             />
           </div>
           <div>
