@@ -220,7 +220,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "qmscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "qmscorrectionmanagement",
@@ -355,7 +355,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "emscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "emscorrectionmanagement",
@@ -490,7 +490,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "ohscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "ohscorrectionmanagement",
@@ -625,7 +625,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "enmscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "enmscorrectionmanagement",
@@ -760,7 +760,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "bmscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "bmscorrectionmanagement",
@@ -895,7 +895,7 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       },
       {
         id: "amscorrectionmanagement",
-        label: "Correction Corrective Actions & Preventive Actions",
+        label: "Correction, Corrective Actions & Preventive Actions",
         icon: CorrectionIcon,
         hasSubMenu: true,
         submenuType: "amscorrectionmanagement",

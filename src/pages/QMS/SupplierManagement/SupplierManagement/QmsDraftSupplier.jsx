@@ -301,7 +301,12 @@ const QmsDraftSupplier = () => {
                   <td className="px-2 add-manual-datas">
                     {supplier.supplier_name}
                   </td>
-                  <td className="px-2 add-manual-datas">{supplier.product}</td>
+                  <td className="px-2 add-manual-datas">
+                    {supplier.product
+                      ? supplier.product.substring(0, 100) +
+                      (supplier.product.length > 100 ? "..." : "")
+                      : "N/A"}
+                  </td>
                   <td className="px-2 add-manual-datas">{formatDate(supplier.date)}</td>
                   <td className="px-2 add-manual-datas !text-left !text-[#1E84AF]">
                     <button
@@ -350,9 +355,8 @@ const QmsDraftSupplier = () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+                }`}
             >
               Previous
             </button>
@@ -362,9 +366,8 @@ const QmsDraftSupplier = () => {
                 <button
                   key={number}
                   onClick={() => paginate(number)}
-                  className={`${
-                    currentPage === number ? "pagin-active" : "pagin-inactive"
-                  }`}
+                  className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                    }`}
                 >
                   {number}
                 </button>
@@ -374,9 +377,8 @@ const QmsDraftSupplier = () => {
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
+              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+                }`}
             >
               Next
             </button>
@@ -410,4 +412,3 @@ const QmsDraftSupplier = () => {
 };
 
 export default QmsDraftSupplier;
- 

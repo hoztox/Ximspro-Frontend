@@ -47,17 +47,17 @@ const QmsViewDraftTraining = () => {
 
     // Format time from HH:MM:SS to readable format
     const formatTime = (timeString) => {
-    if (!timeString) return "N/A";
-    try {
-      const [hours, minutes] = timeString.split(":");
-      return new Date(0, 0, 0, hours, minutes).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (e) {
-      return timeString;
-    }
-  };
+        if (!timeString) return "N/A";
+        try {
+            const [hours, minutes] = timeString.split(":");
+            return new Date(0, 0, 0, hours, minutes).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+            });
+        } catch (e) {
+            return timeString;
+        }
+    };
 
     useEffect(() => {
         // Fetch training data when component mounts
@@ -84,7 +84,7 @@ const QmsViewDraftTraining = () => {
         navigate('/company/qms/draft-training');
     };
 
- 
+
 
     return (
         <div>
@@ -110,13 +110,20 @@ const QmsViewDraftTraining = () => {
 
                         <div>
                             <p className="text-[#AAAAAA] view-training-label mb-[6px]">Training Attendees</p>
-                            <p className="text-white view-training-data">
-                                {training.training_attendees && training.training_attendees.length > 0 ?
-                                    training.training_attendees.map(attendee =>
-                                        `${attendee.first_name} ${attendee.last_name}`
-                                    ).join(', ')
-                                    : 'None specified'}
-                            </p>
+                            <div className="text-white view-training-data">
+                                {training.training_attendees && training.training_attendees.length > 0 ? (
+                                    <ol className="list-decimal pl-5 space-y-1">
+                                        {training.training_attendees.map((attendee, index) => (
+                                            <li key={index}>
+                                                {attendee.first_name} {attendee.last_name}
+                                            </li>
+                                        ))}
+                                    </ol>
+                                ) : (
+                                    <p>None specified</p>
+                                )}
+                            </div>
+
                         </div>
 
                         <div>
@@ -208,7 +215,7 @@ const QmsViewDraftTraining = () => {
                                         : 'None specified'}
                                 </p>
                             </div>
-                             
+
                         </div>
                     </div>
                 </div>
@@ -216,5 +223,5 @@ const QmsViewDraftTraining = () => {
         </div>
     );
 };
- 
+
 export default QmsViewDraftTraining

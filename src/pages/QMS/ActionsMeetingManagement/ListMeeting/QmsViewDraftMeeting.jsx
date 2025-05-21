@@ -125,8 +125,8 @@ const QmsViewDraftMeeting = () => {
   const attendeeNames =
     meeting.attendees && meeting.attendees.length > 0
       ? meeting.attendees
-          .map((a) => `${a.first_name} ${a.last_name}`)
-          .join(", ")
+        .map((a) => `${a.first_name} ${a.last_name}`)
+        .join(", ")
       : "None";
 
   // Get called by name
@@ -165,10 +165,16 @@ const QmsViewDraftMeeting = () => {
             <label className="block view-employee-label mb-[6px]">
               Select Cause
             </label>
-            <div className="view-employee-data">
-              {meeting.agenda && meeting.agenda.length > 0
-                ? meeting.agenda.map((a) => a.title).join(", ")
-                : "N/A"}
+            <div className="view-employee-data text-white">
+              {meeting.agenda && meeting.agenda.length > 0 ? (
+                <ol className="list-decimal pl-5 space-y-1">
+                  {meeting.agenda.map((a, index) => (
+                    <li key={index}>{a.title}</li>
+                  ))}
+                </ol>
+              ) : (
+                "N/A"
+              )}
             </div>
           </div>
 
@@ -199,7 +205,19 @@ const QmsViewDraftMeeting = () => {
             <label className="block view-employee-label mb-[6px]">
               Attendees
             </label>
-            <div className="view-employee-data">{attendeeNames}</div>
+            <div className="view-employee-data text-white">
+              {meeting.attendees && meeting.attendees.length > 0 ? (
+                <ol className="list-decimal pl-5 space-y-1">
+                  {meeting.attendees.map((a, index) => (
+                    <li key={index}>
+                      {a.first_name} {a.last_name}
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                "None"
+              )}
+            </div>
           </div>
 
           <div className="flex justify-between">

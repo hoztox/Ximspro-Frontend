@@ -45,7 +45,7 @@ const QmsViewComplaints = () => {
                 setComplaint(response.data);
                 setLoading(false);
             } catch (err) {
-                let errorMsg =  err.message;
+                let errorMsg = err.message;
 
                 if (err.response) {
                     if (err.response.data.date) {
@@ -75,16 +75,16 @@ const QmsViewComplaints = () => {
     }, [id]);
 
     const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
-  };
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, "/");
+    };
 
     const handleClose = () => {
         navigate("/company/qms/list-complaints");
@@ -187,19 +187,20 @@ const QmsViewComplaints = () => {
                             <label className="block view-employee-label mb-[6px]">
                                 Category
                             </label>
-                            <div className="view-employee-data">
+                            <div className="view-employee-data text-white">
                                 {complaint.category && Array.isArray(complaint.category) && complaint.category.length > 0 ? (
-                                    <ul className="list-disc pl-5 space-y-1">
+                                    <ol className="list-decimal pl-5 space-y-1">
                                         {complaint.category.map((cat, index) => (
                                             <li key={index}>
                                                 {cat.title || "N/A"}
                                             </li>
                                         ))}
-                                    </ul>
+                                    </ol>
                                 ) : (
                                     "N/A"
                                 )}
                             </div>
+
                         </div>
 
                         <div>

@@ -182,12 +182,12 @@ const ViewQmsProcesses = () => {
               </label>
               <div className="text-white view-interested-parties-data">
                 {formData.legal_requirement_details &&
-                formData.legal_requirement_details.length > 0 ? (
-                  <ul className="list-disc pl-5">
+                  formData.legal_requirement_details.length > 0 ? (
+                  <ol className="list-decimal pl-5">
                     {formData.legal_requirement_details.map((req) => (
-                      <li key={req.id}>{req.title} </li>
+                      <li key={req.id}>{req.title}</li>
                     ))}
-                  </ul>
+                  </ol>
                 ) : formData.custom_legal_requirements ? (
                   formData.custom_legal_requirements
                 ) : (
@@ -195,6 +195,7 @@ const ViewQmsProcesses = () => {
                 )}
               </div>
             </div>
+
             <div className="flex justify-end space-x-10">
               <button
                 onClick={() => handleEditProcess(id)}

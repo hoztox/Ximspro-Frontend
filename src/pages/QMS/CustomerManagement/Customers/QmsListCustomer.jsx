@@ -306,7 +306,7 @@ const QmsListCustomer = () => {
               </th>
 
               <th className="px-3 text-left list-awareness-training-thead w-[20%]">
-                Mailing Address
+                Contact Person
               </th>
               <th className="px-3 text-left list-awareness-training-thead w-[10%]">
                 Date
@@ -340,7 +340,7 @@ const QmsListCustomer = () => {
                     {item.email}
                   </td>
                   <td className="px-3 list-awareness-training-datas">
-                    {item.address}
+                    {item.contact_person}
                   </td>
                   <td className="px-3 list-awareness-training-datas">
                     {item.created_at}

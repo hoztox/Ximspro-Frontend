@@ -412,7 +412,12 @@ const QmsListSupplier = () => {
                   <td className="px-2 add-manual-datas">
                     {supplier.supplier_name}
                   </td>
-                  <td className="px-2 add-manual-datas">{supplier.product}</td>
+                 <td className="px-2 add-manual-datas">
+  {supplier.product 
+    ? supplier.product.substring(0, 100) + 
+      (supplier.product.length > 100 ? "..." : "")
+    : "N/A"}
+</td>
                   <td className="px-2 add-manual-datas">{formatDate(supplier.date)}</td>
                   <td className="px-2 add-manual-datas !text-center">
                     <span

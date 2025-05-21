@@ -9,7 +9,7 @@ const QmsDraftViewComplaints = () => {
         customer: null,
         category: [],
         details: "",
-        immediate_action: "", 
+        immediate_action: "",
         executor: null,
         date: "",
         corrective_action_need: "",
@@ -44,16 +44,16 @@ const QmsDraftViewComplaints = () => {
     }, [id]);
 
     const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
-  };
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, "/");
+    };
 
     const handleClose = () => {
         navigate("/company/qms/draft-complaints");
@@ -96,19 +96,20 @@ const QmsDraftViewComplaints = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Category
                         </label>
-                        <div className="view-employee-data">
+                        <div className="view-employee-data text-white">
                             {complaint.category && complaint.category.length > 0 ? (
-                                <ul className="list-disc pl-5 space-y-1">
+                                <ol className="list-decimal pl-5 space-y-1">
                                     {complaint.category.map((cat, index) => (
                                         <li key={index}>
                                             {typeof cat === 'object' ? cat.title : 'N/A'}
                                         </li>
                                     ))}
-                                </ul>
+                                </ol>
                             ) : (
                                 "N/A"
                             )}
                         </div>
+
                     </div>
 
                     <div>
@@ -134,8 +135,8 @@ const QmsDraftViewComplaints = () => {
                             Executor
                         </label>
                         <div className="view-employee-data">
-                            {complaint.executor 
-                                ? `${complaint.executor.first_name || ''} ${complaint.executor.last_name || ''}`.trim() 
+                            {complaint.executor
+                                ? `${complaint.executor.first_name || ''} ${complaint.executor.last_name || ''}`.trim()
                                 : "N/A"}
                         </div>
                     </div>

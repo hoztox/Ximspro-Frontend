@@ -251,7 +251,7 @@ const QmsDraftInternalProblems = () => {
                         <thead className="bg-[#24242D]">
                             <tr className="h-[48px]">
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                                <th className="px-2 text-left add-manual-theads">Description</th>
+                                <th className="px-2 text-left add-manual-theads w-[35%]">Description</th>
                                 <th className="px-2 text-left add-manual-theads">Date</th>
                                 <th className="px-2 text-left add-manual-theads">Corrective Action</th>
                                 <th className="px-2 text-left add-manual-theads">Solved</th>
@@ -265,7 +265,7 @@ const QmsDraftInternalProblems = () => {
                                 internalProblems.map((problem, index) => (
                                     <tr key={problem.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                         <td className="pl-5 pr-2 add-manual-datas">{((currentPage - 1) * itemsPerPage) + index + 1}</td>
-                                        <td className="px-2 add-manual-datas">{problem.problem ? problem.problem.substring(0, 30) + (problem.problem.length > 30 ? '...' : '') : 'N/A'}</td>
+                                        <td className="px-2 add-manual-datas">{problem.problem ? problem.problem.substring(0, 100) + (problem.problem.length > 100 ? '...' : '') : 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{formatDate(problem.date)}</td>
                                         <td className="px-2 add-manual-datas">{problem.corrective_action_need || 'N/A'}</td>
                                         <td className="px-2 add-manual-datas">{problem.solve_after_action || 'N/A'}</td>

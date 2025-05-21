@@ -313,7 +313,7 @@ const QmsListInternalProblems = () => {
             <thead className="bg-[#24242D]">
               <tr className="h-[48px]">
                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-                <th className="px-2 text-left add-manual-theads">
+                <th className="px-2 text-left add-manual-theads w-[35%]">
                   Description
                 </th>
                 <th className="px-2 text-left add-manual-theads">Cause</th>
@@ -339,8 +339,8 @@ const QmsListInternalProblems = () => {
                     </td>
                     <td className="px-2 add-manual-datas">
                       {problem.problem
-                        ? problem.problem.substring(0, 30) +
-                        (problem.problem.length > 30 ? "..." : "")
+                        ? problem.problem.substring(0, 100) +
+                        (problem.problem.length > 100 ? "..." : "")
                         : "N/A"}
                     </td>
                     <td className="px-2 add-manual-datas">

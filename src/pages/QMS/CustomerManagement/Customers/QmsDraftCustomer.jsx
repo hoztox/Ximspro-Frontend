@@ -227,7 +227,7 @@ const QmsDraftCustomer = () => {
                             <th className="px-3 text-left list-awareness-training-thead">No</th>
                             <th className="px-3 text-left list-awareness-training-thead">Name</th>
                             <th className="px-3 text-left list-awareness-training-thead">Email</th>
-                            <th className="px-3 text-left list-awareness-training-thead">Mailing Address</th>
+                            <th className="px-3 text-left list-awareness-training-thead">Contact Person</th>
                             <th className="px-3 text-left list-awareness-training-thead">Action</th>
                             <th className="px-3 text-center list-awareness-training-thead">View</th>
                             <th className="px-3 text-center list-awareness-training-thead">Delete</th>
@@ -240,7 +240,7 @@ const QmsDraftCustomer = () => {
                                     <td className="px-3 list-awareness-training-datas">{indexOfFirstItem + index + 1}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.name}</td>
                                     <td className="px-3 list-awareness-training-datas">{item.email}</td>
-                                    <td className="px-3 list-awareness-training-datas">{item.address}</td>
+                                    <td className="px-3 list-awareness-training-datas">{item.contact_person}</td> 
                                     <td className="px-3 list-awareness-training-datas text-left text-[#1E84AF]">
                                         <button onClick={() => handleEditDraftCustomer(item.id)}>
                                             Click to Continue

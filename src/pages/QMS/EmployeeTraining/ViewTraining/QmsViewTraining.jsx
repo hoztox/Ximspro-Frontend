@@ -194,19 +194,19 @@ const QmsViewTraining = () => {
                 Training Attendees
               </p>
               <div className="text-white view-training-data">
-                {training.training_attendees &&
-                training.training_attendees.length > 0 ? (
-                  <ul className="list-disc pl-5 space-y-1">
+                {training.training_attendees && training.training_attendees.length > 0 ? (
+                  <ol className="list-decimal pl-5 space-y-1">
                     {training.training_attendees.map((attendee, index) => (
                       <li key={index}>
                         {attendee.first_name} {attendee.last_name}
                       </li>
                     ))}
-                  </ul>
+                  </ol>
                 ) : (
                   <p>None specified</p>
                 )}
               </div>
+
             </div>
 
             <div>
@@ -290,13 +290,12 @@ const QmsViewTraining = () => {
               </p>
               <p className="text-white view-training-data">
                 <span
-                  className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                    training.status === "Completed"
+                  className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === "Completed"
                       ? "bg-[#36DDAE11] text-[#36DDAE]"
                       : training.status === "Cancelled"
-                      ? "bg-[#FF000011] text-[#FF0000]"
-                      : "bg-[#ddd23611] text-[#ddd236]"
-                  }`}
+                        ? "bg-[#FF000011] text-[#FF0000]"
+                        : "bg-[#ddd23611] text-[#ddd236]"
+                    }`}
                 >
                   {training.status}
                 </span>
