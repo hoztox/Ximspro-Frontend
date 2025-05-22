@@ -519,11 +519,11 @@ const QmsDraftViewHealthSafetyHazards = () => {
                         </div>
                         <div>
                             <label className="viewmanuallabels">Level of Risk</label>
-                            <p className="viewmanuasdata">{hazardDetails.risk_level || 'N/A'}</p>
+                            <p className="viewmanuasdata">{hazardDetails.level_of_risk || 'N/A'}</p> 
                         </div>
                         <div>
                             <label className="viewmanuallabels">Related Process/ Activity</label>
-                            <p className="viewmanuasdata">{hazardDetails.related_process || 'N/A'}</p>
+                            <p className="viewmanuasdata">{hazardDetails.process_activity || 'N/A'}</p>
                         </div>
                     </div>
                 </div>

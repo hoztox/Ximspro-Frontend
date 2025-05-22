@@ -15,6 +15,7 @@ const QmsAddHealthSafetyHazards = () => {
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
     const [users, setUsers] = useState([]);
+    const [processes, setProcesses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
@@ -49,25 +50,25 @@ const QmsAddHealthSafetyHazards = () => {
 
     const [formData, setFormData] = useState({
         title: '',
-        hazard_no: `HS-1`, // Initialize with default
+        hazard_no: `HS-1`,
         send_notification_to_checked_by: true,
         send_email_to_checked_by: true,
         send_notification_to_approved_by: true,
         send_email_to_approved_by: true,
         hazard_source: '',
         legal_requirement: '',
-        risk_level: '',
+        level_of_risk: '',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         description: '',
         action: '',
-        related_process: '',
+        process_activity: '',
     });
 
     const [openDropdowns, setOpenDropdowns] = useState({
         written_by: false,
         checked_by: false,
         approved_by: false,
-        risk_level: false,
+        level_of_risk: false,
         day: false,
         month: false,
         year: false
@@ -77,6 +78,7 @@ const QmsAddHealthSafetyHazards = () => {
         if (companyId) {
             fetchUsers();
             fetchNextHazardNumber();
+            fetchProcess(); // Fetch processes on mount
         }
     }, [companyId]);
 
@@ -92,11 +94,44 @@ const QmsAddHealthSafetyHazards = () => {
                 console.log("Users loaded:", response.data);
             } else {
                 setUsers([]);
-                console.error("Unexpected response format:", response.data);
+                console.error("Unexpected users:", response.data);
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            setError("Failed to load record formats. Please check your connection and try again.");
+            setError("Failed to load users. Please check your connection and try again.");
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
+        }
+    };
+
+    const fetchProcess = async () => {
+        setLoading(true);
+        try {
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+
+            const response = await axios.get(`${BASE_URL}/qms/health-root/company/${companyId}/`);
+            if (Array.isArray(response.data)) {
+                setProcesses(response.data); // Store fetched processes
+                console.log("Processes loaded:", response.data);
+            } else {
+                setProcesses([]);
+                console.error("Unexpected response format for processes:", response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching process:', error);
+            setError('Failed to load process. Please try again.');
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -106,7 +141,7 @@ const QmsAddHealthSafetyHazards = () => {
                 setNextHazardNo("1");
                 setFormData(prev => ({
                     ...prev,
-                    no: "HS-1"
+                    hazard_no: "HS-1"
                 }));
                 return;
             }
@@ -188,6 +223,10 @@ const QmsAddHealthSafetyHazards = () => {
             newErrors.checked_by = "Checked/Reviewed By is required";
         }
 
+        if (!formData.hazard_source) {
+            newErrors.hazard_source = "Hazard Source is required";
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -250,7 +289,7 @@ const QmsAddHealthSafetyHazards = () => {
     const handleCloseProcessTypeModal = (newProcessAdded = false) => {
         setIsProcessTypeModalOpen(false);
         if (newProcessAdded) {
-            // Note: fetchProcess() is not defined in the original code. Assuming it’s a placeholder.
+            fetchProcess(); // Refresh processes if a new one was added
         }
     };
 
@@ -304,7 +343,29 @@ const QmsAddHealthSafetyHazards = () => {
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to save record formats');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -361,6 +422,25 @@ const QmsAddHealthSafetyHazards = () => {
 
         } catch (err) {
             setLoading(false);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             setShowDarftManualErrorModal(true);
             setTimeout(() => {
                 setShowDarftManualErrorModal(false);
@@ -416,6 +496,7 @@ const QmsAddHealthSafetyHazards = () => {
                 <AddQmsManualDraftErrorModal
                     showDraftManualErrorModal={showDraftManualErrorModal}
                     onClose={() => { setShowDarftManualErrorModal(false) }}
+                    error={error}
                 />
 
                 <ProcessTypeModal
@@ -467,7 +548,7 @@ const QmsAddHealthSafetyHazards = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Hazard No <span className="text-red-500">*</span>
+                                Hazard No
                             </label>
                             <input
                                 type="text"
@@ -538,7 +619,7 @@ const QmsAddHealthSafetyHazards = () => {
 
                         <div>
                             <label className="add-qms-manual-label">
-                                Hazard Source
+                                Hazard Source <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -547,6 +628,7 @@ const QmsAddHealthSafetyHazards = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            <ErrorMessage message={errors.hazard_source} />
                         </div>
 
                         <div className="flex">
@@ -699,11 +781,11 @@ const QmsAddHealthSafetyHazards = () => {
                             <div className="relative">
                                 <select
                                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="risk_level"
-                                    value={formData.risk_level}
-                                    onFocus={() => toggleDropdown('risk_level')}
-                                    onChange={(e) => handleDropdownChange(e, 'risk_level')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, risk_level: false }))}
+                                    name="level_of_risk"
+                                    value={formData.level_of_risk}
+                                    onFocus={() => toggleDropdown('level_of_risk')}
+                                    onChange={(e) => handleDropdownChange(e, 'level_of_risk')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, level_of_risk: false }))}
                                 >
                                     <option value="" disabled>Select Level of Risk</option>
                                     {riskLevel.map(type => (
@@ -713,7 +795,7 @@ const QmsAddHealthSafetyHazards = () => {
                                     ))}
                                 </select>
                                 <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_level ? 'rotate-180' : ''}`}
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.level_of_risk ? 'rotate-180' : ''}`}
                                 />
                             </div>
                         </div>
@@ -733,18 +815,23 @@ const QmsAddHealthSafetyHazards = () => {
                         <div className="flex flex-col gap-3 relative">
                             <label className="add-training-label">Related Process/ Activity</label>
                             <select
-                                name="related_process"
-                                value={formData.related_process}
+                                name="process_activity"
+                                value={formData.process_activity}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("related_process")}
+                                onFocus={() => setFocusedDropdown("process_activity")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
                                 <option value="" disabled>Select Related Process/Activity Type</option>
+                                {processes.map(process => (
+                                    <option key={process.id} value={process.id}>
+                                        {process.title}
+                                    </option>
+                                ))}
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                        ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
+                                        ${focusedDropdown === "process_activity" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />

@@ -194,28 +194,19 @@ const QmsListHealthSafetyHazards = () => {
         try {
             setLoading(true);
             const companyId = getUserCompanyId();
-            console.log("Fetching manuals for company ID:", companyId);
+            console.log("Fetching hazards for company ID:", companyId);
 
             const response = await axios.get(`${BASE_URL}/qms/health/${companyId}/`);
             console.log("Raw API response:", response.data);
-
-            // Apply visibility filtering
             const filteredManuals = filterManualsByVisibility(response.data);
-
-            // Sort manuals by creation date (newest first)
-            const sortedManuals = filteredManuals.sort((a, b) => {
-                // Use created_at if available, otherwise fall back to date field
-                const dateA = new Date(a.created_at || a.date || 0);
-                const dateB = new Date(b.created_at || b.date || 0);
-                return dateB - dateA; // Descending order (newest first)
-            });
+            const sortedManuals = filteredManuals.sort((a, b) => a.id - b.id);
 
             setManuals(sortedManuals);
-            console.log("Filtered and Sorted Manuals Data:", sortedManuals);
+            console.log("Filtered and Sorted hazards Data:", sortedManuals);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching manuals:", err);
-            setError("Failed to load record format. Please try again.");
+            console.error("Error fetching hazards:", err);
+            setError("Failed to load hazards. Please try again.");
             setLoading(false);
         }
     };
@@ -226,14 +217,14 @@ const QmsListHealthSafetyHazards = () => {
             try {
                 // First, fetch manuals
                 const companyId = getUserCompanyId();
-                console.log("Fetching manuals for company ID:", companyId);
+                console.log("Fetching hazards for company ID:", companyId);
 
                 const manualsResponse = await axios.get(`${BASE_URL}/qms/health/${companyId}/`);
-                console.log("Raw manuals data from API:", manualsResponse.data);
+                console.log(" hazards data from API:", manualsResponse.data);
 
                 // Apply visibility filtering using the centralized function
                 const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-                console.log("Filtered manuals:", filteredManuals);
+                console.log("Filtered hazards:", filteredManuals);
 
                 // Set filtered manuals
                 setManuals(filteredManuals);
@@ -241,12 +232,12 @@ const QmsListHealthSafetyHazards = () => {
                 // Then fetch corrections for visible manuals
                 const correctionsPromises = filteredManuals.map(async (manual) => {
                     try {
-                        console.log(`Fetching corrections for manual ID ${manual.id}`);
+                        console.log(`Fetching corrections for hazards ID ${manual.id}`);
                         const correctionResponse = await axios.get(`${BASE_URL}/qms/health/${manual.id}/corrections/`);
-                        console.log(`Corrections for manual ${manual.id}:`, correctionResponse.data);
+                        console.log(`Corrections for hazards ${manual.id}:`, correctionResponse.data);
                         return { manualId: manual.id, corrections: correctionResponse.data };
                     } catch (correctionError) {
-                        console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+                        console.error(`Error fetching corrections for hazards ${manual.id}:`, correctionError);
                         return { manualId: manual.id, corrections: [] };
                     }
                 });
@@ -261,7 +252,7 @@ const QmsListHealthSafetyHazards = () => {
                 }, {});
 
                 setCorrections(correctionsByManual);
-                console.log("Corrections by manual:", correctionsByManual);
+                console.log("Corrections by hazards:", correctionsByManual);
 
                 // Fetch draft count
                 const id = getRelevantUserId();
@@ -327,6 +318,25 @@ const QmsListHealthSafetyHazards = () => {
             } catch (err) {
                 console.error("Error deleting record format:", err);
                 setShowDeleteModal(false);
+                let errorMsg = err.message;
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    }
+                    else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
                 setShowDeleteManualErrorModal(true);
                 setTimeout(() => {
                     setShowDeleteManualErrorModal(false);
@@ -341,10 +351,10 @@ const QmsListHealthSafetyHazards = () => {
 
     const filteredManual = manuals.filter(manual =>
         (manual.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (manual.hazard_source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.hazards_no?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (manual.approved_by?.first_name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (manual.risk_level?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (manual.level_of_risk?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
         (formatDate(manual.date)?.replace(/^0+/, '') || '').includes(searchQuery.replace(/^0+/, ''))
     );
 
@@ -443,6 +453,25 @@ const QmsListHealthSafetyHazards = () => {
             }, 1500);
         } catch (error) {
             console.error("Error publishing record format:", error);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowPublishErrorModal(true);
             setIsPublishing(false); // Reset loading state on error
             setTimeout(() => {
@@ -507,6 +536,7 @@ const QmsListHealthSafetyHazards = () => {
                 <DeleteQmsManualErrorModal
                     showDeleteManualErrorModal={showDeleteManualErrorModal}
                     onClose={() => setShowDeleteManualErrorModal(false)}
+                    error={error}
                 />
                 <PublishSuccessModal
                     showPublishSuccessModal={showPublishSuccessModal}
@@ -515,6 +545,7 @@ const QmsListHealthSafetyHazards = () => {
                 <PublishErrorModal
                     showPublishErrorModal={showPublishErrorModal}
                     onClose={() => { setShowPublishErrorModal(false) }}
+                    error={error}
                 />
 
 
@@ -554,9 +585,7 @@ const QmsListHealthSafetyHazards = () => {
 
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 not-found">Loading Sustainability...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                    <div className="text-center py-4 not-found">Loading Health and Safety Hazards...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>
@@ -564,8 +593,9 @@ const QmsListHealthSafetyHazards = () => {
                                 <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
                                 <th className="px-2 text-left add-manual-theads">Title</th>
                                 <th className="px-2 text-left add-manual-theads">Source</th>
-                                <th className="px-2 text-left add-manual-theads">Approved By</th>
+                                {/* <th className="px-2 text-left add-manual-theads">Approved By</th> */}
                                 <th className="px-2 text-left add-manual-theads">Hazards No</th>
+                                <th className="px-2 text-left add-manual-theads">Applicable Legal Requirement</th>
                                 <th className="px-2 text-left add-manual-theads">Date Entered</th>
                                 <th className="px-2 text-left add-manual-theads">Level of Risk</th>
                                 <th className="px-2 text-left add-manual-theads">Status</th>
@@ -585,15 +615,16 @@ const QmsListHealthSafetyHazards = () => {
                                         <tr key={manual.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[46px]">
                                             <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * manualPerPage + index + 1}</td>
                                             <td className="px-2 add-manual-datas">{manual.title || 'N/A'}</td>
-                                            <td className="px-2 add-manual-datas">{manual.source || 'N/A'}</td>
-                                            <td className="px-2 add-manual-datas">
+                                            <td className="px-2 add-manual-datas">{manual.hazard_source || 'N/A'}</td>
+                                            {/* <td className="px-2 add-manual-datas">
                                                 {manual.approved_by ?
                                                     `${manual.approved_by.first_name} ${manual.approved_by.last_name}` :
                                                     'N/A'}
-                                            </td>
+                                            </td> */}
                                             <td className="px-2 add-manual-datas">{manual.hazard_no || 'N/A'}</td>
+                                            <td className="px-2 add-manual-datas">{manual.legal_requirement || 'N/A'}</td>
                                             <td className="px-2 add-manual-datas">{formatDate(manual.date)}</td>
-                                            <td className="px-2 add-manual-datas">{manual.risk_level || 'N/A'}</td>
+                                            <td className="px-2 add-manual-datas">{manual.level_of_risk || 'N/A'}</td>
                                             <td className="px-2 add-manual-datas">
                                                 {manual.status}
                                             </td>

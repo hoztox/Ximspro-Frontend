@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DeleteConfimModal from '../Modals/DeleteConfimModal';
 
 const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
     const [animateClass, setAnimateClass] = useState('');
@@ -9,16 +12,26 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
     const [newProcessTitle, setNewProcessTitle] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
 
-    // Animation effect when modal opens/closes
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [processToDelete, setProcessToDelete] = useState(null);
+    const [deleteMessage, setDeleteMessage] = useState("");
+
+    // Success and error modals
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     useEffect(() => {
         if (isOpen) {
             setAnimateClass('opacity-100 scale-100');
             fetchProcess();
         } else {
             setAnimateClass('opacity-0 scale-95');
+            setFormError('');
         }
     }, [isOpen]);
 
@@ -31,17 +44,20 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/health-root/company/${companyId}/`);
             setProcess(response.data);
         } catch (error) {
             console.error('Error fetching process:', error);
             setError('Failed to load process. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
     };
 
-    // Get company ID from local storage
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -61,23 +77,73 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
         return null;
     };
 
-    // Handle delete cause
-    const handleDelete = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (processItem) => {
+        setProcessToDelete(processItem);
+        setShowDeleteModal(true);
+        setDeleteMessage('Process/Activity');
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    // Handle delete confirmation
+    const confirmDelete = async () => {
+        if (!processToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
-            setProcess(process.filter(item => item.id !== id));
-            setSuccessMessage('Process deleted successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            await axios.delete(`${BASE_URL}/qms/health-root/${processToDelete.id}/`);
+            setProcess(process.filter(item => item.id !== processToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Process/Activity Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (error) {
             console.error('Error deleting Process:', error);
-            setError('Failed to delete Process. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
-    // Handle save new cause
+    const validateForm = () => {
+        if (!newProcessTitle.trim()) {
+            setFormError('Process/Activities Title is required');
+            return false;
+        }
+        setFormError('');
+        return true;
+    };
+
     const handleSave = async () => {
-        if (!newProcessTitle.trim()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setIsAdding(true);
         try {
@@ -89,7 +155,7 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                 return;
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/root-cause/create/`, {
+            const response = await axios.post(`${BASE_URL}/qms/health-root/create/`, {
                 company: companyId,
                 title: newProcessTitle.trim()
             });
@@ -100,48 +166,79 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                 onAddProcess(response.data);
             }
 
+            setShowSuccessModal(true);
+            setSuccessMessage("Process/Activities Added Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
             setNewProcessTitle('');
-            setSuccessMessage('Process added successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
         } catch (error) {
             console.error('Error adding Process:', error);
-            setError('Failed to add Process. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsAdding(false);
         }
     };
 
-    // Handle selecting a cause
-    // const handleSelectCause = (cause) => {
-    //     if (onAddProcess && typeof onAddProcess === 'function') {
-    //         onAddProcess(cause);
-    //         onClose();
-    //     }
-    // };
+    const handleInputChange = (e) => {
+        setNewProcessTitle(e.target.value);
+        setFormError('');
+    };
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
 
-                {/* Causes List Section */}
+                {/* Success Modal */}
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
+
+                {/* Error Modal */}
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
+                {/* Delete Confirmation Modal */}
+                <DeleteConfimModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={confirmDelete}
+                    onCancel={closeAllModals}
+                    deleteMessage={deleteMessage}
+                />
+
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Related Process/Activities</h2>
                     {loading ? (
-                        <div className="text-center py-4">Loading...</div>
+                        <div className="text-center py-4 not-found">Loading...</div>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-gray-400">
@@ -158,7 +255,7 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                                     <tbody>
                                         {process.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center py-4 not-found">No Review Found</td>
+                                                <td colSpan="3" className="text-center py-4 not-found">No Process/Activities Found</td>
                                             </tr>
                                         ) : (
                                             process.map((item, index) => (
@@ -167,7 +264,7 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                                                     <td className="px-3 agenda-data w-[60%]">{item.title}</td>
                                                     <td className="px-3 agenda-data text-center w-[15%]">
                                                         <div className="flex items-center justify-center h-[42px]">
-                                                            <button onClick={() => handleDelete(item.id)}>
+                                                            <button onClick={() => openDeleteModal(item)}>
                                                                 <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
                                                             </button>
                                                         </div>
@@ -182,34 +279,37 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
                     )}
                 </div>
 
-                {/* Add Cause Section */}
                 <div className="bg-[#1C1C24] rounded-[4px]">
-                    <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Related Process/Activities </h3>
+                    <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Related Process/Activities</h3>
 
                     <div className="mb-4 px-5">
                         <label className="block mb-3 agenda-list-label">
-                        Process/Activities Title <span className="text-[#F9291F]">*</span>
+                            Process/Activities Title <span className="text-[#F9291F]">*</span>
                         </label>
                         <input
                             type="text"
                             value={newProcessTitle}
-                            onChange={(e) => setNewProcessTitle(e.target.value)}
+                            onChange={handleInputChange}
                             className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none"
-                            // placeholder="Enter Review Title"
+                            placeholder="Enter Process/Activities Title"
                         />
+                        {formError && (
+                            <p className="text-red-500 text-sm mt-1">{formError}</p>
+                        )}
                     </div>
 
                     <div className="flex gap-5 justify-end pb-5 px-5">
                         <button
                             onClick={onClose}
                             className="cancel-btn"
+                            disabled={isAdding}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSave}
                             className="save-btn"
-                            disabled={!newProcessTitle.trim() || isAdding}
+                            disabled={isAdding}
                         >
                             {isAdding ? 'Saving...' : 'Save'}
                         </button>
@@ -219,4 +319,5 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
         </div>
     );
 };
-export default ProcessTypeModal
+
+export default ProcessTypeModal;

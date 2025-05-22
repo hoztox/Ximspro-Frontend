@@ -1,10 +1,9 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../../../../ThemeContext";
-import deleteIllustrate from "../../../../../assets/images/Modal/deleteillustration.png"
+import { useTheme } from "../../../../ThemeContext";
+import deleteIllustrate from "../../../../assets/images/Modal/deleteillustration.png"
 
-
-const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel }) => {
+const DeleteConfimModal = ({ showDeleteModal, onConfirm, onCancel, deleteMessage }) => {
     const { theme } = useTheme();
 
     return (
@@ -36,7 +35,7 @@ const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel
                             <h3 className="confirmations">
                                 Are you sure you want to delete
                                 <br />
-                                this Drafted Health and Safety Hazards?
+                                this {deleteMessage || "Page"}?
                             </h3>
                             <div className="modal-actionss gap-3"
                                 style={{ maxWidth: 'calc(100vw - 80px)' }}
@@ -55,4 +54,5 @@ const DeleteQmsManualDraftConfirmModal = ({ showDeleteModal, onConfirm, onCancel
         </AnimatePresence>
     );
 };
-export default DeleteQmsManualDraftConfirmModal
+
+export default DeleteConfimModal

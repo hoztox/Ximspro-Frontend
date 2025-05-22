@@ -41,6 +41,25 @@ const QmsDraftHealthSafetyHazards = () => {
                     console.log("Hazard deleted successfully:", response.data);
                 })
                 .catch((error) => {
+                    let errorMsg = error.message;
+
+                    if (error.response) {
+                        // Check for field-specific errors first
+                        if (error.response.data.date) {
+                            errorMsg = error.response.data.date[0];
+                        }
+                        // Check for non-field errors
+                        else if (error.response.data.detail) {
+                            errorMsg = error.response.data.detail;
+                        }
+                        else if (error.response.data.message) {
+                            errorMsg = error.response.data.message;
+                        }
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+
+                    setError(errorMsg);
                     setShowDeleteDraftHazardErrorModal(true);
                     setTimeout(() => {
                         setShowDeleteDraftHazardErrorModal(false);
@@ -181,6 +200,7 @@ const QmsDraftHealthSafetyHazards = () => {
                 <DeleteQmsManualDraftErrorModal
                     showDeleteDraftManualErrorModal={showDeleteDraftHazardErrorModal}
                     onClose={() => setShowDeleteDraftHazardErrorModal(false)}
+                    error={error}
                 />
 
                 <div className="flex space-x-5 items-center">
@@ -206,9 +226,7 @@ const QmsDraftHealthSafetyHazards = () => {
             </div>
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white not-found">Loading Health and Safety Hazards...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                    <div className="text-center py-4 not-found">Loading Health and Safety Hazards...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>

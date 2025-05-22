@@ -5,6 +5,8 @@ import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
 import ProcessTypeModal from './ProcessTypeModal';
+import ErrorModal from '../Modals/ErrorModal';
+
 const QmsDraftEditHealthSafetyHazards = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -13,6 +15,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
     const currentMonth = currentDate.getMonth() + 1;
     const currentYear = currentDate.getFullYear();
     const [users, setUsers] = useState([]);
+    const [processes, setProcesses] = useState([]); // New state for processes
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [hazardDetails, setHazardDetails] = useState(null);
@@ -20,6 +23,8 @@ const QmsDraftEditHealthSafetyHazards = () => {
     const [isProcessTypeModalOpen, setIsProcessTypeModalOpen] = useState(false);
     const [focusedDropdown, setFocusedDropdown] = useState(null);
     const [showEditDraftHazardSuccessModal, setShowEditDraftHazardSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     const [fieldErrors, setFieldErrors] = useState({
         written_by: '',
         checked_by: '',
@@ -53,20 +58,27 @@ const QmsDraftEditHealthSafetyHazards = () => {
     }, [companyId, id]);
 
     useEffect(() => {
+        if (companyId) {
+            fetchUsers();
+            fetchProcess(); // Fetch processes on mount
+        }
+    }, [companyId]);
+
+    useEffect(() => {
         if (hazardDetails) {
             setFormData({
                 title: hazardDetails.title || '',
                 written_by: hazardDetails.written_by?.id || null,
-                hazard_no: hazardDetails.hazard_no || '', // Use existing Hazard Number
+                hazard_no: hazardDetails.hazard_no || '',
                 checked_by: hazardDetails.checked_by?.id || null,
                 approved_by: hazardDetails.approved_by?.id || null,
                 hazard_source: hazardDetails.hazard_source || '',
                 legal_requirement: hazardDetails.legal_requirement || '',
-                risk_level: hazardDetails.risk_level || '',
+                level_of_risk: hazardDetails.level_of_risk || '',
                 date: hazardDetails.date || `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
                 description: hazardDetails.description || '',
                 action: hazardDetails.action || '',
-                related_process: hazardDetails.related_process || '',
+                process_activity: hazardDetails.process_activity || '',
                 send_notification_to_checked_by: hazardDetails.send_notification_to_checked_by || false,
                 send_email_to_checked_by: hazardDetails.send_email_to_checked_by || false,
                 send_notification_to_approved_by: hazardDetails.send_notification_to_approved_by || false,
@@ -91,6 +103,48 @@ const QmsDraftEditHealthSafetyHazards = () => {
         }
     };
 
+    const fetchUsers = async () => {
+        try {
+            if (!companyId) return;
+
+            const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+            if (Array.isArray(response.data)) {
+                setUsers(response.data);
+            } else {
+                setUsers([]);
+                console.error("Unexpected response format:", response.data);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            setError("Failed to load users. Please check your connection and try again.");
+        }
+    };
+
+    const fetchProcess = async () => {
+        setLoading(true);
+        try {
+            const companyId = getUserCompanyId();
+            if (!companyId) {
+                setError('Company ID not found. Please log in again.');
+                return;
+            }
+
+            const response = await axios.get(`${BASE_URL}/qms/health-root/company/${companyId}/`);
+            if (Array.isArray(response.data)) {
+                setProcesses(response.data); // Store fetched processes
+                console.log("Processes loaded:", response.data);
+            } else {
+                setProcesses([]);
+                console.error("Unexpected response format for processes:", response.data);
+            }
+        } catch (error) {
+            console.error('Error fetching process:', error);
+            setError('Failed to load process. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const riskLevel = [
         'High',
         'Medium',
@@ -105,11 +159,11 @@ const QmsDraftEditHealthSafetyHazards = () => {
         approved_by: null,
         hazard_source: '',
         legal_requirement: '',
-        risk_level: '',
+        level_of_risk: '',
         date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
         description: '',
         action: '',
-        related_process: '',
+        process_activity: '',
         send_notification_to_checked_by: false,
         send_email_to_checked_by: false,
         send_notification_to_approved_by: false,
@@ -120,34 +174,11 @@ const QmsDraftEditHealthSafetyHazards = () => {
         written_by: false,
         checked_by: false,
         approved_by: false,
-        risk_level: false,
+        level_of_risk: false,
         day: false,
         month: false,
         year: false,
     });
-
-    useEffect(() => {
-        if (companyId) {
-            fetchUsers();
-        }
-    }, [companyId]);
-
-    const fetchUsers = async () => {
-        try {
-            if (!companyId) return;
-
-            const response = await axios.get(`${BASE_URL}/company/users/${companyId}/`);
-            if (Array.isArray(response.data)) {
-                setUsers(response.data);
-            } else {
-                setUsers([]);
-                console.error("Unexpected response format:", response.data);
-            }
-        } catch (error) {
-            console.error("Error fetching users:", error);
-            setError("Failed to load users. Please check your connection and try again.");
-        }
-    };
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month, 0).getDate();
@@ -231,7 +262,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
     const handleCloseProcessTypeModal = (newProcessAdded = false) => {
         setIsProcessTypeModalOpen(false);
         if (newProcessAdded) {
-            // Optionally fetch updated process list if needed
+            fetchProcess(); // Refresh processes if a new one was added
         }
     };
 
@@ -269,7 +300,7 @@ const QmsDraftEditHealthSafetyHazards = () => {
 
     const handleListDraftHealthSafetyHazards = () => {
         navigate('/company/qms/draft-health-safety-hazards');
-    }
+    };
 
     const getMonthName = (monthNum) => {
         const monthNames = [
@@ -339,7 +370,29 @@ const QmsDraftEditHealthSafetyHazards = () => {
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update hazard');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Error updating hazard:', err);
         }
     };
@@ -363,6 +416,13 @@ const QmsDraftEditHealthSafetyHazards = () => {
                     showEditDraftManualSuccessModal={showEditDraftHazardSuccessModal}
                     onClose={() => { setShowEditDraftHazardSuccessModal(false) }}
                 />
+
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
 
                 <ProcessTypeModal
                     isOpen={isProcessTypeModalOpen}
@@ -630,12 +690,11 @@ const QmsDraftEditHealthSafetyHazards = () => {
                             <label className="add-qms-manual-label">
                                 Hazard Description
                             </label>
-                            <input
-                                type="text"
+                            <textarea
                                 name="description"
                                 value={formData.description}
                                 onChange={handleChange}
-                                className="w-full add-qms-manual-inputs"
+                                className="w-full add-qms-manual-inputs !h-[98px] py-2"
                             />
                         </div>
 
@@ -646,11 +705,11 @@ const QmsDraftEditHealthSafetyHazards = () => {
                             <div className="relative">
                                 <select
                                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                                    name="risk_level"
-                                    value={formData.risk_level}
-                                    onFocus={() => toggleDropdown('risk_level')}
-                                    onChange={(e) => handleDropdownChange(e, 'risk_level')}
-                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, risk_level: false }))}
+                                    name="level_of_risk"
+                                    value={formData.level_of_risk}
+                                    onFocus={() => toggleDropdown('level_of_risk')}
+                                    onChange={(e) => handleDropdownChange(e, 'level_of_risk')}
+                                    onBlur={() => setOpenDropdowns(prev => ({ ...prev, level_of_risk: false }))}
                                 >
                                     <option value="" disabled>Select Level of Risk</option>
                                     {riskLevel.map(type => (
@@ -660,11 +719,10 @@ const QmsDraftEditHealthSafetyHazards = () => {
                                     ))}
                                 </select>
                                 <ChevronDown
-                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_level ? 'rotate-180' : ''}`}
+                                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.level_of_risk ? 'rotate-180' : ''}`}
                                 />
                             </div>
                         </div>
-
 
                         <div>
                             <label className="add-qms-manual-label">
@@ -681,18 +739,23 @@ const QmsDraftEditHealthSafetyHazards = () => {
                         <div className="flex flex-col gap-3 relative">
                             <label className="add-training-label">Related Process/Activity</label>
                             <select
-                                name="related_process"
-                                value={formData.related_process}
+                                name="process_activity"
+                                value={formData.process_activity}
                                 onChange={handleChange}
-                                onFocus={() => setFocusedDropdown("related_process")}
+                                onFocus={() => setFocusedDropdown("process_activity")}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
                             >
                                 <option value="" disabled>Select Related Process/Activity Type</option>
+                                {processes.map(process => (
+                                    <option key={process.id} value={process.id}>
+                                        {process.title}
+                                    </option>
+                                ))}
                             </select>
                             <ChevronDown
                                 className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                                                        ${focusedDropdown === "related_process" ? "rotate-180" : ""}`}
+                                                        ${focusedDropdown === "process_activity" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -729,4 +792,5 @@ const QmsDraftEditHealthSafetyHazards = () => {
         </div>
     );
 };
-export default QmsDraftEditHealthSafetyHazards
+
+export default QmsDraftEditHealthSafetyHazards;

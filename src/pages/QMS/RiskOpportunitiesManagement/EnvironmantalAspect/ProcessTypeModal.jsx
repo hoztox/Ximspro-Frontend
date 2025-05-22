@@ -4,7 +4,7 @@ import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
 import SuccessModal from "./Modals/SuccessModal";
 import ErrorModal from "./Modals/ErrorModal";
-import DeleteConfimModal from "./Modals/DeleteConfimModal"; 
+import DeleteConfimModal from "./Modals/DeleteConfimModal";
 
 const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
   const [animateClass, setAnimateClass] = useState("");
@@ -110,7 +110,25 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
       }, 3000);
     } catch (error) {
       console.error("Error deleting Process:", error);
-      setError("Failed to delete Process. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -169,7 +187,25 @@ const ProcessTypeModal = ({ isOpen, onClose, onAddProcess }) => {
       setNewProcessTitle("");
     } catch (error) {
       console.error("Error adding Process:", error);
-      setError("Failed to add Process. Please try again.");
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
