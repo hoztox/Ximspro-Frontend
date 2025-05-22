@@ -118,10 +118,10 @@ const QmsListEnergyAction = () => {
         }
 
         setError(errorMsg);
-        // setShowErrorModal(true);
-        // setTimeout(() => {
-        //   setShowErrorModal(false);
-        // }, 3000);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setIsLoading(false);
       }

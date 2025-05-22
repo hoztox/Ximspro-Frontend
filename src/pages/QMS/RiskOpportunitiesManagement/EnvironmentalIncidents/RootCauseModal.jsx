@@ -2,22 +2,24 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+
 const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [animateClass, setAnimateClass] = useState('');
     const [causes, setCauses] = useState([]);
     const [newCauseTitle, setNewCauseTitle] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [formError, setFormError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
-    // Animation effect when modal opens/closes
     useEffect(() => {
         if (isOpen) {
             setAnimateClass('opacity-100 scale-100');
             fetchCauses();
         } else {
             setAnimateClass('opacity-0 scale-95');
+            setFormError('');
         }
     }, [isOpen]);
 
@@ -40,7 +42,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Get company ID from local storage
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -60,7 +61,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         return null;
     };
 
-    // Handle delete cause
     const handleDelete = async (id) => {
         try {
             await axios.delete(`${BASE_URL}/qms/incident-root/${id}/`);
@@ -74,9 +74,19 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Handle save new cause
+    const validateForm = () => {
+        if (!newCauseTitle.trim()) {
+            setFormError('Cause Title is required');
+            return false;
+        }
+        setFormError('');
+        return true;
+    };
+
     const handleSave = async () => {
-        if (!newCauseTitle.trim()) return;
+        if (!validateForm()) {
+            return;
+        }
 
         setIsAdding(true);
         try {
@@ -87,7 +97,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 setIsAdding(false);
                 return;
             }
-            
 
             const response = await axios.post(`${BASE_URL}/qms/incident-root/create/`, {
                 company: companyId,
@@ -112,7 +121,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Handle selecting a cause
     const handleSelectCause = (cause) => {
         if (onAddCause && typeof onAddCause === 'function') {
             onAddCause(cause);
@@ -120,29 +128,21 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
+    const handleInputChange = (e) => {
+        setNewCauseTitle(e.target.value);
+        setFormError('');
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
+                 
 
-                {/* Causes List Section */}
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Root Causes List</h2>
-                    {loading ? (
-                        <div className="text-center py-4">Loading...</div>
-                    ) : (
+                     
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-gray-400">
                                 <thead className="bg-[#24242D] h-[48px]">
@@ -162,12 +162,12 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                                             </tr>
                                         ) : (
                                             causes.map((item, index) => (
-                                                <tr key={item.id} className="border-b border-[#383840] h-[42px]">
+                                                <tr key={item.id} className="border-b border-[#383840] h-[42px] hover:bg-[#24242D] cursor-pointer" onClick={() => handleSelectCause(item)}>
                                                     <td className="px-3 agenda-data w-[10%]">{index + 1}</td>
                                                     <td className="px-3 agenda-data w-[60%]">{item.title}</td>
                                                     <td className="px-3 agenda-data text-center w-[15%]">
                                                         <div className="flex items-center justify-center h-[42px]">
-                                                            <button onClick={() => handleDelete(item.id)}>
+                                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}>
                                                                 <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
                                                             </button>
                                                         </div>
@@ -179,10 +179,9 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                                 </table>
                             </div>
                         </div>
-                    )}
+                    
                 </div>
 
-                {/* Add Cause Section */}
                 <div className="bg-[#1C1C24] rounded-[4px]">
                     <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Root Cause</h3>
 
@@ -193,23 +192,27 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                         <input
                             type="text"
                             value={newCauseTitle}
-                            onChange={(e) => setNewCauseTitle(e.target.value)}
-                            className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none"
+                            onChange={handleInputChange}
+                            className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 outline-none border-none"
                             placeholder="Enter cause title"
                         />
+                        {formError && (
+                            <p className="text-red-500 text-sm mt-1">{formError}</p>
+                        )}
                     </div>
 
                     <div className="flex gap-5 justify-end pb-5 px-5">
                         <button
                             onClick={onClose}
                             className="cancel-btn"
+                            disabled={isAdding}
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSave}
                             className="save-btn"
-                            disabled={!newCauseTitle.trim() || isAdding}
+                            disabled={isAdding}
                         >
                             {isAdding ? 'Saving...' : 'Save'}
                         </button>
@@ -220,4 +223,4 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     );
 };
 
-export default RootCauseModal
+export default RootCauseModal;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -16,6 +16,7 @@ const QmsViewDraftCorrectionActions = () => {
         date_raised: "",
         date_completed: "",
         status: "",
+        upload_attachment: "",
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -54,16 +55,16 @@ const QmsViewDraftCorrectionActions = () => {
 
     // Format dates for display
     const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
-  };
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date
+            .toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            })
+            .replace(/\//g, "/");
+    };
 
     return (
         <div className="bg-[#1C1C24] text-white rounded-lg p-5">
@@ -151,6 +152,24 @@ const QmsViewDraftCorrectionActions = () => {
                         <div className="view-employee-data">{formatDate(formData.date_completed || "N/A")}</div>
                     </div>
 
+                    <div>
+                        <label className="block view-employee-label mb-[6px]">
+                            Attach Document
+                        </label>
+                        {formData.upload_attachment ? (
+                            <a
+                                href={formData.upload_attachment}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center"
+                            >
+                                Click to view file <Eye size={17} />
+                            </a>
+                        ) : (
+                            <div className="view-employee-data">No attachment</div>
+                        )}
+                    </div>
+
                     <div className="flex justify-between">
                         <div>
                             <label className="block view-employee-label mb-[6px]">
@@ -159,7 +178,6 @@ const QmsViewDraftCorrectionActions = () => {
                             <div className="view-employee-data">{formData.status}</div>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>

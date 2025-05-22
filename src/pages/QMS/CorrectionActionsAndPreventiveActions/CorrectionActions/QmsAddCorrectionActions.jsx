@@ -3,6 +3,7 @@ import { ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import RootCauseModal from '../RootCauseModal';
 import axios from 'axios';
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import SuccessModal from '../SuccessModal';
 import ErrorModal from '../ErrorModal';
@@ -53,6 +54,10 @@ const QmsAddCorrectionActions = () => {
         source: '',
         title: '',
     });
+
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSavingDraft, setIsSavingDraft] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(false); // For initial data loading
 
 
     const [successMessage, setSuccessMessage] = useState("");
@@ -121,7 +126,8 @@ const QmsAddCorrectionActions = () => {
         },
         status: 'Pending',
         send_notification: false,
-        is_draft: false
+        is_draft: false,
+        upload_attachment: null // Add this line
     });
 
     const [focusedDropdown, setFocusedDropdown] = useState(null);
@@ -203,7 +209,15 @@ const QmsAddCorrectionActions = () => {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked, files } = e.target;
+
+        if (type === 'file') {
+            setFormData({
+                ...formData,
+                upload_attachment: files[0]
+            });
+            return;
+        }
         if (name === 'next_action_no') return;
 
         if (name.includes('.')) {
@@ -262,36 +276,43 @@ const QmsAddCorrectionActions = () => {
         e.preventDefault();
 
         try {
-            setIsLoading(true);
-            setError('');
-            const companyId = getUserCompanyId();
-            const userId = getRelevantUserId();
-
+            setIsSavingDraft(true);
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                source: formData.source,
-                root_cause: formData.root_cause,
-                description: formData.description,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                status: formData.status,
-                executor: formData.executor,
-                next_action_no: formData.next_action_no,
-                action_or_corrections: formData.action_or_corrections,
-                send_notification: formData.send_notification,
-                is_draft: true,
-                user: userId
-            };
+            const submissionData = new FormData();
+
+            submissionData.append('company', companyId);
+            submissionData.append('user', userId);
+            submissionData.append('title', formData.title);
+            submissionData.append('source', formData.source);
+            submissionData.append('root_cause', formData.root_cause);
+            submissionData.append('description', formData.description);
+            if (dateRaised) {
+                submissionData.append('date_raised', dateRaised);
+            }
+            if (dateCompleted) {
+                submissionData.append('date_completed', dateCompleted);
+            }
+            submissionData.append('status', formData.status);
+            submissionData.append('executor', formData.executor);
+            submissionData.append('next_action_no', formData.next_action_no);
+            submissionData.append('action_or_corrections', formData.action_or_corrections);
+            submissionData.append('send_notification', formData.send_notification);
+            submissionData.append('is_draft', true);
 
             if (formData.source === 'Supplier' && formData.supplier) {
-                submissionData.supplier = formData.supplier;
+                submissionData.append('supplier', formData.supplier);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData);
+            if (formData.upload_attachment) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/car/draft-create/`, submissionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
             setIsLoading(false);
 
             setShowSuccessModal(true);
@@ -299,19 +320,17 @@ const QmsAddCorrectionActions = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/draft-correction-actions');
             }, 1500);
-            setSuccessMessage("Corrections Actions Drafted Successfully")
+            setSuccessMessage("Corrections Actions Drafted Successfully");
 
         } catch (error) {
             console.error('Error saving draft:', error);
-            setIsLoading(false);
+            setIsSavingDraft(false);
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
                 }
-                // Check for non-field errors
                 else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
                 }
@@ -330,47 +349,51 @@ const QmsAddCorrectionActions = () => {
         }
     };
 
-    const handleSubmit = async (e, asDraft = false) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!asDraft && !validateForm()) {
-            return;
-        }
-
-        if (asDraft) {
-            handleDraftSave(e);
+        if (!validateForm()) {
             return;
         }
 
         try {
-            setIsLoading(true);
-            const companyId = getUserCompanyId();
-
+            setIsSubmitting(true);
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                source: formData.source,
-                root_cause: formData.root_cause,
-                description: formData.description,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                status: formData.status,
-                executor: formData.executor,
-                next_action_no: formData.next_action_no,
-                action_or_corrections: formData.action_or_corrections,
-                send_notification: formData.send_notification,
-                user: userId,
-                is_draft: false
-            };
+            const submissionData = new FormData();
 
-            if (formData.source === 'Supplier') {
-                submissionData.supplier = formData.supplier;
+            submissionData.append('company', companyId);
+            submissionData.append('user', userId);
+            submissionData.append('title', formData.title);
+            submissionData.append('source', formData.source);
+            submissionData.append('root_cause', formData.root_cause);
+            submissionData.append('description', formData.description);
+            if (dateRaised) {
+                submissionData.append('date_raised', dateRaised);
+            }
+            if (dateCompleted) {
+                submissionData.append('date_completed', dateCompleted);
+            }
+            submissionData.append('status', formData.status);
+            submissionData.append('executor', formData.executor);
+            submissionData.append('next_action_no', formData.next_action_no);
+            submissionData.append('action_or_corrections', formData.action_or_corrections);
+            submissionData.append('send_notification', formData.send_notification);
+            submissionData.append('is_draft', false);
+
+            if (formData.source === 'Supplier' && formData.supplier) {
+                submissionData.append('supplier', formData.supplier);
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData);
+            if (formData.upload_attachment) {
+                submissionData.append('upload_attachment', formData.upload_attachment);
+            }
+
+            const response = await axios.post(`${BASE_URL}/qms/car-numbers/`, submissionData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
             setIsLoading(false);
 
             setShowSuccessModal(true);
@@ -378,8 +401,9 @@ const QmsAddCorrectionActions = () => {
                 setShowSuccessModal(false);
                 navigate('/company/qms/list-correction-actions');
             }, 1500);
-            setSuccessMessage("Corrections Actions Added Successfully")
+            setSuccessMessage("Corrections Actions Added Successfully");
 
+            // Reset form
             setFormData({
                 source: '',
                 title: '',
@@ -393,22 +417,21 @@ const QmsAddCorrectionActions = () => {
                 date_completed: { day: '', month: '', year: '' },
                 status: 'Pending',
                 send_notification: false,
-                is_draft: false
+                is_draft: false,
+                upload_attachment: null
             });
 
             fetchNextActionNumber();
 
         } catch (error) {
             console.error('Error submitting form:', error);
-            setIsLoading(false);
+            setIsSubmitting(false);
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
                 }
-                // Check for non-field errors
                 else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
                 }
@@ -798,12 +821,36 @@ const QmsAddCorrectionActions = () => {
                         <option value="Deleted">Deleted</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 
+                        className={`absolute right-3 top-[55px] transform transition-transform duration-300
                         ${focusedDropdown === "status" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
                 </div>
+
+                <div className="flex flex-col gap-3">
+                    <label className="add-training-label">Upload Attachment</label>
+                    <div className="flex">
+                        <input
+                            type="file"
+                            name="upload_attachment"
+                            onChange={handleChange}
+                            className="hidden"
+                            id="correction-upload"
+                        />
+                        <label
+                            htmlFor="correction-upload"
+                            className="add-training-inputs w-full flex justify-between items-center cursor-pointer !bg-[#1C1C24] border !border-[#383840]"
+                        >
+                            <span className="text-[#AAAAAA] choose-file">Choose File</span>
+                            <img src={file} alt="" />
+                        </label>
+                    </div>
+                    <p className="no-file text-[#AAAAAA] flex justify-end !mt-0">
+                        {formData.upload_attachment ? formData.upload_attachment.name : "No file chosen"}
+                    </p>
+                </div>
+                <div></div>
 
                 <div className="flex items-end justify-end mt-3">
                     <label className="flex items-center">
@@ -826,7 +873,7 @@ const QmsAddCorrectionActions = () => {
                             type="button"
                             onClick={handleDraftSave}
                             className='request-correction-btn duration-200'>
-                            Save as Draft
+                            {isSavingDraft ? 'Saving Draft...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className='flex gap-5'>
@@ -840,9 +887,9 @@ const QmsAddCorrectionActions = () => {
                         <button
                             type="submit"
                             className="save-btn duration-200"
-                            disabled={isLoading}
+                            disabled={isSubmitting}
                         >
-                            {isLoading ? 'Saving...' : 'Save'}
+                            {isSubmitting ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

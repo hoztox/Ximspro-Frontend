@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Eye } from "lucide-react";
 import axios from "axios";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
@@ -21,6 +21,7 @@ const QmsViewCorrectionActions = () => {
     date_raised: "",
     date_completed: "",
     status: "",
+    upload_attachment: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -112,6 +113,12 @@ const QmsViewCorrectionActions = () => {
     setShowDeleteModal(false);
     setShowSuccessModal(false);
     setShowErrorModal(false);
+  };
+
+  const handleViewFile = () => {
+    if (formData.upload_attachment) {
+      window.open(`${formData.upload_attachment}`, "_blank");
+    }
   };
 
   if (loading)
@@ -226,6 +233,23 @@ const QmsViewCorrectionActions = () => {
             </div>
           </div>
 
+          <div>
+            <label className="block view-employee-label mb-[6px]">
+              Attached Document
+            </label>
+            {formData.upload_attachment ? (
+              <button
+                onClick={handleViewFile}
+                className="flex gap-2 click-view-file-btn text-[#1E84AF] items-center"
+              >
+                Click to view file <Eye size={17} />
+              </button>
+            ) : (
+              <div className="view-employee-data">No file attached</div>
+            )}
+          </div>
+         
+
           <div className="flex justify-between">
             <div>
               <label className="block view-employee-label mb-[6px]">
@@ -235,6 +259,7 @@ const QmsViewCorrectionActions = () => {
                 {formData.status || "N/A"}
               </div>
             </div>
+          </div>
             <div className="flex space-x-10 justify-end">
               <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                 Edit
@@ -250,7 +275,6 @@ const QmsViewCorrectionActions = () => {
                 </button>
               </div>
             </div>
-          </div>
         </div>
       </div>
 

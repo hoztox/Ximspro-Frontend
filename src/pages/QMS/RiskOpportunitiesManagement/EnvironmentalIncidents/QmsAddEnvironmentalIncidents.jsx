@@ -135,16 +135,16 @@ const QmsAddEnvironmentalIncidents = () => {
     const validateForm = () => {
         const errors = {};
         if (!formData.source) errors.source = 'Source is required';
-        if (!formData.title) errors.title = 'Incident title is required';
-        if (!formData.date_raised.day || !formData.date_raised.month || !formData.date_raised.year) {
-            errors.date_raised = 'Date raised is required';
-        }
-        if (formData.status === 'Completed') {
-            if (!formData.action) errors.action = 'Action is required for Completed status';
-            if (!formData.date_completed.day || !formData.date_completed.month || !formData.date_completed.year) {
-                errors.date_completed = 'Complete date is required for Completed status';
-            }
-        }
+        if (!formData.title) errors.title = 'Incident Title is required';
+        // if (!formData.date_raised.day || !formData.date_raised.month || !formData.date_raised.year) {
+        //     errors.date_raised = 'Date raised is required';
+        // }
+        // if (formData.status === 'Completed') {
+        //     if (!formData.action) errors.action = 'Action is required for Completed status';
+        //     if (!formData.date_completed.day || !formData.date_completed.month || !formData.date_completed.year) {
+        //         errors.date_completed = 'Complete date is required for Completed status';
+        //     }
+        // }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -286,10 +286,6 @@ const QmsAddEnvironmentalIncidents = () => {
                 </button>
             </div>
 
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">{error}</div>
-            )}
-
             <RootCauseModal
                 isOpen={isRootCauseModalOpen}
                 onClose={(newCauseAdded) => {
@@ -308,7 +304,7 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.source}
                         onChange={handleChange}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                        required
+                         
                     >
                         <option value="" disabled>Select Source</option>
                         {sourceOptions.map((option) => (
@@ -317,7 +313,7 @@ const QmsAddEnvironmentalIncidents = () => {
                     </select>
                     {formErrors.source && <span className="text-red-500 text-sm">{formErrors.source}</span>}
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 ${
+                        className={`absolute right-3 top-[55px] transform transition-transform duration-300 ${
                             focusedDropdown === 'source' ? 'rotate-180' : ''
                         }`}
                         size={20}
@@ -335,7 +331,7 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
+                         
                     />
                     {formErrors.title && <span className="text-red-500 text-sm">{formErrors.title}</span>}
                 </div>
@@ -454,14 +450,14 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.action}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
-                        required={formData.status === 'Completed'}
+                        
                     />
                     {formErrors.action && <span className="text-red-500 text-sm">{formErrors.action}</span>}
                 </div>
 
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
-                        Date Raised <span className="text-red-500">*</span>
+                        Date Raised
                     </label>
                     <div className="grid grid-cols-3 gap-5">
                         <div className="relative">
@@ -472,7 +468,6 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_raised.day')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
@@ -493,7 +488,6 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_raised.month')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
@@ -514,7 +508,7 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_raised.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required
+                                 
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
@@ -544,7 +538,7 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.day')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required={formData.status === 'Completed'}
+                                
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
@@ -565,7 +559,7 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.month')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required={formData.status === 'Completed'}
+                                
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
@@ -586,7 +580,7 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                required={formData.status === 'Completed'}
+                              
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}

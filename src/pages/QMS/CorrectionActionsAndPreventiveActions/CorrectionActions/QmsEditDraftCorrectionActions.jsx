@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import RootCauseModal from '../RootCauseModal';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import SuccessModal from '../SuccessModal';
 import ErrorModal from '../ErrorModal';
+import file from "../../../../assets/images/Company Documentation/file-icon.svg";
 
 const QmsEditDraftCorrectionActions = () => {
     const { id } = useParams();
@@ -42,6 +43,7 @@ const QmsEditDraftCorrectionActions = () => {
         source: '',
         title: '',
     });
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const [successMessage, setSuccessMessage] = useState("");
     const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -67,6 +69,7 @@ const QmsEditDraftCorrectionActions = () => {
             month: '',
             year: ''
         },
+        upload_attachment: null,
         status: 'Pending',
         send_notification: false,
         is_draft: true
@@ -109,23 +112,27 @@ const QmsEditDraftCorrectionActions = () => {
                 supplier: data.supplier?.id || '',
                 date_raised: processDate(data.date_raised),
                 date_completed: processDate(data.date_completed),
+                upload_attachment: data.upload_attachment || null,
                 status: data.status || 'Pending',
                 send_notification: data.send_notification || false,
                 is_draft: data.is_draft || true
             };
 
             setFormData(formData);
+
+            if (data.upload_attachment) {
+                setSelectedFile(data.upload_attachment.split('/').pop());
+            }
+
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching draft correction action:', error);
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
                 }
-                // Check for non-field errors
                 else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
                 }
@@ -250,6 +257,29 @@ const QmsEditDraftCorrectionActions = () => {
         }
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file.name);
+            setFormData({
+                ...formData,
+                upload_attachment: file,
+            });
+        } else {
+            setSelectedFile(null);
+            setFormData({
+                ...formData,
+                upload_attachment: null,
+            });
+        }
+    };
+
+    const handleViewFile = () => {
+        if (formData.upload_attachment && typeof formData.upload_attachment === 'string') {
+            window.open(formData.upload_attachment, '_blank');
+        }
+    };
+
     const formatDate = (dateObj) => {
         if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
@@ -286,27 +316,34 @@ const QmsEditDraftCorrectionActions = () => {
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                source: formData.source,
-                root_cause: formData.root_cause || null,
-                description: formData.description,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                status: formData.status,
-                executor: formData.executor || null,
-                next_action_no: formData.next_action_no,
-                action_or_corrections: formData.action_or_corrections,
-                send_notification: formData.send_notification,
-                is_draft: true
-            };
+            const submissionData = new FormData();
+            submissionData.append('company', companyId);
+            submissionData.append('title', formData.title);
+            submissionData.append('source', formData.source);
+            submissionData.append('root_cause', formData.root_cause || '');
+            submissionData.append('description', formData.description);
+            if (dateRaised) submissionData.append('date_raised', dateRaised);
+            if (dateCompleted) submissionData.append('date_completed', dateCompleted);
+            submissionData.append('status', formData.status);
+            submissionData.append('executor', formData.executor || '');
+            submissionData.append('next_action_no', formData.next_action_no);
+            submissionData.append('action_or_corrections', formData.action_or_corrections);
+            submissionData.append('send_notification', formData.send_notification);
+            submissionData.append('is_draft', 'false');
 
-            if (formData.source === 'Supplier') {
-                submissionData.supplier = formData.supplier;
+            if (formData.upload_attachment && typeof formData.upload_attachment === 'object') {
+                submissionData.append('upload_attachment', formData.upload_attachment);
             }
 
-            const response = await axios.put(`${BASE_URL}/qms/car-draft/update/${id}/`, submissionData);
+            if (formData.source === 'Supplier') {
+                submissionData.append('supplier', formData.supplier);
+            }
+
+            const response = await axios.put(`${BASE_URL}/qms/car-draft/update/${id}/`, submissionData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             setIsLoading(false);
 
             setShowSuccessModal(true);
@@ -322,11 +359,9 @@ const QmsEditDraftCorrectionActions = () => {
             let errorMsg = error.message;
 
             if (error.response) {
-                // Check for field-specific errors first
                 if (error.response.data.date) {
                     errorMsg = error.response.data.date[0];
                 }
-                // Check for non-field errors
                 else if (error.response.data.detail) {
                     errorMsg = error.response.data.detail;
                 }
@@ -370,11 +405,6 @@ const QmsEditDraftCorrectionActions = () => {
                 </button>
             </div>
 
-            {isLoading ? (
-                <div className="flex justify-center items-center h-64">
-                    <p className="not-found">Loading...</p>
-                </div>
-            ) : (
                 <>
                     <RootCauseModal
                         isOpen={isRootCauseModalOpen}
@@ -702,12 +732,49 @@ const QmsEditDraftCorrectionActions = () => {
                                 <option value="Deleted">Deleted</option>
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[58%] transform transition-transform duration-300 
+                                className={`absolute right-3 top-[55px] transform transition-transform duration-300
                                 ${focusedDropdown === "status" ? "rotate-180" : ""}`}
                                 size={20}
                                 color="#AAAAAA"
                             />
                         </div>
+
+                        <div className="flex flex-col gap-3">
+                            <label className="add-training-label">Upload Attachment</label>
+                            <div className="relative -top-[9px]">
+                                <input
+                                    type="file"
+                                    id="fileInput"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                                <button
+                                    type="button"
+                                    className="w-full add-qmsmanual-attach"
+                                    onClick={() => document.getElementById("fileInput").click()}
+                                >
+                                    <span className="file-input">
+                                        {selectedFile ? selectedFile : "Choose File"}
+                                    </span>
+                                    <img src={file} alt="File Icon" />
+                                </button>
+                                <div className="flex items-center justify-between">
+                                    {(typeof formData.upload_attachment === 'string' || selectedFile) && (
+                                        <div
+                                            onClick={handleViewFile}
+                                            className="flex items-center gap-[8px] text-[#1E84AF] mt-[10.65px] click-view-file-text !text-[14px] cursor-pointer"
+                                        >
+                                            Click to view file
+                                            <Eye size={17} />
+                                        </div>
+                                    )}
+                                    {!selectedFile && (
+                                        <p className="text-right no-file">No file chosen</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div></div>
 
                         <div className="flex items-end justify-end mt-3">
                             <label className="flex items-center">
@@ -744,7 +811,6 @@ const QmsEditDraftCorrectionActions = () => {
                         </div>
                     </form>
                 </>
-            )}
         </div>
     );
 };

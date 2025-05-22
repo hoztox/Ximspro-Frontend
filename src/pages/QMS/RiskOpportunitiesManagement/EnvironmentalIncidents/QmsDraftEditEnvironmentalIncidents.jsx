@@ -150,7 +150,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.source) errors.source = 'Source is required';
-    if (!formData.title) errors.title = 'Incident title is required';
+    if (!formData.title) errors.title = 'Incident Title is required';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -201,16 +201,16 @@ const QmsDraftEditEnvironmentalIncidents = () => {
       const dateRaised = formatDate(formData.date_raised);
       const dateCompleted = formatDate(formData.date_completed);
 
-      if ((formData.date_raised.day || formData.date_raised.month || formData.date_raised.year) && !dateRaised) {
-        setFormErrors({ date_raised: 'Invalid Date Raised. Please enter a valid date.' });
-        setIsLoading(false);
-        return;
-      }
-      if ((formData.date_completed.day || formData.date_completed.month || formData.date_completed.year) && !dateCompleted) {
-        setFormErrors({ date_completed: 'Invalid Complete By date. Please enter a valid date.' });
-        setIsLoading(false);
-        return;
-      }
+      // if ((formData.date_raised.day || formData.date_raised.month || formData.date_raised.year) && !dateRaised) {
+      //   setFormErrors({ date_raised: 'Invalid Date Raised. Please enter a valid date.' });
+      //   setIsLoading(false);
+      //   return;
+      // }
+      // if ((formData.date_completed.day || formData.date_completed.month || formData.date_completed.year) && !dateCompleted) {
+      //   setFormErrors({ date_completed: 'Invalid Complete By date. Please enter a valid date.' });
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       const submissionData = {
         company: companyId,
@@ -252,14 +252,6 @@ const QmsDraftEditEnvironmentalIncidents = () => {
     }
     return options;
   };
-
-  if (isLoading && !formData.incident_no) {
-    return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-96">
-        <p>Loading incident data...</p>
-      </div>
-    );
-  }
 
   if (error && !formData.incident_no) {
     return (
@@ -308,7 +300,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
             onFocus={() => setFocusedDropdown('source')}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-            required
+             
           >
             <option value="" disabled>
               Select Source
@@ -321,7 +313,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
           </select>
           {formErrors.source && <span className="text-red-500 text-sm">{formErrors.source}</span>}
           <ChevronDown
-            className={`absolute right-3 top-[60%] transform transition-transform duration-300
+            className={`absolute right-3 top-[55px] transform transition-transform duration-300
               ${focusedDropdown === 'source' ? 'rotate-180' : ''}`}
             size={20}
             color="#AAAAAA"
@@ -338,7 +330,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
             value={formData.title}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
-            required
+             
           />
           {formErrors.title && <span className="text-red-500 text-sm">{formErrors.title}</span>}
         </div>
