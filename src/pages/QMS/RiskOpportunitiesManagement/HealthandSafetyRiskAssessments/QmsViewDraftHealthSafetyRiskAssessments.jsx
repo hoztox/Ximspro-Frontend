@@ -339,9 +339,8 @@ const QmsViewDraftHealthSafetyRiskAssessments = () => {
     // };
 
     // Render loading or error states
-    if (loading) return <div className="text-white">Loading...</div>;
-    if (error) return <div className="text-red-500">{error}</div>;
-    if (!manualDetails) return <div className="text-white">No manual details found</div>;
+    if (loading) return <div className="text-center not-found">Loading...</div>;
+    if (!manualDetails) return <div className="text-center not-found">No Health and Safety Risk Assessments Details Found</div>;
 
     // Check if current user can review
     const currentUserId = Number(localStorage.getItem('user_id'));

@@ -553,9 +553,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
 
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 not-found">Loading Sustainability...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                    <div className="text-center py-4 not-found">Loading Health and Safety Risk Assessments...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>
@@ -641,7 +639,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
                                     );
                                 })
                             ) : (
-                                <tr><td colSpan="11" className="text-center py-4 not-found">No Sustainability Found.</td></tr>
+                                <tr><td colSpan="11" className="text-center py-4 not-found">No Health and Safety Risk Assessments Found.</td></tr>
                             )}
                             <tr>
                                 <td colSpan="11" className="pt-[15px] border-t border-[#383840]">

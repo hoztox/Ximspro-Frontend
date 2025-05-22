@@ -199,9 +199,7 @@ const QmsDraftHealthSafetyRiskAssessments = () => {
             {/* Table section with updated columns */}
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white not-found">Loading Sustainability...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                    <div className="text-center py-4 not-found">Loading Health and Safety Risk Assessments...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>

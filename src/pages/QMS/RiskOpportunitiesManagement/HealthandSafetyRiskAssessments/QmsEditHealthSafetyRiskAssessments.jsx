@@ -271,7 +271,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
 
         // Validate section number
         if (!formData.assessment_no.trim()) {
-            newErrors.assessment_no = 'Compliance/Obligation Number is required';
+            newErrors.assessment_no = 'Risk Assessment Number is required';
             isValid = false;
         }
 
@@ -528,7 +528,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
                             onChange={handleChange}
                             className="w-full add-qms-manual-inputs"
                         />
-                        {fieldErrors.assessment_no && <p className={errorTextClass}>{fieldErrors.no}</p>}
+                        {fieldErrors.assessment_no && <p className={errorTextClass}>{fieldErrors.assessment_no}</p>}
 
                     </div>
 

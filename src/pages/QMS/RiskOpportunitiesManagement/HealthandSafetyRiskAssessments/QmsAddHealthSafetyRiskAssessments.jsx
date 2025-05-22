@@ -150,7 +150,7 @@ const QmsAddHealthSafetyRiskAssessments = () => {
 
         // Check required fields
         if (!formData.assessment_no.trim()) {
-            newErrors.assessment_no = "Compliance/Obligation Number is required";
+            newErrors.assessment_no = "Risk Assessment Number is required";
         }
 
         if (!formData.written_by) {
