@@ -4,10 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EditQmsManualSuccessModal from './Modals/EditQmsManualSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditEnvironmentalWasteManagement = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
+    const navigate = useNavigate(); 
     const [manualDetails, setManualDetails] = useState(null);
     const [corrections, setCorrections] = useState([]);
     const [users, setUsers] = useState([]);
@@ -16,6 +17,8 @@ const QmsEditEnvironmentalWasteManagement = () => {
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [showEditManualSuccessModal, setShowEditManualSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
 
     const [formData, setFormData] = useState({
         location: '',
@@ -50,6 +53,7 @@ const QmsEditEnvironmentalWasteManagement = () => {
     const [fieldErrors, setFieldErrors] = useState({
         written_by: '',
         checked_by: '',
+        location: '',
     });
 
     const getUserCompanyId = () => {
@@ -126,6 +130,10 @@ const QmsEditEnvironmentalWasteManagement = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setUsers([]);
         }
     };
@@ -140,6 +148,10 @@ const QmsEditEnvironmentalWasteManagement = () => {
         } catch (err) {
             console.error("Error fetching waste management details:", err);
             setError("Failed to load waste management details");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setIsInitialLoad(false);
             setLoading(false);
         }
@@ -200,6 +212,11 @@ const QmsEditEnvironmentalWasteManagement = () => {
     const validateForm = () => {
         let isValid = true;
         const newErrors = { ...fieldErrors };
+
+        if (!formData.location) {
+            newErrors.location = 'Location/Site Name is required';
+            isValid = false;
+        }
 
         if (!formData.written_by) {
             newErrors.written_by = 'Written/Prepare By is required';
@@ -305,7 +322,29 @@ const QmsEditEnvironmentalWasteManagement = () => {
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update waste management record');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Error updating waste management record:', err);
         }
     };
@@ -333,12 +372,18 @@ const QmsEditEnvironmentalWasteManagement = () => {
                     showEditManualSuccessModal={showEditManualSuccessModal}
                     onClose={() => { setShowEditManualSuccessModal(false) }}
                 />
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
-                                Location/Site Name
+                                Location/Site Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -347,6 +392,7 @@ const QmsEditEnvironmentalWasteManagement = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.location && <p className={errorTextClass}>{fieldErrors.location}</p>}
                         </div>
 
                         <div>

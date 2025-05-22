@@ -165,6 +165,10 @@ const QmsAddEnvironmentalWasteManagement = () => {
     const validateForm = () => {
         const newErrors = {};
 
+        if (!formData.location) {
+            newErrors.location = "Location/Site Name is required";
+        }
+
         if (!formData.written_by) {
             newErrors.written_by = "Written/Prepare By is required";
         }
@@ -269,7 +273,29 @@ const QmsAddEnvironmentalWasteManagement = () => {
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to save record formats');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowDarftManualErrorModal(true);
+            setTimeout(() => {
+                setShowDarftManualErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -325,10 +351,30 @@ const QmsAddEnvironmentalWasteManagement = () => {
             setShowDraftManualSuccessModal(true);
             setTimeout(() => {
                 setShowDraftManualSuccessModal(false);
+                navigate('/company/qms/draft-environmantal-waste-management');
             }, 1500);
 
         } catch (err) {
             setLoading(false);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
             setShowDarftManualErrorModal(true);
             setTimeout(() => {
                 setShowDarftManualErrorModal(false);
@@ -376,13 +422,14 @@ const QmsAddEnvironmentalWasteManagement = () => {
                 <AddQmsManualDraftErrorModal
                     showDraftManualErrorModal={showDraftManualErrorModal}
                     onClose={() => { setShowDarftManualErrorModal(false) }}
+                    error={error}
                 />
 
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
-                                Location/Site Name
+                                Location/Site Name  <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -391,6 +438,7 @@ const QmsAddEnvironmentalWasteManagement = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            <ErrorMessage message={errors.location} />
                         </div>
 
                         <div>

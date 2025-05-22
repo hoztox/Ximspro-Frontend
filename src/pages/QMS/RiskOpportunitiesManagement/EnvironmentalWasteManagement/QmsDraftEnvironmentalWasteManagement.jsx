@@ -38,9 +38,28 @@ const QmsDraftEnvironmentalWasteManagement = () => {
                     setTimeout(() => {
                         setShowDeleteDraftManualSuccessModal(false);
                     }, 3000);
-                    console.log("Manual deleted successfully:", response.data);
+                    console.log("Environmental Waste Management deleted successfully:", response.data);
                 })
                 .catch((error) => {
+                    let errorMsg = error.message;
+
+                    if (error.response) {
+                        // Check for field-specific errors first
+                        if (error.response.data.date) {
+                            errorMsg = error.response.data.date[0];
+                        }
+                        // Check for non-field errors
+                        else if (error.response.data.detail) {
+                            errorMsg = error.response.data.detail;
+                        }
+                        else if (error.response.data.message) {
+                            errorMsg = error.response.data.message;
+                        }
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+
+                    setError(errorMsg);
                     setShowDeleteDraftManualErrorModal(true);
                     setTimeout(() => {
                         setShowDeleteDraftManualErrorModal(false);
@@ -170,6 +189,7 @@ const QmsDraftEnvironmentalWasteManagement = () => {
                 <DeleteQmsManualDraftErrorModal
                     showDeleteDraftManualErrorModal={showDeleteDraftManualErrorModal}
                     onClose={() => setShowDeleteDraftManualErrorModal(false)}
+                    error={error}
                 />
 
                 <div className="flex space-x-5 items-center">
@@ -196,9 +216,7 @@ const QmsDraftEnvironmentalWasteManagement = () => {
 
             <div className="p-5 overflow-hidden">
                 {loading ? (
-                    <div className="text-center py-4 text-white not-found">Loading Waste Management drafts...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                    <div className="text-center py-4 not-found">Loading Environmental Waste Management drafts...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>

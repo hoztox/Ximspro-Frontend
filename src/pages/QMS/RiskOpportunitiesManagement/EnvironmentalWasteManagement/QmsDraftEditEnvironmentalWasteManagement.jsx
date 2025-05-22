@@ -4,17 +4,20 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import EditDraftQmsManualSuccessModal from './Modals/EditDraftQmsManualSuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEditEnvironmentalWasteManagement = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); 
     const [error, setError] = useState(null);
     const [manualDetails, setManualDetails] = useState(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [showEditDraftManualSuccessModal, setShowEditDraftManualSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         location: '',
@@ -48,7 +51,7 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
 
     const [fieldErrors, setFieldErrors] = useState({
         written_by: '',
-        no: '',
+        location: '',
         checked_by: '',
     });
 
@@ -125,6 +128,10 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setUsers([]);
         }
     };
@@ -140,6 +147,10 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
         } catch (err) {
             console.error("Error fetching waste management details:", err);
             setError("Failed to load waste management details");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             setIsInitialLoad(false);
             setLoading(false);
         }
@@ -196,8 +207,8 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
             isValid = false;
         }
 
-        if (!formData.wmp.trim()) {
-            newErrors.wmp = 'WMP No is required';
+        if (!formData.location) {
+            newErrors.location = 'Location/Site Name is required';
             isValid = false;
         }
 
@@ -301,7 +312,29 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
 
         } catch (err) {
             setLoading(false);
-            setError('Failed to update waste management draft');
+            let errorMsg = err.message;
+
+            if (err.response) {
+                // Check for field-specific errors first
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
             console.error('Error updating waste management draft:', err);
         }
     };
@@ -315,7 +348,7 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
     return (
         <div className="bg-[#1C1C24] rounded-lg text-white">
             <div>
-            <div className='flex items-center justify-between  px-[65px] 2xl:px-[122px]'>
+                <div className='flex items-center justify-between  px-[65px] 2xl:px-[122px]'>
                     <h1 className="add-manual-sections !px-0">Edit Draft Environmental Waste Management</h1>
                     <button
                         className="flex items-center justify-center  add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -330,11 +363,17 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
                     onClose={() => { setShowEditDraftManualSuccessModal(false) }}
                 />
 
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
                 <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[104px]">
                     <div className="grid md:grid-cols-2 gap-5">
                         <div>
                             <label className="add-qms-manual-label">
-                                Location/Site Name
+                                Location/Site Name <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -343,6 +382,7 @@ const QmsDraftEditEnvironmentalWasteManagement = () => {
                                 onChange={handleChange}
                                 className="w-full add-qms-manual-inputs"
                             />
+                            {fieldErrors.location && <p className={errorTextClass}>{fieldErrors.location}</p>}
                         </div>
 
                         <div>

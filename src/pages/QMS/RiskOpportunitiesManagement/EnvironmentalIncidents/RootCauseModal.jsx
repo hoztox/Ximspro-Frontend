@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
+import DeleteConfimModal from '../Modals/DeleteConfimModal';
 
 const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [animateClass, setAnimateClass] = useState('');
@@ -11,7 +14,14 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [error, setError] = useState('');
     const [formError, setFormError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
+
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [causeToDelete, setCauseToDelete] = useState(null);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
 
     useEffect(() => {
         if (isOpen) {
@@ -29,6 +39,10 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             const companyId = getUserCompanyId();
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
+                setShowErrorModal(true);
+                setTimeout(() => {
+                    setShowErrorModal(false);
+                }, 3000);
                 return;
             }
 
@@ -37,6 +51,10 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         } catch (error) {
             console.error('Error fetching causes:', error);
             setError('Failed to load causes. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setLoading(false);
         }
@@ -61,16 +79,38 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         return null;
     };
 
-    const handleDelete = async (id) => {
+    // Open delete confirmation modal
+    const openDeleteModal = (cause) => {
+        setCauseToDelete(cause);
+        setShowDeleteModal(true);
+        setDeleteMessage("Root Cause");
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
+    const handleDelete = async () => {
+        if (!causeToDelete) return;
+
         try {
-            await axios.delete(`${BASE_URL}/qms/incident-root/${id}/`);
-            setCauses(causes.filter(item => item.id !== id));
-            setSuccessMessage('Cause deleted successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            await axios.delete(`${BASE_URL}/qms/incident-root/${causeToDelete.id}/`);
+            setCauses(causes.filter(item => item.id !== causeToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Root Cause Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
         } catch (error) {
             console.error('Error deleting cause:', error);
             setError('Failed to delete cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -108,14 +148,21 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
             if (onAddCause && typeof onAddCause === 'function') {
                 onAddCause(response.data);
             }
-
+ 
             setNewCauseTitle('');
-            setSuccessMessage('Cause added successfully');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 1500);
+            setSuccessMessage("Root Cause Added Successfully")
+
         } catch (error) {
             console.error('Error adding cause:', error);
             setError('Failed to add cause. Please try again.');
-            setTimeout(() => setError(''), 3000);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsAdding(false);
         }
@@ -138,48 +185,69 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                 
+
+                {/* Success Modal */}
+                <SuccessModal
+                    showSuccessModal={showSuccessModal}
+                    onClose={() => setShowSuccessModal(false)}
+                    successMessage={successMessage}
+                />
+
+                {/* Error Modal */}
+                <ErrorModal
+                    showErrorModal={showErrorModal}
+                    onClose={() => setShowErrorModal(false)}
+                    error={error}
+                />
+
+                {/* Delete Confirmation Modal */}
+                <DeleteConfimModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={handleDelete}
+                    onCancel={closeAllModals}
+                    deleteMessage={deleteMessage}
+                />
 
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Root Causes List</h2>
-                     
-                        <div className="overflow-x-auto">
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-gray-400">
+                            <thead className="bg-[#24242D] h-[48px]">
+                                <tr className="rounded-[4px]">
+                                    <th className="px-3 w-[10%] agenda-thead">No</th>
+                                    <th className="px-3 w-[60%] agenda-thead">Title</th>
+                                    <th className="px-3 text-center w-[15%] agenda-thead">Delete</th>
+                                </tr>
+                            </thead>
+                        </table>
+                        <div className="max-h-[230px] overflow-y-auto">
                             <table className="w-full text-left text-gray-400">
-                                <thead className="bg-[#24242D] h-[48px]">
-                                    <tr className="rounded-[4px]">
-                                        <th className="px-3 w-[10%] agenda-thead">No</th>
-                                        <th className="px-3 w-[60%] agenda-thead">Title</th>
-                                        <th className="px-3 text-center w-[15%] agenda-thead">Delete</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                            <div className="max-h-[230px] overflow-y-auto">
-                                <table className="w-full text-left text-gray-400">
-                                    <tbody>
-                                        {causes.length === 0 ? (
-                                            <tr>
-                                                <td colSpan="4" className="text-center py-4">No causes found</td>
+                                <tbody>
+                                    {causes.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="4" className="text-center py-4">No causes found</td>
+                                        </tr>
+                                    ) : (
+                                        causes.map((item, index) => (
+                                            <tr key={item.id} className="border-b border-[#383840] h-[42px] hover:bg-[#24242D] cursor-pointer" onClick={() => handleSelectCause(item)}>
+                                                <td className="px-3 agenda-data w-[10%]">{index + 1}</td>
+                                                <td className="px-3 agenda-data w-[60%]">{item.title}</td>
+                                                <td className="px-3 agenda-data text-center w-[15%]">
+                                                    <div className="flex items-center justify-center h-[42px]">
+                                                        <button onClick={(e) => { e.stopPropagation(); openDeleteModal(item); }}>
+                                                            <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        ) : (
-                                            causes.map((item, index) => (
-                                                <tr key={item.id} className="border-b border-[#383840] h-[42px] hover:bg-[#24242D] cursor-pointer" onClick={() => handleSelectCause(item)}>
-                                                    <td className="px-3 agenda-data w-[10%]">{index + 1}</td>
-                                                    <td className="px-3 agenda-data w-[60%]">{item.title}</td>
-                                                    <td className="px-3 agenda-data text-center w-[15%]">
-                                                        <div className="flex items-center justify-center h-[42px]">
-                                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }}>
-                                                                <img src={deletes} alt="Delete Icon" className="w-[16px] h-[16px]" />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                    
+                    </div>
+
                 </div>
 
                 <div className="bg-[#1C1C24] rounded-[4px]">

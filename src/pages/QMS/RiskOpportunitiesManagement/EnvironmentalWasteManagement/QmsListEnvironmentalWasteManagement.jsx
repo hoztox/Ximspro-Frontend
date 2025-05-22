@@ -40,6 +40,8 @@ const QmsListEnvironmentalWasteManagement = () => {
     const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
     const [showPublishErrorModal, setShowPublishErrorModal] = useState(false);
 
+    const [sortOrder, setSortOrder] = useState('asc');
+
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -202,20 +204,21 @@ const QmsListEnvironmentalWasteManagement = () => {
             // Apply visibility filtering
             const filteredManuals = filterManualsByVisibility(response.data);
 
-            // Sort manuals by creation date (newest first)
+            // Sort manuals by id
             const sortedManuals = filteredManuals.sort((a, b) => {
-                // Use created_at if available, otherwise fall back to date field
-                const dateA = new Date(a.created_at || a.date || 0);
-                const dateB = new Date(b.created_at || b.date || 0);
-                return dateB - dateA; // Descending order (newest first)
+                return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
             });
 
             setManuals(sortedManuals);
             console.log("Filtered and Sorted Manuals Data:", sortedManuals);
             setLoading(false);
         } catch (err) {
-            console.error("Error fetching manuals:", err);
-            setError("Failed to load record format. Please try again.");
+            console.error("Error fetching environmental waste management:", err);
+            setError("Failed to load environmental waste management");
+            setShowPublishErrorModal(true);
+            setTimeout(() => {
+                setShowPublishErrorModal(false);
+            }, 3000);
             setLoading(false);
         }
     };
@@ -235,18 +238,23 @@ const QmsListEnvironmentalWasteManagement = () => {
                 const filteredManuals = filterManualsByVisibility(manualsResponse.data);
                 console.log("Filtered manuals:", filteredManuals);
 
-                // Set filtered manuals
-                setManuals(filteredManuals);
+                // Sort manuals by id
+                const sortedManuals = filteredManuals.sort((a, b) => {
+                    return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
+                });
+
+                // Set filtered and sorted manuals
+                setManuals(sortedManuals);
 
                 // Then fetch corrections for visible manuals
-                const correctionsPromises = filteredManuals.map(async (manual) => {
+                const correctionsPromises = sortedManuals.map(async (manual) => {
                     try {
                         console.log(`Fetching corrections for manual ID ${manual.id}`);
-                        const correctionResponse = await axios.get(`${BASE_URL}/qms/sustainability/${manual.id}/corrections/`);
-                        console.log(`Corrections for manual ${manual.id}:`, correctionResponse.data);
+                        const correctionResponse = await axios.get(`${BASE_URL}/qms/waste/${manual.id}/corrections/`); 
+                        console.log(`Corrections for environmental waste ${manual.id}:`, correctionResponse.data);
                         return { manualId: manual.id, corrections: correctionResponse.data };
                     } catch (correctionError) {
-                        console.error(`Error fetching corrections for manual ${manual.id}:`, correctionError);
+                        console.error(`Error fetching corrections for environmental waste ${manual.id}:`, correctionError);
                         return { manualId: manual.id, corrections: [] };
                     }
                 });
@@ -278,13 +286,17 @@ const QmsListEnvironmentalWasteManagement = () => {
                 setLoading(false);
             } catch (error) {
                 console.error("Error fetching data:", error);
-                setError("Failed to load data. Please try again.");
+                setError("Failed to load data");
+                setShowPublishErrorModal(true);
+                setTimeout(() => {
+                    setShowPublishErrorModal(false);
+                }, 3000);
                 setLoading(false);
             }
         };
 
         fetchAllData();
-    }, []);
+    }, [sortOrder]); // Add sortOrder to the dependency array
 
     const getRelevantUserId = () => {
         const userRole = localStorage.getItem("role");
@@ -326,6 +338,25 @@ const QmsListEnvironmentalWasteManagement = () => {
                 }, 2000);
             } catch (err) {
                 console.error("Error deleting record format:", err);
+                let errorMsg = err.message;
+
+                if (err.response) {
+                    // Check for field-specific errors first
+                    if (err.response.data.date) {
+                        errorMsg = err.response.data.date[0];
+                    }
+                    // Check for non-field errors
+                    else if (err.response.data.detail) {
+                        errorMsg = err.response.data.detail;
+                    }
+                    else if (err.response.data.message) {
+                        errorMsg = err.response.data.message;
+                    }
+                } else if (err.message) {
+                    errorMsg = err.message;
+                }
+
+                setError(errorMsg);
                 setShowDeleteModal(false);
                 setShowDeleteManualErrorModal(true);
                 setTimeout(() => {
@@ -442,8 +473,27 @@ const QmsListEnvironmentalWasteManagement = () => {
             }, 1500);
         } catch (error) {
             console.error("Error publishing record format:", error);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowPublishErrorModal(true);
-            setIsPublishing(false); // Reset loading state on error
+            setIsPublishing(false); // Reset loading state on error 
             setTimeout(() => {
                 setShowPublishErrorModal(false);
             }, 3000);
@@ -491,7 +541,7 @@ const QmsListEnvironmentalWasteManagement = () => {
 
     return (
         <div className="bg-[#1C1C24] list-manual-main">
-            <div className="flex items-center justify-between px-[14px] pt-[24px]">
+            <div className="flex items-center justify-between px-[20px] pt-[24px]">
                 <h1 className="list-manual-head">List Environmental Waste Management</h1>
 
                 <DeleteQmsManualConfirmModal
@@ -505,7 +555,8 @@ const QmsListEnvironmentalWasteManagement = () => {
                 />
                 <DeleteQmsManualErrorModal
                     showDeleteManualErrorModal={showDeleteManualErrorModal}
-                    onClose={() => setShowDeleteManualErrorModal(false)}
+                    onClose={() => setShowDeleteManualErrorModal(false)} 
+                    error={error}
                 />
                 <PublishSuccessModal
                     showPublishSuccessModal={showPublishSuccessModal}
@@ -514,6 +565,7 @@ const QmsListEnvironmentalWasteManagement = () => {
                 <PublishErrorModal
                     showPublishErrorModal={showPublishErrorModal}
                     onClose={() => { setShowPublishErrorModal(false) }}
+                    error={error}
                 />
 
 
@@ -552,10 +604,8 @@ const QmsListEnvironmentalWasteManagement = () => {
             </div>
 
             <div className="p-5 overflow-hidden">
-                {loading ? (
-                    <div className="text-center py-4 not-found">Loading Sustainability...</div>
-                ) : error ? (
-                    <div className="text-center py-4 text-red-500">{error}</div>
+                {loading ? ( 
+                    <div className="text-center py-4 not-found">Loading Environmental Waste Management...</div>
                 ) : (
                     <table className="w-full">
                         <thead className='bg-[#24242D]'>
@@ -589,7 +639,7 @@ const QmsListEnvironmentalWasteManagement = () => {
                                                     'N/A'}
                                             </td>
                                             <td className="px-2 add-manual-datas">
-                                                {manual.waste_type}
+                                                {manual.waste_type || "N/A"}
                                             </td>
                                             <td className="px-2 add-manual-datas">
                                                 {manual.status}

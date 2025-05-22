@@ -40,6 +40,8 @@ const QmsListEnvironmentalImpact = () => {
   const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
   const [showPublishErrorModal, setShowPublishErrorModal] = useState(false);
 
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' or 'desc'
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -155,9 +157,7 @@ const QmsListEnvironmentalImpact = () => {
       const response = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`);
       const filteredImpacts = filterImpactsByVisibility(response.data);
       const sortedImpacts = filteredImpacts.sort((a, b) => {
-        const dateA = new Date(a.date || 0);
-        const dateB = new Date(b.date || 0);
-        return dateB - dateA; // Sort by date descending
+        return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
       });
       setEnvironmentalImpacts(sortedImpacts);
       setLoading(false);
@@ -181,7 +181,9 @@ const QmsListEnvironmentalImpact = () => {
         // Fetch environmental impacts
         const impactsResponse = await axios.get(`${BASE_URL}/qms/impact/${companyId}/`);
         const filteredImpacts = filterImpactsByVisibility(impactsResponse.data);
-        const sortedImpacts = filteredImpacts.sort((a, b) => a.id - b.id) 
+        const sortedImpacts = filteredImpacts.sort((a, b) => {
+          return sortOrder === 'asc' ? a.id - b.id : b.id - a.id;
+        });
         setEnvironmentalImpacts(sortedImpacts);
 
         // Fetch corrections for each impact
@@ -222,7 +224,7 @@ const QmsListEnvironmentalImpact = () => {
       }
     };
     fetchAllData();
-  }, []);
+  }, [sortOrder]); // Add sortOrder to the dependency array
 
   const handleClickApprove = (id) => {
     navigate(`/company/qms/view-environmantal-impact/${id}`);

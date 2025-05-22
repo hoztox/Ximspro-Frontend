@@ -11,6 +11,9 @@ import ManualCorrectionSuccessModal from './Modals/ManualCorrectionSuccessModal'
 import ManualCorrectionErrorModal from './Modals/ManualCorrectionErrorModal';
 import ReviewSubmitSuccessModal from './Modals/ReviewSubmitSuccessModal';
 import ReviewSubmitErrorModal from './Modals/ReviewSubmitErrorModal';
+import DeleteQmsManualConfirmModal from './Modals/DeleteQmsManualConfirmModal';
+import DeleteQmsManualsuccessModal from './Modals/DeleteQmsManualsuccessModal';
+import DeleteQmsManualErrorModal from './Modals/DeleteQmsManualErrorModal';
 
 const QmsViewEnvironmentalWasteManagement = () => {
     const navigate = useNavigate();
@@ -27,6 +30,11 @@ const QmsViewEnvironmentalWasteManagement = () => {
     const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
     const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
     const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
+
+    // Delete modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+    const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
 
     const [correctionRequest, setCorrectionRequest] = useState({
         isOpen: false,
@@ -108,9 +116,49 @@ const QmsViewEnvironmentalWasteManagement = () => {
             setLoading(false);
         } catch (err) {
             console.error("Error fetching waste management details:", err);
-            // setError("Failed to load waste management details");
             setLoading(false);
         }
+    };
+
+    // Delete manual function
+    const handleDeleteProcedure = async () => {
+        try {
+            await axios.delete(`${BASE_URL}/qms/waste-detail/${id}/`);
+            setShowDeleteModal(false);
+            setShowDeleteManualSuccessModal(true);
+            setTimeout(() => {
+                setShowDeleteManualSuccessModal(false);
+                navigate("/company/qms/list-environmantal-waste-management");
+            }, 2000);
+        } catch (err) {
+            console.error("Error deleting waste management:", err);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                }
+                else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                }
+                else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
+            }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
+            setShowDeleteManualErrorModal(true);
+            setTimeout(() => {
+                setShowDeleteManualErrorModal(false);
+            }, 2000);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteModal(false);
     };
 
     const getViewedCorrections = () => {
@@ -248,7 +296,25 @@ const QmsViewEnvironmentalWasteManagement = () => {
             }, 1500);
 
         } catch (error) {
-            console.error('Error submitting correction:', error);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
             setShowSentCorrectionErrorModal(true);
             setTimeout(() => {
                 setShowSentCorrectionErrorModal(false);
@@ -278,13 +344,10 @@ const QmsViewEnvironmentalWasteManagement = () => {
         return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
     };
 
-    const handleDeleteProcedure = (recordId) => {
-        console.log("Delete record with ID:", recordId);
-    };
 
-    if (loading) return <div className="text-white">Loading...</div>;
-    if (error) return <div className="text-red-500">{error}</div>;
-    if (!manualDetails) return <div className="text-white">No waste management details found</div>;
+
+    if (loading) return <div className="text-center not-found">Loading...</div>;
+    if (!manualDetails) return <div className="text-center not-found">No Environmental Waste Management Details Found</div>;
 
     const currentUserId = Number(localStorage.getItem('user_id'));
     const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
@@ -345,9 +408,23 @@ const QmsViewEnvironmentalWasteManagement = () => {
             fetchManualCorrections();
         } catch (error) {
             console.error('Error submitting review:', error);
-            const errorMessage = error.response?.data?.error ||
-                error.response?.data?.message ||
-                'Failed to submit review';
+            let errorMsg;
+
+            if (error.response) {
+                // Server responded with a status other than 2xx
+                const data = error.response.data;
+
+                // Try multiple possible locations for an error message
+                errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+            } else if (error.request) {
+                // Request was made but no response received
+                errorMsg = "No response received from server.";
+            } else {
+                // Something happened in setting up the request
+                errorMsg = error.message || "An unknown error occurred.";
+            }
+
+            setError(errorMsg);
             setShowSubmitManualErrorModal(true);
             setTimeout(() => {
                 setShowSubmitManualErrorModal(false);
@@ -440,6 +517,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
                 <ManualCorrectionErrorModal
                     showSentCorrectionErrorModal={showSentCorrectionErrorModal}
                     onClose={() => { setShowSentCorrectionErrorModal(false) }}
+                    error={error}
                 />
 
                 <ReviewSubmitSuccessModal
@@ -450,6 +528,23 @@ const QmsViewEnvironmentalWasteManagement = () => {
                 <ReviewSubmitErrorModal
                     showSubmitManualErrorModal={showSubmitManualErrorModal}
                     onClose={() => { setShowSubmitManualErrorModal(false) }}
+                    error={error}
+                />
+
+                {/* Add the delete modals */}
+                <DeleteQmsManualConfirmModal
+                    showDeleteModal={showDeleteModal}
+                    onConfirm={handleDeleteProcedure}
+                    onCancel={handleCancelDelete}
+                />
+                <DeleteQmsManualsuccessModal
+                    showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+                    onClose={() => setShowDeleteManualSuccessModal(false)}
+                />
+                <DeleteQmsManualErrorModal
+                    showDeleteManualErrorModal={showDeleteManualErrorModal}
+                    onClose={() => setShowDeleteManualErrorModal(false)}
+                    error={error}
                 />
 
                 <button
@@ -459,6 +554,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
                     <X size={22} />
                 </button>
             </div>
+
             <div className="mt-5">
                 <div className="grid grid-cols-2 divide-x divide-[#383840] border-b border-[#383840] pb-5">
                     <div className="grid grid-cols-1 gap-[40px]">
@@ -552,7 +648,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
                                         <label className="viewmanuallabels">Delete</label>
                                         <button
                                             onClick={() => {
-                                                handleDeleteProcedure(id);
+                                                setShowDeleteModal(true);
                                             }}
                                         >
                                             <img src={deletes} alt="Delete Icon" />
@@ -560,7 +656,7 @@ const QmsViewEnvironmentalWasteManagement = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
+                        </div> 
                     </div>
                 </div>
 
