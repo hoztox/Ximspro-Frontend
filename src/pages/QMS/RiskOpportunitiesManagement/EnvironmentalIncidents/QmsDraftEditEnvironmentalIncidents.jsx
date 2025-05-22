@@ -5,6 +5,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from '../../../../Utils/Config';
 import RootCauseModal from './RootCauseModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEditEnvironmentalIncidents = () => {
   const { id } = useParams();
@@ -30,9 +32,14 @@ const QmsDraftEditEnvironmentalIncidents = () => {
     date_completed: { day: '', month: '', year: '' },
     remarks: '',
     send_notification: false,
-    is_draft: true,
+    is_draft: false,
   });
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem('company_id');
@@ -61,6 +68,10 @@ const QmsDraftEditEnvironmentalIncidents = () => {
       fetchUsers();
     } else {
       setError('Invalid incident ID or company ID.');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
       setIsLoading(false);
     }
   }, [id, companyId]);
@@ -71,6 +82,10 @@ const QmsDraftEditEnvironmentalIncidents = () => {
       const data = response.data;
       if (!data.is_draft) {
         setError('This incident is not a draft.');
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
         return;
       }
 
@@ -88,17 +103,17 @@ const QmsDraftEditEnvironmentalIncidents = () => {
         action: data.action || '',
         date_raised: dateRaised
           ? {
-              day: String(dateRaised.getDate()).padStart(2, '0'),
-              month: String(dateRaised.getMonth() + 1).padStart(2, '0'),
-              year: String(dateRaised.getFullYear()),
-            }
+            day: String(dateRaised.getDate()).padStart(2, '0'),
+            month: String(dateRaised.getMonth() + 1).padStart(2, '0'),
+            year: String(dateRaised.getFullYear()),
+          }
           : { day: '', month: '', year: '' },
         date_completed: dateCompleted
           ? {
-              day: String(dateCompleted.getDate()).padStart(2, '0'),
-              month: String(dateCompleted.getMonth() + 1).padStart(2, '0'),
-              year: String(dateRaised.getFullYear()),
-            }
+            day: String(dateCompleted.getDate()).padStart(2, '0'),
+            month: String(dateCompleted.getMonth() + 1).padStart(2, '0'),
+            year: String(dateRaised.getFullYear()),
+          }
           : { day: '', month: '', year: '' },
         remarks: data.remarks || '',
         send_notification: data.send_notification || false,
@@ -106,7 +121,29 @@ const QmsDraftEditEnvironmentalIncidents = () => {
       });
     } catch (error) {
       console.error('Error fetching incident data:', error);
-      setError('Failed to load incident data. Please try again.');
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -119,6 +156,10 @@ const QmsDraftEditEnvironmentalIncidents = () => {
     } catch (error) {
       console.error('Error fetching root causes:', error);
       setError('Failed to load root causes. Please try again.');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -129,6 +170,10 @@ const QmsDraftEditEnvironmentalIncidents = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
       setError('Failed to load users. Please try again.');
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -230,15 +275,43 @@ const QmsDraftEditEnvironmentalIncidents = () => {
       };
 
       const response = await axios.put(`${BASE_URL}/qms/incident-draft/update/${id}/`, submissionData);
-    console.log('Updated EI:', response.data);
-    navigate('/company/qms/list-environmantal-incident');
-  } catch (error) {
-    console.error('Error updating incident:', error);
-    setError(error.response?.data?.detail || 'Failed to save incident. Please check your inputs and try again.');
-  } finally {
-    setIsLoading(false);
-  }
-};
+      console.log('Updated EI:', response.data);
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate('/company/qms/draft-environmantal-incident');
+      }, 1500);
+      setSuccessMessage("Environmental Incident Saved Successfully")
+    } catch (error) {
+      console.error('Error updating incident:', error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const generateOptions = (start, end, prefix = '') => {
     const options = [];
@@ -253,22 +326,6 @@ const QmsDraftEditEnvironmentalIncidents = () => {
     return options;
   };
 
-  if (error && !formData.incident_no) {
-    return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-        <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
-          <h1 className="add-training-head">Edit Draft Environmental Incidents</h1>
-          <button
-            className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-            onClick={handleListEnvironmentalIncidents}
-          >
-            List Draft Environmental Incidents
-          </button>
-        </div>
-        <div className="p-5 text-red-300 px-[104px]">{error}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -282,11 +339,21 @@ const QmsDraftEditEnvironmentalIncidents = () => {
         </button>
       </div>
 
-      {error && (
-        <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">{error}</div>
-      )}
+      <RootCauseModal
+        isOpen={isRootCauseModalOpen}
+        onClose={handleCloseRootCauseModal} />
 
-      <RootCauseModal isOpen={isRootCauseModalOpen} onClose={handleCloseRootCauseModal} />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)} 
+        error={error}
+      />
 
       <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
         <div className="flex flex-col gap-3 relative">
@@ -300,7 +367,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
             onFocus={() => setFocusedDropdown('source')}
             onBlur={() => setFocusedDropdown(null)}
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
-             
+
           >
             <option value="" disabled>
               Select Source
@@ -330,7 +397,7 @@ const QmsDraftEditEnvironmentalIncidents = () => {
             value={formData.title}
             onChange={handleChange}
             className="add-training-inputs focus:outline-none"
-             
+
           />
           {formErrors.title && <span className="text-red-500 text-sm">{formErrors.title}</span>}
         </div>
@@ -626,10 +693,10 @@ const QmsDraftEditEnvironmentalIncidents = () => {
               Cancel
             </button>
             <button type="submit" className="save-btn duration-200" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update'}
+              {isLoading ? 'Saving...' : 'Save'}
             </button>
 
-          
+
           </div>
         </div>
       </form>

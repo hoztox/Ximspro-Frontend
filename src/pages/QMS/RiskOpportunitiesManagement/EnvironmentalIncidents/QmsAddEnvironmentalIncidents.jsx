@@ -4,16 +4,25 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from '../../../../Utils/Config';
 import RootCauseModal from './RootCauseModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsAddEnvironmentalIncidents = () => {
     const navigate = useNavigate();
     const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
     const [rootCauses, setRootCauses] = useState([]);
     const [users, setUsers] = useState([]);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false); // For data fetching
+    const [isSaveLoading, setIsSaveLoading] = useState(false); // For Save button
+    const [isDraftLoading, setIsDraftLoading] = useState(false); // For Save as Draft button
     const [nextEino, setNextEino] = useState('1');
     const [error, setError] = useState('');
     const [formErrors, setFormErrors] = useState({});
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const sourceOptions = ['Internal', 'External', 'Customer', 'Regulatory'];
 
@@ -82,8 +91,8 @@ const QmsAddEnvironmentalIncidents = () => {
                 setFormData((prev) => ({ ...prev, next_ei_no: '1' }));
                 return;
             }
+            setIsLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/incident/next-action/${companyId}/`);
-            // Handle {"next_incident_no": "EI-2"}
             let eiNumber = '1';
             if (response.data.next_incident_no) {
                 eiNumber = response.data.next_incident_no.replace('EI-', '');
@@ -95,6 +104,12 @@ const QmsAddEnvironmentalIncidents = () => {
             setNextEino('1');
             setFormData((prev) => ({ ...prev, next_ei_no: '1' }));
             setError('Failed to fetch next incident number');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -111,6 +126,10 @@ const QmsAddEnvironmentalIncidents = () => {
         } catch (error) {
             console.error('Error fetching root causes:', error);
             setError('Failed to fetch root causes');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         } finally {
             setIsLoading(false);
         }
@@ -119,6 +138,7 @@ const QmsAddEnvironmentalIncidents = () => {
     const fetchUsers = async () => {
         try {
             if (!companyId) return;
+            setIsLoading(true);
             const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
             if (Array.isArray(response.data)) {
                 setUsers(response.data);
@@ -129,6 +149,12 @@ const QmsAddEnvironmentalIncidents = () => {
         } catch (error) {
             console.error('Error fetching users:', error);
             setError('Failed to load users');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -136,15 +162,6 @@ const QmsAddEnvironmentalIncidents = () => {
         const errors = {};
         if (!formData.source) errors.source = 'Source is required';
         if (!formData.title) errors.title = 'Incident Title is required';
-        // if (!formData.date_raised.day || !formData.date_raised.month || !formData.date_raised.year) {
-        //     errors.date_raised = 'Date raised is required';
-        // }
-        // if (formData.status === 'Completed') {
-        //     if (!formData.action) errors.action = 'Action is required for Completed status';
-        //     if (!formData.date_completed.day || !formData.date_completed.month || !formData.date_completed.year) {
-        //         errors.date_completed = 'Complete date is required for Completed status';
-        //     }
-        // }
         setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
@@ -177,14 +194,14 @@ const QmsAddEnvironmentalIncidents = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-    
+
         try {
-            setIsLoading(true);
+            setIsSaveLoading(true);
             setError('');
-    
+
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formData.date_completed.day ? formatDate(formData.date_completed) : null;
-    
+
             const submissionData = {
                 company: companyId,
                 user: userId,
@@ -201,38 +218,65 @@ const QmsAddEnvironmentalIncidents = () => {
                 remarks: formData.remarks || null,
                 send_notification: formData.send_notification,
             };
-    
+
             await axios.post(`${BASE_URL}/qms/incident/create/`, submissionData);
-    
-            setIsLoading(false);
-            navigate('/company/qms/list-environmantal-incident');
+
+            setIsSaveLoading(false);
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-environmantal-incident');
+            }, 1500);
+            setSuccessMessage("Environmental Incident Added Successfully")
         } catch (error) {
             console.error('Error submitting form:', error);
-            setError(error.response?.data?.detail || 'Failed to save. Please check your inputs and try again.');
-            setIsLoading(false);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setIsSaveLoading(false);
         }
     };
 
-
     const handleDraftClick = async () => {
         try {
-            setIsLoading(true);
+            setIsDraftLoading(true);
             setError('');
-    
+
             if (!companyId) {
                 setError('Company ID not found. Please log in again.');
-                setIsLoading(false);
+                setIsDraftLoading(false);
                 return;
             }
             if (!userId) {
                 setError('User ID not found. Please log in again.');
-                setIsLoading(false);
+                setIsDraftLoading(false);
                 return;
             }
-    
+
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formData.date_completed.day ? formatDate(formData.date_completed) : null;
-    
+
             const submissionData = {
                 company: companyId,
                 user: userId,
@@ -250,17 +294,46 @@ const QmsAddEnvironmentalIncidents = () => {
                 send_notification: formData.send_notification,
                 is_draft: true,
             };
-    
+
             await axios.post(`${BASE_URL}/qms/incident/draft-create/`, submissionData);
-    
-            setIsLoading(false);
-            navigate('/company/qms/draft-environmantal-incident');
+
+            setIsDraftLoading(false);
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/draft-environmantal-incident');
+            }, 1500);
+            setSuccessMessage("Environmental Incident Drafted Successfully")
         } catch (error) {
             console.error('Error saving draft incident:', error);
-            setError(error.response?.data?.detail || 'Failed to save draft. Please try again.');
-            setIsLoading(false);
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            setIsDraftLoading(false);
         }
     };
+
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -280,7 +353,7 @@ const QmsAddEnvironmentalIncidents = () => {
                 <h1 className="add-training-head">Add Environmental Incident</h1>
                 <button
                     className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
-                    onClick={() => navigate('/company/qms/list-environmental-incident')}
+                    onClick={() => navigate('/company/qms/list-environmantal-incident')}
                 >
                     List Environmental Incidents
                 </button>
@@ -294,7 +367,19 @@ const QmsAddEnvironmentalIncidents = () => {
                 }}
             />
 
-            <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)} 
+                error={error}
+            />
+
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">
                         Source <span className="text-red-500">*</span>
@@ -304,7 +389,6 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.source}
                         onChange={handleChange}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                         
                     >
                         <option value="" disabled>Select Source</option>
                         {sourceOptions.map((option) => (
@@ -313,9 +397,8 @@ const QmsAddEnvironmentalIncidents = () => {
                     </select>
                     {formErrors.source && <span className="text-red-500 text-sm">{formErrors.source}</span>}
                     <ChevronDown
-                        className={`absolute right-3 top-[55px] transform transition-transform duration-300 ${
-                            focusedDropdown === 'source' ? 'rotate-180' : ''
-                        }`}
+                        className={`absolute right-3 top-[55px] transform transition-transform duration-300 ${focusedDropdown === 'source' ? 'rotate-180' : ''
+                            }`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -331,7 +414,6 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                         
                     />
                     {formErrors.title && <span className="text-red-500 text-sm">{formErrors.title}</span>}
                 </div>
@@ -362,9 +444,8 @@ const QmsAddEnvironmentalIncidents = () => {
                         <option value="Deleted">Deleted</option>
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 ${
-                            focusedDropdown === 'status' ? 'rotate-180' : ''
-                        }`}
+                        className={`absolute right-3 top-[60%] transform transition-transform duration-300 ${focusedDropdown === 'status' ? 'rotate-180' : ''
+                            }`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -395,9 +476,8 @@ const QmsAddEnvironmentalIncidents = () => {
                         View / Add Root Cause
                     </button>
                     <ChevronDown
-                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${
-                            focusedDropdown === 'root_cause' ? 'rotate-180' : ''
-                        }`}
+                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${focusedDropdown === 'root_cause' ? 'rotate-180' : ''
+                            }`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -423,9 +503,8 @@ const QmsAddEnvironmentalIncidents = () => {
                         ))}
                     </select>
                     <ChevronDown
-                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${
-                            focusedDropdown === 'report_by' ? 'rotate-180' : ''
-                        }`}
+                        className={`absolute right-3 top-[40%] transform transition-transform duration-300 ${focusedDropdown === 'report_by' ? 'rotate-180' : ''
+                            }`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -450,7 +529,6 @@ const QmsAddEnvironmentalIncidents = () => {
                         value={formData.action}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
-                        
                     />
                     {formErrors.action && <span className="text-red-500 text-sm">{formErrors.action}</span>}
                 </div>
@@ -473,9 +551,8 @@ const QmsAddEnvironmentalIncidents = () => {
                                 {generateOptions(1, 31)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_raised.day' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_raised.day' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -493,9 +570,8 @@ const QmsAddEnvironmentalIncidents = () => {
                                 {generateOptions(1, 12)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_raised.month' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_raised.month' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -508,15 +584,13 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_raised.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                 
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_raised.year' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_raised.year' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -538,15 +612,13 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.day')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                
                             >
                                 <option value="" disabled>dd</option>
                                 {generateOptions(1, 31)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_completed.day' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_completed.day' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -559,15 +631,13 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.month')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                                
                             >
                                 <option value="" disabled>mm</option>
                                 {generateOptions(1, 12)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_completed.month' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_completed.month' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -580,15 +650,13 @@ const QmsAddEnvironmentalIncidents = () => {
                                 onFocus={() => setFocusedDropdown('date_completed.year')}
                                 onBlur={() => setFocusedDropdown(null)}
                                 className="add-training-inputs appearance-none pr-10 cursor-pointer"
-                              
                             >
                                 <option value="" disabled>yyyy</option>
                                 {generateOptions(2023, 2030)}
                             </select>
                             <ChevronDown
-                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${
-                                    focusedDropdown === 'date_completed.year' ? 'rotate-180' : ''
-                                }`}
+                                className={`absolute right-3 top-[35%] transform transition-transform duration-300 ${focusedDropdown === 'date_completed.year' ? 'rotate-180' : ''
+                                    }`}
                                 size={20}
                                 color="#AAAAAA"
                             />
@@ -624,11 +692,11 @@ const QmsAddEnvironmentalIncidents = () => {
                     <div>
                         <button
                             type="button"
-                            onClick={(e) => handleDraftClick(e, true)}
+                            onClick={handleDraftClick}
                             className="request-correction-btn duration-200"
-                            disabled={isLoading}
+                            disabled={isDraftLoading}
                         >
-                            Save as Draft
+                            {isDraftLoading ? 'Saving Draft...' : 'Save as Draft'}
                         </button>
                     </div>
                     <div className="flex gap-5">
@@ -639,8 +707,12 @@ const QmsAddEnvironmentalIncidents = () => {
                         >
                             Cancel
                         </button>
-                        <button type="submit" className="save-btn duration-200" disabled={isLoading}>
-                            {isLoading ? 'Saving...' : 'Save'}
+                        <button
+                            type="submit"
+                            className="save-btn duration-200"
+                            disabled={isSaveLoading}
+                        >
+                            {isSaveLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>
