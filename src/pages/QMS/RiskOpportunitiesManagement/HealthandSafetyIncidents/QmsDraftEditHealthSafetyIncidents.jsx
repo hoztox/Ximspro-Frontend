@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import RootCauseModal from './RootCauseModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsDraftEditHealthSafetyIncidents = () => {
     const { id } = useParams();
@@ -35,12 +37,17 @@ const QmsDraftEditHealthSafetyIncidents = () => {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({ source: '', title: '' });
 
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
+
     const [formData, setFormData] = useState({
         source: '',
         title: '',
         incident_no: '',
         root_cause: '',
-        report_by: '',
+        reported_by: '',
         description: '',
         action: '',
         date_raised: {
@@ -71,21 +78,19 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         try {
             setIsLoading(true);
             const response = await axios.get(`${BASE_URL}/qms/safety_incidents/${id}/`);
+            console.log('responseeeeee', response.data);
+
             const incident = response.data;
 
             const dateRaised = parseDate(incident.date_raised);
             const dateCompleted = parseDate(incident.date_completed);
 
-            const hsiNumber = incident.incident_no.startsWith('HSI-')
-                ? incident.incident_no
-                : `HSI-${incident.incident_no}`;
-
             setFormData({
                 source: incident.source || '',
                 title: incident.title || '',
-                incident_no: hsiNumber,
+                incident_no: incident.incident_no,
                 root_cause: incident.root_cause || '',
-                report_by: incident.report_by || '',
+                reported_by: incident.reported_by || '',
                 description: incident.description || '',
                 action: incident.action || '',
                 date_raised: dateRaised,
@@ -100,7 +105,11 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         } catch (error) {
             console.error('Error fetching incident details:', error);
             setIsLoading(false);
-            setError('Failed to load incident details. Please try again.');
+            setError('Failed to load health and safety incident details. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -164,6 +173,10 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -220,56 +233,8 @@ const QmsDraftEditHealthSafetyIncidents = () => {
         return isValid;
     };
 
-    const handleDraftSave = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
- 
-        if (!validateForm()) {
-            setError('Please fill all required fields.');
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            setError('');
-            const companyId = getUserCompanyId();
-            const dateRaised = formatDate(formData.date_raised);
-            const dateCompleted = formatDate(formData.date_completed);
-            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
-
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                source: formData.source,
-                root_cause: formData.root_cause,
-                description: formData.description,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                status: formData.status,
-                report_by: formData.report_by,
-                incident_no: rawHsiNumber,
-                action: formData.action,
-                remarks: formData.remarks,
-                send_notification: formData.send_notification,
-                is_draft: true
-            };
-
-            const response = await axios.put(`${BASE_URL}/qms/safety_incidents-draft/update/${id}/`, submissionData);
-            setIsLoading(false);
-            navigate('/company/qms/draft-correction-actions');
-        } catch (error) {
-            console.error('Error saving draft:', error);
-            setIsLoading(false);
-            setError('Failed to save draft. Please check your inputs and try again.');
-        }
-    };
-
-    const handleSubmit = async (e, asDraft = false) => {
-        e.preventDefault();
-
-        if (asDraft) {
-            handleDraftSave(e);
-            return;
-        }
 
         if (!validateForm()) {
             setError('Please fill all required fields.');
@@ -281,19 +246,18 @@ const QmsDraftEditHealthSafetyIncidents = () => {
             const companyId = getUserCompanyId();
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
-            const rawHsiNumber = formData.incident_no.replace('HSI-', '');
 
             const submissionData = {
                 company: companyId,
                 title: formData.title,
                 source: formData.source,
-                root_cause: formData.root_cause,
+                root_cause: formData.root_cause?.id || formData.root_cause,
                 description: formData.description,
                 date_raised: dateRaised,
                 date_completed: dateCompleted,
                 status: formData.status,
-                report_by: formData.report_by,
-                incident_no: rawHsiNumber,
+                reported_by: formData.reported_by?.id || formData.reported_by,
+                incident_no: formData.incident_no,
                 action: formData.action,
                 remarks: formData.remarks,
                 send_notification: formData.send_notification,
@@ -302,11 +266,39 @@ const QmsDraftEditHealthSafetyIncidents = () => {
 
             await axios.put(`${BASE_URL}/qms/safety_incidents-draft/update/${id}/`, submissionData);
             setIsLoading(false);
-            navigate('/company/qms/list-health-safety-incidents');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-health-safety-incidents');
+            }, 1500);
+            setSuccessMessage("Health and Safety Incidents Saved Successfully")
         } catch (error) {
             console.error('Error updating incident:', error);
             setIsLoading(false);
-            setError('Failed to update. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -340,7 +332,19 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                 onClose={handleCloseRootCauseModal}
             />
 
-            <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
+
+            <form onSubmit={(e) => handleSubmit(e)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">
                         Source <span className="text-red-500">*</span>
@@ -451,10 +455,10 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                 <div className="flex flex-col gap-3 relative">
                     <label className="add-training-label">Report By</label>
                     <select
-                        name="report_by"
-                        value={formData.report_by}
+                        name="reported_by"
+                        value={formData.reported_by}
                         onChange={handleChange}
-                        onFocus={() => setFocusedDropdown("report_by")}
+                        onFocus={() => setFocusedDropdown("reported_by")}
                         onBlur={() => setFocusedDropdown(null)}
                         className="add-training-inputs appearance-none pr-10 cursor-pointer"
                     >
@@ -473,7 +477,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                     </select>
                     <ChevronDown
                         className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                        ${focusedDropdown === "report_by" ? "rotate-180" : ""}`}
+                        ${focusedDropdown === "reported_by" ? "rotate-180" : ""}`}
                         size={20}
                         color="#AAAAAA"
                     />
@@ -674,7 +678,7 @@ const QmsDraftEditHealthSafetyIncidents = () => {
                             className="save-btn duration-200"
                             disabled={isLoading}
                         >
-                            {isLoading ? 'Updating...' : 'Update'}
+                            {isLoading ? 'Saving...' : 'Save'}
                         </button>
                     </div>
                 </div>

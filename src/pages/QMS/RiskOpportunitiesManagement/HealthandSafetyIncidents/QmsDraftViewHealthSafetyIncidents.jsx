@@ -7,11 +7,11 @@ const QmsDraftViewHealthSafetyIncidents = () => {
     const [formData, setFormData] = useState({
         source: "",
         title: "",
-        ncr_no: "",
+        incident_no: "",
         root_cause: "",
-        executor: "",
+        reported_by: "",
         description: "",
-        resolution_details: "",
+        action: "",
         date_raised: "",
         date_completed: "",
         remarks: "",
@@ -110,7 +110,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Incident No
                         </label>
-                        <div className="view-employee-data">{formData.ncr_no || "N/A"}</div>
+                        <div className="view-employee-data">{formData.incident_no || "N/A"}</div>
                     </div>
 
                     <div>
@@ -134,7 +134,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
                             Report By
                         </label>
                         <div className="view-employee-data">
-                            {formData.executor?.first_name} {formData.executor?.last_name}
+                            {formData.reported_by?.first_name} {formData.reported_by?.last_name}
                         </div>
                     </div>
 
@@ -149,7 +149,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Action or Corrections
                         </label>
-                        <div className="view-employee-data">{formData.resolution_details || "N/A"}</div>
+                        <div className="view-employee-data">{formData.action || "N/A"}</div>
                     </div>
 
                     <div>
@@ -169,7 +169,7 @@ const QmsDraftViewHealthSafetyIncidents = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Remarks
                         </label>
-                        <div className="view-employee-data">{formatDate(formData.remarks)}</div>
+                        <div className="view-employee-data">{formData.remarks}</div>
                     </div>
                 </div>
             </div>

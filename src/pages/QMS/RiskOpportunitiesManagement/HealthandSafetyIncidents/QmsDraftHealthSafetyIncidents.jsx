@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from 'react-router-dom';
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from 'axios';
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsDraftHealthSafetyIncidents = () => {
     const getRelevantUserId = () => {
@@ -19,30 +22,42 @@ const QmsDraftHealthSafetyIncidents = () => {
     };
 
     // State
-    const [nonConformity, setNonConformity] = useState([]);
+    const [incident, setIncident] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
 
+    // Modal states
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [incidentToDelete, setIncidentToDelete] = useState(null);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [deleteMessage, setDeleteMessage] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
+
     // Fetch draft nonConformity from API
-    const fetchDraftNonConformity = async () => {
+    const fetchDraftIncident = async () => {
         try {
             const userId = getRelevantUserId();
             const response = await axios.get(`${BASE_URL}/qms/safety_incidents/draft/${userId}/`);
             console.log('Draft Non Conformity:', response.data);
-            setNonConformity(response.data);
+            setIncident(response.data);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching draft Non Conformity:", err);
             setError("Failed to load draft Non Conformity");
             setLoading(false);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
     useEffect(() => {
-        fetchDraftNonConformity();
+        fetchDraftIncident();
     }, []);
 
     const handleSearchChange = (e) => {
@@ -53,20 +68,20 @@ const QmsDraftHealthSafetyIncidents = () => {
 
     // Pagination
     const itemsPerPage = 10;
-    const totalItems = nonConformity.length;
+    const totalItems = incident.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
     // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems = nonConformity.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = incident.slice(indexOfFirstItem, indexOfLastItem);
 
     // Search functionality
-    const filteredNonConformity = currentItems.filter(nonConformities =>
-        (nonConformities.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (nonConformities.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (nonConformities.hsi_no?.toString() || '').includes(searchQuery.toLowerCase()) ||
-        (nonConformities.report_by?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
+    const filteredIncident = currentItems.filter(incidents =>
+        (incidents.title?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (incidents.source?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (incidents.hsi_no?.toString() || '').includes(searchQuery.toLowerCase()) ||
+        (incidents.report_by?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
     // Navigation handlers
@@ -74,24 +89,62 @@ const QmsDraftHealthSafetyIncidents = () => {
         navigate('/company/qms/list-health-safety-incidents');
     };
 
-    const handleQmsViewDraftNonConformity = (id) => {
+    const handleQmsViewDraftIncident = (id) => {
         navigate(`/company/qms/view-draft-health-safety-incidents/${id}`);
     };
 
-    const handleQmsEditDraftnonConformity = (id) => {
+    const handleQmsEditDraftIncident = (id) => {
         navigate(`/company/qms/edit-draft-health-safety-incidents/${id}`);
     };
 
+    // Open delete confirmation modal
+    const openDeleteModal = (incident) => {
+        setIncidentToDelete(incident);
+        setShowDeleteModal(true);
+        setDeleteMessage("Draft Health and Safety Incident");
+    };
+
+    // Close all modals
+    const closeAllModals = () => {
+        setShowDeleteModal(false);
+        setShowSuccessModal(false);
+    };
+
     // Delete draft non Conformities
-    const handleDeleteDraftNonConformity = async (id) => {
-        if (window.confirm("Are you sure you want to delete this draft Non Conformities?")) {
-            try {
-                await axios.delete(`${BASE_URL}/qms/safety_incidents/${id}/`);
-                setNonConformity(nonConformity.filter(nonConformities => nonConformities.id !== id));
-            } catch (err) {
-                console.error("Error deleting draft Non Conformities:", err);
-                alert("Failed to delete draft Non Conformities");
+    const confirmDelete = async () => {
+        if (!incidentToDelete) return;
+
+        try {
+            await axios.delete(`${BASE_URL}/qms/safety_incidents/${incidentToDelete.id}/`);
+            setIncident(incident.filter(incidents => incidents.id !== incidentToDelete.id));
+            setShowDeleteModal(false);
+            setShowSuccessModal(true);
+            setSuccessMessage("Draft Health and Safety Incident Deleted Successfully");
+            setTimeout(() => {
+                setShowSuccessModal(false);
+            }, 3000);
+        } catch (err) {
+            console.error("Error deleting draft incident:", err);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
+            let errorMsg = err.message;
+
+            if (err.response) {
+                if (err.response.data.date) {
+                    errorMsg = err.response.data.date[0];
+                } else if (err.response.data.detail) {
+                    errorMsg = err.response.data.detail;
+                } else if (err.response.data.message) {
+                    errorMsg = err.response.data.message;
+                }
+            } else if (err.message) {
+                errorMsg = err.message;
             }
+
+            setError(errorMsg);
+            setShowDeleteModal(false);
         }
     };
 
@@ -100,8 +153,7 @@ const QmsDraftHealthSafetyIncidents = () => {
     const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
     const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
-    if (loading) return <div className="text-white text-center p-5">Loading...</div>;
-    if (error) return <div className="text-red-500 text-center p-5">{error}</div>;
+    if (loading) return <div className="not-found text-center p-5">Loading...</div>;
 
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -144,34 +196,34 @@ const QmsDraftHealthSafetyIncidents = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredNonConformity.length > 0 ? (
-                            filteredNonConformity.map((nonConformities, index) => (
-                                <tr key={nonConformities.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
+                        {filteredIncident.length > 0 ? (
+                            filteredIncident.map((incidents, index) => (
+                                <tr key={incidents.id} className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer">
                                     <td className="pl-5 pr-2 add-manual-datas">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.title || 'N/A'}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.source || 'N/A'}</td>
-                                    <td className="px-2 add-manual-datas">{nonConformities.hsi_no || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{incidents.title || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{incidents.source || 'N/A'}</td>
+                                    <td className="px-2 add-manual-datas">{incidents.incident_no || 'N/A'}</td>
                                     <td className="px-2 add-manual-datas">
-                                        {nonConformities.report_by
-                                            ? `${nonConformities.report_by.first_name} ${nonConformities.report_by.last_name}`
-                                            : "N/A"} 
+                                        {incidents.reported_by
+                                            ? `${incidents.reported_by.first_name} ${incidents.reported_by.last_name}`
+                                            : "N/A"}
                                     </td>
 
                                     <td className="px-2 add-manual-datas">
                                         <button
-                                            onClick={() => handleQmsEditDraftnonConformity(nonConformities.id)}
+                                            onClick={() => handleQmsEditDraftIncident(incidents.id)}
                                             className='text-[#1E84AF]'
                                         >
                                             Click to Continue
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleQmsViewDraftNonConformity(nonConformities.id)}>
+                                        <button onClick={() => handleQmsViewDraftIncident(incidents.id)}>
                                             <img src={viewIcon} alt="View Icon" style={{ filter: 'brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)' }} />
                                         </button>
                                     </td>
                                     <td className="px-2 add-manual-datas !text-center">
-                                        <button onClick={() => handleDeleteDraftNonConformity(nonConformities.id)}>
+                                        <button onClick={() => openDeleteModal(incidents)}>
                                             <img src={deleteIcon} alt="Delete Icon" />
                                         </button>
                                     </td>
@@ -219,6 +271,28 @@ const QmsDraftHealthSafetyIncidents = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfimModal
+                showDeleteModal={showDeleteModal}
+                onConfirm={confirmDelete}
+                onCancel={closeAllModals}
+                deleteMessage={deleteMessage}
+            />
+
+            {/* Success Modal */}
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            {/* Error Modal */}
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+            />
         </div>
     );
 };

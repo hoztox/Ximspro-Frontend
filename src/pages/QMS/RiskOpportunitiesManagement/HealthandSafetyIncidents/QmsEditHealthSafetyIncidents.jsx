@@ -4,6 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import RootCauseModal from './RootCauseModal';
+import SuccessModal from '../Modals/SuccessModal';
+import ErrorModal from '../Modals/ErrorModal';
 
 const QmsEditHealthSafetyIncidents = () => {
     const { id } = useParams(); // Get the incident ID from URL parameters
@@ -34,6 +36,11 @@ const QmsEditHealthSafetyIncidents = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({ source: '', title: '' });
+
+    const [successMessage, setSuccessMessage] = useState("");
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+    const [showErrorModal, setShowErrorModal] = useState(false);
 
     const [formData, setFormData] = useState({
         source: '',
@@ -93,12 +100,16 @@ const QmsEditHealthSafetyIncidents = () => {
             });
 
             console.log('AAAAAAAAAAAA', response.data);
-            
+
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching incident details:', error);
             setIsLoading(false);
-            setError('Failed to load incident details. Please try again.');
+            setError('Failed to load health and safety incident details. Please try again.');
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -162,6 +173,10 @@ const QmsEditHealthSafetyIncidents = () => {
         } catch (error) {
             console.error("Error fetching users:", error);
             setError("Failed to load users. Please check your connection and try again.");
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -256,11 +271,39 @@ const QmsEditHealthSafetyIncidents = () => {
 
             await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
             setIsLoading(false);
-            navigate('/company/qms/list-health-safety-incidents');
+
+            setShowSuccessModal(true);
+            setTimeout(() => {
+                setShowSuccessModal(false);
+                navigate('/company/qms/list-health-safety-incidents');
+            }, 1500);
+            setSuccessMessage("Health and Safety Incidents Updated Successfully")
         } catch (error) {
             console.error('Error updating incident:', error);
             setIsLoading(false);
-            setError('Failed to update. Please check your inputs and try again.');
+            let errorMsg = error.message;
+
+            if (error.response) {
+                // Check for field-specific errors first
+                if (error.response.data.date) {
+                    errorMsg = error.response.data.date[0];
+                }
+                // Check for non-field errors
+                else if (error.response.data.detail) {
+                    errorMsg = error.response.data.detail;
+                }
+                else if (error.response.data.message) {
+                    errorMsg = error.response.data.message;
+                }
+            } else if (error.message) {
+                errorMsg = error.message;
+            }
+
+            setError(errorMsg);
+            setShowErrorModal(true);
+            setTimeout(() => {
+                setShowErrorModal(false);
+            }, 3000);
         }
     };
 
@@ -292,6 +335,18 @@ const QmsEditHealthSafetyIncidents = () => {
             <RootCauseModal
                 isOpen={isRootCauseModalOpen}
                 onClose={handleCloseRootCauseModal}
+            />
+
+            <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+            />
+
+            <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
             />
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5">

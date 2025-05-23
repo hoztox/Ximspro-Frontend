@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
 import RootCauseModal from "./RootCauseModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsAddHealthSafetyIncidents = () => {
   const getUserCompanyId = () => {
@@ -42,10 +44,16 @@ const QmsAddHealthSafetyIncidents = () => {
   const navigate = useNavigate();
   const [rootCauses, setRootCauses] = useState([]);
   const [users, setUsers] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // For regular save
+  const [isSavingDraft, setIsSavingDraft] = useState(false); // For draft save
   const [nextHsiNo, setNextHsiNo] = useState("1");
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({ source: "", title: "" });
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   useEffect(() => {
     fetchRootCauses();
@@ -82,7 +90,7 @@ const QmsAddHealthSafetyIncidents = () => {
       month: "",
       year: "",
     },
-    status: "",
+    status: "Pending",
     remarks: "",
     send_notification: false,
     is_draft: false,
@@ -110,7 +118,7 @@ const QmsAddHealthSafetyIncidents = () => {
         `${BASE_URL}/qms/safety_incidents/next-action/${companyId}/`
       );
       if (response.data && response.data.next_incident_no) {
-        const incidentNumber = String(response.data.next_incident_no); 
+        const incidentNumber = String(response.data.next_incident_no);
         setNextHsiNo(incidentNumber);
         setFormData((prev) => ({
           ...prev,
@@ -135,16 +143,13 @@ const QmsAddHealthSafetyIncidents = () => {
 
   const fetchRootCauses = async () => {
     try {
-      setIsLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(
         `${BASE_URL}/qms/safety-root/company/${companyId}/`
       );
       setRootCauses(response.data);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching root causes:", error);
-      setIsLoading(false);
     }
   };
 
@@ -165,8 +170,12 @@ const QmsAddHealthSafetyIncidents = () => {
     } catch (error) {
       console.error("Error fetching users:", error);
       setError(
-        "Failed to load users. Please check your connection and try again."
+        "Failed to load users"
       );
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -226,13 +235,8 @@ const QmsAddHealthSafetyIncidents = () => {
   const handleDraftSave = async (e) => {
     e.preventDefault();
 
-    // if (!validateForm()) {
-    //     setError('Please fill all required fields.');
-    //     return;
-    // }
-
     try {
-      setIsLoading(true);
+      setIsSavingDraft(true);
       setError("");
       const companyId = getUserCompanyId();
       const dateRaised = formatDate(formData.date_raised);
@@ -260,22 +264,45 @@ const QmsAddHealthSafetyIncidents = () => {
         `${BASE_URL}/qms/safety_incidents/draft-create/`,
         submissionData
       );
-      setIsLoading(false);
-      navigate("/company/qms/list-health-safety-incidents");
+      setIsSavingDraft(false);
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-health-safety-incidents");
+      }, 1500);
+      setSuccessMessage("Health and Safety Incidents Drafted Successfully")
     } catch (error) {
       console.error("Error saving draft:", error);
-      setIsLoading(false);
-      setError("Failed to save draft. Please check your inputs and try again.");
+      setIsSavingDraft(false);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
-  const handleSubmit = async (e, asDraft = false) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (asDraft) {
-      handleDraftSave(e);
-      return;
-    }
 
     // Validate form before submitting
     if (!validateForm()) {
@@ -284,18 +311,18 @@ const QmsAddHealthSafetyIncidents = () => {
     }
 
     try {
-      setIsLoading(true);
+      setIsSaving(true);
       const companyId = getUserCompanyId();
       const dateRaised =
         formData.date_raised.year &&
-        formData.date_raised.month &&
-        formData.date_raised.day
+          formData.date_raised.month &&
+          formData.date_raised.day
           ? `${formData.date_raised.year}-${formData.date_raised.month}-${formData.date_raised.day}`
           : null;
       const dateCompleted =
         formData.date_completed.year &&
-        formData.date_completed.month &&
-        formData.date_completed.day
+          formData.date_completed.month &&
+          formData.date_completed.day
           ? `${formData.date_completed.year}-${formData.date_completed.month}-${formData.date_completed.day}`
           : null;
 
@@ -318,8 +345,13 @@ const QmsAddHealthSafetyIncidents = () => {
       };
 
       await axios.post(`${BASE_URL}/qms/safety_incidents/`, submissionData);
-      setIsLoading(false);
-      navigate("/company/qms/list-health-safety-incidents");
+      setIsSaving(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-health-safety-incidents");
+      }, 1500);
+      setSuccessMessage("Health and Safety Incidents Added Successfully")
 
       setFormData({
         source: "",
@@ -341,8 +373,30 @@ const QmsAddHealthSafetyIncidents = () => {
       fetchNextHsiNumber();
     } catch (error) {
       console.error("Error submitting form:", error);
-      setIsLoading(false);
-      setError("Failed to save. Please check your inputs and try again.");
+      setIsSaving(false);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
@@ -377,8 +431,20 @@ const QmsAddHealthSafetyIncidents = () => {
         onClose={handleCloseRootCauseModal}
       />
 
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
+
       <form
-        onSubmit={(e) => handleSubmit(e, false)}
+        onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-6 px-[104px] py-5"
       >
         <div className="flex flex-col gap-3">
@@ -461,27 +527,26 @@ const QmsAddHealthSafetyIncidents = () => {
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
           >
             <option value="" disabled>
-              {isLoading ? "Loading..." : "Select Root Cause"}
+              Select Root Cause
             </option>
             {rootCauses && rootCauses.length > 0
               ? rootCauses.map((cause) => (
-                  <option key={cause.id} value={cause.id}>
-                    {cause.title}
-                  </option>
-                ))
-              : !isLoading && (
-                  <option value="" disabled>
-                    No root causes found
-                  </option>
-                )}
+                <option key={cause.id} value={cause.id}>
+                  {cause.title}
+                </option>
+              ))
+              :
+              <option value="" disabled>
+                No root causes found
+              </option>
+            }
           </select>
           <ChevronDown
             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
-                            ${
-                              focusedDropdown === "root_cause"
-                                ? "rotate-180"
-                                : ""
-                            }`}
+                            ${focusedDropdown === "root_cause"
+                ? "rotate-180"
+                : ""
+              }`}
             size={20}
             color="#AAAAAA"
           />
@@ -505,19 +570,19 @@ const QmsAddHealthSafetyIncidents = () => {
             className="add-training-inputs appearance-none pr-10 cursor-pointer"
           >
             <option value="" disabled>
-              {isLoading ? "Loading..." : "Select Executor"}
+              Select Executor
             </option>
             {users && users.length > 0
               ? users.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.first_name} {user.last_name || ""}
-                  </option>
-                ))
-              : !isLoading && (
-                  <option value="" disabled>
-                    No users found
-                  </option>
-                )}
+                <option key={user.id} value={user.id}>
+                  {user.first_name} {user.last_name || ""}
+                </option>
+              ))
+              :
+              <option value="" disabled>
+                No users found
+              </option>
+            }
           </select>
           <ChevronDown
             className={`absolute right-3 top-[40%] transform transition-transform duration-300 
@@ -566,11 +631,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -592,11 +656,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -618,11 +681,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_raised.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_raised.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -649,11 +711,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.day"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.day"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -675,11 +736,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.month"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.month"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -701,11 +761,10 @@ const QmsAddHealthSafetyIncidents = () => {
               </select>
               <ChevronDown
                 className={`absolute right-3 top-[35%] transform transition-transform duration-300
-                                ${
-                                  focusedDropdown === "date_completed.year"
-                                    ? "rotate-180"
-                                    : ""
-                                }`}
+                                ${focusedDropdown === "date_completed.year"
+                    ? "rotate-180"
+                    : ""
+                  }`}
                 size={20}
                 color="#AAAAAA"
               />
@@ -744,8 +803,9 @@ const QmsAddHealthSafetyIncidents = () => {
               type="button"
               onClick={handleDraftSave}
               className="request-correction-btn duration-200"
+              disabled={isSavingDraft}
             >
-              Save as Draft
+              {isSavingDraft ? "Saving Draft..." : "Save as Draft"}
             </button>
           </div>
           <div className="flex gap-5">
@@ -759,9 +819,9 @@ const QmsAddHealthSafetyIncidents = () => {
             <button
               type="submit"
               className="save-btn duration-200"
-              disabled={isLoading}
+              disabled={isSaving}
             >
-              {isLoading ? "Saving..." : "Save"}
+              {isSaving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

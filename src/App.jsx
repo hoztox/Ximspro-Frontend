@@ -411,7 +411,7 @@ const ThemedApp = () => {
           <Route index element={<CompanyLogin />} />
         </Route>
 
-        <Route path="/company" element={<CompanyLayout />}>
+        <Route path="/company" element={<CompanyLayout />}>  
           <Route path="dashboard" element={<CompanyDashboard />} />
 
           {/* QMS Documentation */}

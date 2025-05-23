@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "../Modals/DeleteConfimModal";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
 
 const QmsListHealthSafetyIncidents = () => {
   // State
@@ -16,6 +19,15 @@ const QmsListHealthSafetyIncidents = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [draftCount, setDraftCount] = useState(0);
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [incidentToDelete, setIncidentToDelete] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -35,6 +47,24 @@ const QmsListHealthSafetyIncidents = () => {
     }
     return null;
   };
+
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+
+    return null;
+  };
+
+  const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
+
   // Fetch incidents data from the API
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -68,16 +98,40 @@ const QmsListHealthSafetyIncidents = () => {
 
         setIncidents(formattedData);
         setError(null);
+
+        // Fetch draft count
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/safety_incidents/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
       } catch (err) {
         console.error("Error fetching health incidents:", err);
-        setError("Failed to load incidents. Please try again later.");
+        let errorMsg = err.message;
+
+        if (err.response) {
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          } else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        setShowErrorModal(true);
+        setTimeout(() => {
+          setShowErrorModal(false);
+        }, 3000);
       } finally {
         setLoading(false);
       }
     };
 
     fetchIncidents();
-  }, []);
+  }, [userId]);
 
   // Format date from YYYY-MM-DD to DD-MM-YYYY
   const formatDate = (dateString) => {
@@ -133,16 +187,54 @@ const QmsListHealthSafetyIncidents = () => {
     navigate(`/company/qms/edit-health-safety-incidents/${id}`);
   };
 
-  const handleDeleteIncident = async (id) => {
-    if (window.confirm("Are you sure you want to delete this incident?")) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/safety_incidents/${id}/`);
-        // Update the incidents list after deletion
-        setIncidents(incidents.filter((incident) => incident.id !== id));
-      } catch (err) {
-        console.error("Error deleting incident:", err);
-        alert("Failed to delete incident. Please try again.");
+  // Open delete confirmation modal
+  const openDeleteModal = (incident) => {
+    setIncidentToDelete(incident);
+    setShowDeleteModal(true);
+    setDeleteMessage("Health and Safety Incident");
+  };
+
+  // Close all modals
+  const closeAllModals = () => {
+    setShowDeleteModal(false);
+    setShowSuccessModal(false);
+  };
+
+  // Handle delete confirmation
+  const confirmDelete = async () => {
+    if (!incidentToDelete) return;
+
+    try {
+      await axios.delete(`${BASE_URL}/qms/safety_incidents/${incidentToDelete.id}/`);
+      setIncidents(incidents.filter((incident) => incident.id !== incidentToDelete.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 3000);
+      setSuccessMessage("Health and Safety Incident Deleted Successfully");
+    } catch (err) {
+      console.error("Error deleting incident:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
+      setShowDeleteModal(false);
     }
   };
 
@@ -160,14 +252,6 @@ const QmsListHealthSafetyIncidents = () => {
       </div>
     );
   }
-
-  // if (error) {
-  //     return (
-  //         <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center items-center h-[400px]">
-  //             <p className="text-red-400">{error}</p>
-  //         </div>
-  //     );
-  // }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -192,6 +276,11 @@ const QmsListHealthSafetyIncidents = () => {
             onClick={handleDraftIncidents}
           >
             <span>Drafts</span>
+            {draftCount > 0 && (
+              <span className="bg-red-500 text-white rounded-full text-xs flex justify-center items-center w-[20px] h-[20px] absolute top-[115px] right-[293px]">
+                {draftCount}
+              </span>
+            )}
           </button>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
@@ -251,13 +340,12 @@ const QmsListHealthSafetyIncidents = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <span
-                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                        incident.status === "Completed"
+                      className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${incident.status === "Completed"
                           ? "bg-[#36DDAE11] text-[#36DDAE]"
                           : incident.status === "Pending"
-                          ? "bg-[#1E84AF11] text-[#1E84AF]"
-                          : "bg-[#dd363611] text-[#dd3636]"
-                      }`}
+                            ? "bg-[#1E84AF11] text-[#1E84AF]"
+                            : "bg-[#dd363611] text-[#dd3636]"
+                        }`}
                     >
                       {incident.status}
                     </span>
@@ -280,7 +368,7 @@ const QmsListHealthSafetyIncidents = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleDeleteIncident(incident.id)}>
+                    <button onClick={() => openDeleteModal(incident)}>
                       <img src={deleteIcon} alt="Delete Icon" />
                     </button>
                   </td>
@@ -304,9 +392,8 @@ const QmsListHealthSafetyIncidents = () => {
           <button
             onClick={prevPage}
             disabled={currentPage === 1}
-            className={`cursor-pointer swipe-text ${
-              currentPage === 1 ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
+              }`}
           >
             Previous
           </button>
@@ -315,9 +402,8 @@ const QmsListHealthSafetyIncidents = () => {
             <button
               key={number}
               onClick={() => paginate(number)}
-              className={`${
-                currentPage === number ? "pagin-active" : "pagin-inactive"
-              }`}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+                }`}
             >
               {number}
             </button>
@@ -326,16 +412,37 @@ const QmsListHealthSafetyIncidents = () => {
           <button
             onClick={nextPage}
             disabled={currentPage === totalPages}
-            className={`cursor-pointer swipe-text ${
-              currentPage === totalPages ? "opacity-50" : ""
-            }`}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
+              }`}
           >
             Next
           </button>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={closeAllModals}
+        deleteMessage={deleteMessage}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+
+      {/* Error Modal */}
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={error}
+      />
     </div>
   );
 };
 
-export default QmsListHealthSafetyIncidents;
+export default QmsListHealthSafetyIncidents; 
