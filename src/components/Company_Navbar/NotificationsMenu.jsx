@@ -35,6 +35,21 @@ const NotificationsMenu = forwardRef(({
     const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
 
+    // Helper function to safely extract array data from API response
+    const safeArrayExtract = (responseData) => {
+        if (Array.isArray(responseData)) {
+            return responseData;
+        }
+        if (responseData && Array.isArray(responseData.results)) {
+            return responseData.results;
+        }
+        if (responseData && Array.isArray(responseData.data)) {
+            return responseData.data;
+        }
+        console.warn('Response data is not an array:', responseData);
+        return [];
+    };
+
     const getCurrentUser = () => {
         const role = localStorage.getItem('role');
         try {
@@ -79,38 +94,32 @@ const NotificationsMenu = forwardRef(({
 
     const fetchUnreadCount = async (userId) => {
         try {
-            const manualResponse = await axios.get(`${BASE_URL}/qms/count-notifications/${userId}/`);
-            const procedureResponse = await axios.get(`${BASE_URL}/qms/procedure/count-notifications/${userId}/`);
-            const conformityResponse = await axios.get(`${BASE_URL}/qms/conformity/count-notifications/${userId}/`);
-            const carResponse = await axios.get(`${BASE_URL}/qms/car/count-notifications/${userId}/`);
-            const preventiveResponse = await axios.get(`${BASE_URL}/qms/preventive/count-notifications/${userId}/`);
-            const enaegy_reviewResponse = await axios.get(`${BASE_URL}/qms/energy-review/count-notifications/${userId}/`);
-            const recordResponse = await axios.get(`${BASE_URL}/qms/record/count-notifications/${userId}/`);
-            const complianceResponse = await axios.get(`${BASE_URL}/qms/compliances/count-notifications/${userId}/`);
-            const interested_partyResponse = await axios.get(`${BASE_URL}/qms/interst/count-notifications/${userId}/`);
-            const processResponse = await axios.get(`${BASE_URL}/qms/processes/count-notifications/${userId}/`);
-            const legalResponse = await axios.get(`${BASE_URL}/qms/legal/count-notifications/${userId}/`);
-            const evaluationResponse = await axios.get(`${BASE_URL}/qms/evaluation/count-notifications/${userId}/`);
-            const changesResponse = await axios.get(`${BASE_URL}/qms/changes/count-notifications/${userId}/`);
-            const sustainabilityResponse = await axios.get(`${BASE_URL}/qms/sustainability/count-notifications/${userId}/`);
-            const trainingResponse = await axios.get(`${BASE_URL}/qms/training/count-notifications/${userId}/`);
+            const endpoints = [
+                `${BASE_URL}/qms/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/procedure/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/conformity/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/car/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/preventive/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/energy-review/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/record/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/compliances/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/interst/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/processes/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/legal/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/evaluation/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/changes/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/sustainability/count-notifications/${userId}/`,
+                `${BASE_URL}/qms/training/count-notifications/${userId}/`
+            ];
 
-            const totalUnread =
-                manualResponse.data.unread_count +
-                procedureResponse.data.unread_count +
-                conformityResponse.data.unread_count +
-                carResponse.data.unread_count +
-                preventiveResponse.data.unread_count +
-                enaegy_reviewResponse.data.unread_count +
-                recordResponse.data.unread_count +
-                complianceResponse.data.unread_count +
-                interested_partyResponse.data.unread_count +
-                processResponse.data.unread_count +
-                legalResponse.data.unread_count +
-                evaluationResponse.data.unread_count +
-                changesResponse.data.unread_count +
-                sustainabilityResponse.data.unread_count +
-                trainingResponse.data.unread_count
+            const responses = await Promise.allSettled(endpoints.map(endpoint => axios.get(endpoint)));
+            
+            const totalUnread = responses.reduce((total, response) => {
+                if (response.status === 'fulfilled' && response.value?.data?.unread_count) {
+                    return total + response.value.data.unread_count;
+                }
+                return total;
+            }, 0);
 
             setUnreadCount(totalUnread);
         } catch (error) {
@@ -123,10 +132,8 @@ const NotificationsMenu = forwardRef(({
             let endpoint;
             if (type === 'manual') {
                 endpoint = `${BASE_URL}/qms/notifications/${notificationId}/read/`;
-
             } else if (type === 'training') {
                 endpoint = `${BASE_URL}/qms/training/notifications/${notificationId}/read/`;
-
             } else if (type === 'sustainability') {
                 endpoint = `${BASE_URL}/qms/notifications-sustainability/${notificationId}/read/`;
             } else if (type === 'changes') {
@@ -174,7 +181,6 @@ const NotificationsMenu = forwardRef(({
         } else if (notification.training && notification.training.id) {
             notificationType = 'training';
             navigationUrl = `/company/qms/view-training/${notification.training.id}`;
-
         } else if (notification.sustainability && notification.sustainability.id) {
             notificationType = 'sustainability';
             navigationUrl = `/company/qms/view-sustainability/${notification.sustainability.id}`;
@@ -203,20 +209,17 @@ const NotificationsMenu = forwardRef(({
             notificationType = 'interested_party';
             navigationUrl = `/company/qms/view-interested-parties/${notification.interested_party.id}`;
         } else if (notification.interest && notification.interest.id) {
-            // Handle the case where it's an interested party notification but stored in 'interest' field
             notificationType = 'interested_party';
             navigationUrl = `/company/qms/view-interested-parties/${notification.interest.id}`;
         } else if (notification.processes && notification.processes.id) {
             notificationType = 'process';
             navigationUrl = `/company/qms/view-processes/${notification.processes.id}`;
-
         } else if (notification.legal && notification.legal.id) {
             notificationType = 'legal';
             navigationUrl = `/company/qms/view-legal-requirements/${notification.legal.id}`;
         } else if (notification.evaluation && notification.evaluation.id) {
             notificationType = 'evaluation';
             navigationUrl = `/company/qms/view-evaluation-compliance/${notification.evaluation.id}`;
-
         } else if (notification.energy_review && notification.energy_review.id) {
             notificationType = 'energy_review';
             navigationUrl = `/company/qms/view-energy-review/${notification.energy_review.id}`;
@@ -224,7 +227,6 @@ const NotificationsMenu = forwardRef(({
             notificationType = 'energy_review';
             const energyReviewId = notification.energy_review?.id || notification.id;
             navigationUrl = `/company/qms/view-energy-review/${energyReviewId}`;
-
         } else {
             console.error("Invalid Notification: Missing required data", notification);
             console.log("Notification type:", notification.notificationType);
@@ -270,146 +272,106 @@ const NotificationsMenu = forwardRef(({
 
                 await fetchUnreadCount(user.user_id);
 
-                const manualNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
-                const procedureNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-procedure/${user.user_id}/`);
-                const conformityNotificationsPromise = axios.get(`${BASE_URL}/qms/conformity/notifications/${user.user_id}/`);
-                const carNotificationsPromise = axios.get(`${BASE_URL}/qms/car/notifications/${user.user_id}/`);
-                const preventiveNotificationsPromise = axios.get(`${BASE_URL}/qms/preventive/notifications/${user.user_id}/`);
-                const energyReviewNotificationsPromise = axios.get(`${BASE_URL}/qms/energy-review/notifications/${user.user_id}/`);
-                const recordNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-record/${user.user_id}/`);
-                const complianceNotificationsPromise = axios.get(`${BASE_URL}/qms/compliances/notifications/${user.user_id}/`);
-                const interested_partyNotificationsPromise = axios.get(`${BASE_URL}/qms/interst/notifications/${user.user_id}/`);
-                const processNotificationsPromise = axios.get(`${BASE_URL}/qms/processes/notifications/${user.user_id}/`);
-                const legalNotificationsPromise = axios.get(`${BASE_URL}/qms/legal/notifications/${user.user_id}/`);
-                const evaluationNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-evaluation/${user.user_id}/`);
-                const changesNotificationsPromise = axios.get(`${BASE_URL}/qms/changes/notifications/${user.user_id}/`);
-                const sustainabilityNotificationsPromise = axios.get(`${BASE_URL}/qms/notifications-sustainability/${user.user_id}/`);
-                const trainingNotificationsPromise = axios.get(`${BASE_URL}/qms/training/notifications/${user.user_id}/`);
-                const meetingNotificationsPromise = axios.get(`${BASE_URL}/qms/meeting/count-notifications/${user.user_id}/`);
+                // Define all API endpoints
+                const endpoints = [
+                    { name: 'manual', url: `${BASE_URL}/qms/notifications/${user.user_id}/` },
+                    { name: 'procedure', url: `${BASE_URL}/qms/notifications-procedure/${user.user_id}/` },
+                    { name: 'conformity', url: `${BASE_URL}/qms/conformity/notifications/${user.user_id}/` },
+                    { name: 'car', url: `${BASE_URL}/qms/car/notifications/${user.user_id}/` },
+                    { name: 'preventive', url: `${BASE_URL}/qms/preventive/notifications/${user.user_id}/` },
+                    { name: 'energyReview', url: `${BASE_URL}/qms/energy-review/notifications/${user.user_id}/` },
+                    { name: 'record', url: `${BASE_URL}/qms/notifications-record/${user.user_id}/` },
+                    { name: 'compliance', url: `${BASE_URL}/qms/compliances/notifications/${user.user_id}/` },
+                    { name: 'interested_party', url: `${BASE_URL}/qms/interst/notifications/${user.user_id}/` },
+                    { name: 'process', url: `${BASE_URL}/qms/processes/notifications/${user.user_id}/` },
+                    { name: 'legal', url: `${BASE_URL}/qms/legal/notifications/${user.user_id}/` },
+                    { name: 'evaluation', url: `${BASE_URL}/qms/notifications-evaluation/${user.user_id}/` },
+                    { name: 'changes', url: `${BASE_URL}/qms/changes/notifications/${user.user_id}/` },
+                    { name: 'sustainability', url: `${BASE_URL}/qms/notifications-sustainability/${user.user_id}/` },
+                    { name: 'training', url: `${BASE_URL}/qms/training/notifications/${user.user_id}/` },
+                    { name: 'meeting', url: `${BASE_URL}/qms/meeting/notifications/${user.user_id}/` }
+                ];
 
-                const [manualResponse, meetingResponse, trainingResponse, sustainabilityResponse, changesResponse, legalResponse, evaluationResponse, procedureResponse, conformityResponse, carResponse, preventiveResponse, energyReviewResponse, recordResponse, complianceResponse, interested_partyResponse, processResponse] = await Promise.all([
-                    manualNotificationsPromise,
-                    procedureNotificationsPromise,
-                    conformityNotificationsPromise,
-                    carNotificationsPromise,
-                    preventiveNotificationsPromise,
-                    energyReviewNotificationsPromise,
-                    recordNotificationsPromise,
-                    complianceNotificationsPromise,
-                    interested_partyNotificationsPromise,
-                    processNotificationsPromise,
-                    legalNotificationsPromise,
-                    evaluationNotificationsPromise,
-                    changesNotificationsPromise,
-                    sustainabilityNotificationsPromise,
-                    trainingNotificationsPromise,
-                    meetingNotificationsPromise
-                ]);
+                // Fetch all notifications with error handling
+                const responses = await Promise.allSettled(
+                    endpoints.map(endpoint => axios.get(endpoint.url))
+                );
 
-                const meetingNotifications = meetingResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'meeting'
-                }));
-                const trainingNotifications = trainingResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'training'
-                }));
-                const sustainabilityNotifications = sustainabilityResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'sustainability'
-                }));
-                const changesNotifications = changesResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'changes'
-                }));
-                const evaluationNotifications = evaluationResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'evaluation'
-                }));
-                const manualNotifications = manualResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'manual'
-                }));
-                const legalNotifications = legalResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'legal'
-                }));
+                // Process responses safely
+                const notificationArrays = {};
+                responses.forEach((response, index) => {
+                    const endpointName = endpoints[index].name;
+                    if (response.status === 'fulfilled') {
+                        notificationArrays[endpointName] = safeArrayExtract(response.value.data);
+                    } else {
+                        console.error(`Failed to fetch ${endpointName} notifications:`, response.reason);
+                        notificationArrays[endpointName] = [];
+                    }
+                });
 
-                const interested_partyNotifications = interested_partyResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'interested_party'
+                // Transform notifications with type information
+                const transformedNotifications = {
+                    manual: notificationArrays.manual.map(n => ({ ...n, notificationType: 'manual' })),
+                    procedure: notificationArrays.procedure.map(n => ({ ...n, notificationType: 'procedure' })),
+                    conformity: notificationArrays.conformity.map(n => ({ ...n, notificationType: 'conformity' })),
+                    car: notificationArrays.car.map(n => ({ 
+                        ...n, 
+                        notificationType: 'car',
+                        car: n.carnumber || {}
+                    })),
+                    preventive: notificationArrays.preventive.map(n => ({ 
+                        ...n, 
+                        notificationType: 'preventive',
+                        preventive: n.preventivenumber || n.preventive || n.preventive_action || {}
+                    })),
+                    energyReview: notificationArrays.energyReview.map(n => ({ 
+                        ...n, 
+                        notificationType: 'energy_review',
+                        energy_review: n.energy_review || {}
+                    })),
+                    record: notificationArrays.record.map(n => ({ ...n, notificationType: 'record' })),
+                    compliance: notificationArrays.compliance.map(n => ({ ...n, notificationType: 'compliance' })),
+                    interested_party: notificationArrays.interested_party.map(n => ({ ...n, notificationType: 'interested_party' })),
+                    process: notificationArrays.process.map(n => ({ ...n, notificationType: 'process' })),
+                    legal: notificationArrays.legal.map(n => ({ ...n, notificationType: 'legal' })),
+                    evaluation: notificationArrays.evaluation.map(n => ({ ...n, notificationType: 'evaluation' })),
+                    changes: notificationArrays.changes.map(n => ({ ...n, notificationType: 'changes' })),
+                    sustainability: notificationArrays.sustainability.map(n => ({ ...n, notificationType: 'sustainability' })),
+                    training: notificationArrays.training.map(n => ({ ...n, notificationType: 'training' })),
+                    meeting: notificationArrays.meeting.map(n => ({ ...n, notificationType: 'meeting' }))
+                };
 
-                }));
-                const complianceNotifications = complianceResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'compliance'
-                }));
-                const procedureNotifications = procedureResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'procedure'
-                }));
-                const recordNotifications = recordResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'record'
-                }));
-                const conformityNotifications = conformityResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'conformity'
-                }));
-                const processNotifications = processResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'process'
-                }));
-
-                const carNotifications = carResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'car',
-                    car: notification.carnumber || {}
-                }));
-
-                const preventiveNotifications = preventiveResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'preventive',
-                    preventive: notification.preventivenumber || notification.preventive || notification.preventive_action || {}
-                }));
-
-                const energyReviewNotifications = energyReviewResponse.data.map(notification => ({
-                    ...notification,
-                    notificationType: 'energy_review',
-                    energy_review: notification.energy_review || {}
-                }));
-
+                // Combine all notifications
                 const combinedNotifications = [
-                    ...manualNotifications,
-                    ...procedureNotifications,
-                    ...conformityNotifications,
-                    ...carNotifications,
-                    ...preventiveNotifications,
-                    ...energyReviewNotifications,
-                    ...recordNotifications,
-                    ...complianceNotifications,
-                    ...interested_partyNotifications,
-                    ...processNotifications,
-                    ...legalNotifications,
-                    ...evaluationNotifications,
-                    ...changesNotifications,
-                    ...sustainabilityNotifications,
-                    ...trainingNotifications,
-                    ...meetingNotifications
-
+                    ...transformedNotifications.manual,
+                    ...transformedNotifications.procedure,
+                    ...transformedNotifications.conformity,
+                    ...transformedNotifications.car,
+                    ...transformedNotifications.preventive,
+                    ...transformedNotifications.energyReview,
+                    ...transformedNotifications.record,
+                    ...transformedNotifications.compliance,
+                    ...transformedNotifications.interested_party,
+                    ...transformedNotifications.process,
+                    ...transformedNotifications.legal,
+                    ...transformedNotifications.evaluation,
+                    ...transformedNotifications.changes,
+                    ...transformedNotifications.sustainability,
+                    ...transformedNotifications.training,
+                    ...transformedNotifications.meeting
                 ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 setNotifications(prev => ({
                     ...prev,
                     QMS: combinedNotifications,
-                    energy_review: energyReviewNotifications
+                    energy_review: transformedNotifications.energyReview
                 }));
 
                 if (onNotificationsUpdate) {
                     onNotificationsUpdate(prev => ({
                         ...prev,
                         QMS: combinedNotifications,
-                        energy_review: energyReviewNotifications
+                        energy_review: transformedNotifications.energyReview
                     }));
                 }
             } catch (error) {
@@ -444,13 +406,13 @@ const NotificationsMenu = forwardRef(({
         if (notification.notificationType === 'manual') {
             notificationType = 'Manual';
         } else if (notification.notificationType === 'meeting') {
-            notificationType = 'meeting';
+            notificationType = 'Meeting';
         } else if (notification.notificationType === 'training') {
-            notificationType = 'training';
+            notificationType = 'Training';
         } else if (notification.notificationType === 'sustainability') {
-            notificationType = 'sustainability';
+            notificationType = 'Sustainability';
         } else if (notification.notificationType === 'changes') {
-            notificationType = 'changes';
+            notificationType = 'Changes';
         } else if (notification.notificationType === 'procedure') {
             notificationType = 'Procedure';
         } else if (notification.notificationType === 'conformity') {
@@ -470,7 +432,9 @@ const NotificationsMenu = forwardRef(({
         } else if (notification.notificationType === 'process') {
             notificationType = 'Process';
         } else if (notification.notificationType === 'legal') {
-            notificationType = 'legal';
+            notificationType = 'Legal';
+        } else if (notification.notificationType === 'evaluation') {
+            notificationType = 'Evaluation';
         }
 
         return (
