@@ -5,6 +5,10 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import SuccessModal from "../Modals/SuccessModal";
+import ErrorModal from "../Modals/ErrorModal";
+import DeleteTrainingConfirmModal from "../Modals/DeleteTrainingConfirmModal";
+import DeleteTrainingSuccessModal from "../Modals/DeleteTrainingSuccessModal";
 
 const QmsReviewTraining = () => {
   const [training, setTraining] = useState({
@@ -18,7 +22,7 @@ const QmsReviewTraining = () => {
     date_planned: "",
     date_conducted: "",
     start_time: "",
-    end_time: "",
+    end_time: "", 
     venue: "",
     attachment: null,
     training_evaluation: "",
@@ -33,6 +37,14 @@ const QmsReviewTraining = () => {
   const [attendees, setAttendees] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [focusedDropdown, setFocusedDropdown] = useState(null);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
+  // Delete modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteTrainingSuccessModal, setShowDeleteTrainingSuccessModal] = useState(false);
 
   const { id } = useParams(); // Get training ID from URL
   const navigate = useNavigate();
@@ -88,9 +100,8 @@ const QmsReviewTraining = () => {
   const formatTime = (timeString) => {
     if (!timeString) return "";
     const [hours, minutes] = timeString.split(":");
-    return `${hours} hour${hours !== "1" ? "s" : ""}, ${minutes} minute${
-      minutes !== "1" ? "s" : ""
-    }`;
+    return `${hours} hour${hours !== "1" ? "s" : ""}, ${minutes} minute${minutes !== "1" ? "s" : ""
+      }`;
   };
 
   useEffect(() => {
@@ -119,7 +130,6 @@ const QmsReviewTraining = () => {
     // If the status hasn't changed, don't do anything
     if (selectedStatus === training.status) {
       alert("Status unchanged");
-      
       return;
     }
 
@@ -147,15 +157,24 @@ const QmsReviewTraining = () => {
           published_by: userId,
           send_notification: training.send_notification,
         });
-        alert("Training marked as completed");
-        navigate("/company/qms/list-training");
+
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate("/company/qms/list-training");
+        }, 1500);
+        setSuccessMessage("Training marked as completed")
       } else if (selectedStatus === "Cancelled") {
         await axios.post(`${BASE_URL}/qms/training/${id}/cancel/`, {
           company_id: getUserCompanyId(),
           cancelled_by: userId,
         });
-        alert("Training marked as cancelled");
-        navigate("/company/qms/list-training");
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate("/company/qms/list-training");
+        }, 1500);
+        setSuccessMessage("Training marked as cancelled")
       }
 
       setTimeout(() => {
@@ -171,7 +190,29 @@ const QmsReviewTraining = () => {
         `Error updating training status to ${selectedStatus}:`,
         error
       );
-      alert(`Failed to update training status to ${selectedStatus}`);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        // Check for field-specific errors first
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        }
+        // Check for non-field errors
+        else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        }
+        else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
 
       setTimeout(() => {
         setIsProcessing(false);
@@ -187,31 +228,48 @@ const QmsReviewTraining = () => {
     navigate(`/company/qms/edit-training/${id}`);
   };
 
-  const handleDelete = async () => {
-    if (
-      window.confirm("Are you sure you want to delete this training record?")
-    ) {
-      try {
-        await axios.delete(`${BASE_URL}/qms/training-get/${id}/`);
+  // Delete training handlers
+  const initiateDeleteTraining = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTraining = async () => {
+    try {
+      setShowDeleteModal(false);
+      await axios.delete(`${BASE_URL}/qms/training-get/${id}/`);
+      setShowDeleteTrainingSuccessModal(true);
+      setTimeout(() => {
+        setShowDeleteTrainingSuccessModal(false);
         navigate("/company/qms/list-training");
-      } catch (err) {
-        console.error("Error deleting training:", err);
-        alert("Failed to delete training record");
+      }, 2000);
+    } catch (err) {
+      console.error("Error deleting training:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        }
+        else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
+
+      setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        Loading training information...
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500">{error}</div>;
-  }
+  const cancelDeleteTraining = () => {
+    setShowDeleteModal(false);
+  };
 
   return (
     <div>
@@ -225,6 +283,18 @@ const QmsReviewTraining = () => {
             <X size={24} />
           </button>
         </div>
+
+        <SuccessModal
+          showSuccessModal={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          successMessage={successMessage}
+        />
+
+        <ErrorModal
+          showErrorModal={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          error={error}
+        />
 
         <div className="pt-5 grid grid-cols-1 md:grid-cols-2">
           <div className="space-y-[40px] border-r border-[#383840]">
@@ -252,13 +322,13 @@ const QmsReviewTraining = () => {
               </p>
               <p className="text-white view-training-data">
                 {training.training_attendees &&
-                training.training_attendees.length > 0
+                  training.training_attendees.length > 0
                   ? training.training_attendees
-                      .map(
-                        (attendee) =>
-                          `${attendee.first_name} ${attendee.last_name}`
-                      )
-                      .join(", ")
+                    .map(
+                      (attendee) =>
+                        `${attendee.first_name} ${attendee.last_name}`
+                    )
+                    .join(", ")
                   : "None specified"}
               </p>
             </div>
@@ -344,13 +414,12 @@ const QmsReviewTraining = () => {
               </p>
               <p className="text-white view-training-data">
                 <span
-                  className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                    training.status === "Completed"
-                      ? "bg-[#36DDAE11] text-[#36DDAE]"
-                      : training.status === "Cancelled"
+                  className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${training.status === "Completed"
+                    ? "bg-[#36DDAE11] text-[#36DDAE]"
+                    : training.status === "Cancelled"
                       ? "bg-[#FF4D4F11] text-[#FF4D4F]"
                       : "bg-[#ddd23611] text-[#ddd236]"
-                  }`}
+                    }`}
                 >
                   {training.status}
                 </span>
@@ -394,19 +463,6 @@ const QmsReviewTraining = () => {
             <div className="flex justify-between">
               <div>
                 <p className="text-[#AAAAAA] view-training-label mb-[6px]">
-                  Evaluation By
-                </p>
-                <p className="text-white view-training-data">
-                  {training.evaluation_by
-                    ? `${training.evaluation_by.first_name} ${training.evaluation_by.last_name}`
-                    : "None specified"}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-between">
-              <div>
-                <p className="text-[#AAAAAA] view-training-label mb-[6px]">
                   Update Status
                 </p>
                 <div className="flex items-center space-x-2">
@@ -443,11 +499,10 @@ const QmsReviewTraining = () => {
                     disabled={
                       isProcessing || selectedStatus === training.status
                     }
-                    className={`request-correction-btn duration-200 ${
-                      isProcessing || selectedStatus === training.status
-                        ? "opacity-50 cursor-not-allowed"
-                        : "cursor-pointer hover:bg-[#176b8f]"
-                    }`}
+                    className={`request-correction-btn duration-200 ${isProcessing || selectedStatus === training.status
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer hover:bg-[#176b8f]"
+                      }`}
                   >
                     {isProcessing ? (
                       <div className="flex items-center justify-center">
@@ -473,7 +528,7 @@ const QmsReviewTraining = () => {
                 </button>
 
                 <button
-                  onClick={handleDelete}
+                  onClick={initiateDeleteTraining}
                   className="flex flex-col gap-2 items-center justify-center delete-btn"
                 >
                   Delete
@@ -488,6 +543,19 @@ const QmsReviewTraining = () => {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteTrainingConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDeleteTraining}
+        onCancel={cancelDeleteTraining}
+      />
+
+      {/* Delete Success Modal */}
+      <DeleteTrainingSuccessModal
+        showDeleteTrainingSuccessModal={showDeleteTrainingSuccessModal}
+        onClose={() => setShowDeleteTrainingSuccessModal(false)}
+      />
     </div>
   );
 };
