@@ -26,7 +26,6 @@ const QmsEditHealthSafetyIncidents = () => {
         return null;
     };
 
-    // Now you can safely use the function
     const companyId = getUserCompanyId();
     const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
     const navigate = useNavigate();
@@ -34,14 +33,14 @@ const QmsEditHealthSafetyIncidents = () => {
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({ source: '', title: '' });
 
-    // Initialize form data based on HealthIncidents model
     const [formData, setFormData] = useState({
         source: '',
         title: '',
-        incident_no: '', // Changed from next_hsi_no to incident_no to match the model
+        incident_no: '',
         root_cause: '',
-        reported_by: '', // Changed from report_by to reported_by to match the model
+        reported_by: '',
         description: '',
         action: '',
         date_raised: {
@@ -74,7 +73,6 @@ const QmsEditHealthSafetyIncidents = () => {
             const response = await axios.get(`${BASE_URL}/qms/safety_incidents/${id}/`);
             const incident = response.data;
 
-            // Parse dates
             const dateRaised = parseDate(incident.date_raised);
             const dateCompleted = parseDate(incident.date_completed);
 
@@ -83,7 +81,7 @@ const QmsEditHealthSafetyIncidents = () => {
                 title: incident.title || '',
                 incident_no: incident.incident_no || '',
                 root_cause: incident.root_cause || '',
-                reported_by: incident.reported_by || '',
+                reported_by: incident.reported_by?.id || incident.reported_by || '',
                 description: incident.description || '',
                 action: incident.action || '',
                 date_raised: dateRaised,
@@ -94,6 +92,8 @@ const QmsEditHealthSafetyIncidents = () => {
                 is_draft: incident.is_draft || false
             });
 
+            console.log('AAAAAAAAAAAA', response.data);
+            
             setIsLoading(false);
         } catch (error) {
             console.error('Error fetching incident details:', error);
@@ -102,7 +102,6 @@ const QmsEditHealthSafetyIncidents = () => {
         }
     };
 
-    // Helper function to parse date string into day, month, year object
     const parseDate = (dateStr) => {
         if (!dateStr) return { day: '', month: '', year: '' };
 
@@ -168,9 +167,13 @@ const QmsEditHealthSafetyIncidents = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        if (name === 'incident_no') return; // Prevent editing incident number
+        if (name === 'incident_no') return;
 
-        // Handle nested objects (dates)
+        // Clear error when user starts typing
+        if (name === 'source' || name === 'title') {
+            setFieldErrors(prev => ({ ...prev, [name]: '' }));
+        }
+
         if (name.includes('.')) {
             const [parent, child] = name.split('.');
             setFormData({
@@ -181,13 +184,11 @@ const QmsEditHealthSafetyIncidents = () => {
                 }
             });
         } else if (e.target.type === 'checkbox') {
-            // Handle checkboxes
             setFormData({
                 ...formData,
                 [name]: e.target.checked
             });
         } else {
-            // Handle regular inputs
             setFormData({
                 ...formData,
                 [name]: value
@@ -200,71 +201,42 @@ const QmsEditHealthSafetyIncidents = () => {
         return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
     };
 
-    const handleDraftSave = async (e) => {
-        e.preventDefault();
+    const validateForm = () => {
+        let isValid = true;
+        const newErrors = { source: '', title: '' };
 
-        try {
-            setIsLoading(true);
-            setError('');
-            const companyId = getUserCompanyId();
-
-            // Format the dates
-            const dateRaised = formatDate(formData.date_raised);
-            const dateCompleted = formatDate(formData.date_completed);
-
-            // Prepare submission data
-            const submissionData = {
-                company: companyId,
-                title: formData.title,
-                source: formData.source,
-                root_cause: formData.root_cause,
-                description: formData.description,
-                date_raised: dateRaised,
-                date_completed: dateCompleted,
-                status: formData.status,
-                reported_by: formData.reported_by,
-                incident_no: formData.incident_no,
-                action: formData.action,
-                remarks: formData.remarks,
-                send_notification: formData.send_notification,
-                is_draft: true
-            };
-
-            // Update the draft
-            const response = await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
-
-            console.log('Updated Draft:', response.data);
-
-            setIsLoading(false);
-
-            // Navigate after successful update
-            navigate('/company/qms/draft-health-safety-incidents');
-
-        } catch (error) {
-            console.error('Error saving draft:', error);
-            setIsLoading(false);
-            setError('Failed to save draft. Please check your inputs and try again.');
+        if (!formData.source.trim()) {
+            newErrors.source = 'Source is required';
+            isValid = false;
         }
+        if (!formData.title.trim()) {
+            newErrors.title = 'Incident Title is required';
+            isValid = false;
+        }
+
+        setFieldErrors(newErrors);
+        return isValid;
     };
 
     const handleSubmit = async (e, asDraft = false) => {
         e.preventDefault();
 
-        // If saving as draft, use the specialized draft save function
         if (asDraft) {
             handleDraftSave(e);
+            return;
+        }
+
+        if (!validateForm()) {
+            setError('Please fill all required fields.');
             return;
         }
 
         try {
             setIsLoading(true);
             const companyId = getUserCompanyId();
-
-            // Format the dates
             const dateRaised = formatDate(formData.date_raised);
             const dateCompleted = formatDate(formData.date_completed);
 
-            // Prepare submission data
             const submissionData = {
                 company: companyId,
                 title: formData.title,
@@ -282,15 +254,9 @@ const QmsEditHealthSafetyIncidents = () => {
                 is_draft: false
             };
 
-            // Update the record
-            const response = await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
-
-            console.log('Updated:', response.data);
-
+            await axios.put(`${BASE_URL}/qms/safety_incidents/update/${id}/`, submissionData);
             setIsLoading(false);
-
             navigate('/company/qms/list-health-safety-incidents');
-
         } catch (error) {
             console.error('Error updating incident:', error);
             setIsLoading(false);
@@ -298,7 +264,6 @@ const QmsEditHealthSafetyIncidents = () => {
         }
     };
 
-    // Generate options for dropdowns
     const generateOptions = (start, end, prefix = '') => {
         const options = [];
         for (let i = start; i <= end; i++) {
@@ -312,14 +277,6 @@ const QmsEditHealthSafetyIncidents = () => {
         return options;
     };
 
-    if (isLoading && !formData.incident_no) {
-        return (
-            <div className="bg-[#1C1C24] text-white p-5 rounded-lg min-h-[300px] flex items-center justify-center">
-                <p>Loading incident details...</p>
-            </div>
-        );
-    }
-
     return (
         <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
             <div className="flex justify-between items-center border-b border-[#383840] px-[104px] pb-5">
@@ -331,12 +288,6 @@ const QmsEditHealthSafetyIncidents = () => {
                     List Health and Safety Incidents
                 </button>
             </div>
-
-            {error && (
-                <div className="bg-red-500 bg-opacity-20 text-red-300 px-[104px] py-2 my-2">
-                    {error}
-                </div>
-            )}
 
             <RootCauseModal
                 isOpen={isRootCauseModalOpen}
@@ -354,8 +305,10 @@ const QmsEditHealthSafetyIncidents = () => {
                         value={formData.source}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.source && (
+                        <span className="text-red-500 text-sm">{fieldErrors.source}</span>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -368,8 +321,10 @@ const QmsEditHealthSafetyIncidents = () => {
                         value={formData.title}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none"
-                        required
                     />
+                    {fieldErrors.title && (
+                        <span className="text-red-500 text-sm">{fieldErrors.title}</span>
+                    )}
                 </div>
 
                 <div className="flex flex-col gap-3">
@@ -505,7 +460,6 @@ const QmsEditHealthSafetyIncidents = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date Raised</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_raised.day"
@@ -526,7 +480,6 @@ const QmsEditHealthSafetyIncidents = () => {
                             />
                         </div>
 
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_raised.month"
@@ -547,7 +500,6 @@ const QmsEditHealthSafetyIncidents = () => {
                             />
                         </div>
 
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_raised.year"
@@ -573,7 +525,6 @@ const QmsEditHealthSafetyIncidents = () => {
                 <div className="flex flex-col gap-3">
                     <label className="add-training-label">Date Completed</label>
                     <div className="grid grid-cols-3 gap-5">
-                        {/* Day */}
                         <div className="relative">
                             <select
                                 name="date_completed.day"
@@ -594,7 +545,6 @@ const QmsEditHealthSafetyIncidents = () => {
                             />
                         </div>
 
-                        {/* Month */}
                         <div className="relative">
                             <select
                                 name="date_completed.month"
@@ -615,7 +565,6 @@ const QmsEditHealthSafetyIncidents = () => {
                             />
                         </div>
 
-                        {/* Year */}
                         <div className="relative">
                             <select
                                 name="date_completed.year"
@@ -647,7 +596,6 @@ const QmsEditHealthSafetyIncidents = () => {
                         value={formData.remarks}
                         onChange={handleChange}
                         className="add-training-inputs focus:outline-none !h-[98px]"
-                        required
                     />
                 </div>
 
@@ -666,10 +614,8 @@ const QmsEditHealthSafetyIncidents = () => {
                     </label>
                 </div>
 
-                {/* Form Actions */}
                 <div className="md:col-span-2 flex gap-4 justify-end">
                     <div className='flex gap-5'>
-                   
                         <button
                             type="button"
                             onClick={handleListHealthSafetyIncidents}

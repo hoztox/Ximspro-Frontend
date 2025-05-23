@@ -383,7 +383,7 @@ const QmsAddEnergyReview = () => {
 
             <SuccessModal
                 showSuccessModal={showSuccessModal}
-                onClose={() => setShowSuccessModal(false)}
+                onClose={() => setShowSuccessModal(false)} 
                 successMessage={successMessage}
             />
 

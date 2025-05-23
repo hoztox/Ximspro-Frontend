@@ -11,8 +11,8 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
     const [error, setError] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const [titleError, setTitleError] = useState('');
 
-    // Animation effect when modal opens/closes
     useEffect(() => {
         if (isOpen) {
             setAnimateClass('opacity-100 scale-100');
@@ -31,7 +31,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 return;
             }
 
-            const response = await axios.get(`${BASE_URL}/qms/root-cause/company/${companyId}/`);
+            const response = await axios.get(`${BASE_URL}/qms/safety-root/company/${companyId}/`);
             setCauses(response.data);
         } catch (error) {
             console.error('Error fetching causes:', error);
@@ -41,7 +41,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Get company ID from local storage
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;
@@ -61,10 +60,9 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         return null;
     };
 
-    // Handle delete cause
     const handleDelete = async (id) => {
         try {
-            await axios.delete(`${BASE_URL}/qms/root-cause/${id}/`);
+            await axios.delete(`${BASE_URL}/qms/safety-root/${id}/`);
             setCauses(causes.filter(item => item.id !== id));
             setSuccessMessage('Cause deleted successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
@@ -75,9 +73,11 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Handle save new cause
     const handleSave = async () => {
-        if (!newCauseTitle.trim()) return;
+        if (!newCauseTitle.trim()) {
+            setTitleError('Cause Title is required');
+            return;
+        }
 
         setIsAdding(true);
         try {
@@ -89,7 +89,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                 return;
             }
 
-            const response = await axios.post(`${BASE_URL}/qms/root-cause/create/`, {
+            const response = await axios.post(`${BASE_URL}/qms/safety-root/create/`, { 
                 company: companyId,
                 title: newCauseTitle.trim()
             });
@@ -112,7 +112,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
-    // Handle selecting a cause
     const handleSelectCause = (cause) => {
         if (onAddCause && typeof onAddCause === 'function') {
             onAddCause(cause);
@@ -120,24 +119,17 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
         }
     };
 
+    const handleTitleChange = (e) => {
+        setNewCauseTitle(e.target.value);
+        setTitleError(''); // Clear error when user starts typing
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-300">
             <div className={`bg-[#13131A] text-white rounded-[4px] w-[563px] p-5 transform transition-all duration-300 ${animateClass}`}>
-                {/* Success or error messages */}
-                {successMessage && (
-                    <div className="bg-green-800 text-white p-2 mb-4 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {error && (
-                    <div className="bg-red-800 text-white p-2 mb-4 rounded">
-                        {error}
-                    </div>
-                )}
 
-                {/* Causes List Section */}
                 <div className="bg-[#1C1C24] rounded-[4px] p-5 mb-6 max-h-[350px]">
                     <h2 className="agenda-list-head pb-5">Root Causes List</h2>
                     {loading ? (
@@ -158,7 +150,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                                     <tbody>
                                         {causes.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center py-4">No causes found</td>
+                                                <td colSpan="4" className="text-center py-4 not-found">No Root Causes Found</td>
                                             </tr>
                                         ) : (
                                             causes.map((item, index) => (
@@ -182,7 +174,6 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                     )}
                 </div>
 
-                {/* Add Cause Section */}
                 <div className="bg-[#1C1C24] rounded-[4px]">
                     <h3 className="agenda-list-head border-b border-[#383840] px-5 py-6">Add Root Cause</h3>
 
@@ -193,10 +184,13 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                         <input
                             type="text"
                             value={newCauseTitle}
-                            onChange={(e) => setNewCauseTitle(e.target.value)}
+                            onChange={handleTitleChange}
                             className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none"
                             placeholder="Enter cause title"
                         />
+                        {titleError && (
+                            <span className="text-red-500 text-sm">{titleError}</span>
+                        )}
                     </div>
 
                     <div className="flex gap-5 justify-end pb-5 px-5">
@@ -209,7 +203,7 @@ const RootCauseModal = ({ isOpen, onClose, onAddCause }) => {
                         <button
                             onClick={handleSave}
                             className="save-btn"
-                            disabled={!newCauseTitle.trim() || isAdding}
+                            disabled={isAdding}
                         >
                             {isAdding ? 'Saving...' : 'Save'}
                         </button>

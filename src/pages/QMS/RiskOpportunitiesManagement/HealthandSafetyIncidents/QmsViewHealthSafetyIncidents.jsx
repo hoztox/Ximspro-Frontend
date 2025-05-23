@@ -57,20 +57,7 @@ const QmsViewHealthSafetyIncidents = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this item?")) {
-            try {
-                const response = await fetch(`${BASE_URL}/qms/safety_incidents/${id}/`, {
-                    method: 'DELETE',
-                });
-                if (!response.ok) {
-                    throw new Error("Failed to delete item");
-                }
-                navigate("/company/qms/list-correction-actions");
-            } catch (err) {
-                console.error("Error deleting car number:", err);
-                alert("Failed to delete item");
-            }
-        }
+       
     };
 
     // if (loading) return (
@@ -139,7 +126,7 @@ const QmsViewHealthSafetyIncidents = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Incident No
                         </label>
-                        <div className="view-employee-data">{formData.ncr_no || "N/A"}</div>
+                        <div className="view-employee-data">{formData.incident_no || "N/A"}</div>
                     </div>
 
                     <div>
@@ -163,7 +150,7 @@ const QmsViewHealthSafetyIncidents = () => {
                             Report By
                         </label>
                         <div className="view-employee-data">
-                            {formData.executor?.first_name} {formData.executor?.last_name}
+                            {formData.reported_by?.first_name} {formData.reported_by?.last_name} 
                         </div>
                     </div>
 
@@ -198,7 +185,7 @@ const QmsViewHealthSafetyIncidents = () => {
                         <label className="block view-employee-label mb-[6px]">
                             Remarks
                         </label>
-                        <div className="view-employee-data">{formatDate(formData.remarks)}</div>
+                        <div className="view-employee-data">{formData.remarks}</div> 
                     </div>
 
                     <div className="flex space-x-10 justify-end">
