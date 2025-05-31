@@ -191,7 +191,7 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
       setShowAddAgendaSuccessModal(true);
       setTimeout(() => {
         setShowAddAgendaSuccessModal(false);
-        onClose();
+        // onClose();
       }, 1500);
     } catch (error) {
       console.error("Error adding agenda item:", error);
@@ -341,17 +341,17 @@ const AgendaModal = ({ isOpen, onClose, onAddCause }) => {
               value={newAgendaTitle}
               onChange={(e) => setNewAgendaTitle(e.target.value)}
               className="w-full add-agenda-inputs bg-[#24242D] h-[49px] px-5 border-none outline-none"
-              placeholder="Enter agenda title"
+              placeholder="Enter Agenda Title" 
             />
           </div>
 
           <div className="flex gap-5 justify-end pb-5 px-5">
-            <button onClick={onClose} className="cancel-btn">
+            <button onClick={onClose} className="cancel-btn duration-200">
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="save-btn"
+              className="save-btn duration-200 cursor-pointer"
               disabled={!newAgendaTitle.trim() || isAdding}
             >
               {isAdding ? "Saving..." : "Save"}

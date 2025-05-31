@@ -387,11 +387,11 @@ const QmsListSupplier = () => {
           <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-              <th className="px-2 text-left add-manual-theads w-[10%]">Supplier</th>
-              <th className="px-2 text-left add-manual-theads w-[32%]">
+              <th className="px-2 text-left add-manual-theads w-[13%]">Supplier</th>
+              <th className="px-2 text-left add-manual-theads w-[40%]">
                 Product / Service
               </th>
-              <th className="px-2 text-left add-manual-theads">Date</th>
+              <th className="px-2 text-left add-manual-theads w-[95px]">Date</th>
               <th className="px-2 text-center add-manual-theads">Status</th>
               <th className="px-2 text-center add-manual-theads">Block</th>
               <th className="px-2 text-center add-manual-theads">View</th>

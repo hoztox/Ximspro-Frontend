@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Eye, AlertCircle } from "lucide-react";
+import { X, Eye, AlertCircle, UserPlus, ChevronDown } from "lucide-react";
 import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import historys from "../../../../assets/images/Company Documentation/history.svg";
@@ -14,6 +14,7 @@ import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
+import SuccessModal from "./Modals/SuccessModal";
 
 const QmsViewEnvironmentalAspect = () => {
   const navigate = useNavigate();
@@ -46,16 +47,24 @@ const QmsViewEnvironmentalAspect = () => {
     useState(false);
   const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] =
     useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
+    useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
+    useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   const [correctionRequest, setCorrectionRequest] = useState({
     isOpen: false,
     text: "",
   });
-
-  // Delete modal states
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
-  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
-  const [deleteError, setDeleteError] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [approveError, setApproveError] = useState(null);
+  const [isSelectFocused, setIsSelectFocused] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const getCurrentUser = () => {
     const role = localStorage.getItem("role");
@@ -117,15 +126,81 @@ const QmsViewEnvironmentalAspect = () => {
 
   const fetchAspectDetails = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/qms/aspect-detail/${id}/`
-      );
+      const response = await axios.get(`${BASE_URL}/qms/aspect-detail/${id}/`);
       setFormData(response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching aspect details:", err);
-      setError("Failed to load environmental aspect details");
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+
+      setError(errorMsg);
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
+      setUsers(response.data);
+      console.log("Fetched Users:", response.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setApproveError(err.message || "Failed to fetch users");
+    }
+  };
+
+  const handleUpdateApprovedBy = async () => {
+    try {
+      if (!selectedUserId) {
+        setApproveError("Please select a user");
+        return;
+      }
+
+      const response = await axios.put(`${BASE_URL}/qms/aspect/${id}/update/`, { 
+        approved_by: selectedUserId,
+      });
+
+      setFormData(response.data);
+      setShowSuccessModal(true);
+      setSuccessMessage("Approver Added Successfully");
+      setShowApproveModal(false);
+      setSelectedUserId("");
+      setApproveError(null);
+      await fetchAspectDetails();
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
+    } catch (err) {
+      console.error("Error updating approved by:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+
+      setApproveError(errorMsg);
     }
   };
 
@@ -180,6 +255,7 @@ const QmsViewEnvironmentalAspect = () => {
   useEffect(() => {
     fetchAspectDetails();
     fetchAspectCorrections();
+    fetchUsers();
   }, [id]);
 
   const getUserName = (user) => {
@@ -240,6 +316,21 @@ const QmsViewEnvironmentalAspect = () => {
       }, 1500);
     } catch (error) {
       console.error("Error submitting correction:", error);
+      let errorMsg = error.message;
+
+      if (error.response) {
+        if (error.response.data.date) {
+          errorMsg = error.response.data.date[0];
+        } else if (error.response.data.detail) {
+          errorMsg = error.response.data.detail;
+        } else if (error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
+      setError(errorMsg);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
         setShowSentCorrectionErrorModal(false);
@@ -281,12 +372,11 @@ const QmsViewEnvironmentalAspect = () => {
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  const handleEdit = (id) => {
+  const handleEdit = () => {
     handleMoveToHistory();
     navigate(`/company/qms/edit-environmantal-aspect/${id}`);
   };
 
-  // Delete handlers
   const handleDelete = () => {
     setShowDeleteModal(true);
   };
@@ -308,11 +398,9 @@ const QmsViewEnvironmentalAspect = () => {
       if (err.response) {
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
-        }
-        else if (err.response.data.message) {
+        } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         }
       } else if (err.message) {
@@ -371,10 +459,7 @@ const QmsViewEnvironmentalAspect = () => {
         aspect_id: id,
         current_user_id: currentUser.user_id,
       };
-      await axios.post(
-        `${BASE_URL}/qms/aspect-review/`,
-        requestData
-      );
+      await axios.post(`${BASE_URL}/qms/aspect-review/`, requestData);
       setShowSubmitManualSuccessModal(true);
       setTimeout(() => {
         setShowSubmitManualSuccessModal(false);
@@ -387,16 +472,12 @@ const QmsViewEnvironmentalAspect = () => {
       let errorMsg;
 
       if (error.response) {
-        // Server responded with a status other than 2xx
         const data = error.response.data;
-
-        // Try multiple possible locations for an error message
-        errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
+        errorMsg =
+          data?.error || data?.message || data?.detail || JSON.stringify(data);
       } else if (error.request) {
-        // Request was made but no response received
         errorMsg = "No response received from server.";
       } else {
-        // Something happened in setting up the request
         errorMsg = error.message || "An unknown error occurred.";
       }
 
@@ -412,17 +493,18 @@ const QmsViewEnvironmentalAspect = () => {
     hidden: {
       opacity: 0,
       height: 0,
-      transition: {
-        duration: 0.3,
-      },
+      transition: { duration: 0.3 },
     },
     visible: {
       opacity: 1,
       height: "auto",
-      transition: {
-        duration: 0.3,
-      },
+      transition: { duration: 0.3 },
     },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
   };
 
   const renderHighlightedCorrection = () => {
@@ -436,6 +518,12 @@ const QmsViewEnvironmentalAspect = () => {
               Latest Correction Request
             </h2>
           </div>
+          <button
+            onClick={handleMoveToHistory}
+            className="text-[#AAAAAA] hover:text-white text-sm"
+          >
+            Move to history
+          </button>
         </div>
         <div className="bg-[#24242D] p-5 rounded-md mt-3">
           <div className="flex justify-between items-center mb-2">
@@ -465,8 +553,9 @@ const QmsViewEnvironmentalAspect = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? "mb-5" : ""
-              }`}
+            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
+              index < historyCorrections.length - 1 ? "mb-5" : ""
+            }`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -494,41 +583,6 @@ const QmsViewEnvironmentalAspect = () => {
     <div className="bg-[#1C1C24] text-white rounded-lg p-5">
       <div className="flex justify-between items-center border-b border-[#383840] pb-5">
         <h2 className="view-employee-head">Environmental Aspect Information</h2>
-        <ManualCorrectionSuccessModal
-          showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
-          onClose={() => setShowSentCorrectionSuccessModal(false)}
-        />
-        <ManualCorrectionErrorModal
-          showSentCorrectionErrorModal={showSentCorrectionErrorModal}
-          onClose={() => setShowSentCorrectionErrorModal(false)}
-          error={error}
-        />
-        <ReviewSubmitSuccessModal
-          showSubmitManualSuccessModal={showSubmitManualSuccessModal}
-          onClose={() => setShowSubmitManualSuccessModal(false)}
-        />
-        <ReviewSubmitErrorModal
-          showSubmitManualErrorModal={showSubmitManualErrorModal}
-          onClose={() => setShowSubmitManualErrorModal(false)}
-          error={error}
-        />
-
-        {/* Delete Modals */}
-        <DeleteQmsManualConfirmModal
-          showDeleteModal={showDeleteModal}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-        />
-        <DeleteQmsManualsuccessModal
-          showDeleteManualSuccessModal={showDeleteManualSuccessModal}
-          onClose={() => setShowDeleteManualSuccessModal(false)}
-        />
-        <DeleteQmsManualErrorModal
-          showDeleteManualErrorModal={showDeleteManualErrorModal}
-          onClose={() => setShowDeleteManualErrorModal(false)}
-          error={deleteError}
-        />
-
         <button
           onClick={handleClose}
           className="bg-[#24242D] h-[36px] w-[36px] flex justify-center items-center rounded-md"
@@ -536,7 +590,7 @@ const QmsViewEnvironmentalAspect = () => {
           <X className="text-white" />
         </button>
       </div>
-      <div className="p-5 relative ">
+      <div className="p-5 relative">
         <div className="hidden md:block absolute top-[20px] bottom-[20px] left-1/2 border-l border-[#383840] h-[550px]"></div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[40px] border-b border-[#383840] pb-10">
           <div>
@@ -603,8 +657,21 @@ const QmsViewEnvironmentalAspect = () => {
             <label className="block view-employee-label mb-[6px]">
               Approved By
             </label>
-            <div className="view-employee-data">
-              {getUserName(formData.approved_by)}
+            <div className="flex items-center gap-24">
+              <div className="view-employee-data">
+                {getUserName(formData.approved_by)}
+              </div>
+              {(!formData.approved_by || formData.approved_by === "N/A") &&
+                isCurrentUserWrittenBy && (
+                  <button
+                    onClick={() => setShowApproveModal(true)}
+                    className="save-btn text-white flex items-center gap-2 !w-[12rem] duration-200"
+                    title="Assign Approver"
+                  >
+                    <UserPlus size={20} />
+                    Select Approver
+                  </button>
+                )}
             </div>
           </div>
           <div>
@@ -634,7 +701,7 @@ const QmsViewEnvironmentalAspect = () => {
               <div className="flex space-x-10 justify-end">
                 <div className="flex flex-col justify-center items-center gap-[8px] view-employee-label">
                   Edit
-                  <button onClick={() => handleEdit(id)}>
+                  <button onClick={handleEdit}>
                     <img
                       src={edits}
                       alt="Edit Icon"
@@ -735,9 +802,128 @@ const QmsViewEnvironmentalAspect = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            {showApproveModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={modalVariants}
+                  className="bg-[#1C1C24] p-6 rounded-lg w-full max-w-md"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="view-employee-label">Select Approver</h2>
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="text-white bg-[#24242D] p-2 rounded-md"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      onFocus={() => {
+                        setIsSelectFocused(true);
+                        setIsDropdownOpen(true);
+                      }}
+                      onBlur={() => {
+                        setIsSelectFocused(false);
+                        setIsDropdownOpen(false);
+                      }}
+                      onMouseDown={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="add-qms-manual-inputs mb-4 appearance-none pr-8"
+                    >
+                      <option value="">Select Approver</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={18}
+                      className="absolute right-3 top-[28px] text-[#AAAAAA] pointer-events-none transition-transform duration-200"
+                      style={{
+                        transform: isDropdownOpen
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </div>
+                  {approveError && (
+                    <p className="text-red-500 text-sm mb-4">{approveError}</p>
+                  )}
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="cancel-btn duration-200 text-white cursor-pointer !w-[118px]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateApprovedBy}
+                      className="save-btn duration-200 text-white cursor-pointer !w-[118px]"
+                      disabled={!selectedUserId}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
           </div>
         )}
       </div>
+      <ManualCorrectionSuccessModal
+        showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
+        onClose={() => setShowSentCorrectionSuccessModal(false)}
+      />
+      <ManualCorrectionErrorModal
+        showSentCorrectionErrorModal={showSentCorrectionErrorModal}
+        onClose={() => setShowSentCorrectionErrorModal(false)}
+        error={error}
+      />
+      <ReviewSubmitSuccessModal
+        showSubmitManualSuccessModal={showSubmitManualSuccessModal}
+        onClose={() => setShowSubmitManualSuccessModal(false)}
+      />
+      <ReviewSubmitErrorModal
+        showSubmitManualErrorModal={showSubmitManualErrorModal}
+        onClose={() => setShowSubmitManualErrorModal(false)}
+        error={error}
+      />
+      <DeleteQmsManualConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      <DeleteQmsManualsuccessModal
+        showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+        onClose={() => setShowDeleteManualSuccessModal(false)}
+      />
+      <DeleteQmsManualErrorModal
+        showDeleteManualErrorModal={showDeleteManualErrorModal}
+        onClose={() => setShowDeleteManualErrorModal(false)}
+        error={deleteError}
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
     </div>
   );
 };

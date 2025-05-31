@@ -153,7 +153,7 @@ const QmsAddObjectives = () => {
     return isValid;
   };
 
-  const formatDate = (dateObj) => {
+  const   formatDate = (dateObj) => {
     if (!dateObj.year || !dateObj.month || !dateObj.day) return null;
     return `${dateObj.year}-${dateObj.month}-${dateObj.day}`;
   };

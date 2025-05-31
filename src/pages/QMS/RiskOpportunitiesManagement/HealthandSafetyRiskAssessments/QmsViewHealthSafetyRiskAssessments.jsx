@@ -3,7 +3,7 @@ import edits from "../../../../assets/images/Company Documentation/edit.svg";
 import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 import historys from "../../../../assets/images/Company Documentation/history.svg";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Eye, AlertCircle } from "lucide-react";
+import { X, Eye, AlertCircle, UserPlus, ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -14,18 +14,18 @@ import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
+import SuccessModal from "./Modals/SuccessModal";
 
 const QmsViewHealthSafetyRiskAssessments = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [manualDetails, setManualDetails] = useState("aa");
+  const [manualDetails, setManualDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [corrections, setCorrections] = useState([]);
   const [highlightedCorrection, setHighlightedCorrection] = useState(null);
   const [historyCorrections, setHistoryCorrections] = useState([]);
   const [usersData, setUsersData] = useState({});
-
   const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] =
     useState(false);
   const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] =
@@ -34,22 +34,26 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     useState(false);
   const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] =
     useState(false);
-
-  // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
     useState(false);
   const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
     useState(false);
-
   const [correctionRequest, setCorrectionRequest] = useState({
     isOpen: false,
     text: "",
   });
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [approveError, setApproveError] = useState(null);
+  const [isSelectFocused, setIsSelectFocused] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const getCurrentUser = () => {
     const role = localStorage.getItem("role");
-
     try {
       if (role === "company") {
         const companyData = {};
@@ -63,13 +67,10 @@ const QmsViewHealthSafetyRiskAssessments = () => {
               companyData[cleanKey] = localStorage.getItem(key);
             }
           });
-
         companyData.role = role;
         companyData.company_id = localStorage.getItem("company_id");
         companyData.company_name = localStorage.getItem("company_name");
         companyData.email_address = localStorage.getItem("email_address");
-
-        console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === "user") {
         const userData = {};
@@ -83,11 +84,8 @@ const QmsViewHealthSafetyRiskAssessments = () => {
               userData[cleanKey] = localStorage.getItem(key);
             }
           });
-
         userData.role = role;
         userData.user_id = localStorage.getItem("user_id");
-
-        console.log("Regular User Data:", userData);
         return userData;
       }
     } catch (error) {
@@ -98,7 +96,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
-
     if (role === "company") {
       return localStorage.getItem("company_id");
     } else if (role === "user") {
@@ -110,7 +107,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         return null;
       }
     }
-
     return null;
   };
 
@@ -120,12 +116,75 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         `${BASE_URL}/qms/assessment-detail/${id}/`
       );
       setManualDetails(response.data);
-      console.log("Manual Details:", response.data);
       setLoading(false);
     } catch (err) {
-      console.error("Error fetching manual details:", err);
-      setError("Failed to load record format details");
+      console.error("Error fetching risk assessment details:", err);
+      let errorMsg = err.message;
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      setError(errorMsg);
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
+      setUsers(response.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setApproveError(err.message || "Failed to fetch users");
+    }
+  };
+
+  const handleUpdateApprovedBy = async () => {
+    try {
+      if (!selectedUserId) {
+        setApproveError("Please select a user");
+        return;
+      }
+      const response = await axios.put(
+        `${BASE_URL}/qms/assessment/${id}/update/`,
+        {
+          approved_by: selectedUserId,
+        }
+      );
+      setManualDetails(response.data);
+      setShowSuccessModal(true);
+      setSuccessMessage("Approver Added Successfully");
+      setShowApproveModal(false);
+      setSelectedUserId("");
+      setApproveError(null);
+      await fetchManualDetails();
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
+    } catch (err) {
+      console.error("Error updating approved by:", err);
+      let errorMsg = err.message;
+      if (err.response) {
+        if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+      setApproveError(errorMsg);
     }
   };
 
@@ -154,12 +213,8 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         `${BASE_URL}/qms/assessment/${id}/corrections/`
       );
       const allCorrections = response.data;
-      console.log("Fetched Record Formats Corrections:", allCorrections);
-
       const viewedCorrections = getViewedCorrections();
-
       setCorrections(allCorrections);
-
       const userIds = new Set();
       allCorrections.forEach((correction) => {
         if (correction.from_user && typeof correction.from_user === "number")
@@ -167,14 +222,11 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         if (correction.to_user && typeof correction.to_user === "number")
           userIds.add(correction.to_user);
       });
-
       const sortedCorrections = [...allCorrections].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-
       if (sortedCorrections.length > 0) {
         const mostRecent = sortedCorrections[0];
-
         if (!viewedCorrections.includes(mostRecent.id)) {
           setHighlightedCorrection(mostRecent);
           setHistoryCorrections(sortedCorrections.slice(1));
@@ -187,37 +239,33 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         setHistoryCorrections([]);
       }
     } catch (error) {
-      console.error("Error fetching record format corrections:", error);
+      console.error("Error fetching risk assessment corrections:", error);
     }
   };
 
   useEffect(() => {
     fetchManualDetails();
     fetchManualCorrections();
+    fetchUsers();
   }, [id]);
 
   const getUserName = (user) => {
     if (!user) return "N/A";
-
     if (typeof user === "object" && user.first_name && user.last_name) {
       return `${user.first_name} ${user.last_name}`;
     }
-
     if (typeof user === "number" && usersData[user]) {
       return `${usersData[user].first_name} ${usersData[user].last_name}`;
     }
-
     if (typeof user === "string" && user.includes("@")) {
       return user;
     }
-
     if (
       user === highlightedCorrection?.to_user &&
       highlightedCorrection?.to_user_email
     ) {
       return highlightedCorrection.to_user_email;
     }
-
     return `User ${user}`;
   };
 
@@ -243,50 +291,36 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     try {
       const currentUser = getCurrentUser();
       if (!currentUser) {
-        alert("User not authenticated");
+        setError("User not authenticated");
         return;
       }
-
       const requestData = {
         assessment_id: id,
         correction: correctionRequest.text,
         from_user: currentUser.user_id,
       };
-
-      console.log("Submitting correction request:", requestData);
-
       const response = await axios.post(
         `${BASE_URL}/qms/assessment/submit-correction/`,
         requestData
       );
-
-      console.log("Correction response:", response.data);
-
       handleCloseCorrectionRequest();
       setShowSentCorrectionSuccessModal(true);
-
       const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
         "user_id"
       )}`;
       localStorage.removeItem(storageKey);
-
       await fetchManualDetails();
       await fetchManualCorrections();
-
       setTimeout(() => {
         setShowSentCorrectionSuccessModal(false);
       }, 1500);
     } catch (error) {
       console.error("Error submitting correction:", error);
       let errorMsg = error.message;
-
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
@@ -294,7 +328,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
       } else if (error.message) {
         errorMsg = error.message;
       }
-
       setError(errorMsg);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
@@ -334,12 +367,10 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     hours = hours % 12;
     hours = hours ? hours : 12;
     const formattedHours = String(hours).padStart(2, "0");
-
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  // Delete function implementations
-  const handleDeleteProcedure = (recordId) => {
+  const handleDeleteProcedure = () => {
     setShowDeleteModal(true);
   };
 
@@ -353,10 +384,8 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         navigate("/company/qms/list-health-safety-assessments");
       }, 2000);
     } catch (err) {
-      console.error("Error deleting record format:", err);
-      setShowDeleteModal(false);
+      console.error("Error deleting risk assessment:", err);
       let errorMsg = err.message;
-
       if (err.response) {
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
@@ -368,7 +397,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
       } else if (err.message) {
         errorMsg = err.message;
       }
-
       setError(errorMsg);
       setShowDeleteManualErrorModal(true);
       setTimeout(() => {
@@ -381,10 +409,31 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     setShowDeleteModal(false);
   };
 
-  if (loading) return <div className="text-white">Loading...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  const correctionVariants = {
+    hidden: {
+      opacity: 0,
+      height: 0,
+      transition: { duration: 0.3 },
+    },
+    visible: {
+      opacity: 1,
+      height: "auto",
+      transition: { duration: 0.3 },
+    },
+  };
+
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+  };
+
+  if (loading) return <div className="text-center not-found">Loading...</div>;
   if (!manualDetails)
-    return <div className="text-white">No manual details found</div>;
+    return (
+      <div className="text-center not-found">
+        No Health and Safety Risk Assessment Details Found
+      </div>
+    );
 
   const currentUserId = Number(localStorage.getItem("user_id"));
   const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
@@ -393,30 +442,24 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     if (isCurrentUserWrittenBy) {
       return true;
     }
-
     if (manualDetails.status === "Pending for Review/Checking") {
       return currentUserId === manualDetails.checked_by?.id;
     }
-
     if (manualDetails.status === "Correction Requested") {
       const hasSentCorrections = corrections.some(
         (correction) =>
           correction.from_user?.id === currentUserId && !correction.is_addressed
       );
-
       if (hasSentCorrections) {
         return false;
       }
-
       return corrections.some(
         (correction) => correction.to_user?.id === currentUserId
       );
     }
-
     if (manualDetails.status === "Reviewed,Pending for Approval") {
       return currentUserId === manualDetails.approved_by?.id;
     }
-
     return false;
   })();
 
@@ -424,20 +467,17 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     try {
       const currentUser = getCurrentUser();
       if (!currentUser) {
-        alert("User not authenticated");
+        setError("User not authenticated");
         return;
       }
-
       const requestData = {
         assessment_id: id,
         current_user_id: currentUser.user_id,
       };
-
       const response = await axios.post(
         `${BASE_URL}/qms/assessment-review/`,
         requestData
       );
-
       setShowSubmitManualSuccessModal(true);
       setTimeout(() => {
         setShowSubmitManualSuccessModal(false);
@@ -448,22 +488,15 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     } catch (error) {
       console.error("Error submitting review:", error);
       let errorMsg;
-
       if (error.response) {
-        // Server responded with a status other than 2xx
         const data = error.response.data;
-
-        // Try multiple possible locations for an error message
         errorMsg =
           data?.error || data?.message || data?.detail || JSON.stringify(data);
       } else if (error.request) {
-        // Request was made but no response received
         errorMsg = "No response received from server.";
       } else {
-        // Something happened in setting up the request
         errorMsg = error.message || "An unknown error occurred.";
       }
-
       setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
@@ -472,26 +505,8 @@ const QmsViewHealthSafetyRiskAssessments = () => {
     }
   };
 
-  const correctionVariants = {
-    hidden: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3,
-      },
-    },
-    visible: {
-      opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.3,
-      },
-    },
-  };
-
   const renderHighlightedCorrection = () => {
     if (!highlightedCorrection) return null;
-
     return (
       <div className="mt-5 bg-[#1F2937] p-4 rounded-md border-l-4 border-[#3B82F6]">
         <div className="flex justify-between items-center mb-2">
@@ -501,6 +516,12 @@ const QmsViewHealthSafetyRiskAssessments = () => {
               Latest Correction Request
             </h2>
           </div>
+          <button
+            onClick={handleMoveToHistory}
+            className="text-[#AAAAAA] hover:text-white text-sm"
+          >
+            Move to history
+          </button>
         </div>
         <div className="bg-[#24242D] p-5 rounded-md mt-3">
           <div className="flex justify-between items-center mb-2">
@@ -521,7 +542,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
 
   const renderCorrectionHistory = () => {
     if (historyCorrections.length === 0) return null;
-
     return (
       <div className="mt-5 bg-[#1C1C24] p-4 pt-0 rounded-md max-h-[356px] overflow-auto custom-scrollbar">
         <div className="sticky -top-0 bg-[#1C1C24] flex items-center text-white mb-5 gap-[6px] pb-2">
@@ -531,7 +551,7 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
+            className={`bg-[#24242D] p-5 rounded-md ${
               index < historyCorrections.length - 1 ? "mb-5" : ""
             }`}
           >
@@ -558,53 +578,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
         <h1 className="viewmanualhead">
           Health and Safety Risk Assessments Information
         </h1>
-
-        <ManualCorrectionSuccessModal
-          showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
-          onClose={() => {
-            setShowSentCorrectionSuccessModal(false);
-          }}
-        />
-
-        <ManualCorrectionErrorModal
-          showSentCorrectionErrorModal={showSentCorrectionErrorModal}
-          onClose={() => {
-            setShowSentCorrectionErrorModal(false);
-          }}
-          error={error}
-        />
-
-        <ReviewSubmitSuccessModal
-          showSubmitManualSuccessModal={showSubmitManualSuccessModal}
-          onClose={() => {
-            setShowSubmitManualSuccessModal(false);
-          }}
-        />
-
-        <ReviewSubmitErrorModal
-          showSubmitManualErrorModal={showSubmitManualErrorModal}
-          onClose={() => {
-            setShowSubmitManualErrorModal(false);
-          }}
-          error={error}
-        />
-
-        {/* Delete Modals */}
-        <DeleteQmsManualConfirmModal
-          showDeleteModal={showDeleteModal}
-          onConfirm={handleConfirmDelete}
-          onCancel={handleCancelDelete}
-        />
-        <DeleteQmsManualsuccessModal
-          showDeleteManualSuccessModal={showDeleteManualSuccessModal}
-          onClose={() => setShowDeleteManualSuccessModal(false)}
-        />
-        <DeleteQmsManualErrorModal
-          showDeleteManualErrorModal={showDeleteManualErrorModal}
-          onClose={() => setShowDeleteManualErrorModal(false)}
-          error={error}
-        />
-
         <button
           className="text-white bg-[#24242D] p-1 rounded-md"
           onClick={handleCloseViewPage}
@@ -670,10 +643,9 @@ const QmsViewHealthSafetyRiskAssessments = () => {
               </p>
             </div>
           </div>
-
           <div className="grid grid-cols-1 gap-[40px] pl-5">
             <div>
-              <label className="viewmanuallabels">Written/Prepare By</label>
+              <label className="viewmanuallabels">Written/Prepared By</label>
               <p className="viewmanuasdata">
                 {manualDetails.written_by
                   ? `${manualDetails.written_by.first_name} ${manualDetails.written_by.last_name}`
@@ -690,11 +662,25 @@ const QmsViewHealthSafetyRiskAssessments = () => {
             </div>
             <div>
               <label className="viewmanuallabels">Approved By</label>
-              <p className="viewmanuasdata">
-                {manualDetails.approved_by
-                  ? `${manualDetails.approved_by.first_name} ${manualDetails.approved_by.last_name}`
-                  : "N/A"}
-              </p>
+              <div className="flex items-center gap-24">
+                <p className="viewmanuasdata">
+                  {manualDetails.approved_by
+                    ? `${manualDetails.approved_by.first_name} ${manualDetails.approved_by.last_name}`
+                    : "N/A"}
+                </p>
+                {(!manualDetails.approved_by ||
+                  manualDetails.approved_by === "N/A") &&
+                  isCurrentUserWrittenBy && (
+                    <button
+                      onClick={() => setShowApproveModal(true)}
+                      className="save-btn text-white flex items-center gap-2 !w-[12rem] duration-200"
+                      title="Assign Approver"
+                    >
+                      <UserPlus size={20} />
+                      Select Approver
+                    </button>
+                  )}
+              </div>
             </div>
             <div>
               <label className="viewmanuallabels">Date</label>
@@ -728,7 +714,7 @@ const QmsViewHealthSafetyRiskAssessments = () => {
                   </div>
                   <div className="flex flex-col justify-center items-center">
                     <label className="viewmanuallabels">Delete</label>
-                    <button onClick={() => handleDeleteProcedure(id)}>
+                    <button onClick={() => handleDeleteProcedure()}>
                       <img src={deletes} alt="Delete Icon" />
                     </button>
                   </div>
@@ -737,10 +723,8 @@ const QmsViewHealthSafetyRiskAssessments = () => {
             </div>
           </div>
         </div>
-
         {renderHighlightedCorrection()}
         {renderCorrectionHistory()}
-
         {canReview && (
           <div className="flex flex-wrap justify-between mt-5">
             {!correctionRequest.isOpen && (
@@ -754,7 +738,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
                 >
                   Request For Correction
                 </button>
-
                 {manualDetails.status === "Reviewed,Pending for Approval" ? (
                   <button
                     onClick={() => {
@@ -780,7 +763,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
                 )}
               </>
             )}
-
             <AnimatePresence>
               {correctionRequest.isOpen && (
                 <motion.div
@@ -798,7 +780,6 @@ const QmsViewHealthSafetyRiskAssessments = () => {
                       <X size={22} />
                     </button>
                   </div>
-
                   <textarea
                     value={correctionRequest.text}
                     onChange={(e) =>
@@ -821,9 +802,128 @@ const QmsViewHealthSafetyRiskAssessments = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+            {showApproveModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={modalVariants}
+                  className="bg-[#1C1C24] p-6 rounded-lg w-full max-w-md"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="viewmanuallabels">Select Approver</h2>
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="text-white bg-[#24242D] p-2 rounded-md"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      onFocus={() => {
+                        setIsSelectFocused(true);
+                        setIsDropdownOpen(true);
+                      }}
+                      onBlur={() => {
+                        setIsSelectFocused(false);
+                        setIsDropdownOpen(false);
+                      }}
+                      onMouseDown={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="add-qms-manual-inputs mb-4 appearance-none pr-8"
+                    >
+                      <option value="">Select Approver</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={18}
+                      className="absolute right-3 top-[28px] text-[#AAAAAA] pointer-events-none transition-transform duration-200"
+                      style={{
+                        transform: isDropdownOpen
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </div>
+                  {approveError && (
+                    <p className="text-red-500 text-sm mb-4">{approveError}</p>
+                  )}
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="cancel-btn duration-200 text-white cursor-pointer !w-[118px]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateApprovedBy}
+                      className="save-btn duration-200 text-white cursor-pointer !w-[118px]"
+                      disabled={!selectedUserId}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
           </div>
         )}
       </div>
+      <ManualCorrectionSuccessModal
+        showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
+        onClose={() => setShowSentCorrectionSuccessModal(false)}
+      />
+      <ManualCorrectionErrorModal
+        showSentCorrectionErrorModal={showSentCorrectionErrorModal}
+        onClose={() => setShowSentCorrectionErrorModal(false)}
+        error={error}
+      />
+      <ReviewSubmitSuccessModal
+        showSubmitManualSuccessModal={showSubmitManualSuccessModal}
+        onClose={() => setShowSubmitManualSuccessModal(false)}
+      />
+      <ReviewSubmitErrorModal
+        showSubmitManualErrorModal={showSubmitManualErrorModal}
+        onClose={() => setShowSubmitManualErrorModal(false)}
+        error={error}
+      />
+      <DeleteQmsManualConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      <DeleteQmsManualsuccessModal
+        showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+        onClose={() => setShowDeleteManualSuccessModal(false)}
+      />
+      <DeleteQmsManualErrorModal
+        showDeleteManualErrorModal={showDeleteManualErrorModal}
+        onClose={() => setShowDeleteManualErrorModal(false)}
+        error={error}
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
     </div>
   );
 };

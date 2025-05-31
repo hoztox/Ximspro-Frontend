@@ -67,73 +67,68 @@ const QmsListCustomer = () => {
 
   // Fetch customers data
   useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(
-          `${BASE_URL}/qms/customer/company/${companyId}/`
-        );
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${BASE_URL}/qms/customer/company/${companyId}/`
+      );
 
-        // Sort by created_at in descending order (newest first)
-        const sortedData = response.data.sort((a, b) => 
-          new Date(a.created_at) - new Date(b.created_at) 
-        );
+      // Sort by id in ascending order
+      const sortedData = response.data.sort((a, b) => a.id - b.id);
 
-        const formattedData = sortedData.map((customer, index) => ({
-          id: index + 1,
-          customer_id: customer.id,
-          name: customer.name || "Anonymous",
-          email: customer.email || "N/A",
-          contact_person: customer.contact_person || "N/A",
-          phone: customer.phone || "N/A",
-          address: customer.address || "N/A",
-          city: customer.city || "N/A",
-          state: customer.state || "N/A",
-          country: customer.country || "N/A",
-          zipcode: customer.zipcode || "N/A",
-          is_draft: customer.is_draft,
-          created_at: formatDate(customer.created_at),
-        }));
-        setCustomers(formattedData);
- 
-        const userId = getRelevantUserId();
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/customer/drafts-count/${userId}/`
-        );
-        setDraftCount(draftResponse.data.count);
+      const formattedData = sortedData.map((customer, index) => ({
+        id: index + 1,
+        customer_id: customer.id,
+        name: customer.name || "Anonymous",
+        email: customer.email || "N/A",
+        contact_person: customer.contact_person || "N/A",
+        phone: customer.phone || "N/A",
+        address: customer.address || "N/A",
+        city: customer.city || "N/A",
+        state: customer.state || "N/A",
+        country: customer.country || "N/A",
+        zipcode: customer.zipcode || "N/A",
+        is_draft: customer.is_draft,
+        created_at: formatDate(customer.created_at),
+      }));
+      setCustomers(formattedData);
 
-        setError(null);
-      } catch (err) {
-        let errorMsg = err.message;
+      const userId = getRelevantUserId();
+      const draftResponse = await axios.get(
+        `${BASE_URL}/qms/customer/drafts-count/${userId}/`
+      );
+      setDraftCount(draftResponse.data.count);
 
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
+      setError(null);
+    } catch (err) {
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.date) {
+          errorMsg = err.response.data.date[0];
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
         }
-
-        setError(errorMsg);
-        console.error("Error fetching customers:", err);
-        setShowErrorModal(true);
-        setTimeout(() => {
-          setShowErrorModal(false);
-        }, 3000);
-      } finally {
-        setLoading(false);
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    };
 
-    fetchCustomers();
-  }, [companyId]);
+      setError(errorMsg);
+      console.error("Error fetching customers:", err);
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchCustomers();
+}, [companyId]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";

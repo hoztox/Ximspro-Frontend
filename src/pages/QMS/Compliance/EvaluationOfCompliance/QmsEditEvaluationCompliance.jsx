@@ -352,11 +352,11 @@ const QmsEditEvaluationCompliance = () => {
         date: newDate,
       }));
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [dropdown]: value,
-      }));
-
+       const newValue = value === "" ? null : value;
+    setFormData((prev) => ({
+      ...prev,
+      [dropdown]: newValue,
+    }));
       // Clear error when dropdown selection changes
       if (fieldErrors[dropdown]) {
         setFieldErrors((prev) => ({
@@ -378,108 +378,103 @@ const QmsEditEvaluationCompliance = () => {
   };
 
   const handleUpdateClick = async () => {
-    if (!validateForm()) {
-      setError("Please fill in all required fields");
+  if (!validateForm()) {
+    setError("Please fill in all required fields");
+    setShowErrorModal(true);
+    setTimeout(() => setShowErrorModal(false), 3000);
+    return;
+  }
+  try {
+    setLoading(true);
+
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
+      setLoading(false);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
       return;
     }
-    try {
-      setLoading(true);
 
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
+    const submitData = new FormData();
+    submitData.append("company", companyId);
 
-      const submitData = new FormData();
-      console.log("qqqqqqqqqqqq", submitData);
-      submitData.append("company", companyId);
+    // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+    const apiFormData = {
+      ...formData,
+      send_system_checked: formData.send_notification_to_checked_by ? "Yes" : "No",
+      send_email_checked: formData.send_email_to_checked_by ? "Yes" : "No",
+      send_system_approved: formData.send_notification_to_approved_by ? "Yes" : "No",
+      send_email_approved: formData.send_email_to_approved_by ? "Yes" : "No",
+    };
 
-      // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
-      const apiFormData = {
-        ...formData,
-        send_system_checked: formData.send_notification_to_checked_by
-          ? "Yes"
-          : "No",
-        send_email_checked: formData.send_email_to_checked_by ? "Yes" : "No",
-        send_system_approved: formData.send_notification_to_approved_by
-          ? "Yes"
-          : "No",
-        send_email_approved: formData.send_email_to_approved_by ? "Yes" : "No",
-      };
-
-      if (formData.approved_by === null || formData.approved_by === "") {
-        // If approved_by is null or empty, don't include it in the submitData
-        delete apiFormData.approved_by;
-      } else if (typeof formData.approved_by === "string") {
-        // If it's a string, convert to number (assuming IDs are numeric)
-        apiFormData.approved_by = parseInt(formData.approved_by, "");
-      }
-
-      // Add all form data
-      Object.keys(apiFormData).forEach((key) => {
-        // Skip the checkbox fields with boolean values
-        if (
-          key !== "send_notification_to_checked_by" &&
-          key !== "send_email_to_checked_by" &&
-          key !== "send_notification_to_approved_by" &&
-          key !== "send_email_to_approved_by"
-        ) {
-          submitData.append(key, apiFormData[key]);
-        }
-      });
-
-      // Add file if new file is selected
-      if (fileObject) {
-        submitData.append("upload_attachment", fileObject);
-      }
-
-      const response = await axios.put(
-        `${BASE_URL}/qms/evaluation/${id}/update/`,
-        submitData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setLoading(false);
-      console.log("wwwwwwwww", response);
-
-      setShowEditManualSuccessModal(true);
-      setTimeout(() => {
-        setShowEditManualSuccessModal(false);
-        navigate("/company/qms/list-evaluation-compliance");
-      }, 2000);
-    } catch (err) {
-      setLoading(false);
-      let errorMsg = err.message;
-
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
-      setError(errorMsg);
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
-      console.error("Error updating evaluation:", err);
+    // Handle approved_by field - explicitly set to empty string if null
+    if (formData.approved_by === null || formData.approved_by === "") {
+      submitData.append("approved_by", "");
+    } else {
+      submitData.append("approved_by", formData.approved_by);
     }
-  };
+
+    // Add all other form data
+    Object.keys(apiFormData).forEach((key) => {
+      // Skip the fields we've already handled
+      if (
+        key !== "send_notification_to_checked_by" &&
+        key !== "send_email_to_checked_by" &&
+        key !== "send_notification_to_approved_by" &&
+        key !== "send_email_to_approved_by" &&
+        key !== "approved_by" // Skip approved_by as we've handled it separately
+      ) {
+        submitData.append(key, apiFormData[key]);
+      }
+    });
+
+    // Add file if new file is selected
+    if (fileObject) {
+      submitData.append("upload_attachment", fileObject);
+    }
+
+    const response = await axios.put(
+      `${BASE_URL}/qms/evaluation/${id}/update/`,
+      submitData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    setLoading(false);
+    setShowEditManualSuccessModal(true);
+    setTimeout(() => {
+      setShowEditManualSuccessModal(false);
+      navigate("/company/qms/list-evaluation-compliance");
+    }, 2000);
+  } catch (err) {
+    setLoading(false);
+    let errorMsg = err.message;
+
+    if (err.response) {
+      if (err.response.data.date) {
+        errorMsg = err.response.data.date[0];
+      }
+      else if (err.response.data.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response.data.message) {
+        errorMsg = err.response.data.message;
+      }
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+
+    setError(errorMsg);
+    setShowErrorModal(true);
+    setTimeout(() => {
+      setShowErrorModal(false);
+    }, 3000);
+    console.error("Error updating evaluation:", err);
+  }
+};
 
   const getMonthName = (monthNum) => {
     const monthNames = [
@@ -752,7 +747,7 @@ const QmsEditEvaluationCompliance = () => {
                   <select
                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                     name="approved_by"
-                    value={formData.approved_by || ""}
+                    value={formData.approved_by || ""} 
                     onFocus={() => toggleDropdown("approved_by")}
                     onChange={(e) => handleDropdownChange(e, "approved_by")}
                     onBlur={() =>

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, Eye } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { ChevronDown, Eye } from "lucide-react";
 import file from "../../../../assets/images/Company Documentation/file-icon.svg";
-import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
+import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
-import SuccessModal from './Modals/SuccessModal';
-import ErrorModal from './Modals/ErrorModal';
+import SuccessModal from "./Modals/SuccessModal";
+import ErrorModal from "./Modals/ErrorModal";
 
 const QmsEditEnvironmentalImpact = () => {
   const { id } = useParams();
@@ -30,21 +30,23 @@ const QmsEditEnvironmentalImpact = () => {
   const [showErrorModal, setShowErrorModal] = useState(false);
 
   const [formData, setFormData] = useState({
-    title: '',
+    title: "",
     written_by: null,
-    number: '',
+    number: "",
     checked_by: null,
-    rivision: '',
+    rivision: "",
     approved_by: null,
-    document_type: 'System',
-    date: `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`,
-    review_frequency_year: '',
-    review_frequency_month: '',
+    document_type: "System",
+    date: `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(
+      currentDay
+    ).padStart(2, "0")}`,
+    review_frequency_year: "",
+    review_frequency_month: "",
     send_notification_to_checked_by: false,
     send_email_to_checked_by: false,
     send_notification_to_approved_by: false,
     send_email_to_approved_by: false,
-    related_record: ''
+    related_record: "",
   });
 
   const [openDropdowns, setOpenDropdowns] = useState({
@@ -54,14 +56,14 @@ const QmsEditEnvironmentalImpact = () => {
     document_type: false,
     day: false,
     month: false,
-    year: false
+    year: false,
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    title: '',
-    written_by: '',
-    number: '',
-    checked_by: ''
+    title: "",
+    written_by: "",
+    number: "",
+    checked_by: "",
   });
 
   const closeAttachmentPreview = () => {
@@ -117,21 +119,25 @@ const QmsEditEnvironmentalImpact = () => {
   useEffect(() => {
     if (impactDetails) {
       setFormData({
-        title: impactDetails.title || '',
+        title: impactDetails.title || "",
         written_by: impactDetails.written_by?.id || null,
-        number: impactDetails.number || '',
+        number: impactDetails.number || "",
         checked_by: impactDetails.checked_by?.id || null,
-        rivision: impactDetails.rivision || '',
+        rivision: impactDetails.rivision || "",
         approved_by: impactDetails.approved_by?.id || null,
-        document_type: impactDetails.document_type || 'System',
+        document_type: impactDetails.document_type || "System",
         date: impactDetails.date || formData.date,
-        review_frequency_year: impactDetails.review_frequency_year || '',
-        review_frequency_month: impactDetails.review_frequency_month || '',
-        send_notification_to_checked_by: impactDetails.send_notification_to_checked_by || false,
-        send_email_to_checked_by: impactDetails.send_email_to_checked_by || false,
-        send_notification_to_approved_by: impactDetails.send_notification_to_approved_by || false,
-        send_email_to_approved_by: impactDetails.send_email_to_approved_by || false,
-        related_record: impactDetails.related_record || ''
+        review_frequency_year: impactDetails.review_frequency_year || "",
+        review_frequency_month: impactDetails.review_frequency_month || "",
+        send_notification_to_checked_by:
+          impactDetails.send_notification_to_checked_by || false,
+        send_email_to_checked_by:
+          impactDetails.send_email_to_checked_by || false,
+        send_notification_to_approved_by:
+          impactDetails.send_notification_to_approved_by || false,
+        send_email_to_approved_by:
+          impactDetails.send_email_to_approved_by || false,
+        related_record: impactDetails.related_record || "",
       });
     }
   }, [impactDetails]);
@@ -152,7 +158,9 @@ const QmsEditEnvironmentalImpact = () => {
   const fetchUsers = async () => {
     try {
       if (!companyId) return;
-      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
       if (Array.isArray(response.data)) {
         setUsers(response.data);
       } else {
@@ -161,7 +169,9 @@ const QmsEditEnvironmentalImpact = () => {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      setError("Failed to load users. Please check your connection and try again.");
+      setError(
+        "Failed to load users. Please check your connection and try again."
+      );
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -190,7 +200,9 @@ const QmsEditEnvironmentalImpact = () => {
 
   const fetchImpactCorrections = async () => {
     try {
-      const response = await axios.get(`${BASE_URL}/qms/impact/${id}/corrections/`);
+      const response = await axios.get(
+        `${BASE_URL}/qms/impact/${id}/corrections/`
+      );
       setCorrections(response.data);
     } catch (error) {
       console.error("Error fetching environmental impact corrections:", error);
@@ -206,7 +218,7 @@ const QmsEditEnvironmentalImpact = () => {
     return {
       day: dateObj.getDate(),
       month: dateObj.getMonth() + 1,
-      year: dateObj.getFullYear()
+      year: dateObj.getFullYear(),
     };
   };
 
@@ -219,36 +231,28 @@ const QmsEditEnvironmentalImpact = () => {
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
 
-  const years = Array.from(
-    { length: 21 },
-    (_, i) => currentYear - 10 + i
-  );
+  const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
-  const documentTypes = [
-    'System',
-    'Paper',
-    'External',
-    'Work Instruction'
-  ];
+  const documentTypes = ["System", "Paper", "External", "Work Instruction"];
 
   const toggleDropdown = (dropdown) => {
-    setOpenDropdowns(prev => ({
+    setOpenDropdowns((prev) => ({
       ...prev,
-      [dropdown]: !prev[dropdown]
+      [dropdown]: !prev[dropdown],
     }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
 
     if (fieldErrors[name]) {
-      setFieldErrors(prev => ({
+      setFieldErrors((prev) => ({
         ...prev,
-        [name]: ''
+        [name]: "",
       }));
     }
   };
@@ -258,22 +262,22 @@ const QmsEditEnvironmentalImpact = () => {
     const newErrors = { ...fieldErrors };
 
     if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
+      newErrors.title = "Title is required";
       isValid = false;
     }
 
     if (!formData.written_by) {
-      newErrors.written_by = 'Written/Prepared By is required';
+      newErrors.written_by = "Written/Prepared By is required";
       isValid = false;
     }
 
     if (!formData.number.trim()) {
-      newErrors.number = 'Number is required';
+      newErrors.number = "Number is required";
       isValid = false;
     }
 
     if (!formData.checked_by) {
-      newErrors.checked_by = 'Checked/Reviewed By is required';
+      newErrors.checked_by = "Checked/Reviewed By is required";
       isValid = false;
     }
 
@@ -283,102 +287,117 @@ const QmsEditEnvironmentalImpact = () => {
 
   const handleCheckboxChange = (e) => {
     const { name, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: checked
+      [name]: checked,
     }));
   };
 
   const handleDropdownChange = (e, dropdown) => {
     const value = e.target.value;
 
-    if (dropdown === 'day' || dropdown === 'month' || dropdown === 'year') {
+    if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       const dateObj = parseDate();
       dateObj[dropdown] = parseInt(value, 10);
-      const newDate = `${dateObj.year}-${String(dateObj.month).padStart(2, '0')}-${String(dateObj.day).padStart(2, '0')}`;
-      setFormData(prev => ({
+      const newDate = `${dateObj.year}-${String(dateObj.month).padStart(
+        2,
+        "0"
+      )}-${String(dateObj.day).padStart(2, "0")}`;
+      setFormData((prev) => ({
         ...prev,
-        date: newDate
+        date: newDate,
       }));
     } else {
-      setFormData(prev => ({
+      const newValue = value === "" ? null : value;
+      setFormData((prev) => ({
         ...prev,
-        [dropdown]: value
+        [dropdown]: newValue,
       }));
 
       if (fieldErrors[dropdown]) {
-        setFieldErrors(prev => ({
+        setFieldErrors((prev) => ({
           ...prev,
-          [dropdown]: ''
+          [dropdown]: "",
         }));
       }
     }
 
-    setOpenDropdowns(prev => ({ ...prev, [dropdown]: false }));
+    setOpenDropdowns((prev) => ({ ...prev, [dropdown]: false }));
   };
 
   const handleListEnvironmentalImpact = () => {
-    navigate('/company/qms/list-environmantal-impact');
+    navigate("/company/qms/list-environmantal-impact");
   };
 
   const handleUpdateClick = async () => {
     if (!validateForm()) {
-      setError('Please fill in all required fields');
+      setError("Please fill in all required fields");
       return;
     }
     try {
       setLoading(true);
       const companyId = getUserCompanyId();
       if (!companyId) {
-        setError('Company ID not found. Please log in again.');
+        setError("Company ID not found. Please log in again.");
         setLoading(false);
         return;
       }
 
       const submitData = new FormData();
-      submitData.append('company', companyId);
+      submitData.append("company", companyId);
 
       const apiFormData = {
         ...formData,
-        send_system_checked: formData.send_notification_to_checked_by ? 'Yes' : 'No',
-        send_email_checked: formData.send_email_to_checked_by ? 'Yes' : 'No',
-        send_system_approved: formData.send_notification_to_approved_by ? 'Yes' : 'No',
-        send_email_approved: formData.send_email_to_approved_by ? 'Yes' : 'No'
+        send_system_checked: formData.send_notification_to_checked_by
+          ? "Yes"
+          : "No",
+        send_email_checked: formData.send_email_to_checked_by ? "Yes" : "No",
+        send_system_approved: formData.send_notification_to_approved_by
+          ? "Yes"
+          : "No",
+        send_email_approved: formData.send_email_to_approved_by ? "Yes" : "No",
       };
 
-      if (formData.approved_by === null || formData.approved_by === '') {
-        delete apiFormData.approved_by;
-      } else if (typeof formData.approved_by === 'string') {
-        apiFormData.approved_by = parseInt(formData.approved_by, 10);
+      if (formData.approved_by === null || formData.approved_by === "") {
+        submitData.append("approved_by", "");
+      } else {
+        submitData.append("approved_by", formData.approved_by);
       }
 
-      Object.keys(apiFormData).forEach(key => {
-        if (key !== 'send_notification_to_checked_by' &&
-          key !== 'send_email_to_checked_by' &&
-          key !== 'send_notification_to_approved_by' &&
-          key !== 'send_email_to_approved_by') {
+      Object.keys(apiFormData).forEach((key) => {
+        if (
+          key !== "send_notification_to_checked_by" &&
+          key !== "send_email_to_checked_by" &&
+          key !== "send_notification_to_approved_by" &&
+          key !== "send_email_to_approved_by" &&
+          key !== "approved_by"
+        ) {
           submitData.append(key, apiFormData[key]);
         }
       });
 
       if (fileObject) {
-        submitData.append('upload_attachment', fileObject);
+        submitData.append("upload_attachment", fileObject);
       }
 
-      const response = await axios.put(`${BASE_URL}/qms/impact/${id}/update/`, submitData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      const response = await axios.put(
+        `${BASE_URL}/qms/impact/${id}/update/`,
+        submitData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      });
+      );
 
       setLoading(false);
 
       setShowSuccessModal(true);
       setTimeout(() => {
         setShowSuccessModal(false);
-        navigate('/company/qms/list-environmantal-impact');
+        navigate("/company/qms/list-environmantal-impact"); 
       }, 1500);
-      setSuccessMessage("Environmental Impact Updated Successfully")
+      setSuccessMessage("Environmental Impact Updated Successfully");
     } catch (err) {
       setLoading(false);
       let errorMsg = err.message;
@@ -391,8 +410,7 @@ const QmsEditEnvironmentalImpact = () => {
         // Check for non-field errors
         else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
-        }
-        else if (err.response.data.message) {
+        } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         }
       } else if (err.message) {
@@ -404,14 +422,24 @@ const QmsEditEnvironmentalImpact = () => {
       setTimeout(() => {
         setShowErrorModal(false);
       }, 3000);
-      console.error('Error updating environmental impact:', err);
+      console.error("Error updating environmental impact:", err);
     }
   };
 
   const getMonthName = (monthNum) => {
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return monthNames[monthNum - 1];
   };
@@ -422,10 +450,11 @@ const QmsEditEnvironmentalImpact = () => {
 
   const renderAttachmentPreview = () => {
     if (previewAttachment) {
-      const attachmentName = selectedFile || impactDetails?.upload_attachment_name || 'Attachment';
+      const attachmentName =
+        selectedFile || impactDetails?.upload_attachment_name || "Attachment";
       return (
         <button
-          onClick={() => window.open(previewAttachment, '_blank')}
+          onClick={() => window.open(previewAttachment, "_blank")}
           className="text-[#1E84AF] click-view-file-text !text-[14px] flex items-center gap-2 mt-[10.65px]"
         >
           Click to View File
@@ -441,7 +470,9 @@ const QmsEditEnvironmentalImpact = () => {
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white p-5">
       <div className="flex justify-between items-center border-b border-[#383840] px-[124px] pb-5">
-        <h1 className="add-training-head">Edit Environmental Impact Assessment</h1>
+        <h1 className="add-training-head">
+          Edit Environmental Impact Assessment
+        </h1>
         <button
           className="border border-[#858585] text-[#858585] rounded px-3 h-[42px] list-training-btn duration-200"
           onClick={handleListEnvironmentalImpact}
@@ -457,7 +488,7 @@ const QmsEditEnvironmentalImpact = () => {
       />
 
       <ErrorModal
-        showErrorModal={showErrorModal} 
+        showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
         error={error}
       />
@@ -475,7 +506,9 @@ const QmsEditEnvironmentalImpact = () => {
               onChange={handleChange}
               className="w-full add-qms-manual-inputs"
             />
-            {fieldErrors.title && <p className={errorTextClass}>{fieldErrors.title}</p>}
+            {fieldErrors.title && (
+              <p className={errorTextClass}>{fieldErrors.title}</p>
+            )}
           </div>
 
           <div>
@@ -486,23 +519,29 @@ const QmsEditEnvironmentalImpact = () => {
               <select
                 className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                 name="written_by"
-                value={formData.written_by || ''}
-                onFocus={() => toggleDropdown('written_by')}
-                onChange={(e) => handleDropdownChange(e, 'written_by')}
-                onBlur={() => setOpenDropdowns(prev => ({ ...prev, written_by: false }))}
+                value={formData.written_by || ""}
+                onFocus={() => toggleDropdown("written_by")}
+                onChange={(e) => handleDropdownChange(e, "written_by")}
+                onBlur={() =>
+                  setOpenDropdowns((prev) => ({ ...prev, written_by: false }))
+                }
               >
                 <option value="">Select User</option>
-                {users.map(user => (
+                {users.map((user) => (
                   <option key={`written-${user.id}`} value={user.id}>
                     {formatUserName(user)}
                   </option>
                 ))}
               </select>
               <ChevronDown
-                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? 'rotate-180' : ''}`}
+                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                  openDropdowns.written_by ? "rotate-180" : ""
+                }`}
               />
             </div>
-            {fieldErrors.written_by && <p className={errorTextClass}>{fieldErrors.written_by}</p>}
+            {fieldErrors.written_by && (
+              <p className={errorTextClass}>{fieldErrors.written_by}</p>
+            )}
           </div>
 
           <div>
@@ -516,16 +555,18 @@ const QmsEditEnvironmentalImpact = () => {
               onChange={handleChange}
               className="w-full add-qms-manual-inputs"
             />
-            {fieldErrors.number && <p className={errorTextClass}>{fieldErrors.number}</p>}
+            {fieldErrors.number && (
+              <p className={errorTextClass}>{fieldErrors.number}</p>
+            )}
           </div>
 
           <div className="flex">
             <div className="flex-grow">
-              <div className='flex items-center justify-between h-[24px]'>
+              <div className="flex items-center justify-between h-[24px]">
                 <label className="add-qms-manual-label">
                   Checked/Reviewed By <span className="text-red-500">*</span>
                 </label>
-                <div className='flex items-end justify-end space-y-1'>
+                <div className="flex items-end justify-end space-y-1">
                   <div className="ml-5 flex items-center h-[24px]">
                     <div className="flex items-center h-14 justify-center gap-2">
                       <input
@@ -535,7 +576,9 @@ const QmsEditEnvironmentalImpact = () => {
                         onChange={handleCheckboxChange}
                         className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                       />
-                      <label className="add-qms-manual-label check-label">System Notify</label>
+                      <label className="add-qms-manual-label check-label">
+                        System Notify
+                      </label>
                     </div>
                   </div>
                   <div className="ml-5 flex items-center h-[24px]">
@@ -547,7 +590,9 @@ const QmsEditEnvironmentalImpact = () => {
                         onChange={handleCheckboxChange}
                         className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                       />
-                      <label className="add-qms-manual-label check-label">Email Notify</label>
+                      <label className="add-qms-manual-label check-label">
+                        Email Notify
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -556,30 +601,34 @@ const QmsEditEnvironmentalImpact = () => {
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   name="checked_by"
-                  value={formData.checked_by || ''}
-                  onFocus={() => toggleDropdown('checked_by')}
-                  onChange={(e) => handleDropdownChange(e, 'checked_by')}
-                  onBlur={() => setOpenDropdowns(prev => ({ ...prev, checked_by: false }))}
+                  value={formData.checked_by || ""}
+                  onFocus={() => toggleDropdown("checked_by")}
+                  onChange={(e) => handleDropdownChange(e, "checked_by")}
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({ ...prev, checked_by: false }))
+                  }
                 >
                   <option value="">Select User</option>
-                  {users.map(user => (
+                  {users.map((user) => (
                     <option key={`checked-${user.id}`} value={user.id}>
                       {formatUserName(user)}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? 'rotate-180' : ''}`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.checked_by ? "rotate-180" : ""
+                  }`}
                 />
               </div>
-              {fieldErrors.checked_by && <p className={errorTextClass}>{fieldErrors.checked_by}</p>}
+              {fieldErrors.checked_by && (
+                <p className={errorTextClass}>{fieldErrors.checked_by}</p>
+              )}
             </div>
           </div>
 
           <div>
-            <label className="add-qms-manual-label">
-              Revision
-            </label>
+            <label className="add-qms-manual-label">Revision</label>
             <input
               type="text"
               name="rivision"
@@ -591,11 +640,9 @@ const QmsEditEnvironmentalImpact = () => {
 
           <div className="flex">
             <div className="flex-grow">
-              <div className='flex items-center justify-between h-[24px]'>
-                <label className="add-qms-manual-label">
-                  Approved By
-                </label>
-                <div className='flex items-end justify-end space-y-1'>
+              <div className="flex items-center justify-between h-[24px]">
+                <label className="add-qms-manual-label">Approved By</label>
+                <div className="flex items-end justify-end space-y-1">
                   <div className="ml-5 flex items-center h-[24px]">
                     <div className="flex items-center h-14 justify-center gap-2">
                       <input
@@ -605,7 +652,9 @@ const QmsEditEnvironmentalImpact = () => {
                         onChange={handleCheckboxChange}
                         className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                       />
-                      <label className="add-qms-manual-label check-label">System Notify</label>
+                      <label className="add-qms-manual-label check-label">
+                        System Notify
+                      </label>
                     </div>
                   </div>
                   <div className="ml-5 flex items-center h-[24px]">
@@ -617,7 +666,9 @@ const QmsEditEnvironmentalImpact = () => {
                         onChange={handleCheckboxChange}
                         className="cursor-pointer qms-manual-form-checkbox p-[7px]"
                       />
-                      <label className="add-qms-manual-label check-label">Email Notify</label>
+                      <label className="add-qms-manual-label check-label">
+                        Email Notify
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -626,116 +677,137 @@ const QmsEditEnvironmentalImpact = () => {
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   name="approved_by"
-                  value={formData.approved_by || ''}
-                  onFocus={() => toggleDropdown('approved_by')}
-                  onChange={(e) => handleDropdownChange(e, 'approved_by')}
-                  onBlur={() => setOpenDropdowns(prev => ({ ...prev, approved_by: false }))}
+                  value={formData.approved_by || ""}
+                  onFocus={() => toggleDropdown("approved_by")}
+                  onChange={(e) => handleDropdownChange(e, "approved_by")}
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({
+                      ...prev,
+                      approved_by: false,
+                    }))
+                  }
                 >
                   <option value="">Select User</option>
-                  {users.map(user => (
+                  {users.map((user) => (
                     <option key={`approved-${user.id}`} value={user.id}>
                       {formatUserName(user)}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? 'rotate-180' : ''}`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.approved_by ? "rotate-180" : ""
+                  }`}
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="add-qms-manual-label">
-              Document Type
-            </label>
+            <label className="add-qms-manual-label">Document Type</label>
             <div className="relative">
               <select
                 className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                 name="document_type"
                 value={formData.document_type}
-                onFocus={() => toggleDropdown('document_type')}
-                onChange={(e) => handleDropdownChange(e, 'document_type')}
-                onBlur={() => setOpenDropdowns(prev => ({ ...prev, document_type: false }))}
+                onFocus={() => toggleDropdown("document_type")}
+                onChange={(e) => handleDropdownChange(e, "document_type")}
+                onBlur={() =>
+                  setOpenDropdowns((prev) => ({
+                    ...prev,
+                    document_type: false,
+                  }))
+                }
               >
-                {documentTypes.map(type => (
+                {documentTypes.map((type) => (
                   <option key={type} value={type}>
                     {type}
                   </option>
                 ))}
               </select>
               <ChevronDown
-                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.document_type ? 'rotate-180' : ''}`}
+                className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                  openDropdowns.document_type ? "rotate-180" : ""
+                }`}
               />
             </div>
           </div>
 
           <div>
-            <label className="add-qms-manual-label">
-              Date Entered
-            </label>
+            <label className="add-qms-manual-label">Date Entered</label>
             <div className="flex space-x-5">
               <div className="relative w-1/3">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   value={dateParts.day}
-                  onFocus={() => toggleDropdown('day')}
-                  onChange={(e) => handleDropdownChange(e, 'day')}
-                  onBlur={() => setOpenDropdowns(prev => ({ ...prev, day: false }))}
+                  onFocus={() => toggleDropdown("day")}
+                  onChange={(e) => handleDropdownChange(e, "day")}
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({ ...prev, day: false }))
+                  }
                 >
-                  {days.map(day => (
+                  {days.map((day) => (
                     <option key={`day-${day}`} value={day}>
                       {day < 10 ? `0${day}` : day}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? 'rotate-180' : ''}`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.day ? "rotate-180" : ""
+                  }`}
                 />
               </div>
               <div className="relative w-1/3">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   value={dateParts.month}
-                  onFocus={() => toggleDropdown('month')}
-                  onChange={(e) => handleDropdownChange(e, 'month')}
-                  onBlur={() => setOpenDropdowns(prev => ({ ...prev, month: false }))}
+                  onFocus={() => toggleDropdown("month")}
+                  onChange={(e) => handleDropdownChange(e, "month")}
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({ ...prev, month: false }))
+                  }
                 >
-                  {months.map(month => (
+                  {months.map((month) => (
                     <option key={`month-${month}`} value={month}>
-                      {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
+                      {month < 10 ? `0${month}` : month} -{" "}
+                      {getMonthName(month).substring(0, 3)}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? 'rotate-180' : ''}`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.month ? "rotate-180" : ""
+                  }`}
                 />
               </div>
               <div className="relative w-1/3">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   value={dateParts.year}
-                  onFocus={() => toggleDropdown('year')}
-                  onChange={(e) => handleDropdownChange(e, 'year')}
-                  onBlur={() => setOpenDropdowns(prev => ({ ...prev, year: false }))}
+                  onFocus={() => toggleDropdown("year")}
+                  onChange={(e) => handleDropdownChange(e, "year")}
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({ ...prev, year: false }))
+                  }
                 >
-                  {years.map(year => (
+                  {years.map((year) => (
                     <option key={`year-${year}`} value={year}>
                       {year}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? 'rotate-180' : ''}`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.year ? "rotate-180" : ""
+                  }`}
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="add-qms-manual-label">
-              Attach Document
-            </label>
+            <label className="add-qms-manual-label">Attach Document</label>
             <div className="relative">
               <input
                 type="file"
@@ -746,29 +818,29 @@ const QmsEditEnvironmentalImpact = () => {
               <button
                 type="button"
                 className="w-full add-qmsmanual-attach"
-                onClick={() => document.getElementById('fileInput').click()}
+                onClick={() => document.getElementById("fileInput").click()}
               >
                 <span className="file-input">
                   {selectedFile ? selectedFile : "Choose File"}
                 </span>
                 <img src={file} alt="File Icon" />
               </button>
-              <div className='flex justify-between items-center'>
+              <div className="flex justify-between items-center">
                 {renderAttachmentPreview()}
-                {!selectedFile && !previewAttachment && <p className="text-right no-file">No file chosen</p>}
+                {!selectedFile && !previewAttachment && (
+                  <p className="text-right no-file">No file chosen</p>
+                )}
               </div>
             </div>
           </div>
 
           <div>
-            <label className='add-qms-manual-label'>
-              Review Frequency
-            </label>
+            <label className="add-qms-manual-label">Review Frequency</label>
             <div className="flex space-x-5">
               <input
                 type="text"
                 name="review_frequency_year"
-                placeholder='Years'
+                placeholder="Years"
                 value={formData.review_frequency_year}
                 onChange={handleChange}
                 className="w-full add-qms-manual-inputs"
@@ -776,7 +848,7 @@ const QmsEditEnvironmentalImpact = () => {
               <input
                 type="text"
                 name="review_frequency_month"
-                placeholder='Months'
+                placeholder="Months"
                 value={formData.review_frequency_month}
                 onChange={handleChange}
                 className="w-full add-qms-manual-inputs"
@@ -798,7 +870,7 @@ const QmsEditEnvironmentalImpact = () => {
           </div>
 
           <div className="flex items-end mt-[22px] justify-end">
-            <div className='flex gap-[22px]'>
+            <div className="flex gap-[22px]">
               <button
                 className="cancel-btn duration-200"
                 onClick={handleListEnvironmentalImpact}
@@ -811,7 +883,7 @@ const QmsEditEnvironmentalImpact = () => {
                 onClick={handleUpdateClick}
                 disabled={loading}
               >
-                {loading ? 'Updating...' : 'Update'}
+                {loading ? "Updating..." : "Update"}
               </button>
             </div>
           </div>

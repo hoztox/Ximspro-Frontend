@@ -346,97 +346,92 @@ const EditQmsmanual = () => {
         date: newDate,
       }));
     } else {
-      setFormData((prev) => ({
+       // For user dropdowns, convert empty string to null
+    const newValue = value === "" ? null : value;
+    setFormData((prev) => ({
+      ...prev,
+      [dropdown]: newValue,
+    }));
+
+    // Clear error when dropdown selection changes
+    if (fieldErrors[dropdown]) {
+      setFieldErrors((prev) => ({
         ...prev,
-        [dropdown]: value,
+        [dropdown]: "",
       }));
-
-      // Clear error when dropdown selection changes
-      if (fieldErrors[dropdown]) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          [dropdown]: "",
-        }));
-      }
     }
+  }
 
-    setOpenDropdowns((prev) => ({ ...prev, [dropdown]: false }));
-  };
+  setOpenDropdowns((prev) => ({ ...prev, [dropdown]: false }));
+};
 
   const handleCancelClick = () => {
     navigate("/company/qms/manual");
   };
 
   const handleUpdateClick = async () => {
-    if (!validateForm()) {
-      setError("Please fill in all required fields");
+  if (!validateForm()) {
+    setError("Please fill in all required fields");
+    return;
+  }
+  try {
+    setLoading(true);
+
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
+      setLoading(false);
       return;
     }
-    try {
-      setLoading(true);
 
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        setLoading(false);
-        return;
+    const submitData = new FormData();
+
+    submitData.append("company", companyId);
+
+    // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
+    const apiFormData = {
+      ...formData,
+      send_system_checked: formData.send_notification_to_checked_by ? "Yes" : "No",
+      send_email_checked: formData.send_email_to_checked_by ? "Yes" : "No",
+      send_system_approved: formData.send_notification_to_approved_by ? "Yes" : "No",
+      send_email_approved: formData.send_email_to_approved_by ? "Yes" : "No",
+    };
+
+    // Handle approved_by field - explicitly set to null if empty
+    if (formData.approved_by === null || formData.approved_by === "") {
+      submitData.append("approved_by", "");
+    } else {
+      submitData.append("approved_by", formData.approved_by);
+    }
+
+    // Add all other form data
+    Object.keys(apiFormData).forEach((key) => {
+      // Skip the fields we've already handled
+      if (
+        key !== "send_notification_to_checked_by" &&
+        key !== "send_email_to_checked_by" &&
+        key !== "send_notification_to_approved_by" &&
+        key !== "send_email_to_approved_by" &&
+        key !== "approved_by" // Skip approved_by as we've handled it separately
+      ) {
+        submitData.append(key, apiFormData[key]);
       }
+    });
 
-      const submitData = new FormData();
-      console.log("uuuuuuuqqqqqq:", formData);
+    // Add file if new file is selected
+    if (fileObject) {
+      submitData.append("upload_attachment", fileObject);
+    }
 
-      submitData.append("company", companyId);
-
-      // Convert boolean checkbox values to 'Yes'/'No' strings for API compatibility
-      const apiFormData = {
-        ...formData,
-        send_system_checked: formData.send_notification_to_checked_by
-          ? "Yes"
-          : "No",
-        send_email_checked: formData.send_email_to_checked_by ? "Yes" : "No",
-        send_system_approved: formData.send_notification_to_approved_by
-          ? "Yes"
-          : "No",
-        send_email_approved: formData.send_email_to_approved_by ? "Yes" : "No",
-      };
-
-      // Handle approved_by field properly
-      if (formData.approved_by === null || formData.approved_by === "") {
-        // If approved_by is null or empty, don't include it in the submitData
-        delete apiFormData.approved_by;
-      } else if (typeof formData.approved_by === "string") {
-        // If it's a string, convert to number (assuming IDs are numeric)
-        apiFormData.approved_by = parseInt(formData.approved_by, "");
+    const response = await axios.put(
+      `${BASE_URL}/qms/manuals/${id}/update/`,
+      submitData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       }
-
-      // Add all form data
-      Object.keys(apiFormData).forEach((key) => {
-        // Skip the checkbox fields with boolean values
-        if (
-          key !== "send_notification_to_checked_by" &&
-          key !== "send_email_to_checked_by" &&
-          key !== "send_notification_to_approved_by" &&
-          key !== "send_email_to_approved_by"
-        ) {
-          submitData.append(key, apiFormData[key]);
-        }
-      });
-
-      // Add file if new file is selected
-      if (fileObject) {
-        submitData.append("upload_attachment", fileObject);
-      }
-
-      const response = await axios.put(
-        `${BASE_URL}/qms/manuals/${id}/update/`,
-        submitData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
+    );
       setLoading(false);
       console.log("Update response:", response);
 

@@ -349,7 +349,7 @@ const QmsReviewTraining = () => {
                 Date Conducted
               </p>
               <p className="text-white view-training-data">
-                {formatDate(training.date_conducted)}
+                {formatDate(training.date_conducted) || "N/A"}
               </p>
             </div>
 
@@ -431,7 +431,7 @@ const QmsReviewTraining = () => {
                 Date Planned
               </p>
               <p className="text-white view-training-data">
-                {formatDate(training.date_planned)}
+                {formatDate(training.date_planned) || "N/A"}
               </p>
             </div>
 

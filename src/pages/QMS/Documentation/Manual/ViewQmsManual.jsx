@@ -4,7 +4,7 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import historys from "../../../../assets/images/Company Documentation/history.svg";
 import { motion, AnimatePresence } from "framer-motion";
 import "./viewqmsmanual.css";
-import { X, Eye, AlertCircle } from "lucide-react";
+import { X, Eye, AlertCircle, UserPlus, ChevronDown } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -15,6 +15,7 @@ import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
+import SuccessModal from "./Modals/SuccessModal";
 
 const ViewQmsManual = () => {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ const ViewQmsManual = () => {
   const [corrections, setCorrections] = useState([]);
   const [highlightedCorrection, setHighlightedCorrection] = useState(null);
   const [historyCorrections, setHistoryCorrections] = useState([]);
-
   const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] =
     useState(false);
   const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] =
@@ -34,25 +34,30 @@ const ViewQmsManual = () => {
     useState(false);
   const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] =
     useState(false);
-
-  // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
     useState(false);
   const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
     useState(false);
-
   const [correctionRequest, setCorrectionRequest] = useState({
     isOpen: false,
     text: "",
   });
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [approveError, setApproveError] = useState(null);
+  const [isSelectFocused, setIsSelectFocused] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const getCurrentUser = () => {
     const role = localStorage.getItem("role");
 
     try {
       if (role === "company") {
-        // Retrieve company user data
         const companyData = {};
         Object.keys(localStorage)
           .filter((key) => key.startsWith("company_"))
@@ -65,7 +70,6 @@ const ViewQmsManual = () => {
             }
           });
 
-        // Add additional fields from localStorage
         companyData.role = role;
         companyData.company_id = localStorage.getItem("company_id");
         companyData.company_name = localStorage.getItem("company_name");
@@ -74,7 +78,6 @@ const ViewQmsManual = () => {
         console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === "user") {
-        // Retrieve regular user data
         const userData = {};
         Object.keys(localStorage)
           .filter((key) => key.startsWith("user_"))
@@ -87,7 +90,6 @@ const ViewQmsManual = () => {
             }
           });
 
-        // Add additional fields from localStorage
         userData.role = role;
         userData.user_id = localStorage.getItem("user_id");
 
@@ -106,7 +108,6 @@ const ViewQmsManual = () => {
     if (role === "company") {
       return localStorage.getItem("company_id");
     } else if (role === "user") {
-      // Try to get company ID for user
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
         return userCompanyId ? JSON.parse(userCompanyId) : null;
@@ -119,7 +120,6 @@ const ViewQmsManual = () => {
     return null;
   };
 
-  // Fetch manual details
   const fetchManualDetails = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/qms/manual-detail/${id}/`);
@@ -131,12 +131,9 @@ const ViewQmsManual = () => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -150,6 +147,63 @@ const ViewQmsManual = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        throw new Error("Company ID not found");
+      }
+      const response = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
+      setUsers(response.data);
+      console.log("Fetched Users:", response.data);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setApproveError(err.message || "Failed to fetch users");
+    }
+  };
+
+  const handleUpdateApprovedBy = async () => {
+    try {
+      if (!selectedUserId) {
+        setApproveError("Please select a user");
+        return;
+      }
+
+      const response = await axios.put(
+        `${BASE_URL}/qms/manuals/${id}/update/`,
+        {
+          approved_by: selectedUserId,
+        }
+      );
+
+      setManualDetails(response.data);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+      }, 1500);
+      setSuccessMessage("Approver Added Successfully");
+      setShowApproveModal(false);
+      setSelectedUserId("");
+      setApproveError(null);
+      await fetchManualDetails();
+    } catch (err) {
+      console.error("Error updating approved by:", err);
+      let errorMsg = err.message;
+
+      if (err.response) {
+        if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      }
+
+      setApproveError(errorMsg);
+    }
+  };
+
   const fetchManualCorrections = async () => {
     try {
       const response = await axios.get(
@@ -158,19 +212,15 @@ const ViewQmsManual = () => {
       const allCorrections = response.data;
       console.log("Fetched Manual Corrections:", allCorrections);
 
-      // Get current user ID and viewed corrections
       const currentUserId = Number(localStorage.getItem("user_id"));
       const viewedCorrections = getViewedCorrections();
 
-      // Store all corrections
       setCorrections(allCorrections);
 
-      // Sort all corrections by created_at date (newest first)
       const sortedCorrections = [...allCorrections].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
 
-      // Find the latest non-viewed correction for current user
       const userCorrections = allCorrections.filter(
         (correction) => correction.to_user?.id === currentUserId
       );
@@ -181,7 +231,6 @@ const ViewQmsManual = () => {
 
       if (latestUnviewedCorrection) {
         setHighlightedCorrection(latestUnviewedCorrection);
-        // Display all corrections except the highlighted one in history
         setHistoryCorrections(
           sortedCorrections.filter(
             (correction) => correction.id !== latestUnviewedCorrection.id
@@ -189,7 +238,6 @@ const ViewQmsManual = () => {
         );
       } else {
         setHighlightedCorrection(null);
-        // If no highlighted correction, show all corrections in history
         setHistoryCorrections(sortedCorrections);
       }
     } catch (error) {
@@ -200,6 +248,7 @@ const ViewQmsManual = () => {
   useEffect(() => {
     fetchManualDetails();
     fetchManualCorrections();
+    fetchUsers();
   }, [id]);
 
   const handleCorrectionRequest = () => {
@@ -237,7 +286,7 @@ const ViewQmsManual = () => {
       console.log("Submitting correction request:", requestData);
 
       const response = await axios.post(
-        `${BASE_URL}/qms/submit-correction/`, 
+        `${BASE_URL}/qms/submit-correction/`,
         requestData
       );
 
@@ -246,35 +295,27 @@ const ViewQmsManual = () => {
       handleCloseCorrectionRequest();
       setShowSentCorrectionSuccessModal(true);
 
-      // Clear any previously viewed corrections from localStorage to ensure
-      // the new correction appears highlighted for the current user
       const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
         "user_id"
       )}`;
       localStorage.removeItem(storageKey);
 
-      // Refresh data immediately to get the new correction
       await fetchManualDetails();
       await fetchManualCorrections();
 
       setTimeout(() => {
         setShowSentCorrectionSuccessModal(false);
-        // Don't navigate away - we want to show the highlighted correction
       }, 1500);
     } catch (error) {
       console.error("Error submitting correction:", error);
       let errorMsg = error.message;
 
       if (error.response) {
-        // Check for field-specific errors first
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
+        } else if (error.response.data.detail) {
           errorMsg = error.response.data.detail;
-        }
-        else if (error.response.data.message) {
+        } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
       } else if (error.message) {
@@ -289,8 +330,6 @@ const ViewQmsManual = () => {
     }
   };
 
-
-  // Delete manual functions
   const handleDelete = (id) => {
     setShowDeleteModal(true);
   };
@@ -339,16 +378,12 @@ const ViewQmsManual = () => {
 
   const handleMoveToHistory = () => {
     if (highlightedCorrection) {
-      // Save this correction as viewed in localStorage
       saveViewedCorrection(highlightedCorrection.id);
-
-      // Update state
       setHistoryCorrections((prev) => [highlightedCorrection, ...prev]);
       setHighlightedCorrection(null);
     }
   };
 
-  // Format date from ISO to DD-MM-YYYY
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -361,39 +396,32 @@ const ViewQmsManual = () => {
       .replace(/\//g, "/");
   };
 
-  // Format date to display how long ago the correction was made
   const formatCorrectionDate = (dateString) => {
     const date = new Date(dateString);
-
-    // Format date as DD-MM-YYYY
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
-
-    // Format time as HH:MM am/pm
     let hours = date.getHours();
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "pm" : "am";
-
-    // Convert hours to 12-hour format
     hours = hours % 12;
-    hours = hours ? hours : 12; // Convert 0 to 12
+    hours = hours ? hours : 12;
     const formattedHours = String(hours).padStart(2, "0");
 
     return `${day}-${month}-${year}, ${formattedHours}:${minutes} ${ampm}`;
   };
 
-  // Render loading or error states
-  if (loading) return <div className="text-center not-found">Loading Manual Details...</div>;
+  if (loading)
+    return (
+      <div className="text-center not-found">Loading Manual Details...</div>
+    );
   if (!manualDetails)
     return <div className="text-center not-found">No manual details found</div>;
 
-  // Check if current user can review
   const currentUserId = Number(localStorage.getItem("user_id"));
   const isCurrentUserWrittenBy = currentUserId === manualDetails.written_by?.id;
 
   const canReview = (() => {
-    // Exclude the written_by user from requesting corrections
     if (isCurrentUserWrittenBy) {
       return true;
     }
@@ -442,21 +470,17 @@ const ViewQmsManual = () => {
       fetchManualCorrections();
     } catch (error) {
       console.error("Error submitting review:", error);
-       let errorMsg;
+      let errorMsg;
 
-  if (error.response) {
-    // Server responded with a status other than 2xx
-    const data = error.response.data;
-
-    // Try multiple possible locations for an error message
-    errorMsg = data?.error || data?.message || data?.detail || JSON.stringify(data);
-  } else if (error.request) {
-    // Request was made but no response received
-    errorMsg = "No response received from server.";
-  } else {
-    // Something happened in setting up the request
-    errorMsg = error.message || "An unknown error occurred.";
-  }
+      if (error.response) {
+        const data = error.response.data;
+        errorMsg =
+          data?.error || data?.message || data?.detail || JSON.stringify(data);
+      } else if (error.request) {
+        errorMsg = "No response received from server.";
+      } else {
+        errorMsg = error.message || "An unknown error occurred.";
+      }
 
       setError(errorMsg);
       setShowSubmitManualErrorModal(true);
@@ -467,23 +491,15 @@ const ViewQmsManual = () => {
   };
 
   const correctionVariants = {
-    hidden: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3,
-      },
-    },
-    visible: {
-      opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.3,
-      },
-    },
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.3 } },
   };
 
-  // Render highlighted correction
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.8, transition: { duration: 0.3 } },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
+  };
+
   const renderHighlightedCorrection = () => {
     if (!highlightedCorrection) return null;
 
@@ -515,7 +531,6 @@ const ViewQmsManual = () => {
     );
   };
 
-  // Render correction history
   const renderCorrectionHistory = () => {
     if (historyCorrections.length === 0) return null;
 
@@ -528,8 +543,9 @@ const ViewQmsManual = () => {
         {historyCorrections.map((correction, index) => (
           <div
             key={correction.id}
-            className={`bg-[#24242D] p-5 rounded-md mb-5 ${index < historyCorrections.length - 1 ? "mb-5" : ""
-              }`}
+            className={`bg-[#24242D] p-5 rounded-md mb-5 ${
+              index < historyCorrections.length - 1 ? "mb-5" : ""
+            }`}
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
@@ -556,35 +572,22 @@ const ViewQmsManual = () => {
 
         <ManualCorrectionSuccessModal
           showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
-          onClose={() => {
-            setShowSentCorrectionSuccessModal(false);
-          }}
+          onClose={() => setShowSentCorrectionSuccessModal(false)}
         />
-
         <ManualCorrectionErrorModal
           showSentCorrectionErrorModal={showSentCorrectionErrorModal}
-          onClose={() => {
-            setShowSentCorrectionErrorModal(false);
-          }}
+          onClose={() => setShowSentCorrectionErrorModal(false)}
           error={error}
         />
-
         <ReviewSubmitSuccessModal
           showSubmitManualSuccessModal={showSubmitManualSuccessModal}
-          onClose={() => {
-            setShowSubmitManualSuccessModal(false);
-          }}
+          onClose={() => setShowSubmitManualSuccessModal(false)}
         />
-
         <ReviewSubmitErrorModal
           showSubmitManualErrorModal={showSubmitManualErrorModal}
-          onClose={() => {
-            setShowSubmitManualErrorModal(false);
-          }}
+          onClose={() => setShowSubmitManualErrorModal(false)}
           error={error}
         />
-
-        {/* Delete Modals */}
         <DeleteQmsManualConfirmModal
           showDeleteModal={showDeleteModal}
           onConfirm={() => handleConfirmDelete(id)}
@@ -598,6 +601,12 @@ const ViewQmsManual = () => {
           showDeleteManualErrorModal={showDeleteManualErrorModal}
           onClose={() => setShowDeleteManualErrorModal(false)}
           error={error}
+        />
+
+        <SuccessModal
+          showSuccessModal={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          successMessage={successMessage}
         />
 
         <button
@@ -673,11 +682,25 @@ const ViewQmsManual = () => {
             </div>
             <div>
               <label className="viewmanuallabels">Approved By</label>
-              <p className="viewmanuasdata">
-                {manualDetails.approved_by
-                  ? `${manualDetails.approved_by.first_name} ${manualDetails.approved_by.last_name}`
-                  : "N/A"}
-              </p>
+              <div className="flex items-center gap-24">
+                <p className="viewmanuasdata">
+                  {manualDetails.approved_by
+                    ? `${manualDetails.approved_by.first_name} ${manualDetails.approved_by.last_name}`
+                    : "N/A"}
+                </p>
+                {(!manualDetails.approved_by ||
+                  manualDetails.approved_by === "N/A") &&
+                  isCurrentUserWrittenBy && (
+                    <button
+                      onClick={() => setShowApproveModal(true)}
+                      className="save-btn text-white flex items-center gap-2 !w-[12rem] duration-200"
+                      title="Assign Approver"
+                    >
+                      <UserPlus size={20} />
+                      Select Approver
+                    </button>
+                  )}
+              </div>
             </div>
             <div>
               <label className="viewmanuallabels">Date</label>
@@ -688,8 +711,9 @@ const ViewQmsManual = () => {
                 <label className="viewmanuallabels">Review Frequency</label>
                 <p className="viewmanuasdata">
                   {manualDetails.review_frequency_year
-                    ? `${manualDetails.review_frequency_year} years, ${manualDetails.review_frequency_month || 0
-                    } months`
+                    ? `${manualDetails.review_frequency_year} years, ${
+                        manualDetails.review_frequency_month || 0
+                      } months`
                     : "N/A"}
                 </p>
               </div>
@@ -718,17 +742,13 @@ const ViewQmsManual = () => {
           </div>
         </div>
 
-        {/* Render highlighted correction */}
         {renderHighlightedCorrection()}
-
-        {/* Render correction history */}
         {renderCorrectionHistory()}
 
         {canReview && (
           <div className="flex flex-wrap justify-between mt-5">
             {!correctionRequest.isOpen && (
               <>
-                {/* Always show Request For Correction button */}
                 <button
                   onClick={() => {
                     handleCorrectionRequest();
@@ -739,7 +759,6 @@ const ViewQmsManual = () => {
                   Request For Correction
                 </button>
 
-                {/* Show either Approve or Review and Submit based on status */}
                 {manualDetails.status === "Reviewed,Pending for Approval" ? (
                   <button
                     onClick={() => {
@@ -783,7 +802,6 @@ const ViewQmsManual = () => {
                       <X size={22} />
                     </button>
                   </div>
-
                   <textarea
                     value={correctionRequest.text}
                     onChange={(e) =>
@@ -806,6 +824,89 @@ const ViewQmsManual = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {showApproveModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={modalVariants}
+                  className="bg-[#1C1C24] p-6 rounded-lg w-full max-w-md"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="viewmanuallabels">Select Approver</h2>
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="text-white bg-[#24242D] p-2 rounded-md"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => {
+                        setSelectedUserId(e.target.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      onFocus={() => {
+                        setIsSelectFocused(true);
+                        setIsDropdownOpen(true);
+                      }}
+                      onBlur={() => {
+                        setIsSelectFocused(false);
+                        setIsDropdownOpen(false);
+                      }}
+                      onMouseDown={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="add-qms-manual-inputs mb-4 appearance-none pr-8"
+                    >
+                      <option value="">Select Approver</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.first_name} {user.last_name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      size={18}
+                      className="absolute right-3 top-[28px] text-[#AAAAAA] pointer-events-none transition-transform duration-200"
+                      style={{
+                        transform: isDropdownOpen
+                          ? "rotate(180deg)"
+                          : "rotate(0deg)",
+                      }}
+                    />
+                  </div>
+                  {approveError && (
+                    <p className="text-red-500 text-sm mb-4">{approveError}</p>
+                  )}
+                  <div className="flex justify-end gap-4">
+                    <button
+                      onClick={() => {
+                        setShowApproveModal(false);
+                        setSelectedUserId("");
+                        setApproveError(null);
+                      }}
+                      className="cancel-btn duration-200 text-white cursor-pointer !w-[118px]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateApprovedBy}
+                      className="save-btn duration-200 text-white cursor-pointer !w-[118px]"
+                      disabled={!selectedUserId}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
           </div>
         )}
       </div>

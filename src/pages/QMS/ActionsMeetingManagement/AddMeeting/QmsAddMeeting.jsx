@@ -266,9 +266,14 @@ const QmsAddMeeting = () => {
 
     setLoading(true);
 
+    let formattedDate = null;
+  if (formData.dateConducted.year && formData.dateConducted.month && formData.dateConducted.day) {
+    formattedDate = `${formData.dateConducted.year}-${formData.dateConducted.month.padStart(2, '0')}-${formData.dateConducted.day.padStart(2, '0')}`;
+  }
+
     const formattedData = {
       title: formData.title,
-      date: `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`,
+      // date: `${formData.dateConducted.year}-${formData.dateConducted.month}-${formData.dateConducted.day}`,
       start_time: `${formData.startTime.hour}:${formData.startTime.min}:00`,
       end_time: `${formData.endTime.hour}:${formData.endTime.min}:00`,
       meeting_type: formData.meeting_type,
@@ -281,6 +286,10 @@ const QmsAddMeeting = () => {
       company: getUserCompanyId(),
       user: getRelevantUserId(),
     };
+
+     if (formattedDate) {
+    formattedData.date = formattedDate;
+  }
 
     submitMeeting(formattedData);
   };

@@ -324,9 +324,10 @@ const QmsEditHealthSafetyRiskAssessments = () => {
         date: newDate,
       }));
     } else {
+      const newValue = value === "" ? null : value;
       setFormData((prev) => ({
         ...prev,
-        [dropdown]: value,
+        [dropdown]: newValue,
       }));
 
       // Clear error when dropdown selection changes
@@ -382,11 +383,9 @@ const QmsEditHealthSafetyRiskAssessments = () => {
       };
 
       if (formData.approved_by === null || formData.approved_by === "") {
-        // If approved_by is null or empty, don't include it in the submitData
-        delete apiFormData.approved_by;
-      } else if (typeof formData.approved_by === "string") {
-        // If it's a string, convert to number (assuming IDs are numeric)
-        apiFormData.approved_by = parseInt(formData.approved_by, "");
+        submitData.append("approved_by", "");
+      } else {
+        submitData.append("approved_by", formData.approved_by);
       }
 
       // Add all form data
@@ -396,7 +395,8 @@ const QmsEditHealthSafetyRiskAssessments = () => {
           key !== "send_notification_to_checked_by" &&
           key !== "send_email_to_checked_by" &&
           key !== "send_notification_to_approved_by" &&
-          key !== "send_email_to_approved_by"
+          key !== "send_email_to_approved_by" &&
+           key !== "approved_by"
         ) {
           submitData.append(key, apiFormData[key]);
         }
@@ -715,7 +715,7 @@ const QmsEditHealthSafetyRiskAssessments = () => {
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
                   name="approved_by"
-                  value={formData.approved_by || ""}
+                  value={formData.approved_by || ""} 
                   onFocus={() => toggleDropdown("approved_by")}
                   onChange={(e) => handleDropdownChange(e, "approved_by")}
                   onBlur={() =>
