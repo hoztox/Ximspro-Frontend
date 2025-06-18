@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QmsEditOpportunityAssessment = ({ opportunityData }) => {
@@ -12,7 +12,6 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     potential_opportunity: "",
     probability: "",
     benefit: "",
-    action_plan: "",
     owners_action_party: "",
     approved_by: "",
     status: "",
@@ -22,6 +21,7 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     remarks: "",
   });
 
+  const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
     benefit: false,
@@ -34,7 +34,7 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
   });
   const [errors, setErrors] = useState({});
 
-  // Pre-populate form data when opportunityData is available
+  // Pre-populate form data and action plan fields when opportunityData is available
   useEffect(() => {
     if (opportunityData) {
       setFormData({
@@ -42,7 +42,6 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
         potential_opportunity: opportunityData.potential_opportunity || "",
         probability: opportunityData.probability || "",
         benefit: opportunityData.benefit || "",
-        action_plan: opportunityData.action_plan || "",
         owners_action_party: opportunityData.owners_action_party || "",
         approved_by: opportunityData.approved_by || "",
         status: opportunityData.status || "",
@@ -51,6 +50,16 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
         review_frequency_month: opportunityData.review_frequency_month || "",
         remarks: opportunityData.remarks || "",
       });
+
+      // Pre-populate action plan fields
+      if (opportunityData.action_plan) {
+        const actionPlans = opportunityData.action_plan.split(";").filter(plan => plan.trim() !== "");
+        setActionPlanFields(
+          actionPlans.length > 0
+            ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan }))
+            : [{ id: 1, value: "" }]
+        );
+      }
     }
   }, [opportunityData]);
 
@@ -123,6 +132,35 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     }
   };
 
+  const handleActionPlanChange = (id, value) => {
+    setActionPlanFields(
+      actionPlanFields.map((field) =>
+        field.id === id ? { ...field, value } : field
+      )
+    );
+
+    if (errors[`action_plan_${id}`]) {
+      setErrors((prev) => ({
+        ...prev,
+        [`action_plan_${id}`]: "",
+      }));
+    }
+  };
+
+  const addActionPlanField = () => {
+    const newId =
+      actionPlanFields.length > 0
+        ? Math.max(...actionPlanFields.map((f) => f.id)) + 1
+        : 1;
+    setActionPlanFields([...actionPlanFields, { id: newId, value: "" }]);
+  };
+
+  const removeActionPlanField = (id) => {
+    if (actionPlanFields.length > 1) {
+      setActionPlanFields(actionPlanFields.filter((field) => field.id !== id));
+    }
+  };
+
   const handleDropdownChange = (e, dropdown) => {
     const value = e.target.value;
 
@@ -180,8 +218,6 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     if (!formData.probability)
       newErrors.probability = "Probability is required";
     if (!formData.benefit) newErrors.benefit = "Benefit is required";
-    if (!formData.action_plan)
-      newErrors.action_plan = "Action Plan is required";
     if (!formData.owners_action_party)
       newErrors.owners_action_party = "Owner/Action Party is required";
     if (!formData.approved_by)
@@ -189,16 +225,33 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     if (!formData.status) newErrors.status = "Status is required";
     if (!formData.date) newErrors.date = "Date is required";
 
+    // Validate action plan fields
+    actionPlanFields.forEach((field, index) => {
+      if (!field.value.trim() && actionPlanFields.length === 1) {
+        newErrors[`action_plan_${field.id}`] = "At least one Action Plan is required";
+      }
+    });
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Simulate update API call
-    console.log("Updating opportunity with data:", formData);
+    // Prepare action plan data as a semicolon-separated string
+    const actionPlanString = actionPlanFields
+      .filter((field) => field.value.trim() !== "")
+      .map((field) => field.value)
+      .join(";");
+
+    // Simulate update API call with updated form data
+    const updatedFormData = {
+      ...formData,
+      action_plan: actionPlanString,
+    };
+    console.log("Updating opportunity with data:", updatedFormData);
     // In a real app, you would make an API call here to update the data
-    // e.g., api.updateOpportunity(opportunityData.id, formData);
-    
+    // e.g., api.updateOpportunity(opportunityData.id, updatedFormData);
+
     // Navigate back to list after successful update
     navigate("/company/qms/list-opportunity-assessment");
   };
@@ -333,18 +386,44 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
               <ErrorMessage message={errors.benefit} />
             </div>
 
-            <div>
+            <div className="flex flex-col gap-3">
               <label className="add-qms-manual-label">
                 Opportunity Action Plan
               </label>
-              <input
-                type="text"
-                name="action_plan"
-                value={formData.action_plan}
-                onChange={handleChange}
-                className="w-full add-qms-manual-inputs"
-              />
-              <ErrorMessage message={errors.action_plan} />
+              {actionPlanFields.map((field, index) => (
+                <div key={field.id} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleActionPlanChange(field.id, e.target.value)
+                        }
+                        className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
+                      />
+                      {index === actionPlanFields.length - 1 ? (
+                        <button
+                          type="button"
+                          onClick={addActionPlanField}
+                          className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+                        >
+                          <Plus className="text-white" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeActionPlanField(field.id)}
+                          className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+                        >
+                          <X className="text-white" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <ErrorMessage message={errors[`action_plan_${field.id}`]} />
+                </div>
+              ))}
             </div>
 
             <div>
@@ -422,7 +501,7 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
             </div>
 
             <div>
-              <label className="add-qms-manual-label">Date Entered</label>
+              <label className="add-qms-manual-label">Due Date</label>
               <div className="flex space-x-5">
                 <div className="relative w-1/3">
                   <select

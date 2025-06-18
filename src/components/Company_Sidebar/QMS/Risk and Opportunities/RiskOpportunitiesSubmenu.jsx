@@ -134,6 +134,10 @@ const RiskOpportunitiesSubmenu = (props) => {
       label: "Process Opportunities Assessment",
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
       path: "/company/qms/list-opportunity-assessment",
+      relatedPaths: [
+        "/company/qms/add-opportunity-assessment",
+        "/company/qms/edit-opportunity-assessment",
+      ],
     },
     {
       id: "accident-and-incident-investigations",
@@ -176,8 +180,9 @@ const RiskOpportunitiesSubmenu = (props) => {
               {category.icon}
             </div>
             <span
-              className={`text-center ${active ? "text-white" : "text-[#5B5B5B]"
-                } documentation-submenu-label duration-200`}
+              className={`text-center ${
+                active ? "text-white" : "text-[#5B5B5B]"
+              } documentation-submenu-label duration-200`}
             >
               {category.label}
             </span>

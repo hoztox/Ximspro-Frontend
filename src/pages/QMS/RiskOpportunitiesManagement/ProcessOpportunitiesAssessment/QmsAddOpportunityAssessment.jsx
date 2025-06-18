@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const QmsAddOpportunityAssessment = () => {
@@ -11,15 +11,16 @@ const QmsAddOpportunityAssessment = () => {
     potential_opportunity: "",
     probability: "",
     benefit: "",
-    action_plan: "",
     owners_action_party: "",
     approved_by: "",
     status: "",
     date: "",
     review_frequency_year: "",
     review_frequency_month: "",
-    remarks: "", // Renamed from related_record_format
+    remarks: "",
   });
+
+  const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
 
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
@@ -99,6 +100,28 @@ const QmsAddOpportunityAssessment = () => {
         ...prev,
         [name]: "",
       }));
+    }
+  };
+
+  const handleActionPlanChange = (id, value) => {
+    setActionPlanFields(
+      actionPlanFields.map((field) =>
+        field.id === id ? { ...field, value } : field
+      )
+    );
+  };
+
+  const addActionPlanField = () => {
+    const newId =
+      actionPlanFields.length > 0
+        ? Math.max(...actionPlanFields.map((f) => f.id)) + 1
+        : 1;
+    setActionPlanFields([...actionPlanFields, { id: newId, value: "" }]);
+  };
+
+  const removeActionPlanField = (id) => {
+    if (actionPlanFields.length > 1) {
+      setActionPlanFields(actionPlanFields.filter((field) => field.id !== id));
     }
   };
 
@@ -279,18 +302,44 @@ const QmsAddOpportunityAssessment = () => {
               <ErrorMessage message={errors.benefit} />
             </div>
 
-            <div>
+            <div className="flex flex-col gap-3">
               <label className="add-qms-manual-label">
                 Opportunity Action Plan
               </label>
-              <input
-                type="text"
-                name="action_plan"
-                value={formData.action_plan}
-                onChange={handleChange}
-                className="w-full add-qms-manual-inputs"
-              />
-              <ErrorMessage message={errors.action_plan} />
+              {actionPlanFields.map((field, index) => (
+                <div key={field.id} className="flex flex-col gap-3">
+                  <div className="flex items-center gap-2 justify-between">
+                    <div className="flex gap-2 flex-1">
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={(e) =>
+                          handleActionPlanChange(field.id, e.target.value)
+                        }
+                        className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
+                      />
+                      {index === actionPlanFields.length - 1 ? (
+                        <button
+                          type="button"
+                          onClick={addActionPlanField}
+                          className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+                        >
+                          <Plus className="text-white" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeActionPlanField(field.id)}
+                          className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
+                        >
+                          <X className="text-white" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <ErrorMessage message={errors[`action_plan_${field.id}`]} />
+                </div>
+              ))}
             </div>
 
             <div>
@@ -368,7 +417,7 @@ const QmsAddOpportunityAssessment = () => {
             </div>
 
             <div>
-              <label className="add-qms-manual-label">Date Entered</label>
+              <label className="add-qms-manual-label">Due Date</label>
               <div className="flex space-x-5">
                 <div className="relative w-1/3">
                   <select
@@ -499,23 +548,21 @@ const QmsAddOpportunityAssessment = () => {
             </div>
 
             <div className="mt-[35px]">
-                        <div className="flex gap-[22px] mb-6 justify-end">
-              <button
-                className="cancel-btn duration-200"
-                onClick={handleCancelClick}
-              >
-                Cancel
-              </button>
-              <button className="save-btn duration-200" onClick={() => {}}>
-                Save
-              </button>
-            </div>
+              <div className="flex gap-[22px] mb-6 justify-end">
+                <button
+                  className="cancel-btn duration-200"
+                  onClick={handleCancelClick}
+                >
+                  Cancel
+                </button>
+                <button className="save-btn duration-200" onClick={() => {}}>
+                  Save
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center mt-[22px] justify-between">
-            
-          </div>
+          <div className="flex items-center mt-[22px] justify-between"></div>
         </div>
       </div>
     </div>
