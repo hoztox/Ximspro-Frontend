@@ -389,6 +389,8 @@ import QmsDraftViewHealthSafetyIncidents from "./pages/QMS/RiskOpportunitiesMana
 import QmsOutboxForward from "./pages/QMS/ActionsMeetingManagement/SystemMessaging/QmsOutboxForward";
 import QmsListRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsListRiskAssessment";
 import QmsListOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsListOpportunityAssessment";
+import QmsAddOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsAddOpportunityAssessment";
+import QmsEditOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsEditOpportunityAssessment";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -739,6 +741,8 @@ const ThemedApp = () => {
           <Route path="qms/list-process-risks-assessments" element={<QmsListRiskAssessment />} />
 
           <Route path="qms/list-opportunity-assessment" element={<QmsListOpportunityAssessment />} />
+          <Route path="qms/add-opportunity-assessment" element={<QmsAddOpportunityAssessment />} />
+          <Route path="qms/edit-opportunity-assessment/:id" element={<QmsEditOpportunityAssessment />} />
 
 
 
