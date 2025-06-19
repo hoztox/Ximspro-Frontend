@@ -585,7 +585,7 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
 
             <div>
               <label className="add-qms-manual-label">
-                Status <span className="text-red-500">*</span>
+                Status
               </label>
               <div className="relative">
                 <select
