@@ -84,9 +84,9 @@ const QmsListOpportunityAssessment = () => {
     navigate("/company/qms/add-opportunity-assessment");
   };
 
-  // const handleViewAssessment = (id) => {
-  //   navigate(`/company/qms/view-opportunity-assessment/${id}`);
-  // };
+  const handleViewAssessment = (id) => {
+    navigate(`/company/qms/view-opportunity-assessment/${id}`);
+  };
 
   const handleEditAssessment = (id) => {
     navigate(`/company/qms/edit-opportunity-assessment/${id}`);
@@ -217,7 +217,7 @@ const QmsListOpportunityAssessment = () => {
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
                     <button
-                    //  onClick={() => handleViewAssessment(assessment.id)}
+                     onClick={() => handleViewAssessment(assessment.id)}
                     >
                       <img
                         src={viewIcon}

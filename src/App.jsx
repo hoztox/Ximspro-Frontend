@@ -391,6 +391,7 @@ import QmsListRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/Proce
 import QmsListOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsListOpportunityAssessment";
 import QmsAddOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsAddOpportunityAssessment";
 import QmsEditOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsEditOpportunityAssessment";
+import QmsViewOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsViewOpportunityAssessment";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -743,6 +744,7 @@ const ThemedApp = () => {
           <Route path="qms/list-opportunity-assessment" element={<QmsListOpportunityAssessment />} />
           <Route path="qms/add-opportunity-assessment" element={<QmsAddOpportunityAssessment />} />
           <Route path="qms/edit-opportunity-assessment/:id" element={<QmsEditOpportunityAssessment />} />
+          <Route path="qms/view-opportunity-assessment/:id" element={<QmsViewOpportunityAssessment />} />
 
 
 
