@@ -6,7 +6,6 @@ import { Toaster, toast } from 'react-hot-toast';
 import choosefile from "../../../../assets/images/Company User Management/choosefile.svg"
 import "./adduser.css";
 import QmsAddUserSuccessModal from '../Modals/QmsAddUserSuccessModal';
-import ErrorModal from '../Modals/ErrorModal';
 
 const QMSAddUser = () => {
   const navigate = useNavigate();
@@ -16,7 +15,6 @@ const QMSAddUser = () => {
   const [selectedPermissions, setSelectedPermissions] = useState([]);
 
   const [showAddUserSuccessModal, setShowAddUserSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
 
 
   const [formData, setFormData] = useState({
@@ -98,47 +96,47 @@ const QMSAddUser = () => {
     return () => clearTimeout(timeoutId);
   }, [formData.username]);
 
-  useEffect(() => {
-    const validateEmail = async () => {
+  // useEffect(() => {
+  //   const validateEmail = async () => {
 
-      if (formData.email) {
+  //     if (formData.email) {
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-          setEmailError('Invalid email format!');
-          setEmailValid(false);
-          return;
-        }
+  //       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  //       if (!emailRegex.test(formData.email)) {
+  //         setEmailError('Invalid email format!');
+  //         setEmailValid(false);
+  //         return;
+  //       }
 
-        try {
-          const response = await axios.get(`${BASE_URL}/company/validate-email/`, {
-            params: { email: formData.email },
-          });
-          if (response.data.exists) {
-            setEmailError('Email already exists!');
-            setEmailValid(false);
-          } else {
-            setEmailError('');
-            setEmailValid(true);
-          }
-        } catch (error) {
-          console.error('Error validating email:', error);
-          setEmailError('Error checking email.');
-          setEmailValid(false);
-        }
-      } else {
-        setEmailError('');
-        setEmailValid(null);
-      }
-    };
+  //       try {
+  //         const response = await axios.get(`${BASE_URL}/company/validate-email/`, {
+  //           params: { email: formData.email },
+  //         });
+  //         if (response.data.exists) {
+  //           setEmailError('Email already exists!');
+  //           setEmailValid(false);
+  //         } else {
+  //           setEmailError('');
+  //           setEmailValid(true);
+  //         }
+  //       } catch (error) {
+  //         console.error('Error validating email:', error);
+  //         setEmailError('Error checking email.');
+  //         setEmailValid(false);
+  //       }
+  //     } else {
+  //       setEmailError('');
+  //       setEmailValid(null);
+  //     }
+  //   };
 
 
-    const timeoutId = setTimeout(() => {
-      validateEmail();
-    }, 500);
+  //   const timeoutId = setTimeout(() => {
+  //     validateEmail();
+  //   }, 500);
 
-    return () => clearTimeout(timeoutId);
-  }, [formData.email]);
+  //   return () => clearTimeout(timeoutId);
+  // }, [formData.email]);
 
 
 
@@ -176,31 +174,313 @@ const QMSAddUser = () => {
 
   }, []);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Remove spaces from username field
-    if (name === 'username') {
-      const valueWithoutSpaces = value.replace(/\s/g, '');
-      setFormData({
-        ...formData,
-        [name]: valueWithoutSpaces
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
+const handleChange = (e) => {
+  const { name, value } = e.target;
+  
+  // Remove spaces from username field
+  if (name === 'username') {
+    const valueWithoutSpaces = value.replace(/\s/g, '');
+    setFormData({
+      ...formData,
+      [name]: valueWithoutSpaces
+    });
+  } 
+  // Remove spaces from password field
+  else if (name === 'password' || name === 'confirm_password') {
+    const valueWithoutSpaces = value.replace(/\s/g, '');
+    setFormData({
+      ...formData,
+      [name]: valueWithoutSpaces
+    });
+  }
+  // Restrict phone fields to only numbers, spaces, hyphens, parentheses, and plus
+  else if (name === 'phone' || name === 'office_phone' || name === 'mobile_phone' || name === 'fax') {
+    const phoneValue = value.replace(/[^0-9\s\-\(\)\+]/g, '');
+    setFormData({
+      ...formData,
+      [name]: phoneValue
+    });
+  }
+  // Handle secret question and answer - prevent leading spaces and trim
+  else if (name === 'secret_question' || name === 'answer') {
+    // Prevent leading spaces but allow internal spaces
+    let processedValue = value;
+    if (value.length === 1 && value === ' ') {
+      // Don't allow the first character to be a space
+      processedValue = '';
+    } else if (value.startsWith(' ') && formData[name] === '') {
+      // Don't allow leading space when field is empty
+      processedValue = value.trimStart();
     }
+    
+    setFormData({
+      ...formData,
+      [name]: processedValue
+    });
+  }
+  else {
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  }
 
-    // Clear the error for this field when user changes the value
-    if (fieldErrors[name]) {
-      setFieldErrors({
-        ...fieldErrors,
-        [name]: ''
-      });
+  // Clear the error for this field when user changes the value
+  if (fieldErrors[name]) {
+    setFieldErrors({
+      ...fieldErrors,
+      [name]: ''
+    });
+  }
+};
+
+ 
+// Updated useEffect for email validation - simplified frontend logic
+useEffect(() => {
+  const validateEmail = async () => {
+    if (formData.email) {
+      // Basic structure check before API call to avoid unnecessary requests
+      const hasAtSymbol = formData.email.includes('@');
+      const hasBasicStructure = /^[^@]+@[^@]+\.[^@]+$/.test(formData.email);
+      
+      // Only proceed if email has basic @ and dot structure
+      if (!hasBasicStructure) {
+        setEmailError('');
+        setEmailValid(null);
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${BASE_URL}/company/validate-email/`, {
+          params: { email: formData.email },
+        });
+        
+        if (response.data.status === 200) {
+          if (response.data.exists) {
+            setEmailError('Email already exists!');
+            setEmailValid(false);
+          } else {
+            setEmailError('');
+            setEmailValid(true);
+          }
+        } else {
+          // Handle validation errors from backend
+          setEmailError(response.data.error);
+          setEmailValid(false);
+        }
+      } catch (error) {
+        console.error('Error validating email:', error);
+        if (error.response && error.response.data) {
+          setEmailError(error.response.data.error || 'Error checking email.');
+        } else {
+          setEmailError('Error checking email.');
+        }
+        setEmailValid(false);
+      }
+    } else {
+      setEmailError('');
+      setEmailValid(null);
     }
   };
+
+  const timeoutId = setTimeout(() => {
+    validateEmail();
+  }, 500); // Increased timeout to reduce API calls
+
+  return () => clearTimeout(timeoutId);
+}, [formData.email]);
+
+// Updated validateForm function - removed complex email validation
+// Updated handleChange function to prevent leading spaces and handle secret question/answer
+
+
+// Updated validateForm function to check for only-space entries
+const validateForm = () => {
+  const errors = {};
+  let isValid = true;
+
+  // Required fields validation
+  if (!formData.username) {
+    errors.username = 'Username is required';
+    isValid = false;
+  }
+
+  if (!formData.password) {
+    errors.password = 'Password is required';
+    isValid = false;
+  } else if (formData.password.length < 8) {
+    errors.password = 'Password must be at least 8 characters';
+    isValid = false;
+  } else if (/\s/.test(formData.password)) {
+    errors.password = 'Password cannot contain spaces';
+    isValid = false;
+  }
+
+  if (!formData.confirm_password) {
+    errors.confirm_password = 'Please confirm your password';
+    isValid = false;
+  } else if (formData.password !== formData.confirm_password) {
+    errors.confirm_password = 'Passwords do not match';
+    isValid = false;
+  }
+
+  if (!formData.first_name) {
+    errors.first_name = 'First name is required';
+    isValid = false;
+  }
+
+  if (!formData.last_name) {
+    errors.last_name = 'Last name is required';
+    isValid = false;
+  }
+
+  // Simplified email validation - let backend handle the complex validation
+  if (!formData.email) {
+    errors.email = 'Email is required';
+    isValid = false;
+  } else if (emailValid === false || emailError) {
+    errors.email = emailError || 'Please enter a valid email';
+    isValid = false;
+  }
+
+  if (!formData.confirm_email) {
+    errors.confirm_email = 'Please confirm your email';
+    isValid = false;
+  } else if (formData.email !== formData.confirm_email) {
+    errors.confirm_email = 'Emails do not match';
+    isValid = false;
+  }
+
+  if (!formData.phone) {
+    errors.phone = 'Phone number is required';
+    isValid = false;
+  }
+
+  if (!formData.country) {
+    errors.country = 'Country is required';
+    isValid = false;
+  }
+
+  // Updated secret question validation - check for empty or only spaces
+  if (!formData.secret_question || !formData.secret_question.trim()) {
+    errors.secret_question = 'Secret question is required';
+    isValid = false;
+  }
+
+  // Updated answer validation - check for empty or only spaces
+  if (!formData.answer || !formData.answer.trim()) {
+    errors.answer = 'Answer is required';
+    isValid = false;
+  }
+
+  if (selectedPermissions.length === 0) {
+    setPermissionError('Please select at least one permission');
+    isValid = false;
+  } else {
+    setPermissionError('');
+  }
+
+  // Set all field errors
+  setFieldErrors(errors);
+
+  return isValid;
+};
+
+// 3. Update the validateForm function with improved email validation
+// const validateForm = () => {
+//   const errors = {};
+//   let isValid = true;
+
+//   // Required fields validation
+//   if (!formData.username) {
+//     errors.username = 'Username is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.password) {
+//     errors.password = 'Password is required';
+//     isValid = false;
+//   } else if (formData.password.length < 8) {
+//     errors.password = 'Password must be at least 8 characters';
+//     isValid = false;
+//   } else if (/\s/.test(formData.password)) {
+//     errors.password = 'Password cannot contain spaces';
+//     isValid = false;
+//   }
+
+//   if (!formData.confirm_password) {
+//     errors.confirm_password = 'Please confirm your password';
+//     isValid = false;
+//   } else if (formData.password !== formData.confirm_password) {
+//     errors.confirm_password = 'Passwords do not match';
+//     isValid = false;
+//   }
+
+//   if (!formData.first_name) {
+//     errors.first_name = 'First name is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.last_name) {
+//     errors.last_name = 'Last name is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.email) {
+//     errors.email = 'Email is required';
+//     isValid = false;
+//   } else {
+//     // Strict email validation - only allow specific domains
+//     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+\.(com|org|net|edu|gov)$/;
+//     const hasConsecutiveDots = /\.{2,}/.test(formData.email);
+//     const hasDotsAtWrongPlace = /^\.|\.$|@\.|\.\@/.test(formData.email);
+    
+//     if (!emailRegex.test(formData.email) || hasConsecutiveDots || hasDotsAtWrongPlace) {
+//       errors.email = 'Invalid email format!';
+//       isValid = false;
+//     }
+//   }
+
+//   if (!formData.confirm_email) {
+//     errors.confirm_email = 'Please confirm your email';
+//     isValid = false;
+//   } else if (formData.email !== formData.confirm_email) {
+//     errors.confirm_email = 'Emails do not match';
+//     isValid = false;
+//   }
+
+//   if (!formData.phone) {
+//     errors.phone = 'Phone number is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.country) {
+//     errors.country = 'Country is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.secret_question) {
+//     errors.secret_question = 'Secret question is required';
+//     isValid = false;
+//   }
+
+//   if (!formData.answer) {
+//     errors.answer = 'Answer is required';
+//     isValid = false;
+//   }
+
+//   if (selectedPermissions.length === 0) {
+//     setPermissionError('Please select at least one permission');
+//     isValid = false;
+//   } else {
+//     setPermissionError('');
+//   }
+
+//   // Set all field errors
+//   setFieldErrors(errors);
+
+//   return isValid;
+// };
   const handleDobChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -235,90 +515,8 @@ const QMSAddUser = () => {
     navigate('/company/qms/listuser');
   };
 
-  const validateForm = () => {
-    const errors = {};
-    let isValid = true;
 
-    // Required fields validation
-    if (!formData.username) {
-      errors.username = 'Username is required';
-      isValid = false;
-    }
-
-    if (!formData.password) {
-      errors.password = 'Password is required';
-      isValid = false;
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-      isValid = false;
-    }
-
-    if (!formData.confirm_password) {
-      errors.confirm_password = 'Please confirm your password';
-      isValid = false;
-    } else if (formData.password !== formData.confirm_password) {
-      errors.confirm_password = 'Passwords do not match';
-      isValid = false;
-    }
-
-    if (!formData.first_name) {
-      errors.first_name = 'First name is required';
-      isValid = false;
-    }
-
-    if (!formData.last_name) {
-      errors.last_name = 'Last name is required';
-      isValid = false;
-    }
-
-    if (!formData.email) {
-      errors.email = 'Email is required';
-      isValid = false;
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
-      isValid = false;
-    }
-
-    if (!formData.confirm_email) {
-      errors.confirm_email = 'Please confirm your email';
-      isValid = false;
-    } else if (formData.email !== formData.confirm_email) {
-      errors.confirm_email = 'Emails do not match';
-      isValid = false;
-    }
-
-    if (!formData.phone) {
-      errors.phone = 'Phone number is required';
-      isValid = false;
-    }
-
-    if (!formData.country) {
-      errors.country = 'Country is required';
-      isValid = false;
-    }
-
-    if (!formData.secret_question) {
-      errors.secret_question = 'Secret question is required';
-      isValid = false;
-    }
-
-    if (!formData.answer) {
-      errors.answer = 'Answer is required';
-      isValid = false;
-    }
-
-    if (selectedPermissions.length === 0) {
-      setPermissionError('Please select at least one permission');
-      isValid = false;
-    } else {
-      setPermissionError('');
-    }
-
-    // Set all field errors
-    setFieldErrors(errors);
-
-    return isValid;
-  };
+ 
 
   const getUserCompanyId = () => {
     // First check if company_id is stored directly
@@ -426,15 +624,12 @@ const QMSAddUser = () => {
       }
     } catch (err) {
       console.error("Error saving user:", err);
+      toast.error("Failed to add user");
       if (err.response && err.response.data) {
         setError(err.response.data.message || "Failed to add user");
       } else {
         setError("Failed to add user. Please try again.");
       }
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
     } finally {
       setIsLoading(false);
     }
@@ -456,12 +651,6 @@ const QMSAddUser = () => {
       <QmsAddUserSuccessModal
         showAddUserSuccessModal={showAddUserSuccessModal}
         onClose={() => { setShowAddUserSuccessModal(false) }}
-      />
-
-      <ErrorModal
-        showErrorModal={showErrorModal}
-        onClose={() => setShowErrorModal(false)}
-        error={error}
       />
 
 
