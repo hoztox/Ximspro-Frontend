@@ -16,6 +16,7 @@ import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
 import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
 import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
+import SendMailModal from "./SendMailModal";
 
 const EvaluationModal = ({
   isOpen,
@@ -329,7 +330,7 @@ const EvaluationModal = ({
                 </div>
 
                 {loading ? (
-                  <div className="text-center py-6">Loading questions...</div>
+                  <div className="text-center py-6 not-found">Loading questions...</div>
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     <table className="min-w-full">
@@ -446,6 +447,7 @@ const EvaluationModal = ({
     </AnimatePresence>
   );
 };
+
 const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
   const [formData, setFormData] = useState({
     question: "",
@@ -458,7 +460,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
 
-  // Delete related states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
   const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] =
@@ -478,12 +479,9 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
           let errorMsg = err.message;
 
           if (err.response) {
-            // Check for field-specific errors first
             if (err.response.data.date) {
               errorMsg = err.response.data.date[0];
-            }
-            // Check for non-field errors
-            else if (err.response.data.detail) {
+            } else if (err.response.data.detail) {
               errorMsg = err.response.data.detail;
             } else if (err.response.data.message) {
               errorMsg = err.response.data.message;
@@ -542,12 +540,9 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -566,13 +561,11 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     }
   };
 
-  // Open delete confirmation modal
   const openDeleteModal = (question) => {
     setQuestionToDelete(question);
     setShowDeleteModal(true);
   };
 
-  // Close all modals
   const closeAllModals = () => {
     setShowDeleteModal(false);
     setShowDeleteQuestionSuccessModal(false);
@@ -580,7 +573,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     setShowAddQuestionSuccessModal(false);
   };
 
-  // Handle delete confirmation
   const confirmDelete = async () => {
     if (!questionToDelete) return;
 
@@ -590,7 +582,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
         `${BASE_URL}/qms/performance/question/${questionToDelete.id}/delete/`
       );
 
-      // Remove the deleted question from state
       setQuestions(
         questions.filter((question) => question.id !== questionToDelete.id)
       );
@@ -605,12 +596,9 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -692,7 +680,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
             </form>
 
             {loading && questions.length === 0 ? (
-              <div className="text-center py-4">Loading questions...</div>
+              <div className="text-center py-4 not-found">Loading questions...</div>
             ) : (
               questions.length > 0 && (
                 <div className="mb-4">
@@ -753,20 +741,17 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
         }}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteQuestionConfirmModal
         showDeleteModal={showDeleteModal}
         onConfirm={confirmDelete}
         onCancel={closeAllModals}
       />
 
-      {/* Question Added Success Modal */}
       <DeleteQuestionSuccessModal
         showDeleteQuestionSuccessModal={showDeleteQuestionSuccessModal}
         onClose={() => setShowDeleteQuestionSuccessModal(false)}
       />
 
-      {/* Error Modal */}
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
@@ -777,7 +762,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
 };
 
 const QmsEmployeePerformance = () => {
-  // State for data management
   const [performances, setPerformances] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -787,14 +771,12 @@ const QmsEmployeePerformance = () => {
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
 
-  // Modal states
   const [evaluationModal, setEvaluationModal] = useState({
     isOpen: false,
     employee: null,
   });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
-
-  // Delete modal states
+  const [sendMailModal, setSendMailModal] = useState({ isOpen: false, performanceId: null });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [performanceToDelete, setPerformanceToDelete] = useState(null);
   const [
@@ -833,7 +815,6 @@ const QmsEmployeePerformance = () => {
     return null;
   };
 
-  // Fetch employee performance data
   useEffect(() => {
     const fetchPerformanceData = async () => {
       setLoading(true);
@@ -848,7 +829,6 @@ const QmsEmployeePerformance = () => {
         const response = await axios.get(
           `${BASE_URL}/qms/performance/${companyId}/`
         );
-        // Sort performances by id in ascending order
         const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
         setPerformances(sortedPerformances);
         const draftResponse = await axios.get(
@@ -867,7 +847,7 @@ const QmsEmployeePerformance = () => {
             errorMsg = err.response.data.message;
           }
         } else if (err.message) {
-          errorMsg = err.message; 
+          errorMsg = err.message;
         }
         setError(errorMsg);
         console.error("Error fetching employee performance data:", err);
@@ -879,34 +859,28 @@ const QmsEmployeePerformance = () => {
     fetchPerformanceData();
   }, []);
 
-  // Handle search
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter performances based on search term
   const filteredPerformances = performances.filter((performance) =>
     performance.evaluation_title
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
-  // Add new employee performance evaluation
   const handleAddEmployee = () => {
     navigate("/company/qms/add-employee-performance");
   };
 
-  // Go to drafts
   const handleDraftEmployeePerformance = () => {
     navigate("/company/qms/draft-employee-performance");
   };
 
-  // View performance
   const handleView = (id) => {
     navigate(`/company/qms/view-employee-performance/${id}`);
   };
 
-  // Edit performance
   const handleEdit = (id) => {
     navigate(`/company/qms/edit-employee-performance/${id}`);
   };
@@ -915,7 +889,10 @@ const QmsEmployeePerformance = () => {
     navigate("/company/qms/employees-performance-graph");
   };
 
-  // Open delete confirmation modal
+  const openSendMailModal = (performanceId) => {
+    setSendMailModal({ isOpen: true, performanceId });
+  };
+
   const openDeleteModal = (performance) => {
     setPerformanceToDelete(performance);
     setShowDeleteModal(true);
@@ -926,7 +903,6 @@ const QmsEmployeePerformance = () => {
     setPerformanceToDelete(null);
   };
 
-  // Delete performance after confirmation
   const confirmDelete = async () => {
     try {
       await axios.delete(
@@ -947,12 +923,9 @@ const QmsEmployeePerformance = () => {
       let errorMsg = err.message;
 
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -970,20 +943,6 @@ const QmsEmployeePerformance = () => {
     }
   };
 
-  // Send email
-  const handleSendEmail = async (performanceId) => {
-    try {
-      await axios.post(
-        `${BASE_URL}/qms/performance/send-email/${performanceId}/`
-      );
-      alert("Email sent successfully");
-    } catch (err) {
-      console.error("Error sending email:", err);
-      alert("Failed to send email");
-    }
-  };
-
-  // Open evaluation modal
   const openEvaluationModal = (performance) => {
     setEvaluationModal({
       isOpen: true,
@@ -992,12 +951,10 @@ const QmsEmployeePerformance = () => {
     });
   };
 
-  // Open questions modal
   const openQuestionsModal = (performanceId) => {
     setQuestionsModal({ isOpen: true, performanceId });
   };
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
@@ -1010,8 +967,6 @@ const QmsEmployeePerformance = () => {
       .replace(/\//g, "/");
   };
 
-
-  // Pagination
   const itemsPerPage = 10;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -1023,19 +978,14 @@ const QmsEmployeePerformance = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">
-        Loading...
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center">
+        Loading Employee Performance Evaluation...
       </div>
     );
   }
 
-  // if (error) {
-  //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-  // }
-
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-      {/* Header and Search Bar */}
       <div className="flex flex-col md:flex-row justify-between items-center pb-5">
         <h1 className="employee-performance-head">
           List Employee Performance Evaluation
@@ -1081,7 +1031,6 @@ const QmsEmployeePerformance = () => {
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-[#24242D]">
@@ -1120,15 +1069,15 @@ const QmsEmployeePerformance = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF]"
-                      onClick={() => handleSendEmail(performance.id)}
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                      onClick={() => openSendMailModal(performance.id)}
                     >
                       Send Mail
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
                       onClick={() => openEvaluationModal(performance)}
                     >
                       Click to Evaluate
@@ -1136,7 +1085,7 @@ const QmsEmployeePerformance = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF]"
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
                       onClick={handleResultGraph}
                     >
                       See Result Graph
@@ -1144,7 +1093,7 @@ const QmsEmployeePerformance = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
                       onClick={() => openQuestionsModal(performance.id)}
                     >
                       Add Questions
@@ -1190,7 +1139,6 @@ const QmsEmployeePerformance = () => {
         </table>
       </div>
 
-      {/* Pagination */}
       {filteredPerformances.length > 0 && (
         <div className="flex justify-between items-center mt-3">
           <div className="text-white total-text">
@@ -1208,7 +1156,6 @@ const QmsEmployeePerformance = () => {
             </button>
 
             {Array.from({ length: Math.min(4, totalPages) }, (_, i) => {
-              // Show pages around current page
               const pageToShow =
                 currentPage <= 2
                   ? i + 1
@@ -1249,7 +1196,6 @@ const QmsEmployeePerformance = () => {
         </div>
       )}
 
-      {/* Modals */}
       <EvaluationModal
         isOpen={evaluationModal.isOpen}
         onClose={() => setEvaluationModal({ isOpen: false, employee: null })}
@@ -1264,14 +1210,18 @@ const QmsEmployeePerformance = () => {
         performanceId={questionsModal.performanceId}
       />
 
-      {/* Delete Confirmation Modal */}
+      <SendMailModal
+        isOpen={sendMailModal.isOpen}
+        onClose={() => setSendMailModal({ isOpen: false, performanceId: null })}
+        performanceId={sendMailModal.performanceId}
+      />
+
       <DeleteEmployeePerformanceConfirmModal
         showDeleteModal={showDeleteModal}
         onConfirm={confirmDelete}
         onCancel={cancelDeleteEmployeePerformance}
       />
 
-      {/* Success Modal */}
       <DeleteEmployeePerformanceSuccessModal
         showDeleteEmployeePerformanceSuccessModal={
           showDeleteEmployeePerformanceSuccessModal
@@ -1279,7 +1229,6 @@ const QmsEmployeePerformance = () => {
         onClose={() => setShowDeleteEmployeePerformanceSuccessModal(false)}
       />
 
-      {/* Error Modal */}
       <ErrorModal
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}

@@ -366,7 +366,7 @@ const EvaluationModal = ({
                 </div>
 
                 {loading ? (
-                  <div className="text-center py-6">Loading questions...</div>
+                  <div className="text-center py-6 not-found">Loading questions...</div>
                 ) : (
                   <div className="max-h-[320px] overflow-y-auto">
                     <table className="min-w-full">
@@ -472,7 +472,7 @@ const EvaluationModal = ({
                     onClick={handleSubmitAllAnswers}
                     disabled={loading}
                   >
-                    {loading ? "Submitting..." : "Save"}
+                    {loading ? "Saving..." : "Save"}     
                   </button>
                 </div>
               </div>
@@ -733,7 +733,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
             </form>
 
             {loading && questions.length === 0 ? (
-              <div className="text-center py-4">Loading questions...</div>
+              <div className="text-center py-4 not-found">Loading questions...</div>
             ) : (
               questions.length > 0 && (
                 <div className="mb-4">
@@ -1072,7 +1072,7 @@ const QmsTrainingEvaluation = () => {
 
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg flex justify-center">
+      <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center">
         Loading...
       </div>
     );
@@ -1140,7 +1140,7 @@ const QmsTrainingEvaluation = () => {
               <th className="px-2 text-left add-manual-theads">Evaluation</th>
               <th className="px-2 text-left add-manual-theads">
                 See Result Graph
-              </th>
+              </th> 
               <th className="px-2 text-left add-manual-theads">
                 Add Questions
               </th>
