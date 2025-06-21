@@ -423,7 +423,7 @@ const ViewQmsManual = () => {
 
   const canReview = (() => {
     if (isCurrentUserWrittenBy) {
-      return true;
+      return false;
     }
 
     if (manualDetails.status === "Pending for Review/Checking") {

@@ -276,86 +276,121 @@ const AddQmsManual = () => {
     navigate("/company/qms/manual");
   };
 
-  const handleSaveClick = async () => {
-    if (!validateForm()) {
-      // Show the form has validation errors
-      setError("Please fill all required fields");
+const handleSaveClick = async () => {
+  if (!validateForm()) {
+    setError("Please fill all required fields");
+    return;
+  }
+  
+  try {
+    setLoading(true);
+
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
+      setLoading(false);
       return;
     }
-    try {
-      setLoading(true);
 
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        setLoading(false);
+    const submitData = new FormData();
+    console.log("manual post ...................", formData);
+    submitData.append("company", companyId);
+
+    Object.keys(formData).forEach((key) => {
+      if (
+        key === "send_notification_to_checked_by" ||
+        key === "send_notification_to_approved_by" ||
+        key === "send_email_to_checked_by" ||
+        key === "send_email_to_approved_by"
+      ) {
+        submitData.append(key, formData[key]);
         return;
       }
+      submitData.append(key, formData[key]);
+    });
 
-      const submitData = new FormData();
-      console.log("manual post ...................", formData);
-      submitData.append("company", companyId);
-
-      Object.keys(formData).forEach((key) => {
-        if (
-          key === "send_notification_to_checked_by" ||
-          key === "send_notification_to_approved_by" ||
-          key === "send_email_to_checked_by" ||
-          key === "send_email_to_approved_by"
-        ) {
-          submitData.append(key, formData[key]);
-          return;
-        }
-        submitData.append(key, formData[key]);
-      });
-
-      if (fileObject) {
-        submitData.append("upload_attachment", fileObject);
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/qms/manuals-create/`,
-        submitData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setLoading(false);
-      setShowAddManualSuccessModal(true);
-      setTimeout(() => {
-        setShowAddManualSuccessModal(false);
-        navigate("/company/qms/manual");
-      }, 1500);
-    } catch (err) {
-      setLoading(false);
-      let errorMsg = err.message;
-
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        }
-        else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
-      setError(errorMsg);
-      setShowDarftManualErrorModal(true);
-      setTimeout(() => {
-        setShowDarftManualErrorModal(false);
-      }, 3000);
+    if (fileObject) {
+      submitData.append("upload_attachment", fileObject);
     }
-  };
+
+    const response = await axios.post(
+      `${BASE_URL}/qms/manuals-create/`,
+      submitData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    setLoading(false);
+    setShowAddManualSuccessModal(true);
+    setTimeout(() => {
+      setShowAddManualSuccessModal(false);
+      navigate("/company/qms/manual");
+    }, 1500);
+  } catch (err) {
+    setLoading(false);
+    let errorMsg = "An error occurred while saving the manual.";
+    let fieldErrors = {};
+
+    if (err.response && err.response.data) {
+      console.log("Error response data:", err.response.data);
+      
+      // Handle field-specific errors
+      if (err.response.data.title) {
+        // Handle title field errors (including duplicate title)
+        if (Array.isArray(err.response.data.title)) {
+          fieldErrors.title = err.response.data.title[0];
+          errorMsg = err.response.data.title[0];
+        } else {
+          fieldErrors.title = err.response.data.title;
+          errorMsg = err.response.data.title;
+        }
+      } else if (err.response.data.date) {
+        if (Array.isArray(err.response.data.date)) {
+          errorMsg = err.response.data.date[0];
+        } else {
+          errorMsg = err.response.data.date;
+        }
+      } else if (err.response.data.no) {
+        // Handle section number errors
+        if (Array.isArray(err.response.data.no)) {
+          fieldErrors.no = err.response.data.no[0];
+          errorMsg = err.response.data.no[0];
+        } else {
+          fieldErrors.no = err.response.data.no;
+          errorMsg = err.response.data.no;
+        }
+      } else if (err.response.data.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response.data.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.response.data.error) {
+        errorMsg = err.response.data.error;
+      } else if (typeof err.response.data === 'string') {
+        errorMsg = err.response.data;
+      }
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+
+    // Set field-specific errors if any
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        ...fieldErrors
+      }));
+    }
+
+    setError(errorMsg);
+    setShowDarftManualErrorModal(true);
+    setTimeout(() => {
+      setShowDarftManualErrorModal(false);
+    }, 3000);
+  }
+};
+
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
@@ -371,62 +406,105 @@ const AddQmsManual = () => {
   };
 
   const handleDraftClick = async () => {
-    try {
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
-
-      const userId = getRelevantUserId();
-      if (!userId) {
-        setError("User ID not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
-
-      const submitData = new FormData();
-
-      submitData.append("company", companyId);
-      submitData.append("user", userId);
-      submitData.append("is_draft", true);
-
-      Object.keys(formData).forEach((key) => {
-        if (formData[key] !== null && formData[key] !== "") {
-          submitData.append(key, formData[key]);
-        }
-      });
-
-      if (fileObject) {
-        submitData.append("upload_attachment", fileObject);
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/qms/manuals/draft-create/`,
-        submitData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
+  try {
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
       setLoading(false);
-      setShowDraftManualSuccessModal(true);
-      setTimeout(() => {
-        setShowDraftManualSuccessModal(false);
-        navigate("/company/qms/draftmanual");
-      }, 1500);
-    } catch (err) {
-      setLoading(false);
-      setShowDarftManualErrorModal(true);
-      setTimeout(() => {
-        setShowDarftManualErrorModal(false);
-      }, 3000);
-      console.error("Error saving manual:", err);
+      return;
     }
-  };
+
+    const userId = getRelevantUserId();
+    if (!userId) {
+      setError("User ID not found. Please log in again.");
+      setLoading(false);
+      return;
+    }
+
+    const submitData = new FormData();
+
+    submitData.append("company", companyId);
+    submitData.append("user", userId);
+    submitData.append("is_draft", true);
+
+    Object.keys(formData).forEach((key) => {
+      if (formData[key] !== null && formData[key] !== "") {
+        submitData.append(key, formData[key]);
+      }
+    });
+
+    if (fileObject) {
+      submitData.append("upload_attachment", fileObject);
+    }
+
+    const response = await axios.post(
+      `${BASE_URL}/qms/manuals/draft-create/`,
+      submitData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    setLoading(false);
+    setShowDraftManualSuccessModal(true);
+    setTimeout(() => {
+      setShowDraftManualSuccessModal(false);
+      navigate("/company/qms/draftmanual");
+    }, 1500);
+  } catch (err) {
+    setLoading(false);
+    let errorMsg = "An error occurred while saving the draft.";
+    let fieldErrors = {};
+
+    if (err.response && err.response.data) {
+      console.log("Draft error response data:", err.response.data);
+      
+      // Handle field-specific errors for draft
+      if (err.response.data.title) {
+        if (Array.isArray(err.response.data.title)) {
+          fieldErrors.title = err.response.data.title[0];
+          errorMsg = err.response.data.title[0];
+        } else {
+          fieldErrors.title = err.response.data.title;
+          errorMsg = err.response.data.title;
+        }
+      } else if (err.response.data.no) {
+        if (Array.isArray(err.response.data.no)) {
+          fieldErrors.no = err.response.data.no[0];
+          errorMsg = err.response.data.no[0];
+        } else {
+          fieldErrors.no = err.response.data.no;
+          errorMsg = err.response.data.no;
+        }
+      } else if (err.response.data.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response.data.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.response.data.error) {
+        errorMsg = err.response.data.error;
+      }
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+
+    // Set field-specific errors if any
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        ...fieldErrors
+      }));
+    }
+
+    setError(errorMsg);
+    setShowDarftManualErrorModal(true);
+    setTimeout(() => {
+      setShowDarftManualErrorModal(false);
+    }, 3000);
+    console.error("Error saving manual:", err);
+  }
+};
 
   // Get month name from number
   const getMonthName = (monthNum) => {
