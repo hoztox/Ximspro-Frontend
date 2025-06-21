@@ -279,10 +279,10 @@ const AddQmsPolicy = () => {
       align: document.queryCommandState("justifyCenter")
         ? "center"
         : document.queryCommandState("justifyRight")
-        ? "right"
-        : document.queryCommandState("justifyFull")
-        ? "justify"
-        : "left",
+          ? "right"
+          : document.queryCommandState("justifyFull")
+            ? "justify"
+            : "left",
       unorderedList: document.queryCommandState("insertUnorderedList"),
       orderedList: document.queryCommandState("insertOrderedList"),
       indent: false, // No direct state for indent
@@ -495,12 +495,195 @@ const AddQmsPolicy = () => {
     }
   };
 
-  const handleCreateLink = () => {
-    const url = prompt("Enter URL:", "http://");
-    if (url) {
-      execCommand("createLink", url);
+const handleCreateLink = () => {
+  const url = prompt("Enter URL:", "https://");
+  if (url && url.trim()) {
+    // Ensure the URL has a protocol
+    let finalUrl = url.trim();
+    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+      finalUrl = 'https://' + finalUrl;
+    }
+    
+    // Focus the editor first
+    editorRef.current.focus();
+    
+    // Get the current selection
+    const selection = window.getSelection();
+    const selectedText = selection.toString();
+    
+    if (selectedText) {
+      // If text is selected, create link with selected text
+      execCommand("createLink", finalUrl);
+    } else {
+      // If no text is selected, insert the URL as both text and link
+      document.execCommand('insertHTML', false, `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`);
+    }
+    
+    // Update the links to be clickable
+    setTimeout(() => {
+      makeLinksClickable();
+    }, 100);
+  }
+};
+const makeLinksClickable = () => {
+  if (!editorRef.current) return;
+  
+  const links = editorRef.current.querySelectorAll('a');
+  links.forEach(link => {
+    // Remove any existing click handlers to avoid duplicates
+    link.removeEventListener('click', handleLinkClick);
+    
+    // Add click handler
+    link.addEventListener('click', handleLinkClick);
+    
+    // Ensure the link has proper attributes
+    if (!link.getAttribute('target')) {
+      link.setAttribute('target', '_blank');
+    }
+    if (!link.getAttribute('rel')) {
+      link.setAttribute('rel', 'noopener noreferrer');
+    }
+  });
+};
+
+// 4. Add link click handler
+const handleLinkClick = (e) => {
+  const link = e.target;
+  const currentUrl = link.href;
+
+  // Allow default navigation for regular clicks
+  if (!e.ctrlKey && !e.metaKey) {
+    // Let the browser handle the navigation
+    return;
+  }
+
+  // For Ctrl/Cmd + click, show edit/open options
+  e.preventDefault();
+  const action = confirm(`Current URL: ${currentUrl}\n\nClick OK to edit this link, or Cancel to open it in a new tab.`);
+  if (action) {
+    // Edit link
+    const newUrl = prompt("Edit URL:", currentUrl);
+    if (newUrl && newUrl.trim()) {
+      let finalUrl = newUrl.trim();
+      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
+        finalUrl = 'https://' + finalUrl;
+      }
+      link.href = finalUrl;
+      if (link.textContent === currentUrl) {
+        link.textContent = finalUrl;
+      }
+    }
+  } else {
+    // Open in new tab
+    window.open(currentUrl, '_blank', 'noopener,noreferrer');
+  }
+};
+
+// 5. Update the useEffect to call makeLinksClickable
+useEffect(() => {
+  const editor = editorRef.current;
+  if (!editor) return;
+
+  // Initialize editor with proper styling
+  initializeEditor();
+
+  // Initialize default formatting
+  initializeDefaultStyles();
+
+  // Make existing links clickable
+  makeLinksClickable();
+
+  // Set initial focus to help with command state detection
+  editor.focus();
+
+  const handleKeyDown = (e) => {
+    // Check for Tab key for indentation within lists
+    if (e.key === "Tab") {
+      // Prevent default tab behavior
+      e.preventDefault();
+
+      // If we're in a list, apply indent/outdent
+      if (e.shiftKey) {
+        // Shift+Tab for outdent
+        handleOutdent();
+      } else {
+        // Tab for indent
+        handleIndent();
+      }
+    }
+
+    // Update styles after key operations
+    setTimeout(updateActiveStyles, 10);
+  };
+
+  // Handle selection changes
+  const handleSelectionChange = () => {
+    if (document.activeElement === editor) {
+      updateActiveStyles();
     }
   };
+
+  // Handle paste events to preserve list formatting
+  const handlePaste = (e) => {
+    e.preventDefault();
+
+    // Get text representation of clipboard
+    const text = e.clipboardData.getData("text/plain");
+
+    // Insert as plain text (preserving line breaks)
+    document.execCommand("insertText", false, text);
+    
+    // Make any new links clickable
+    setTimeout(() => {
+      makeLinksClickable();
+    }, 100);
+  };
+
+  // Handle input events to make new links clickable
+  const handleInput = (e) => {
+    // Update form data
+    setFormData((prev) => ({
+      ...prev,
+      content: editor.innerHTML,
+    }));
+    
+    // Make any new links clickable
+    setTimeout(() => {
+      makeLinksClickable();
+    }, 100);
+  };
+
+  editor.addEventListener("keydown", handleKeyDown);
+  editor.addEventListener("paste", handlePaste);
+  editor.addEventListener("input", handleInput);
+  document.addEventListener("selectionchange", handleSelectionChange);
+
+  return () => {
+    editor.removeEventListener("keydown", handleKeyDown);
+    editor.removeEventListener("paste", handlePaste);
+    editor.removeEventListener("input", handleInput);
+    document.removeEventListener("selectionchange", handleSelectionChange);
+  };
+}, []);
+
+// 6. Update the editor div's onInput handler
+// Replace the existing onInput in your JSX with:
+<div
+  ref={editorRef}
+  contentEditable
+  className="bg-[#24242D] px-5 py-[16px] min-h-[300px] focus:outline-none rounded-[4px]"
+  onInput={(e) => {
+    setFormData((prev) => ({
+      ...prev,
+      content: editorRef.current.innerHTML,
+    }));
+    
+    // Make any new links clickable
+    setTimeout(() => {
+      makeLinksClickable();
+    }, 100);
+  }}
+/>
 
   // Handle inserting image via URL
   const handleInsertImage = () => {
@@ -532,49 +715,60 @@ const AddQmsPolicy = () => {
   };
 
   // Initialize the editor with CSS styling for lists
-  const initializeEditor = () => {
-    // Add a stylesheet for the editor
-    const style = document.createElement("style");
-    style.textContent = `
-      [contenteditable] {
-        outline: none;
-        word-wrap: break-word;
-        white-space: pre-wrap;
-        overflow-wrap: break-word;
-      }
-      [contenteditable] ul {
-        display: block;
-        list-style-type: disc;
-        padding-left: 40px;
-        margin-left: 0;
-      }
-      [contenteditable] ol {
-        display: block;
-        list-style-type: decimal;
-        padding-left: 40px;
-        margin-left: 0;
-      }
-      [contenteditable] li {
-        display: list-item;
-      }
-      [contenteditable] img {
-        max-width: 100%;
-        height: auto;
-        display: block;
-        margin: 10px 0;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Ensure the editor has proper styling
-    if (editorRef.current) {
-      // Set content to ensure proper initialization (if empty)
-      if (!editorRef.current.innerHTML.trim()) {
-        editorRef.current.innerHTML = "<p><br></p>";
-      }
+ const initializeEditor = () => {
+  // Add a stylesheet for the editor
+  const style = document.createElement("style");
+  style.textContent = `
+    [contenteditable] {
+      outline: none;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
     }
-  };
+    [contenteditable] ul {
+      display: block;
+      list-style-type: disc;
+      padding-left: 40px;
+      margin-left: 0;
+    }
+    [contenteditable] ol {
+      display: block;
+      list-style-type: decimal;
+      padding-left: 40px;
+      margin-left: 0;
+    }
+    [contenteditable] li {
+      display: list-item;
+    }
+    [contenteditable] img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 10px 0;
+    }
+    [contenteditable] a {
+      color: #3b82f6;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    [contenteditable] a:hover {
+      color: #1d4ed8;
+      text-decoration: underline;
+    }
+    [contenteditable] a:visited {
+      color: #7c3aed;
+    }
+  `;
+  document.head.appendChild(style);
 
+  // Ensure the editor has proper styling
+  if (editorRef.current) {
+    // Set content to ensure proper initialization (if empty)
+    if (!editorRef.current.innerHTML.trim()) {
+      editorRef.current.innerHTML = "<p><br></p>";
+    }
+  }
+};
   // Setup editor initialization and keyboard event listeners
   useEffect(() => {
     const editor = editorRef.current;
@@ -691,19 +885,41 @@ const AddQmsPolicy = () => {
     return null;
   };
 
+  // Enhanced validation for mandatory fields in handleSave function
   const handleSave = async () => {
     const editorContent = editorRef.current ? editorRef.current.innerHTML : "";
 
-    // Check if title is empty
+    // Reset any previous errors
+    setTitleError("");
+    setErrorMessage("");
+
+    let hasValidationErrors = false;
+
+    // Check if title is empty or only whitespace
     if (!formData.title.trim()) {
       setTitleError("Policy Title is Required");
-      return;
-    } else {
-      setTitleError(""); // Clear error if title is provided
+      hasValidationErrors = true;
     }
 
-    if (!editorContent.trim() || editorContent === "<p><br></p>") {
-      toast.error("Please enter policy content");
+    // Enhanced content validation - check for meaningful content
+    const isContentEmpty = !editorContent.trim() ||
+      editorContent === "<p><br></p>" ||
+      editorContent === "<p></p>" ||
+      editorContent === "<br>" ||
+      editorContent.replace(/<[^>]*>/g, '').trim() === '';
+
+    if (isContentEmpty) {
+      setErrorMessage("Policy content is required.");
+      setShowAddPolicyErrorModal(true);
+      setTimeout(() => {
+        setShowAddPolicyErrorModal(false);
+        setErrorMessage("");
+      }, 3000);
+      hasValidationErrors = true;
+    }
+
+    // If there are validation errors, stop execution
+    if (hasValidationErrors) {
       return;
     }
 
@@ -723,7 +939,7 @@ const AddQmsPolicy = () => {
       }
 
       const apiFormData = new FormData();
-      apiFormData.append("title", formData.title);
+      apiFormData.append("title", formData.title.trim()); // Trim whitespace
       apiFormData.append("text", editorContent);
       apiFormData.append("company", companyId);
 
@@ -753,17 +969,21 @@ const AddQmsPolicy = () => {
         setShowAddPolicyErrorModal(true);
         setTimeout(() => {
           setShowAddPolicyErrorModal(false);
+          setErrorMessage("");
         }, 3000);
       }
     } catch (error) {
       console.error("Error details:", error.response?.data || error.message);
       const errorMsg =
-       error.response.data.date[0] || err.response.data.detail || err.response.data.message || "An error occurred while saving the policy.";
+        error.response?.data?.date?.[0] ||
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        "An error occurred while saving the policy.";
       setErrorMessage(errorMsg);
       setShowAddPolicyErrorModal(true);
       setTimeout(() => {
         setShowAddPolicyErrorModal(false);
-          setErrorMessage(errorMsg);
+        setErrorMessage("");
       }, 3000);
     } finally {
       setIsSaving(false);
@@ -784,7 +1004,78 @@ const AddQmsPolicy = () => {
       editorRef.current.innerHTML = "<p><br></p>";
     }
   };
+const LinkInstructions = () => (
+  <div className="text-xs text-gray-400 mb-2">
+    💡 Tip: Click on links to open or edit them. Right-click for more options.
+  </div>
+);
 
+// 8. Add context menu support for links (optional enhancement)
+const addContextMenuToLinks = () => {
+  if (!editorRef.current) return;
+  
+  const links = editorRef.current.querySelectorAll('a');
+  links.forEach(link => {
+    link.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      
+      const menu = document.createElement('div');
+      menu.className = 'fixed z-50 bg-gray-800 border border-gray-600 rounded shadow-lg py-2 min-w-32';
+      menu.style.left = e.pageX + 'px';
+      menu.style.top = e.pageY + 'px';
+      
+      const openOption = document.createElement('button');
+      openOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
+      openOption.textContent = 'Open Link';
+      openOption.onclick = () => {
+        window.open(link.href, '_blank', 'noopener,noreferrer');
+        document.body.removeChild(menu);
+      };
+      
+      const editOption = document.createElement('button');
+      editOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
+      editOption.textContent = 'Edit Link';
+      editOption.onclick = () => {
+        editLink(link);
+        document.body.removeChild(menu);
+      };
+      
+      const removeOption = document.createElement('button');
+      removeOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
+      removeOption.textContent = 'Remove Link';
+      removeOption.onclick = () => {
+        // Replace link with just its text content
+        const textNode = document.createTextNode(link.textContent);
+        link.parentNode.replaceChild(textNode, link);
+        document.body.removeChild(menu);
+        
+        // Trigger content change
+        setFormData((prev) => ({
+          ...prev,
+          content: editorRef.current.innerHTML,
+        }));
+      };
+      
+      menu.appendChild(openOption);
+      menu.appendChild(editOption);
+      menu.appendChild(removeOption);
+      
+      document.body.appendChild(menu);
+      
+      // Remove menu when clicking elsewhere
+      const removeMenu = (event) => {
+        if (!menu.contains(event.target)) {
+          document.body.removeChild(menu);
+          document.removeEventListener('click', removeMenu);
+        }
+      };
+      
+      setTimeout(() => {
+        document.addEventListener('click', removeMenu);
+      }, 100);
+    });
+  });
+};
   // Dropdown component to show selected option
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -835,9 +1126,8 @@ const AddQmsPolicy = () => {
           {colorPalette.map((color, index) => (
             <button
               key={index}
-              className={`w-6 h-6 rounded-sm border ${
-                color === activeColor ? "border-blue-500" : "border-gray-600"
-              }`}
+              className={`w-6 h-6 rounded-sm border ${color === activeColor ? "border-blue-500" : "border-gray-600"
+                }`}
               style={{ backgroundColor: color }}
               onClick={() => onColorSelect(color)}
               title={color}
@@ -864,7 +1154,7 @@ const AddQmsPolicy = () => {
   };
 
   return (
-    <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]"> 
+    <div className="bg-[#1C1C24] text-white p-5 rounded-[8px]">
       <h1 className="add-policy-head">Add Policies</h1>
 
       <AddQmsPolicySuccessModal
@@ -894,9 +1184,8 @@ const AddQmsPolicy = () => {
           id="policyTitle"
           value={formData.title}
           onChange={handleTitleChange}
-          className={`add-qms-manual-inputs ${
-            titleError ? "border-red-500" : ""
-          }`}
+          className={`add-qms-manual-inputs ${titleError ? "border-red-500" : ""
+            }`}
           placeholder="Enter Policy Title"
           maxLength={50}
         />
@@ -908,27 +1197,24 @@ const AddQmsPolicy = () => {
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.bold ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.bold ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("bold")}
           title="Bold"
         >
           <img src={bold} alt="Bold" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.italic ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.italic ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("italic")}
           title="Italic"
         >
           <img src={itallic} alt="Itallic" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.underline ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.underline ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("underline")}
           title="Underline"
         >
@@ -938,54 +1224,48 @@ const AddQmsPolicy = () => {
         {/* Alignment */}
 
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.align === "left" ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "left" ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("justifyLeft")}
           title="Align Left"
         >
           <img src={leftalign} alt="Text Left Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.align === "center" ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "center" ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("justifyCenter")}
           title="Align Center"
         >
           <img src={centeralign} alt="Text Center Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.align === "right" ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "right" ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("justifyRight")}
           title="Align Right"
         >
           <img src={rightalign} alt="Text Right Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.align === "justify" ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "justify" ? "bg-gray-700" : ""
+            }`}
           onClick={() => execCommand("justifyFull")}
           title="Justify"
         >
           <img src={sentencetext} alt="Align Justify" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.orderedList ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.orderedList ? "bg-gray-700" : ""
+            }`}
           onClick={() => handleList("ol")}
           title="Ordered List"
         >
           <img src={orderedlist} alt="Ordered List" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${
-            activeStyles.unorderedList ? "bg-gray-700" : ""
-          }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.unorderedList ? "bg-gray-700" : ""
+            }`}
           onClick={() => handleList("ul")}
           title="Unordered List"
         >

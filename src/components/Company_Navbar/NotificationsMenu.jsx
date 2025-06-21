@@ -35,7 +35,7 @@ const NotificationsMenu = forwardRef(({
     const [unreadCount, setUnreadCount] = useState(0);
     const navigate = useNavigate();
 
-    // Helper function to safely extract array data from API response
+   
     const safeArrayExtract = (responseData) => {
         if (Array.isArray(responseData)) {
             return responseData;

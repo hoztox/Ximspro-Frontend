@@ -137,6 +137,20 @@ const QmsManual = () => {
     );
   };
 
+  // New function to check if current user can edit/delete the manual
+  const canEditOrDelete = (manual) => {
+    const currentUserId = Number(localStorage.getItem("user_id"));
+    const role = localStorage.getItem("role");
+    
+    // Company role can always edit/delete
+    if (role === "company") {
+      return true;
+    }
+    
+    // For regular users, only allow if they are the writer
+    return manual.written_by && manual.written_by.id === currentUserId;
+  };
+
   const filterManualsByVisibility = (manualsData) => {
     const role = localStorage.getItem("role");
 
@@ -575,6 +589,7 @@ const QmsManual = () => {
               {paginatedManual.length > 0 ? (
                 paginatedManual.map((manual, index) => {
                   const canApprove = canReview(manual);
+                  const canEditDelete = canEditOrDelete(manual);
 
                   return (
                     <tr
@@ -618,8 +633,8 @@ const QmsManual = () => {
                             {manual.status === "Pending for Review/Checking"
                               ? "Review"
                               : manual.status === "Correction Requested"
-                              ? "Click to Approve"
-                              : "Click to Approve"}
+                              ? "Click to Correct"
+                              : "Click to Corrcet"}
                           </button>
                         ) : (
                           <span className="text-[#858585]">
@@ -636,21 +651,29 @@ const QmsManual = () => {
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas text-center">
-                        <button
-                          onClick={() => handleEdit(manual.id)}
-                          title="Edit"
-                        >
-                          <img src={edits} alt="" />
-                        </button>
+                        {canEditDelete ? (
+                          <button
+                            onClick={() => handleEdit(manual.id)}
+                            title="Edit"
+                          >
+                            <img src={edits} alt="" />
+                          </button>
+                        ) : (
+                          <span className="text-[#858585] text-xs">-</span>
+                        )}
                       </td>
 
                       <td className="pl-2 pr-4 add-manual-datas text-center">
-                        <button
-                          onClick={() => handleDelete(manual.id)}
-                          title="Delete"
-                        >
-                          <img src={deletes} alt="" />
-                        </button>
+                        {canEditDelete ? (
+                          <button
+                            onClick={() => handleDelete(manual.id)}
+                            title="Delete"
+                          >
+                            <img src={deletes} alt="" />
+                          </button>
+                        ) : (
+                          <span className="text-[#858585] text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   );
