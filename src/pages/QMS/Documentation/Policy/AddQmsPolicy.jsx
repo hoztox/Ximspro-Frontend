@@ -37,11 +37,11 @@ const AddQmsPolicy = () => {
 
   const [titleError, setTitleError] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [showAddPolicySuccessModal, setShowAddPolicySuccessModal] =
-    useState(false);
+  const [showAddPolicySuccessModal, setShowAddPolicySuccessModal] = useState(false);
   const [showAddPolicyErrorModal, setShowAddPolicyErrorModal] = useState(false);
 
   const editorRef = useRef(null);
+  const fileInputRef = useRef(null); // Added ref for file input
   const imageInputRef = useRef(null);
   const [showTextColorPicker, setShowTextColorPicker] = useState(false);
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
@@ -82,37 +82,33 @@ const AddQmsPolicy = () => {
     "#FFD700",
   ];
 
-  // Font options
+  // Font options with tooltips
   const fontSizes = [
-    { label: "Small", value: "1" },
-    { label: "Normal", value: "3" },
-    { label: "Large", value: "5" },
-    { label: "Extra Large", value: "7" },
+    { label: "Small", value: "1", tooltip: "Small font size for compact text" },
+    { label: "Normal", value: "3", tooltip: "Standard font size for regular text" },
+    { label: "Large", value: "5", tooltip: "Large font size for emphasis" },
+    { label: "Extra Large", value: "7", tooltip: "Extra large font size for headings" },
   ];
 
   const fontStyles = [
-    { label: "Arial", value: "Arial" },
-    { label: "Times New Roman", value: "Times New Roman" },
-    { label: "Courier New", value: "Courier New" },
-    { label: "Georgia", value: "Georgia" },
+    { label: "Arial", value: "Arial", tooltip: "Clean, sans-serif font for modern text" },
+    { label: "Times New Roman", value: "Times New Roman", tooltip: "Traditional serif font for formal text" },
+    { label: "Courier New", value: "Courier New", tooltip: "Monospace font for code-like text" },
+    { label: "Georgia", value: "Georgia", tooltip: "Serif font with a classic, elegant style" },
   ];
 
   const fontFormats = [
-    { label: "Paragraph", value: "p" },
-    { label: "Heading 1", value: "h1" },
-    { label: "Heading 2", value: "h2" },
-    { label: "Heading 3", value: "h3" },
-    { label: "Preformatted", value: "pre" },
+    { label: "Paragraph", value: "p", tooltip: "Standard paragraph format" },
+    { label: "Heading 1", value: "h1", tooltip: "Main heading for sections" },
+    { label: "Heading 2", value: "h2", tooltip: "Subheading for subsections" },
+    { label: "Heading 3", value: "h3", tooltip: "Minor heading for smaller sections" },
+    { label: "Preformatted", value: "pre", tooltip: "Preserves whitespace and uses monospace font" },
   ];
 
   // Add state for selected dropdown values
   const [selectedFontSize, setSelectedFontSize] = useState(fontSizes[1].label); // 'Normal'
-  const [selectedFontStyle, setSelectedFontStyle] = useState(
-    fontStyles[0].label
-  ); // 'Arial'
-  const [selectedFontFormat, setSelectedFontFormat] = useState(
-    fontFormats[0].label
-  ); // 'Paragraph'
+  const [selectedFontStyle, setSelectedFontStyle] = useState(fontStyles[0].label); // 'Arial'
+  const [selectedFontFormat, setSelectedFontFormat] = useState(fontFormats[0].label); // 'Paragraph'
 
   // Handle file selection for policy attachment
   const handleFileChange = (e) => {
@@ -122,6 +118,17 @@ const AddQmsPolicy = () => {
         ...formData,
         energyPolicy: file,
       });
+    }
+  };
+
+  // Handle clearing selected file
+  const handleClearFile = () => {
+    setFormData({
+      ...formData,
+      energyPolicy: null,
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null; // Clear the file input
     }
   };
 
@@ -208,10 +215,7 @@ const AddQmsPolicy = () => {
       document.execCommand(command, false, value);
 
       // Special handling for list commands which can be finicky
-      if (
-        command === "insertUnorderedList" ||
-        command === "insertOrderedList"
-      ) {
+      if (command === "insertUnorderedList" || command === "insertOrderedList") {
         // Force update after a short delay to ensure command is applied
         setTimeout(() => {
           updateActiveStyles();
@@ -248,10 +252,7 @@ const AddQmsPolicy = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        colorPickerRef.current &&
-        !colorPickerRef.current.contains(event.target)
-      ) {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target)) {
         setShowTextColorPicker(false);
         setShowBgColorPicker(false);
       }
@@ -294,9 +295,7 @@ const AddQmsPolicy = () => {
 
     // Update selected format
     if (formatBlock) {
-      const fontFormatOption = fontFormats.find(
-        (option) => option.value === formatBlock
-      );
+      const fontFormatOption = fontFormats.find((option) => option.value === formatBlock);
       if (fontFormatOption) {
         setSelectedFontFormat(fontFormatOption.label);
       }
@@ -324,9 +323,7 @@ const AddQmsPolicy = () => {
     // Update font size
     const fontSize = document.queryCommandValue("fontSize");
     if (fontSize) {
-      const fontSizeOption = fontSizes.find(
-        (option) => option.value === fontSize
-      );
+      const fontSizeOption = fontSizes.find((option) => option.value === fontSize);
       if (fontSizeOption) {
         setSelectedFontSize(fontSizeOption.label);
       }
@@ -459,8 +456,7 @@ const AddQmsPolicy = () => {
       // Reduce indentation through inline style
       const currentPadding = parseInt(selectedElement.style.paddingLeft || "0");
       if (currentPadding > 0) {
-        selectedElement.style.paddingLeft =
-          Math.max(0, currentPadding - 40) + "px";
+        selectedElement.style.paddingLeft = Math.max(0, currentPadding - 40) + "px";
       }
 
       setActiveStyles((prev) => ({ ...prev, outdent: currentPadding <= 0 }));
@@ -487,203 +483,171 @@ const AddQmsPolicy = () => {
     execCommand("formatBlock", format);
 
     // Update the selected format title based on format value
-    const fontFormatOption = fontFormats.find(
-      (option) => option.value === format
-    );
+    const fontFormatOption = fontFormats.find((option) => option.value === format);
     if (fontFormatOption) {
       setSelectedFontFormat(fontFormatOption.label);
     }
   };
 
-const handleCreateLink = () => {
-  const url = prompt("Enter URL:", "https://");
-  if (url && url.trim()) {
-    // Ensure the URL has a protocol
-    let finalUrl = url.trim();
-    if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-      finalUrl = 'https://' + finalUrl;
-    }
-    
-    // Focus the editor first
-    editorRef.current.focus();
-    
-    // Get the current selection
-    const selection = window.getSelection();
-    const selectedText = selection.toString();
-    
-    if (selectedText) {
-      // If text is selected, create link with selected text
-      execCommand("createLink", finalUrl);
-    } else {
-      // If no text is selected, insert the URL as both text and link
-      document.execCommand('insertHTML', false, `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`);
-    }
-    
-    // Update the links to be clickable
-    setTimeout(() => {
-      makeLinksClickable();
-    }, 100);
-  }
-};
-const makeLinksClickable = () => {
-  if (!editorRef.current) return;
-  
-  const links = editorRef.current.querySelectorAll('a');
-  links.forEach(link => {
-    // Remove any existing click handlers to avoid duplicates
-    link.removeEventListener('click', handleLinkClick);
-    
-    // Add click handler
-    link.addEventListener('click', handleLinkClick);
-    
-    // Ensure the link has proper attributes
-    if (!link.getAttribute('target')) {
-      link.setAttribute('target', '_blank');
-    }
-    if (!link.getAttribute('rel')) {
-      link.setAttribute('rel', 'noopener noreferrer');
-    }
-  });
-};
-
-// 4. Add link click handler
-const handleLinkClick = (e) => {
-  const link = e.target;
-  const currentUrl = link.href;
-
-  // Allow default navigation for regular clicks
-  if (!e.ctrlKey && !e.metaKey) {
-    // Let the browser handle the navigation
-    return;
-  }
-
-  // For Ctrl/Cmd + click, show edit/open options
-  e.preventDefault();
-  const action = confirm(`Current URL: ${currentUrl}\n\nClick OK to edit this link, or Cancel to open it in a new tab.`);
-  if (action) {
-    // Edit link
-    const newUrl = prompt("Edit URL:", currentUrl);
-    if (newUrl && newUrl.trim()) {
-      let finalUrl = newUrl.trim();
-      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-        finalUrl = 'https://' + finalUrl;
+  const handleCreateLink = () => {
+    const url = prompt("Enter URL:", "https://");
+    if (url && url.trim()) {
+      // Ensure the URL has a protocol
+      let finalUrl = url.trim();
+      if (!finalUrl.startsWith("http://") && !finalUrl.startsWith("https://")) {
+        finalUrl = "https://" + finalUrl;
       }
-      link.href = finalUrl;
-      if (link.textContent === currentUrl) {
-        link.textContent = finalUrl;
-      }
-    }
-  } else {
-    // Open in new tab
-    window.open(currentUrl, '_blank', 'noopener,noreferrer');
-  }
-};
 
-// 5. Update the useEffect to call makeLinksClickable
-useEffect(() => {
-  const editor = editorRef.current;
-  if (!editor) return;
+      // Focus the editor first
+      editorRef.current.focus();
 
-  // Initialize editor with proper styling
-  initializeEditor();
+      // Get the current selection
+      const selection = window.getSelection();
+      const selectedText = selection.toString();
 
-  // Initialize default formatting
-  initializeDefaultStyles();
-
-  // Make existing links clickable
-  makeLinksClickable();
-
-  // Set initial focus to help with command state detection
-  editor.focus();
-
-  const handleKeyDown = (e) => {
-    // Check for Tab key for indentation within lists
-    if (e.key === "Tab") {
-      // Prevent default tab behavior
-      e.preventDefault();
-
-      // If we're in a list, apply indent/outdent
-      if (e.shiftKey) {
-        // Shift+Tab for outdent
-        handleOutdent();
+      if (selectedText) {
+        // If text is selected, create link with selected text
+        execCommand("createLink", finalUrl);
       } else {
-        // Tab for indent
-        handleIndent();
+        // If no text is selected, insert the URL as both text and link
+        document.execCommand("insertHTML", false, `<a href="${finalUrl}" target="_blank">${finalUrl}</a>`);
       }
-    }
 
-    // Update styles after key operations
-    setTimeout(updateActiveStyles, 10);
-  };
-
-  // Handle selection changes
-  const handleSelectionChange = () => {
-    if (document.activeElement === editor) {
-      updateActiveStyles();
+      // Update the links to be clickable
+      setTimeout(() => {
+        makeLinksClickable();
+      }, 100);
     }
   };
 
-  // Handle paste events to preserve list formatting
-  const handlePaste = (e) => {
+  const makeLinksClickable = () => {
+    if (!editorRef.current) return;
+
+    const links = editorRef.current.querySelectorAll("a");
+    links.forEach((link) => {
+      // Remove any existing click handlers to avoid duplicates
+      link.removeEventListener("click", handleLinkClick);
+
+      // Add click handler
+      link.addEventListener("click", handleLinkClick);
+
+      // Ensure the link has proper attributes
+      if (!link.getAttribute("target")) {
+        link.setAttribute("target", "_blank");
+      }
+      if (!link.getAttribute("rel")) {
+        link.setAttribute("rel", "noopener noreferrer");
+      }
+    });
+  };
+
+  const handleLinkClick = (e) => {
+    const link = e.target;
+    const currentUrl = link.href;
+
+    // Allow default navigation for regular clicks
+    if (!e.ctrlKey && !e.metaKey) {
+      // Let the browser handle the navigation
+      return;
+    }
+
+    // For Ctrl/Cmd + click, show edit/open options
     e.preventDefault();
-
-    // Get text representation of clipboard
-    const text = e.clipboardData.getData("text/plain");
-
-    // Insert as plain text (preserving line breaks)
-    document.execCommand("insertText", false, text);
-    
-    // Make any new links clickable
-    setTimeout(() => {
-      makeLinksClickable();
-    }, 100);
+    const action = confirm(`Current URL: ${currentUrl}\n\nClick OK to edit this link, or Cancel to open it in a new tab.`);
+    if (action) {
+      // Edit link
+      const newUrl = prompt("Edit URL:", currentUrl);
+      if (newUrl && newUrl.trim()) {
+        let finalUrl = newUrl.trim();
+        if (!finalUrl.startsWith("http://") && !finalUrl.startsWith("https://")) {
+          finalUrl = "https://" + finalUrl;
+        }
+        link.href = finalUrl;
+        if (link.textContent === currentUrl) {
+          link.textContent = finalUrl;
+        }
+      }
+    } else {
+      // Open in new tab
+      window.open(currentUrl, "_blank", "noopener,noreferrer");
+    }
   };
 
-  // Handle input events to make new links clickable
-  const handleInput = (e) => {
-    // Update form data
-    setFormData((prev) => ({
-      ...prev,
-      content: editor.innerHTML,
-    }));
-    
-    // Make any new links clickable
-    setTimeout(() => {
-      makeLinksClickable();
-    }, 100);
+  const addContextMenuToLinks = () => {
+    if (!editorRef.current) return;
+
+    const links = editorRef.current.querySelectorAll("a");
+    links.forEach((link) => {
+      link.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+
+        const menu = document.createElement("div");
+        menu.className = "fixed z-50 bg-gray-800 border border-gray-600 rounded shadow-lg py-2 min-w-32";
+        menu.style.left = e.pageX + "px";
+        menu.style.top = e.pageY + "px";
+
+        const openOption = document.createElement("button");
+        openOption.className = "block w-full text-left px-4 py-2 text-white hover:bg-gray-700";
+        openOption.textContent = "Open Link";
+        openOption.onclick = () => {
+          window.open(link.href, "_blank", "noopener,noreferrer");
+          document.body.removeChild(menu);
+        };
+
+        const editOption = document.createElement("button");
+        editOption.className = "block w-full text-left px-4 py-2 text-white hover:bg-gray-700";
+        editOption.textContent = "Edit Link";
+        editOption.onclick = () => {
+          const newUrl = prompt("Edit URL:", link.href);
+          if (newUrl && newUrl.trim()) {
+            let finalUrl = newUrl.trim();
+            if (!finalUrl.startsWith("http://") && !finalUrl.startsWith("https://")) {
+              finalUrl = "https://" + finalUrl;
+            }
+            link.href = finalUrl;
+            if (link.textContent === link.href) {
+              link.textContent = finalUrl;
+            }
+          }
+          document.body.removeChild(menu);
+        };
+
+        const removeOption = document.createElement("button");
+        removeOption.className = "block w-full text-left px-4 py-2 text-white hover:bg-gray-700";
+        removeOption.textContent = "Remove Link";
+        removeOption.onclick = () => {
+          // Replace link with just its text content
+          const textNode = document.createTextNode(link.textContent);
+          link.parentNode.replaceChild(textNode, link);
+          document.body.removeChild(menu);
+
+          // Trigger content change
+          setFormData((prev) => ({
+            ...prev,
+            content: editorRef.current.innerHTML,
+          }));
+        };
+
+        menu.appendChild(openOption);
+        menu.appendChild(editOption);
+        menu.appendChild(removeOption);
+
+        document.body.appendChild(menu);
+
+        // Remove menu when clicking elsewhere
+        const removeMenu = (event) => {
+          if (!menu.contains(event.target)) {
+            document.body.removeChild(menu);
+            document.removeEventListener("click", removeMenu);
+          }
+        };
+
+        setTimeout(() => {
+          document.addEventListener("click", removeMenu);
+        }, 100);
+      });
+    });
   };
-
-  editor.addEventListener("keydown", handleKeyDown);
-  editor.addEventListener("paste", handlePaste);
-  editor.addEventListener("input", handleInput);
-  document.addEventListener("selectionchange", handleSelectionChange);
-
-  return () => {
-    editor.removeEventListener("keydown", handleKeyDown);
-    editor.removeEventListener("paste", handlePaste);
-    editor.removeEventListener("input", handleInput);
-    document.removeEventListener("selectionchange", handleSelectionChange);
-  };
-}, []);
-
-// 6. Update the editor div's onInput handler
-// Replace the existing onInput in your JSX with:
-<div
-  ref={editorRef}
-  contentEditable
-  className="bg-[#24242D] px-5 py-[16px] min-h-[300px] focus:outline-none rounded-[4px]"
-  onInput={(e) => {
-    setFormData((prev) => ({
-      ...prev,
-      content: editorRef.current.innerHTML,
-    }));
-    
-    // Make any new links clickable
-    setTimeout(() => {
-      makeLinksClickable();
-    }, 100);
-  }}
-/>
 
   // Handle inserting image via URL
   const handleInsertImage = () => {
@@ -715,61 +679,61 @@ useEffect(() => {
   };
 
   // Initialize the editor with CSS styling for lists
- const initializeEditor = () => {
-  // Add a stylesheet for the editor
-  const style = document.createElement("style");
-  style.textContent = `
-    [contenteditable] {
-      outline: none;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-    }
-    [contenteditable] ul {
-      display: block;
-      list-style-type: disc;
-      padding-left: 40px;
-      margin-left: 0;
-    }
-    [contenteditable] ol {
-      display: block;
-      list-style-type: decimal;
-      padding-left: 40px;
-      margin-left: 0;
-    }
-    [contenteditable] li {
-      display: list-item;
-    }
-    [contenteditable] img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 10px 0;
-    }
-    [contenteditable] a {
-      color: #3b82f6;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    [contenteditable] a:hover {
-      color: #1d4ed8;
-      text-decoration: underline;
-    }
-    [contenteditable] a:visited {
-      color: #7c3aed;
-    }
-  `;
-  document.head.appendChild(style);
+  const initializeEditor = () => {
+    // Add a stylesheet for the editor
+    const style = document.createElement("style");
+    style.textContent = `
+      [contenteditable] {
+        outline: none;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+      [contenteditable] ul {
+        display: block;
+        list-style-type: disc;
+        padding-left: 40px;
+        margin-left: 0;
+      }
+      [contenteditable] ol {
+        display: block;
+        list-style-type: decimal;
+        padding-left: 40px;
+        margin-left: 0;
+      }
+      [contenteditable] li {
+        display: list-item;
+      }
+      [contenteditable] img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 10px 0;
+      }
+      [contenteditable] a {
+        color: #3b82f6;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+      [contenteditable] a:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
+      [contenteditable] a:visited {
+        color: #7c3aed;
+      }
+    `;
+    document.head.appendChild(style);
 
-  // Ensure the editor has proper styling
-  if (editorRef.current) {
-    // Set content to ensure proper initialization (if empty)
-    if (!editorRef.current.innerHTML.trim()) {
-      editorRef.current.innerHTML = "<p><br></p>";
+    // Ensure the editor has proper styling
+    if (editorRef.current) {
+      // Set content to ensure proper initialization (if empty)
+      if (!editorRef.current.innerHTML.trim()) {
+        editorRef.current.innerHTML = "<p><br></p>";
+      }
     }
-  }
-};
-  // Setup editor initialization and keyboard event listeners
+  };
+
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -779,6 +743,9 @@ useEffect(() => {
 
     // Initialize default formatting
     initializeDefaultStyles();
+
+    // Make existing links clickable
+    makeLinksClickable();
 
     // Set initial focus to help with command state detection
     editor.focus();
@@ -819,15 +786,37 @@ useEffect(() => {
 
       // Insert as plain text (preserving line breaks)
       document.execCommand("insertText", false, text);
+
+      // Make any new links clickable
+      setTimeout(() => {
+        makeLinksClickable();
+      }, 100);
+    };
+
+    // Handle input events to make new links clickable
+    const handleInput = () => {
+      // Update form data
+      setFormData((prev) => ({
+        ...prev,
+        content: editor.innerHTML,
+      }));
+
+      // Make any new links clickable
+      setTimeout(() => {
+        makeLinksClickable();
+        addContextMenuToLinks();
+      }, 100);
     };
 
     editor.addEventListener("keydown", handleKeyDown);
     editor.addEventListener("paste", handlePaste);
+    editor.addEventListener("input", handleInput);
     document.addEventListener("selectionchange", handleSelectionChange);
 
     return () => {
       editor.removeEventListener("keydown", handleKeyDown);
       editor.removeEventListener("paste", handlePaste);
+      editor.removeEventListener("input", handleInput);
       document.removeEventListener("selectionchange", handleSelectionChange);
     };
   }, []);
@@ -902,11 +891,12 @@ useEffect(() => {
     }
 
     // Enhanced content validation - check for meaningful content
-    const isContentEmpty = !editorContent.trim() ||
+    const isContentEmpty =
+      !editorContent.trim() ||
       editorContent === "<p><br></p>" ||
       editorContent === "<p></p>" ||
       editorContent === "<br>" ||
-      editorContent.replace(/<[^>]*>/g, '').trim() === '';
+      editorContent.replace(/<[^>]*>/g, "").trim() === "";
 
     if (isContentEmpty) {
       setErrorMessage("Policy content is required.");
@@ -947,15 +937,11 @@ useEffect(() => {
         apiFormData.append("energy_policy", formData.energyPolicy);
       }
 
-      const response = await axios.post(
-        `${BASE_URL}/qms/policy/`,
-        apiFormData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(`${BASE_URL}/qms/policy/`, apiFormData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       if (response && (response.status === 200 || response.status === 201)) {
         setShowAddPolicySuccessModal(true);
@@ -1004,78 +990,13 @@ useEffect(() => {
       editorRef.current.innerHTML = "<p><br></p>";
     }
   };
-const LinkInstructions = () => (
-  <div className="text-xs text-gray-400 mb-2">
-    💡 Tip: Click on links to open or edit them. Right-click for more options.
-  </div>
-);
 
-// 8. Add context menu support for links (optional enhancement)
-const addContextMenuToLinks = () => {
-  if (!editorRef.current) return;
-  
-  const links = editorRef.current.querySelectorAll('a');
-  links.forEach(link => {
-    link.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      
-      const menu = document.createElement('div');
-      menu.className = 'fixed z-50 bg-gray-800 border border-gray-600 rounded shadow-lg py-2 min-w-32';
-      menu.style.left = e.pageX + 'px';
-      menu.style.top = e.pageY + 'px';
-      
-      const openOption = document.createElement('button');
-      openOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
-      openOption.textContent = 'Open Link';
-      openOption.onclick = () => {
-        window.open(link.href, '_blank', 'noopener,noreferrer');
-        document.body.removeChild(menu);
-      };
-      
-      const editOption = document.createElement('button');
-      editOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
-      editOption.textContent = 'Edit Link';
-      editOption.onclick = () => {
-        editLink(link);
-        document.body.removeChild(menu);
-      };
-      
-      const removeOption = document.createElement('button');
-      removeOption.className = 'block w-full text-left px-4 py-2 text-white hover:bg-gray-700';
-      removeOption.textContent = 'Remove Link';
-      removeOption.onclick = () => {
-        // Replace link with just its text content
-        const textNode = document.createTextNode(link.textContent);
-        link.parentNode.replaceChild(textNode, link);
-        document.body.removeChild(menu);
-        
-        // Trigger content change
-        setFormData((prev) => ({
-          ...prev,
-          content: editorRef.current.innerHTML,
-        }));
-      };
-      
-      menu.appendChild(openOption);
-      menu.appendChild(editOption);
-      menu.appendChild(removeOption);
-      
-      document.body.appendChild(menu);
-      
-      // Remove menu when clicking elsewhere
-      const removeMenu = (event) => {
-        if (!menu.contains(event.target)) {
-          document.body.removeChild(menu);
-          document.removeEventListener('click', removeMenu);
-        }
-      };
-      
-      setTimeout(() => {
-        document.addEventListener('click', removeMenu);
-      }, 100);
-    });
-  });
-};
+  const LinkInstructions = () => (
+    <div className="text-xs text-gray-400 mb-2">
+      💡 Tip: Click on links to open or edit them. Right-click for more options.
+    </div>
+  );
+
   // Dropdown component to show selected option
   const Dropdown = ({ title, options, onSelect, selectedValue }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -1086,6 +1007,7 @@ const addContextMenuToLinks = () => {
         <button
           className="px-2 py-1 bg-transparent border border-[#AAAAAA] rounded flex items-center custom-fonts"
           onClick={() => setIsOpen(!isOpen)}
+          title={title}
         >
           {displayTitle}{" "}
           <span className="ml-1">
@@ -1094,7 +1016,7 @@ const addContextMenuToLinks = () => {
         </button>
 
         {isOpen && (
-          <div className="absolute z-10  w-40 bg-[#1C1C24] border border-[#AAAAAA] rounded shadow-lg">
+          <div className="absolute z-10 w-40 bg-[#1C1C24] border border-[#AAAAAA] rounded shadow-lg">
             {options.map((option, index) => (
               <button
                 key={index}
@@ -1103,6 +1025,7 @@ const addContextMenuToLinks = () => {
                   onSelect(option.value);
                   setIsOpen(false);
                 }}
+                title={option.tooltip} // Add tooltip to each option
               >
                 {option.label}
               </button>
@@ -1184,37 +1107,31 @@ const addContextMenuToLinks = () => {
           id="policyTitle"
           value={formData.title}
           onChange={handleTitleChange}
-          className={`add-qms-manual-inputs ${titleError ? "border-red-500" : ""
-            }`}
+          className={`add-qms-manual-inputs ${titleError ? "border-red-500" : ""}`}
           placeholder="Enter Policy Title"
           maxLength={50}
         />
-        {titleError && (
-          <p className="text-red-500 text-sm mt-1">{titleError}</p>
-        )}
+        {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
       </div>
 
       <div className="flex items-center bg-[#24242D] justify-between px-5 py-[13px] rounded-[4px] mb-4">
         {/* Text formatting */}
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.bold ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.bold ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("bold")}
           title="Bold"
         >
           <img src={bold} alt="Bold" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.italic ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.italic ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("italic")}
           title="Italic"
         >
-          <img src={itallic} alt="Itallic" />
+          <img src={itallic} alt="Italic" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.underline ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.underline ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("underline")}
           title="Underline"
         >
@@ -1222,54 +1139,47 @@ const addContextMenuToLinks = () => {
         </button>
 
         {/* Alignment */}
-
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "left" ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "left" ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("justifyLeft")}
           title="Align Left"
         >
           <img src={leftalign} alt="Text Left Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "center" ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "center" ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("justifyCenter")}
           title="Align Center"
         >
           <img src={centeralign} alt="Text Center Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "right" ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "right" ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("justifyRight")}
           title="Align Right"
         >
           <img src={rightalign} alt="Text Right Align" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "justify" ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.align === "justify" ? "bg-gray-700" : ""}`}
           onClick={() => execCommand("justifyFull")}
           title="Justify"
         >
           <img src={sentencetext} alt="Align Justify" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.orderedList ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.orderedList ? "bg-gray-700" : ""}`}
           onClick={() => handleList("ol")}
           title="Ordered List"
         >
           <img src={orderedlist} alt="Ordered List" />
         </button>
         <button
-          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.unorderedList ? "bg-gray-700" : ""
-            }`}
+          className={`p-1 mx-1 hover:bg-gray-700 rounded ${activeStyles.unorderedList ? "bg-gray-700" : ""}`}
           onClick={() => handleList("ul")}
           title="Unordered List"
         >
-          <img src={unorderedlist} alt="unordered List" />
+          <img src={unorderedlist} alt="Unordered List" />
         </button>
 
         {/* Font dropdowns */}
@@ -1303,53 +1213,30 @@ const addContextMenuToLinks = () => {
         </div>
 
         {/* Lists and indentation */}
-
-        <button
-          className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={handleIndent}
-          title="Indent"
-        >
+        <button className="p-1 mx-1 hover:bg-gray-700 rounded" onClick={handleIndent} title="Indent">
           <img src={textoutdent} alt="Text Indent" />
         </button>
-        <button
-          className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={handleOutdent}
-          title="Outdent"
-        >
-          <img src={textindednt} alt="Text Indent" />
+        <button className="p-1 mx-1 hover:bg-gray-700 rounded" onClick={handleOutdent} title="Outdent">
+          <img src={textindednt} alt="Text Outdent" />
         </button>
         <button
           className="p-1 mx-1 hover:bg-gray-700 rounded"
           onClick={handleInsertImage}
           title="Insert Image from URL"
         >
-          <img src={imagelink} alt="" />
+          <img src={imagelink} alt="Insert Image" />
         </button>
-        <button
-          className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={triggerImageUpload}
-          title="Upload Image"
-        >
-          <img src={imageupload} alt="" />
+        <button className="p-1 mx-1 hover:bg-gray-700 rounded" onClick={triggerImageUpload} title="Upload Image">
+          <img src={imageupload} alt="Upload Image" />
         </button>
 
         {/* Links */}
-        <button
-          className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={handleCreateLink}
-          title="Insert Link"
-        >
+        <button className="p-1 mx-1 hover:bg-gray-700 rounded" onClick={handleCreateLink} title="Insert Link">
           <img src={addlinks} alt="Add Link" />
         </button>
-        <button
-          className="p-1 mx-1 hover:bg-gray-700 rounded"
-          onClick={() => execCommand("unlink")}
-          title="Remove Link"
-        >
-          <img src={removelinks} alt="remove Links" />
+        <button className="p-1 mx-1 hover:bg-gray-700 rounded" onClick={() => execCommand("unlink")} title="Remove Link">
+          <img src={removelinks} alt="Remove Link" />
         </button>
-
-        {/* Images */}
 
         {/* Color pickers */}
         <div className="relative">
@@ -1359,13 +1246,10 @@ const addContextMenuToLinks = () => {
             title="Text Color"
             style={{ color: activeStyles.textColor }}
           >
-            <img src={textcolor} alt="text Color" />
+            <img src={textcolor} alt="Text Color" />
           </button>
           {showTextColorPicker && (
-            <ColorPickerPanel
-              onColorSelect={handleTextColor}
-              activeColor={activeStyles.textColor}
-            />
+            <ColorPickerPanel onColorSelect={handleTextColor} activeColor={activeStyles.textColor} />
           )}
         </div>
 
@@ -1378,55 +1262,63 @@ const addContextMenuToLinks = () => {
             <img
               src={textbgcolor}
               style={{
-                color:
-                  activeStyles.bgColor !== "transparent"
-                    ? activeStyles.bgColor
-                    : undefined,
+                color: activeStyles.bgColor !== "transparent" ? activeStyles.bgColor : undefined,
               }}
             />
           </button>
           {showBgColorPicker && (
-            <ColorPickerPanel
-              onColorSelect={handleBackgroundColor}
-              activeColor={activeStyles.bgColor}
-            />
+            <ColorPickerPanel onColorSelect={handleBackgroundColor} activeColor={activeStyles.bgColor} />
           )}
         </div>
       </div>
+      <LinkInstructions />
       <div className="rounded-md mb-6">
         {/* Editor Content Area */}
         <div
           ref={editorRef}
           contentEditable
           className="bg-[#24242D] px-5 py-[16px] min-h-[300px] focus:outline-none rounded-[4px]"
-          onInput={() =>
+          onInput={() => {
             setFormData((prev) => ({
               ...prev,
               content: editorRef.current.innerHTML,
-            }))
-          }
+            }));
+            setTimeout(() => {
+              makeLinksClickable();
+              addContextMenuToLinks();
+            }, 100);
+          }}
         />
       </div>
 
       {/* File Upload Section */}
       <div className="flex items-center justify-between mt-8 mb-[23px]">
         <label className="attach-policy-text">Attach Quality Policy:</label>
-        <div className="flex items-center ">
+        <div className="flex items-center">
           <label className="flex justify-center gap-[10px] items-center w-[326px] h-[44px] px-[10px] text-[#AAAAAA] rounded-md border border-[#383840] cursor-pointer transition">
             Choose File
             <img src={files} alt="File Icon" />
             <input
               type="file"
               className="hidden"
+              ref={fileInputRef} // Add ref to file input
               onChange={handleFileChange}
               accept=".pdf,.doc,.docx"
             />
           </label>
           <div className="mt-1 ml-2 text-sm text-[#54545B]">
-            {formData.energyPolicy?.name
-              ? formData.energyPolicy.name
-              : "No file chosen"}
+            {formData.energyPolicy?.name ? formData.energyPolicy.name : "No file chosen"}
           </div>
+          {formData.energyPolicy && (
+            <button
+              className="ml-2 px-2 py-1 text-[#AAAAAA]   text-xl font-bold"
+              onClick={handleClearFile}
+              title="Clear selected file"
+            >
+              &times;
+            </button>
+
+          )}
         </div>
       </div>
 
@@ -1446,11 +1338,7 @@ const addContextMenuToLinks = () => {
         <button className="cancel-btn duration-200" onClick={handleCancel}>
           Cancel
         </button>
-        <button
-          className="save-btn duration-200"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
+        <button className="save-btn duration-200" onClick={handleSave} disabled={isSaving}>
           {isSaving ? "Saving..." : "Save Policy"}
         </button>
       </div>
