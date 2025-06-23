@@ -18,6 +18,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
   const [employees, setEmployees] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [company, setCompany] = useState(null);
+
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
@@ -36,6 +37,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     }
     return null;
   };
+
   // Fetch managers and employees when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -101,6 +103,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
 
     return null;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedManager) {
@@ -109,6 +112,10 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     }
     if (selectedEmployees.length === 0) {
       setError("At least one employee must be selected");
+      return;
+    }
+    if (!surveyId) {
+      setError("Survey ID is required");
       return;
     }
 
@@ -123,6 +130,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
         company: companyId,
         manager: selectedManager,
         employee: selectedEmployees.map((emp) => emp.id),
+        survey: surveyId, // Include surveyId in the payload
       };
 
       await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);

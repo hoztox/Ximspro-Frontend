@@ -122,7 +122,7 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
       EmployeePerformance: performanceId, // Include performanceId in the payload
     };
 
-    await axios.post(`${BASE_URL}/qms/send-performance-email/`, payload);
+    await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);
 
     // Success feedback
     setError("");
