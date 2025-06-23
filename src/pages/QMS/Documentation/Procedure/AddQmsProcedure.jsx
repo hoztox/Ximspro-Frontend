@@ -275,85 +275,81 @@ const AddQmsProcedure = () => {
     navigate("/company/qms/procedure");
   };
 
-  const handleSaveClick = async () => {
-    if (!validateForm()) {
-      // Show the form has validation errors
-      setError("Please fill in all required fields");
+const handleSaveClick = async () => {
+  if (!validateForm()) {
+    setError("Please fill in all required fields");
+    return;
+  }
+  try {
+    setLoading(true);
+
+    const companyId = getUserCompanyId();
+    if (!companyId) {
+      setError("Company ID not found. Please log in again.");
+      setLoading(false);
       return;
     }
-    try {
-      setLoading(true);
 
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found. Please log in again.");
-        setLoading(false);
+    const submitData = new FormData();
+    submitData.append("company", companyId);
+
+    Object.keys(formData).forEach((key) => {
+      if (
+        key === "send_notification_to_checked_by" ||
+        key === "send_notification_to_approved_by" ||
+        key === "send_email_to_checked_by" ||
+        key === "send_email_to_approved_by"
+      ) {
+        submitData.append(key, formData[key]);
         return;
       }
+      submitData.append(key, formData[key]);
+    });
 
-      const submitData = new FormData();
-      console.log("procedure post ...................", formData);
-      submitData.append("company", companyId);
-
-      Object.keys(formData).forEach((key) => {
-        if (
-          key === "send_notification_to_checked_by" ||
-          key === "send_notification_to_approved_by" ||
-          key === "send_email_to_checked_by" ||
-          key === "send_email_to_approved_by"
-        ) {
-          submitData.append(key, formData[key]);
-          return;
-        }
-        submitData.append(key, formData[key]);
-      });
-
-      if (fileObject) {
-        submitData.append("upload_attachment", fileObject);
-      }
-
-      const response = await axios.post(
-        `${BASE_URL}/qms/procedure-create/`,
-        submitData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      setLoading(false);
-      setShowAddManualSuccessModal(true);
-      setTimeout(() => {
-        setShowAddManualSuccessModal(false);
-        navigate("/company/qms/procedure");
-      }, 1500);
-    } catch (err) {
-      setLoading(false);
-      let errorMsg = err.message;
-
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
-      setError(errorMsg);
-      setShowDarftManualErrorModal(true);
-      setTimeout(() => {
-        setShowDarftManualErrorModal(false);
-      }, 3000);
+    if (fileObject) {
+      submitData.append("upload_attachment", fileObject);
     }
-  };
+
+    const response = await axios.post(
+      `${BASE_URL}/qms/procedure-create/`,
+      submitData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    setLoading(false);
+    setShowAddManualSuccessModal(true);
+    setTimeout(() => {
+      setShowAddManualSuccessModal(false);
+      navigate("/company/qms/procedure");
+    }, 1500);
+  } catch (err) {
+    setLoading(false);
+    let errorMsg = "An unexpected error occurred.";
+
+    if (err.response) {
+      // Check for field-specific errors
+      if (err.response.data.title) {
+        errorMsg = err.response.data.title[0]; // e.g., "A procedure with this title already exists for your company."
+      } else if (err.response.data.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response.data.message) {
+        errorMsg = err.response.data.message;
+      }
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+
+    setError(errorMsg);
+    setShowDarftManualErrorModal(true);
+    setTimeout(() => {
+      setShowDarftManualErrorModal(false);
+    }, 3000);
+  }
+};
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
