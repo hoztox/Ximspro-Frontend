@@ -5,7 +5,7 @@ import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { motion, AnimatePresence } from "framer-motion";
-// import "./qmsemployeeperformance.css"; // Import same CSS as QmsEmployeePerformance
+ 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -25,165 +25,16 @@ const EvaluationModal = ({
   employeeList,
   surveyId,
 }) => {
-  const navigate = useNavigate();
-  const [selectedEmployee, setSelectedEmployee] = useState(
-    employee ? employee.id || "Select Employee" : "Select Employee"
-  );
+  const [selectedEmployee, setSelectedEmployee] = useState("Select Employee");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
-  const [surveys, setSurveys] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-
   const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [activeRatingQuestion, setActiveRatingQuestion] = useState(null);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
-        );
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching unsubmitted users:", error);
-      }
-    };
-
-    if (isOpen && surveyId) {
-      fetchUsers();
-    }
-  }, [isOpen, surveyId]);
-
-  useEffect(() => {
-    const fetchSurveyData = async () => {
-      setLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-        const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
-        setSurveys(response.data);
-        setError(null);
-      } catch (err) {
-        let errorMsg = err.message;
-        if (err.response) {
-          if (err.response.data.date) errorMsg = err.response.data.date[0];
-          else if (err.response.data.detail) errorMsg = err.response.data.detail;
-          else if (err.response.data.message) errorMsg = err.response.data.message;
-        }
-        setError(errorMsg);
-        console.error("Error fetching employee survey data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSurveyData();
-  }, []);
-
-  useEffect(() => {
-    if (isOpen && surveyId) {
-      fetchQuestions();
-    }
-  }, [isOpen, surveyId]);
-
-  const fetchQuestions = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${BASE_URL}/qms/survey/${surveyId}/questions/`
-      );
-      setQuestions(response.data);
-      console.log("Fetched questions:", response.data);
-    } catch (err) {
-      console.error("Error fetching questions:", err);
-      let errorMsg = err.message;
-      if (err.response) {
-        if (err.response.data.date) errorMsg = err.response.data.date[0];
-        else if (err.response.data.detail) errorMsg = err.response.data.detail;
-        else if (err.response.data.message) errorMsg = err.response.data.message;
-      }
-      setError(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleRatingSelector = (questionId) => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-      return;
-    }
-    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
-  };
-
-  const handleAnswerChange = (questionId, rating) => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      return;
-    }
-    const updatedQuestions = questions.map((q) =>
-      q.id === questionId ? { ...q, answer: rating } : q
-    );
-    setQuestions(updatedQuestions);
-    setActiveRatingQuestion(null);
-  };
-
-  const handleSubmitAllAnswers = async () => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 1500);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const questionsWithAnswers = questions.filter((q) => q.answer);
-      for (const question of questionsWithAnswers) {
-        await axios.patch(
-          `${BASE_URL}/qms/survey/question/answer/${question.id}/`,
-          { answer: question.answer, user_id: selectedEmployee }
-        );
-      }
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        navigate("/company/qms/list-satisfaction-survey");
-        onClose();
-      }, 1500);
-    } catch (err) {
-      console.error("Error submitting answers:", err);
-      let errorMsg = err.message;
-      if (err.response) {
-        if (err.response.data.date) errorMsg = err.response.data.date[0];
-        else if (err.response.data.detail) errorMsg = err.response.data.detail;
-        else if (err.response.data.message) errorMsg = err.response.data.message;
-      }
-      setError(errorMsg);
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const combinedOptions = [...(employeeList || []), ...(users || [])].reduce(
-    (unique, item) => {
-      if (!unique.find((x) => x.id === item.id)) unique.push(item);
-      return unique;
-    },
-    []
-  );
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
@@ -199,6 +50,132 @@ const EvaluationModal = ({
     }
     return null;
   };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const companyId = getUserCompanyId();
+        const response = await axios.get(
+          `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
+        );
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Error fetching unsubmitted users:", error);
+        setError("Failed to load employees");
+      }
+    };
+    if (isOpen && surveyId) {
+      fetchUsers();
+    }
+  }, [isOpen, surveyId]);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (selectedEmployee === "Select Employee" || !selectedEmployee) return;
+      setLoading(true);
+      try {
+        const questionsResponse = await axios.get(
+          `${BASE_URL}/qms/survey/${surveyId}/questions/`
+        );
+        const allQuestions = questionsResponse.data;
+        const companyId = getUserCompanyId();
+        const userResponse = await axios.get(
+          `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
+        );
+        const userData = userResponse.data.find(
+          (user) => user.id === parseInt(selectedEmployee)
+        );
+
+        const unansweredQuestions = allQuestions.map((question) => {
+          const userQuestion = userData?.questions.find(
+            (q) => q.question_text === question.question_text
+          );
+          return {
+            ...question,
+            answer: userQuestion?.answer || null,
+          };
+        }).filter((question) => !question.answer);
+
+        setQuestions(unansweredQuestions);
+      } catch (err) {
+        console.error("Error fetching questions:", err);
+        setError("Failed to load questions");
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (isOpen && surveyId && selectedEmployee !== "Select Employee") {
+      fetchQuestions();
+    }
+  }, [isOpen, surveyId, selectedEmployee]);
+
+  const toggleRatingSelector = (questionId) => {
+    if (selectedEmployee === "Select Employee") {
+      setError("Please select an employee first");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+      return;
+    }
+    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
+  };
+
+  const handleAnswerChange = (questionId, rating) => {
+    const updatedQuestions = questions.map((q) =>
+      q.id === questionId ? { ...q, answer: rating.toString() } : q
+    );
+    setQuestions(updatedQuestions);
+    setActiveRatingQuestion(null);
+  };
+
+  const handleSubmitAllAnswers = async () => {
+    if (selectedEmployee === "Select Employee") {
+      setError("Please select an employee first");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const questionsWithAnswers = questions.filter((q) => q.answer);
+      for (const question of questionsWithAnswers) {
+        await axios.patch(
+          `${BASE_URL}/qms/survey/question/answer/${question.id}/`,
+          {
+            answer: question.answer,
+            employee_id: selectedEmployee,
+          }
+        );
+      }
+      const companyId = getUserCompanyId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
+      );
+      setUsers(response.data);
+      setQuestions([]);
+      setSelectedEmployee("Select Employee");
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error("Error submitting answers:", err);
+      setError(err.response?.data?.message || err.message);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const combinedOptions = [...(employeeList || []), ...(users || [])].reduce(
+    (unique, item) => {
+      const exists = unique.find((x) => x.id === item.id);
+      if (!exists) unique.push(item);
+      return unique;
+    },
+    []
+  );
 
   return (
     <AnimatePresence>
@@ -256,9 +233,7 @@ const EvaluationModal = ({
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${
-                          isDropdownOpen ? "rotate-180" : ""
-                        }`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180deg" : ""}`}
                       />
                     </div>
                   </div>
@@ -272,7 +247,7 @@ const EvaluationModal = ({
                         <tr className="h-[48px]">
                           <th className="px-4 text-left employee-evaluation-theads w-16">No</th>
                           <th className="px-4 text-left employee-evaluation-theads">Question</th>
-                          <th className="px-4 text-right employee-evaluation-theads w-32">Answer</th>
+                          <th className="px-4 text-right employee-evaluation-theads w-32">Rating</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -284,7 +259,9 @@ const EvaluationModal = ({
                                 <td className="px-4 whitespace-nowrap employee-evaluate-data">{question.question_text}</td>
                                 <td className="px-4 whitespace-nowrap text-right">
                                   {question.answer ? (
-                                    <div className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-center w-[78px] h-[30px] ml-auto rating-data">{question.answer}</div>
+                                    <div className="bg-[#24242D] rounded-md px-[10px] flex items-center justify-center w-[78px] h-[30px] ml-auto rating-data">
+                                      {question.answer}
+                                    </div>
                                   ) : (
                                     <button
                                       onClick={() => toggleRatingSelector(question.id)}
@@ -324,7 +301,11 @@ const EvaluationModal = ({
                           ))
                         ) : (
                           <tr>
-                            <td colSpan="3" className="text-center py-4 not-found">No questions available</td>
+                            <td colSpan="3" className="text-center py-4 not-found">
+                              {selectedEmployee === "Select Employee"
+                                ? "Please select an employee"
+                                : "No unanswered questions for this employee"}
+                            </td>
                           </tr>
                         )}
                       </tbody>
@@ -332,26 +313,27 @@ const EvaluationModal = ({
                   </div>
                 )}
                 <div className="p-4 flex justify-end space-x-4">
-                  <button className="cancel-btn duration-200" onClick={onClose}>Cancel</button>
+                  <button className="cancel-btn duration-200" onClick={onClose}>
+                    Cancel
+                  </button>
                   <button
                     className="save-btn duration-200"
                     onClick={handleSubmitAllAnswers}
-                    disabled={submitting}
+                    disabled={submitting || questions.length === 0}
                   >
                     {submitting ? "Submitting..." : "Done"}
                   </button>
                 </div>
               </div>
-            </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
     </AnimatePresence>
   );
 };
 
 const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({ question: "" });
   const [questions, setQuestions] = useState([]);
   const [error, setError] = useState("");
@@ -380,13 +362,11 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
             else if (err.response.data.message) errorMsg = err.response.data.message;
           }
           setError(errorMsg);
-          setShowErrorModal(true);
         } finally {
           setLoading(false);
         }
       }
     };
-
     if (isOpen) fetchQuestions();
   }, [isOpen, surveyId]);
 
@@ -399,6 +379,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
     if (!formData.question.trim()) {
       setError("Question is required");
       setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
       return;
     }
     setLoading(true);
@@ -410,10 +391,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       setQuestions([...questions, response.data]);
       setFormData({ question: "" });
       setShowAddQuestionSuccessModal(true);
-      setTimeout(() => {
-        setShowAddQuestionSuccessModal(false);
-        navigate("/company/qms/list-satisfaction-survey");
-      }, 1500);
+      setTimeout(() => setShowAddQuestionSuccessModal(false), 1500);
       setError("");
     } catch (err) {
       console.error("Error adding question:", err);
@@ -450,7 +428,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       await axios.delete(
         `${BASE_URL}/qms/survey/question/${questionToDelete.id}/delete/`
       );
-      setQuestions(questions.filter((q) => q.id !== questionToDelete.id));
+      setQuestions(questions.filter((question) => question.id !== questionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteQuestionSuccessModal(true);
       setTimeout(() => setShowDeleteQuestionSuccessModal(false), 1500);
@@ -468,7 +446,6 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
       setTimeout(() => setShowErrorModal(false), 3000);
     } finally {
       setLoading(false);
-      setQuestionToDelete(null);
     }
   };
 
@@ -543,32 +520,24 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr><td colSpan="3">
-                        <div className="max-h-[148px] overflow-y-auto">
-                          <table className="w-full text-left">
-                            <tbody>
-                              {questions.map((question, index) => (
-                                <tr
-                                  key={question.id}
-                                  className="border-b border-[#383840] h-[42px] last:border-b-0"
-                                >
-                                  <td className="px-4 add-question-data w-[10%]">{index + 1}</td>
-                                  <td className="px-4 add-question-data w-[70%]">{question.question_text}</td>
-                                  <td className="px-4 text-center">
-                                    <button
-                                      onClick={() => openDeleteModal(question)}
-                                      className="text-gray-400 hover:text-white"
-                                      disabled={loading}
-                                    >
-                                      <img src={deleteIcon} alt="Delete Icon" />
-                                    </button>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </td></tr>
+                      {questions.map((question, index) => (
+                        <tr
+                          key={question.id}
+                          className="border-b border-[#383840] h-[42px] last:border-b-0"
+                        >
+                          <td className="px-4 add-question-data w-[10%]">{index + 1}</td>
+                          <td className="px-4 add-question-data w-[70%]">{question.question_text}</td>
+                          <td className="px-4 text-center">
+                            <button
+                              onClick={() => openDeleteModal(question)}
+                              className="text-gray-400 hover:text-white"
+                              disabled={loading}
+                            >
+                              <img src={deleteIcon} alt="Delete Icon" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -601,6 +570,7 @@ const QuestionsModal = ({ isOpen, onClose, surveyId }) => {
 
 const QmsEmployeeSatisfaction = () => {
   const [surveys, setSurveys] = useState([]);
+  const [sendMail, setSendMail] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -608,8 +578,8 @@ const QmsEmployeeSatisfaction = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
-  const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null });
-  const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
+  const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null, surveyId: null });
+  const [questionsModal, setQuestionsModal] = useState({ isOpen: false, surveyId: null });
   const [sendMailModal, setSendMailModal] = useState({ isOpen: false, surveyId: null });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
@@ -642,6 +612,20 @@ const QmsEmployeeSatisfaction = () => {
     return null;
   };
 
+  const fetchSendMail = async () => {
+    setLoading(true);
+    try {
+      const companyId = getUserCompanyId();
+      const response = await axios.get(`${BASE_URL}/qms/performanc/company/${companyId}/`);
+      setSendMail(response.data);
+    } catch (err) {
+      console.error("Error fetching send mail data:", err);
+      setError("Failed to load send mail data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSurveyData = async () => {
       setLoading(true);
@@ -656,9 +640,7 @@ const QmsEmployeeSatisfaction = () => {
         const response = await axios.get(`${BASE_URL}/qms/survey/${companyId}/`);
         const sortedSurveys = response.data.sort((a, b) => a.id - b.id);
         setSurveys(sortedSurveys);
-        const draftResponse = await axios.get(
-          `${BASE_URL}/qms/survey/drafts-count/${userId}/`
-        );
+        const draftResponse = await axios.get(`${BASE_URL}/qms/survey/drafts-count/${userId}/`);
         setDraftCount(draftResponse.data.count);
         setError(null);
       } catch (err) {
@@ -674,8 +656,8 @@ const QmsEmployeeSatisfaction = () => {
         setLoading(false);
       }
     };
-
     fetchSurveyData();
+    fetchSendMail();
   }, []);
 
   const handleSearch = (e) => {
@@ -726,7 +708,7 @@ const QmsEmployeeSatisfaction = () => {
       setSurveys(surveys.filter((survey) => survey.id !== satisfactionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteEmployeeSatisfactionSuccessModal(true);
-      setTimeout(() => setShowDeleteEmployeeSatisfactionSuccessModal(false), 1500);
+      setTimeout(() => setShowDeleteEmployeeSatisfactionSuccessModal(false), 2000);
     } catch (err) {
       console.error("Error deleting survey evaluation:", err);
       let errorMsg = err.message;
@@ -738,7 +720,7 @@ const QmsEmployeeSatisfaction = () => {
       setError(errorMsg);
       setShowDeleteModal(false);
       setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
+      setTimeout(() => setShowErrorModal(false), 2000);
     }
   };
 
@@ -763,6 +745,9 @@ const QmsEmployeeSatisfaction = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredSurveys.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredSurveys.length / itemsPerPage);
+
+  const currentUserId = getRelevantUserId();
+  const isManager = sendMail.some((item) => String(item.manager?.id) === String(currentUserId));
 
   if (loading) {
     return (
@@ -816,10 +801,16 @@ const QmsEmployeeSatisfaction = () => {
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
               <th className="px-2 text-left add-manual-theads">Valid Till</th>
-              <th className="px-2 text-left add-manual-theads">Add Questions</th>
-              <th className="px-2 text-left add-manual-theads">Email</th>
+              {!isManager && (
+                <>
+                  <th className="px-2 text-left add-manual-theads">Add Questions</th>
+                  <th className="px-2 text-left add-manual-theads">Email</th>
+                </>
+              )}
               <th className="px-2 text-left add-manual-theads">See Result Graph</th>
-              <th className="px-2 text-left add-manual-theads">Survey</th>
+              {isManager && currentUserId !== "14" && (
+                <th className="px-2 text-left add-manual-theads">Evaluation</th>
+              )}
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
               <th className="px-2 text-center add-manual-theads">Delete</th>
@@ -835,22 +826,26 @@ const QmsEmployeeSatisfaction = () => {
                   <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
                   <td className="px-2 add-manual-datas">{survey.survey_title || "Anonymous"}</td>
                   <td className="px-2 add-manual-datas">{formatDate(survey.valid_till)}</td>
-                  <td className="px-2 add-manual-datas">
-                    <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openQuestionsModal(survey.id)}
-                    >
-                      Add Questions
-                    </button>
-                  </td>
-                  <td className="px-2 add-manual-datas">
-                    <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openSendMailModal(survey.id)}
-                    >
-                      Send Mail
-                    </button>
-                  </td>
+                  {!isManager && (
+                    <>
+                      <td className="px-2 add-manual-datas">
+                        <button
+                          className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                          onClick={() => openQuestionsModal(survey.id)}
+                        >
+                          Add Questions
+                        </button>
+                      </td>
+                      <td className="px-2 add-manual-datas">
+                        <button
+                          className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                          onClick={() => openSendMailModal(survey.id)}
+                        >
+                          Send Mail
+                        </button>
+                      </td>
+                    </>
+                  )}
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
@@ -859,14 +854,16 @@ const QmsEmployeeSatisfaction = () => {
                       See Result Graph
                     </button>
                   </td>
-                  <td className="px-2 add-manual-datas">
-                    <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openEvaluationModal(survey)}
-                    >
-                      Click to Survey 
-                    </button>
-                  </td>
+                  {isManager && currentUserId !== "14" && (
+                    <td className="px-2 add-manual-datas">
+                      <button
+                        className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                        onClick={() => openEvaluationModal(survey)}
+                      >
+                        Click to Evaluate
+                      </button>
+                    </td>
+                  )}
                   <td className="px-2 add-manual-datas !text-center">
                     <button onClick={() => handleView(survey.id)}>
                       <img src={viewIcon} alt="View Icon" className="action-btn" />
@@ -886,7 +883,9 @@ const QmsEmployeeSatisfaction = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="10" className="text-center py-4 not-found">No employee satisfaction survey found</td>
+                <td colSpan={isManager ? 7 : 9} className="text-center py-4 not-found">
+                  No employee satisfaction surveys found
+                </td>
               </tr>
             )}
           </tbody>
@@ -935,14 +934,14 @@ const QmsEmployeeSatisfaction = () => {
       )}
       <EvaluationModal
         isOpen={evaluationModal.isOpen}
-        onClose={() => setEvaluationModal({ isOpen: false, employee: null })}
+        onClose={() => setEvaluationModal({ isOpen: false, employee: null, surveyId: null })}
         employee={evaluationModal.employee}
         employeeList={employees}
         surveyId={evaluationModal.surveyId}
       />
       <QuestionsModal
         isOpen={questionsModal.isOpen}
-        onClose={() => setQuestionsModal({ isOpen: false })}
+        onClose={() => setQuestionsModal({ isOpen: false, surveyId: null })}
         surveyId={questionsModal.surveyId}
       />
       <SendMailModal
