@@ -15,6 +15,7 @@ import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
 import DeleteTrainingEvaluationSuccessModal from "../Modals/DeleteTrainingEvaluationSuccessModal";
 import DeleteTrainingEvaluationConfirmModal from "../Modals/DeleteTrainingEvaluationConfirmModal";
+import SendMailModal from "../SendMailModal";
 
 const EvaluationModal = ({
   isOpen,
@@ -833,6 +834,8 @@ const QmsTrainingEvaluation = () => {
     employee: null,
   });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
+  // Add state for SendMailModal
+  const [sendMailModal, setSendMailModal] = useState({ isOpen: false, performanceId: null });
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -876,57 +879,57 @@ const QmsTrainingEvaluation = () => {
 
   // Fetch employee performance data
   useEffect(() => {
-  const fetchPerformanceData = async () => {
-    setLoading(true);
-    try {
-      const userId = getRelevantUserId();
-      const companyId = getUserCompanyId();
-      if (!companyId) {
-        setError("Company ID not found");
+    const fetchPerformanceData = async () => {
+      setLoading(true);
+      try {
+        const userId = getRelevantUserId();
+        const companyId = getUserCompanyId();
+        if (!companyId) {
+          setError("Company ID not found");
+          setLoading(false);
+          return;
+        }
+
+        const response = await axios.get(
+          `${BASE_URL}/qms/training-evaluation/${companyId}/`
+        );
+
+        const draftResponse = await axios.get(
+          `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
+        );
+        setDraftCount(draftResponse.data.count);
+
+        // Sort performances by id in ascending order
+        const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
+        setPerformances(sortedPerformances);
+        setError(null);
+      } catch (err) {
+        let errorMsg = err.message;
+
+        if (err.response) {
+          // Check for field-specific errors first
+          if (err.response.data.date) {
+            errorMsg = err.response.data.date[0];
+          }
+          // Check for non-field errors
+          else if (err.response.data.detail) {
+            errorMsg = err.response.data.detail;
+          } else if (err.response.data.message) {
+            errorMsg = err.response.data.message;
+          }
+        } else if (err.message) {
+          errorMsg = err.message;
+        }
+
+        setError(errorMsg);
+        console.error("Error fetching training evaluation data:", err);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      const response = await axios.get(
-        `${BASE_URL}/qms/training-evaluation/${companyId}/`
-      );
-
-      const draftResponse = await axios.get(
-        `${BASE_URL}/qms/training-evaluation/drafts-count/${userId}/`
-      );
-      setDraftCount(draftResponse.data.count);
-
-      // Sort performances by id in ascending order
-      const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
-      setPerformances(sortedPerformances);
-      setError(null);
-    } catch (err) {
-      let errorMsg = err.message;
-
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
-      setError(errorMsg);
-      console.error("Error fetching training evaluation data:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchPerformanceData();
-}, []);
+    fetchPerformanceData();
+  }, []);
 
   // Handle search
   const handleSearch = (e) => {
@@ -968,6 +971,11 @@ const QmsTrainingEvaluation = () => {
   const openDeleteModal = (performance) => {
     setTrainingEvaluationToDelete(performance);
     setShowDeleteModal(true);
+  };
+
+  // Add function to open SendMailModal
+  const openSendMailModal = (performanceId) => {
+    setSendMailModal({ isOpen: true, performanceId });
   };
 
   const cancelDeleteTrainingEvaluation = () => {
@@ -1019,19 +1027,6 @@ const QmsTrainingEvaluation = () => {
     }
   };
 
-  // Send email
-  const handleSendEmail = async (performanceId) => {
-    // try {
-    //   await axios.post(
-    //     `${BASE_URL}/qms/performance/send-email/${performanceId}/`
-    //   );
-    //   alert("Email sent successfully");
-    // } catch (err) {
-    //   console.error("Error sending email:", err);
-    //   alert("Failed to send email");
-    // }
-  };
-
   // Open evaluation modal
   const openEvaluationModal = (performance) => {
     setEvaluationModal({
@@ -1059,7 +1054,6 @@ const QmsTrainingEvaluation = () => {
       .replace(/\//g, "/");
   };
 
-
   // Pagination
   const itemsPerPage = 10;
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -1077,10 +1071,6 @@ const QmsTrainingEvaluation = () => {
       </div>
     );
   }
-
-  // if (error) {
-  //   return <div className="bg-[#1C1C24] text-white p-5 rounded-lg">Error: {error}</div>;
-  // }
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -1136,14 +1126,14 @@ const QmsTrainingEvaluation = () => {
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
               <th className="px-2 text-left add-manual-theads">Valid Till</th>
-              <th className="px-2 text-left add-manual-theads">Email</th>
-              <th className="px-2 text-left add-manual-theads">Evaluation</th>
-              <th className="px-2 text-left add-manual-theads">
-                See Result Graph
-              </th> 
               <th className="px-2 text-left add-manual-theads">
                 Add Questions
               </th>
+              <th className="px-2 text-left add-manual-theads">Email</th>
+              <th className="px-2 text-left add-manual-theads">
+                See Result Graph
+              </th>
+              <th className="px-2 text-left add-manual-theads">Evaluation</th>
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
               <th className="px-2 text-center add-manual-theads">Delete</th>
@@ -1167,23 +1157,23 @@ const QmsTrainingEvaluation = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF]"
-                      onClick={() => handleSendEmail(performance.id)}
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                      onClick={() => openQuestionsModal(performance.id)}
+                    >
+                      Add Questions
+                    </button>
+                  </td>
+                  <td className="px-2 add-manual-datas">
+                    <button
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                      onClick={() => openSendMailModal(performance.id)} // Trigger SendMailModal
                     >
                       Send Mail
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
-                      onClick={() => openEvaluationModal(performance)}
-                    >
-                      Click to Evaluate
-                    </button>
-                  </td>
-                  <td className="px-2 add-manual-datas">
-                    <button
-                      className="text-[#1E84AF]"
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
                       onClick={handleResultGraph}
                     >
                       See Result Graph
@@ -1191,10 +1181,10 @@ const QmsTrainingEvaluation = () => {
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
-                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors"
-                      onClick={() => openQuestionsModal(performance.id)}
+                      className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
+                      onClick={() => openEvaluationModal(performance)}
                     >
-                      Add Questions
+                      Click to Evaluate
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
@@ -1255,7 +1245,6 @@ const QmsTrainingEvaluation = () => {
             </button>
 
             {Array.from({ length: Math.min(4, totalPages) }, (_, i) => {
-              // Show pages around current page
               const pageToShow =
                 currentPage <= 2
                   ? i + 1
@@ -1309,6 +1298,13 @@ const QmsTrainingEvaluation = () => {
         isOpen={questionsModal.isOpen}
         onClose={() => setQuestionsModal({ isOpen: false })}
         performanceId={questionsModal.performanceId}
+      />
+
+      {/* Add SendMailModal */}
+      <SendMailModal
+        isOpen={sendMailModal.isOpen}
+        onClose={() => setSendMailModal({ isOpen: false, performanceId: null })}
+        performanceId={sendMailModal.performanceId}
       />
 
       {/* Delete Confirmation Modal */}

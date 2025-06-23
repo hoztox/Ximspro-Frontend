@@ -16,7 +16,7 @@ import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
 import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
 import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
-import SendMailModal from "./SendMailModal";
+import SendMailModal from "../SendMailModal";
 
 const EvaluationModal = ({
   isOpen,
@@ -1038,14 +1038,14 @@ const QmsEmployeePerformance = () => {
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
               <th className="px-2 text-left add-manual-theads">Title</th>
               <th className="px-2 text-left add-manual-theads">Valid Till</th>
-              <th className="px-2 text-left add-manual-theads">Email</th>
-              <th className="px-2 text-left add-manual-theads">Evaluation</th>
-              <th className="px-2 text-left add-manual-theads">
-                See Result Graph
-              </th>
               <th className="px-2 text-left add-manual-theads">
                 Add Questions
               </th>
+              <th className="px-2 text-left add-manual-theads">Email</th>
+              <th className="px-2 text-left add-manual-theads">
+                See Result Graph
+              </th>
+              <th className="px-2 text-left add-manual-theads">Evaluation</th>
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
               <th className="px-2 text-center add-manual-theads">Delete</th>
@@ -1070,17 +1070,17 @@ const QmsEmployeePerformance = () => {
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openSendMailModal(performance.id)}
+                      onClick={() => openQuestionsModal(performance.id)}
                     >
-                      Send Mail
+                      Add Questions
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openEvaluationModal(performance)}
+                      onClick={() => openSendMailModal(performance.id)}
                     >
-                      Click to Evaluate
+                      Send Mail
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas">
@@ -1094,9 +1094,9 @@ const QmsEmployeePerformance = () => {
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openQuestionsModal(performance.id)}
+                      onClick={() => openEvaluationModal(performance)}
                     >
-                      Add Questions
+                      Click to Evaluate
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">

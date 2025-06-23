@@ -116,6 +116,7 @@ import AMSObjectivesSubmenu from "./AMS/Objectives and Targets/AMSObjectivesSubm
 import AMSUserSubmenu from "./AMS/User Management/AMSUserSubmenu";
 import AMSNonConformitySubmenu from "./AMS/Non Conformity Report/AMSNonConformitySubmenu";
 import AMSReportSubmenu from "./AMS/Report Analysis/AMSReportSubmenu";
+import EmployeeManagementSubmenu from "./QMS/EmployeeManagement/EmployeeManagementSubmenu";
 
 
 
@@ -233,6 +234,14 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
         hasSubMenu: true,
         submenuType: "qmsobjectives",
         pathPrefix: "/company/qmsobjectives",
+      },
+      {
+        id: "qmsemployee",
+        label: "Employee Management",
+        icon: CustomerIcon,
+        hasSubMenu: true,
+        submenuType: "qmsemployee",
+        pathPrefix: "/company/qmsemployee",
       },
       {
         id: "qmsuser",
@@ -1364,6 +1373,14 @@ const SecondarySidebar = ({ selectedMenuItem, collapsed, setCollapsed }) => {
       case "qmsobjectives":
         submenuContent = (
           <ObjectiveSubmenu
+            activeSubItem={activeSubItem}
+            handleItemClick={handleSubMenuItemClick}
+          />
+        );
+        break;
+      case "qmsemployee":
+        submenuContent = (
+          <EmployeeManagementSubmenu
             activeSubItem={activeSubItem}
             handleItemClick={handleSubMenuItemClick}
           />

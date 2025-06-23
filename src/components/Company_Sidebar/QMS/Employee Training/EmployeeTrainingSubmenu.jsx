@@ -55,7 +55,7 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/drafts-training-evaluation",
                 "/company/qms/edits-drafts-training-evaluation",
                 "/company/qms/views-drafts-training-evaluation",
-                // "/company/qms/employees-performance-graph",
+                "/company/qms/training-evaluation-graph",
             ]
         },
         {
@@ -77,8 +77,6 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/edit-draft-employee-performance",
                 "/company/qms/view-draft-employee-performance",
                 "/company/qms/employees-performance-graph",
-                
-
             ]
         },
         {
@@ -93,6 +91,7 @@ const EmployeeTrainingSubmenu = (props) => {
                 "/company/qms/draft-satisfaction-survey",
                 "/company/qms/edit-draft-satisfaction-survey",
                 "/company/qms/view-draft-satisfaction-survey",
+                "/company/qms/employees-satisfaction-graph",
             ]
         },
         {

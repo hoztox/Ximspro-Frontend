@@ -1,0 +1,22 @@
+.viewhead {
+    font-family: 'Switzer Medium';
+    font-size: 26px;
+    color: white;
+}
+
+.viewlabels {
+    font-family: 'Switzer Light'; 
+    font-size: 14px;
+    color: #AAAAAA;
+}
+
+.viewdatas {
+    font-family: 'Switzer Light';
+    font-size: 14px;
+    color: white;
+}
+
+.buttons {
+    font-family: 'Switzer Light';
+    font-size: 16px;
+}
