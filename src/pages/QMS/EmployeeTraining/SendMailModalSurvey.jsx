@@ -97,66 +97,67 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
 
     return null;
   };
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (!selectedManager) {
-    setError("Manager is required");
-    return;
-  }
-  if (selectedEmployees.length === 0) {
-    setError("At least one employee must be selected");
-    return;
-  }
-
-  setLoading(true);
-  setError("");
-
-  try {
-    const companyId = getUserCompanyId();
-    const userId = getRelevantUserId();
-    const payload = {
-      user: userId,
-      company: companyId,
-      manager: selectedManager,
-      employee: selectedEmployees.map(emp => emp.id),
-      EmployeePerformance: performanceId, // Include performanceId in the payload
-    };
-
-    await axios.post(`${BASE_URL}/qms/send-performance-email/`, payload);
-
-    // Success feedback
-    setError("");
-    alert("Email sent successfully!");
-
-    // Reset form
-    setSelectedManager("");
-    setSelectedEmployees([]);
-    setSearchTerm("");
-
-    setTimeout(() => {
-      onClose();
-    }, 1000);
-
-  } catch (err) {
-    console.error("Error sending email:", err);
-    let errorMsg = "Failed to send email. Please try again.";
-
-    if (err.response?.data) {
-      if (err.response.data.detail) {
-        errorMsg = err.response.data.detail;
-      } else if (err.response.data.message) {
-        errorMsg = err.response.data.message;
-      } else if (typeof err.response.data === 'object') {
-        // Handle field-specific errors
-        const errors = Object.values(err.response.data).flat();
-        errorMsg = errors.join(', ');
-      }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedManager) {
+      setError("Manager is required");
+      return;
     }
-    setError(errorMsg);
-  } finally {
-    setLoading(false);
-  }
-};
+    if (selectedEmployees.length === 0) {
+      setError("At least one employee must be selected");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    
+    try {
+ const companyId = getUserCompanyId();
+  const userId = getRelevantUserId();
+      const payload = {
+        user:userId,
+        company:companyId,
+        manager: selectedManager,
+        employee: selectedEmployees.map(emp => emp.id),
+       
+       
+      };
+
+      await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);
+      
+      // Success feedback
+      setError("");
+      alert("Email sent successfully!");
+      
+      // Reset form
+      setSelectedManager("");
+      setSelectedEmployees([]);
+      setSearchTerm("");
+      
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+      
+    } catch (err) {
+      console.error("Error sending email:", err);
+      let errorMsg = "Failed to send email. Please try again.";
+      
+      if (err.response?.data) {
+        if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        } else if (typeof err.response.data === 'object') {
+          // Handle field-specific errors
+          const errors = Object.values(err.response.data).flat();
+          errorMsg = errors.join(', ');
+        }
+      }
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCancel = () => {
     // Clear all form data
