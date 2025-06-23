@@ -392,6 +392,11 @@ import QmsListOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagemen
 import QmsAddOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsAddOpportunityAssessment";
 import QmsEditOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsEditOpportunityAssessment";
 import QmsViewOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsViewOpportunityAssessment";
+import QmsEmployeeSatisfactionGraph from "./pages/QMS/EmployeeTraining/EmployeeSatisfactionSurvey/QmsEmployeeSatisfactionGraph";
+import QmsAddEmployee from "./pages/QMS/EmployeeManagement/QmsAddEmployee";
+import QmsListEmployee from "./pages/QMS/EmployeeManagement/QmsListEmployee";
+import QmsEditEmployee from "./pages/QMS/EmployeeManagement/QmsEditEmployee";
+import QmsViewEmployee from "./pages/QMS/EmployeeManagement/QmsViewEmployee";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -509,6 +514,7 @@ const ThemedApp = () => {
           <Route path="qms/draft-satisfaction-survey" element={<QmsDraftEmployeeSatisfaction />} />
           <Route path="qms/edit-draft-satisfaction-survey/:id" element={<QmsEditDraftEmployeeSatisfaction />} />
           <Route path="qms/view-draft-satisfaction-survey/:id" element={<QmsViewDraftEmployeeSatisfaction />} />
+          <Route path="qms/employees-satisfaction-graph" element={<QmsEmployeeSatisfactionGraph />} />
 
           <Route path="qms/list-awareness-training" element={<QmsListAwarenessTraining />} />
           <Route path="qms/add-awareness-training" element={<QmsAddAwarenessTraining />} />
@@ -848,6 +854,15 @@ const ThemedApp = () => {
 
 
 
+        {/* QMS Employee Management */}
+        <Route path="qms/list-employee" element={<QmsListEmployee />} />
+        <Route path="qms/add-employee" element={<QmsAddEmployee />} />
+        <Route path="qms/edit-employee" element={<QmsEditEmployee />} />
+        <Route path="qms/view-employee" element={<QmsViewEmployee />} />
+
+
+
+
 
 
 
@@ -856,6 +871,7 @@ const ThemedApp = () => {
           <Route path="qms/listuser" element={<QMSListUser />} />
           <Route path="qms/edituser/:id" element={<QMSEditUser />} />
           <Route path="qms/user-details/:id" element={<QMSViewUser />} />
+
 
 
 

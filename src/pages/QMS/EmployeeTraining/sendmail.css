@@ -21,10 +21,10 @@
 }
 
 .form-checkboxes:checked::after {
-  content: url('../../../../assets/images/AddCompany/tickmark.svg');
+  content: url('../../../assets/images/AddCompany/tickmark.svg');
   color: white; 
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
 }

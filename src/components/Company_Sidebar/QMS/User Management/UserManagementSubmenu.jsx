@@ -19,11 +19,20 @@ const UserManagementSubmenu = (props) => {
       label: "List User",
       icon: <img src={manual} alt="Manual" className="w-[15px] h-[15px]" />,
       path: "/company/qms/listuser",
+       relatedPaths: [
+        "/company/qms/edituser",
+        "/company/qms/user-details",
+      ],
     },
   ];
 
   const isActive = (category) => {
-    return location.pathname === category.path;
+    const currentPath = location.pathname;
+    return (
+      currentPath === category.path ||
+      (category.relatedPaths &&
+        category.relatedPaths.some((path) => currentPath.startsWith(path)))
+    );
   };
 
   // Handle clicking on a submenu item
