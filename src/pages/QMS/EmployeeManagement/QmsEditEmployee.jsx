@@ -38,7 +38,7 @@ const QmsEditEmployee = () => {
     date_of_birth: { day: '', month: '', year: '' },
     phone: '',
     email: '',
-    department_division: '',
+    department: '',
     status: 'active',
   });
 
@@ -70,7 +70,7 @@ const QmsEditEmployee = () => {
             date_of_birth: dob,
             phone: employee.phone || '',
             email: employee.email || '',
-            department_division: employee.department_division || '',
+            department: employee.department || '',
             status: employee.status || 'active',
           });
           setEmailValid(true); // Assume existing email is valid
@@ -228,10 +228,10 @@ const QmsEditEmployee = () => {
       formDataToSubmit.append('date_of_birth', formattedDob);
       formDataToSubmit.append('phone', formData.phone);
       formDataToSubmit.append('email', formData.email);
-      formDataToSubmit.append('department_division', formData.department_division);
+      formDataToSubmit.append('department', formData.department);
       formDataToSubmit.append('status', formData.status);
 
-      const response = await axios.put(`${BASE_URL}/company/employees/${id}/update/`, formDataToSubmit, {
+      const response = await axios.put(`${BASE_URL}/company/employees/${id}/`, formDataToSubmit, {
         headers: { "Content-Type": "multipart/form-data" }
       });
 
@@ -498,8 +498,8 @@ const QmsEditEmployee = () => {
             <label className="add-user-label">Department / Division</label>
             <input
               type="text"
-              name="department_division"
-              value={formData.department_division}
+              name="department"
+              value={formData.department}
               onChange={handleChange}
               className="w-full add-user-inputs"
             />

@@ -33,10 +33,6 @@ const QmsListEmployee = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchEmployees();
-  }, [currentPage, searchQuery]);
-
   const getCompanyId = () => {
     const role = localStorage.getItem("role");
     if (role === "company") {
@@ -44,7 +40,15 @@ const QmsListEmployee = () => {
     } else if (role === "user") {
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
-        return userCompanyId ? JSON.parse(userCompanyId) : null;
+        if (!userCompanyId) return null;
+        
+        // Check if it's already a plain string/number or needs parsing
+        try {
+          return JSON.parse(userCompanyId);
+        } catch {
+          // If parsing fails, return the value as is (might be a plain string)
+          return userCompanyId;
+        }
       } catch (e) {
         console.error("Error parsing company ID:", e);
         return null;
@@ -56,9 +60,12 @@ const QmsListEmployee = () => {
   const fetchEmployees = async () => {
     try {
       const companyId = getCompanyId();
-      if (!companyId) return;
+      if (!companyId) {
+        console.warn("No company ID found");
+        return;
+      }
 
-      const response = await axios.get(`${BASE_URL}/company/employees/${companyId}/`, {
+      const response = await axios.get(`${BASE_URL}/company/employees/company/${companyId}/`, {
         params: {
           search: searchQuery,
           page: currentPage,
@@ -70,17 +77,35 @@ const QmsListEmployee = () => {
       if (Array.isArray(response.data)) {
         employeesList = response.data;
         setTotalPages(1);
-      } else if (response.data.employees) {
+      } else if (response.data && response.data.employees) {
         employeesList = response.data.employees;
         setTotalPages(response.data.total_pages || 1);
       }
 
-      const sortedEmployees = employeesList.sort((a, b) => a.id - b.id);
+      // Ensure all employees have required properties
+      const processedEmployees = employeesList.map(employee => ({
+        ...employee,
+        status: employee.status || 'active', // Default status
+        first_name: employee.first_name || '',
+        last_name: employee.last_name || '',
+        email: employee.email || ''
+      }));
+
+      const sortedEmployees = processedEmployees.sort((a, b) => a.id - b.id);
       setEmployees(sortedEmployees);
     } catch (error) {
       console.error("Error fetching employees:", error);
+      setError("Failed to fetch employees");
+      setShowErrorModal(true);
+      setTimeout(() => {
+        setShowErrorModal(false);
+      }, 3000);
     }
   };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, [currentPage, searchQuery]);
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
@@ -107,7 +132,7 @@ const QmsListEmployee = () => {
   const handleConfirmDelete = async () => {
     if (employeeToDelete) {
       try {
-        await axios.delete(`${BASE_URL}/company/employees/delete/${employeeToDelete}/`);
+        await axios.delete(`${BASE_URL}/company/employees/${employeeToDelete}/`);
         setEmployees(employees.filter(employee => employee.id !== employeeToDelete));
         setSuccessMessage("Employee Deleted Successfully!");
         setShowSuccessModal(true);
@@ -117,7 +142,7 @@ const QmsListEmployee = () => {
       } catch (error) {
         console.error("Error deleting employee:", error);
         let errorMsg = error.message;
-        if (error.response) {
+        if (error.response && error.response.data) {
           if (error.response.data.detail) {
             errorMsg = error.response.data.detail;
           } else if (error.response.data.message) {
@@ -141,7 +166,7 @@ const QmsListEmployee = () => {
   const handleToggleStatus = (employeeId, currentStatus) => {
     setEmployeeToBlock(employeeId);
     setCurrentStatus(currentStatus);
-    const newAction = currentStatus.toLowerCase() === "active" ? "block" : "unblock";
+    const newAction = currentStatus && currentStatus.toLowerCase() === "active" ? "block" : "unblock";
     setActionType(newAction);
     setShowBlockConfirmModal(true);
   };
@@ -150,7 +175,7 @@ const QmsListEmployee = () => {
     if (employeeToBlock) {
       setStatusLoading(prev => ({ ...prev, [employeeToBlock]: true }));
       try {
-        const newStatus = currentStatus.toLowerCase() === "active" ? "blocked" : "active";
+        const newStatus = currentStatus && currentStatus.toLowerCase() === "active" ? "blocked" : "active";
         const companyId = getCompanyId();
         if (!companyId) {
           setError('Company ID not found. Please log in again.');
@@ -185,7 +210,7 @@ const QmsListEmployee = () => {
       } catch (error) {
         console.error("Error updating employee status:", error);
         let errorMsg = error.message;
-        if (error.response) {
+        if (error.response && error.response.data) {
           if (error.response.data.detail) {
             errorMsg = error.response.data.detail;
           } else if (error.response.data.message) {
@@ -224,6 +249,12 @@ const QmsListEmployee = () => {
     return actionType === "block"
       ? "Are you sure you want to block this Employee?"
       : "Are you sure you want to unblock this Employee?";
+  };
+
+  // Safe status display function
+  const getStatusDisplay = (status) => {
+    if (!status) return 'Active';
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   return (
@@ -286,7 +317,6 @@ const QmsListEmployee = () => {
               <th className="px-5 text-left add-user-theads">Employee Name</th>
               <th className="px-5 text-left add-user-theads">Email</th>
               <th className="px-5 text-left add-user-theads">Status</th>
-              {/* <th className="px-5 text-center add-user-theads">Block</th> */}
               <th className="px-5 text-center add-user-theads">View</th>
               <th className="px-5 text-center add-user-theads">Edit</th>
               <th className="px-5 text-center add-user-theads">Delete</th>
@@ -297,33 +327,19 @@ const QmsListEmployee = () => {
               employees.map((employee, index) => (
                 <tr key={employee.id} className="border-b border-[#383840] hover:bg-[#1a1a20] cursor-pointer h-[46px]">
                   <td className="px-[23px] add-user-datas">{(currentPage - 1) * employeesPerPage + index + 1}</td>
-                  <td className="px-5 add-user-datas">{employee.first_name} {employee.last_name}</td>
+                  <td className="px-5 add-user-datas">
+                    {employee.first_name} {employee.last_name}
+                  </td>
                   <td className="px-5 add-user-datas">{employee.email}</td>
                   <td className="px-5 add-user-datas">
-                    <span className={`px-2 py-1 rounded text-xs ${employee.status === 'active' ? 'bg-[#36DDAE11] text-[#36DDAE]' : 'bg-[#dd363642] text-red-500'}`}>
-                      {employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      employee.status === 'active' 
+                        ? 'bg-[#36DDAE11] text-[#36DDAE]' 
+                        : 'bg-[#dd363642] text-red-500'
+                    }`}>
+                      {getStatusDisplay(employee.status)}
                     </span>
                   </td>
-                  {/* <td className="px-5 add-user-datas text-center">
-                    <div className="flex justify-center items-center w-full">
-                      <button
-                        className={`items-center rounded-full p-1 toggle ${employee.status && employee.status.toLowerCase() === "blocked" ? "toggleblock" : "toggleactive"}`}
-                        onClick={() => handleToggleStatus(employee.id, employee.status || "Active")}
-                        disabled={statusLoading[employee.id]}
-                      >
-                        {statusLoading[employee.id] ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <div
-                            className={`rounded-full transform transition-transform bar ${employee.status.toLowerCase() === "blocked"
-                              ? "translate-x-2"
-                              : "translate-x-0"
-                              }`}
-                          />
-                        )}
-                      </button>
-                    </div>
-                  </td> */}
                   <td className="px-4 add-user-datas text-center">
                     <button onClick={() => handleViewEmployee(employee.id)}>
                       <img src={views} alt="View" />
@@ -343,11 +359,11 @@ const QmsListEmployee = () => {
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="text-center py-4 not-found">No employees found.</td>
+                <td colSpan="7" className="text-center py-4 not-found">No employees found.</td>
               </tr>
             )}
             <tr>
-              <td colSpan="8" className="pt-[15px] border-t border-[#383840]">
+              <td colSpan="7" className="pt-[15px] border-t border-[#383840]">
                 <div className="flex items-center justify-between">
                   <div className="text-white total-text">
                     Total-{employees.length}

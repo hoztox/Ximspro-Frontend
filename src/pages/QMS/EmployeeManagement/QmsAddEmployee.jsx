@@ -37,7 +37,7 @@ const QmsAddEmployee = () => {
     date_of_birth: { day: '', month: '', year: '' },
     phone: '',
     email: '',
-    department_division: '',
+    department: '',
     status: 'active',
   });
 
@@ -182,14 +182,14 @@ const QmsAddEmployee = () => {
       }
 
       const formDataToSubmit = new FormData();
-      formDataToSubmit.append('company_id', companyId);
+      formDataToSubmit.append('company', companyId);
       formDataToSubmit.append('first_name', formData.first_name);
       formDataToSubmit.append('last_name', formData.last_name);
       formDataToSubmit.append('gender', formData.gender);
       formDataToSubmit.append('date_of_birth', formattedDob);
       formDataToSubmit.append('phone', formData.phone);
       formDataToSubmit.append('email', formData.email);
-      formDataToSubmit.ppend('department_division', formData.department_division);
+      formDataToSubmit.append('department', formData.department); // Fixed typo here
       formDataToSubmit.append('status', formData.status);
 
       const response = await axios.post(`${BASE_URL}/company/employees/create/`, formDataToSubmit, {
@@ -455,8 +455,8 @@ const QmsAddEmployee = () => {
             <label className="add-user-label">Department / Division</label>
             <input
               type="text"
-              name="department_division"
-              value={formData.department_division}
+              name="department"
+              value={formData.department}
               onChange={handleChange}
               className="w-full add-user-inputs"
             />

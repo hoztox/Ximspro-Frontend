@@ -857,8 +857,8 @@ const ThemedApp = () => {
         {/* QMS Employee Management */}
         <Route path="qms/list-employee" element={<QmsListEmployee />} />
         <Route path="qms/add-employee" element={<QmsAddEmployee />} />
-        <Route path="qms/edit-employee" element={<QmsEditEmployee />} />
-        <Route path="qms/view-employee" element={<QmsViewEmployee />} />
+        <Route path="qms/edit-employee/:id" element={<QmsEditEmployee />} />
+        <Route path="qms/view-employee/:id" element={<QmsViewEmployee />} />
 
 
 

@@ -420,7 +420,7 @@ const ViewQmsprocedure = () => {
 
   const canReview = (() => {
     if (isCurrentUserWrittenBy) {
-      return true;
+      return false;
     }
     if (manualDetails.status === "Pending for Review/Checking") {
       return currentUserId === manualDetails.checked_by?.id;
