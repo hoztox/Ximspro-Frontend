@@ -15,14 +15,14 @@ import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
 import DeleteTrainingEvaluationSuccessModal from "../Modals/DeleteTrainingEvaluationSuccessModal";
 import DeleteTrainingEvaluationConfirmModal from "../Modals/DeleteTrainingEvaluationConfirmModal";
-import SendMailModal from "../SendMailModal";
+import SendMailModalTraining from "../SendMailModalTraining";
 
 const EvaluationModal = ({
   isOpen,
   onClose,
   employee,
   employeeList,
-  performanceId,
+  trainingEvaluationId,
 }) => {
   const [selectedEmployee, setSelectedEmployee] = useState(
     employee ? employee.id || "Select Employee" : "Select Employee"
@@ -32,7 +32,7 @@ const EvaluationModal = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
-  const [performances, setPerformances] = useState([]);
+  const [trainingEvaluations, setTrainingEvaluations] = useState([]);
   const navigate = useNavigate();
 
   const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] =
@@ -50,7 +50,7 @@ const EvaluationModal = ({
         const companyId = getUserCompanyId();
 
         const response = await axios.get(
-          `${BASE_URL}/qms/training-evaluation/${companyId}/evaluation/${performanceId}/`
+          `${BASE_URL}/qms/training-evaluation/${companyId}/evaluation/${trainingEvaluationId}/`
         );
         setUsers(response.data);
         console.log("uuuuuuuuuuuuuuuuuu", response.data);
@@ -59,13 +59,13 @@ const EvaluationModal = ({
       }
     };
 
-    if (isOpen && performanceId) {
+    if (isOpen && trainingEvaluationId) {
       fetchUsers();
     }
-  }, [isOpen, performanceId]);
+  }, [isOpen, trainingEvaluationId]);
 
   useEffect(() => {
-    const fetchPerformanceData = async () => {
+    const fetchTrainingEvaluationData = async () => {
       setLoading(true);
       try {
         const companyId = getUserCompanyId();
@@ -78,7 +78,7 @@ const EvaluationModal = ({
         const response = await axios.get(
           `${BASE_URL}/qms/training-evaluation/${companyId}/`
         );
-        setPerformances(response.data);
+        setTrainingEvaluations(response.data);
         setError(null);
       } catch (err) {
         let errorMsg =  err.message;
@@ -99,28 +99,28 @@ const EvaluationModal = ({
         }
 
         setError(errorMsg);
-        console.error("Error fetching employee performance data:", err);
+        console.error("Error fetching employee training evaluation data:", err);
       } finally {
         setLoading(false);
       }
     };
 
     // Fetch employees for dropdown
-    fetchPerformanceData();
+    fetchTrainingEvaluationData();
   }, []);
 
   // Fetch questions when modal opens
   useEffect(() => {
-    if (isOpen && performanceId) {
+    if (isOpen && trainingEvaluationId) {
       fetchQuestions();
     }
-  }, [isOpen, performanceId]);
+  }, [isOpen, trainingEvaluationId]);
 
   const fetchQuestions = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${BASE_URL}/qms/training-evaluation/${performanceId}/questions/`
+        `${BASE_URL}/qms/training-evaluation/${trainingEvaluationId}/questions/`
       );
       setQuestions(response.data);
       console.log("Fetched questions:", response.data);
@@ -485,7 +485,7 @@ const EvaluationModal = ({
   );
 };
 
-const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
+const QuestionsModal = ({ isOpen, onClose, trainingEvaluationId }) => {
   const [formData, setFormData] = useState({
     question: "",
   });
@@ -493,47 +493,36 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] =
-    useState(false);
+  const [showAddQuestionSuccessModal, setShowAddQuestionSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const navigate = useNavigate();
-
-  // Delete related states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [questionToDelete, setQuestionToDelete] = useState(null);
-  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] =
-    useState(false);
+  const [showDeleteQuestionSuccessModal, setShowDeleteQuestionSuccessModal] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchQuestions = async () => {
-      if (performanceId) {
+      if (trainingEvaluationId) {
         setLoading(true);
         try {
           const response = await axios.get(
-            `${BASE_URL}/qms/training-evaluation/${performanceId}/questions/`
+            `${BASE_URL}/qms/training-evaluation/${trainingEvaluationId}/questions/`
           );
-          console.log("aaaaaaaaaaa", response.data);
-
+          console.log("Questions:", response.data); // Debug log
           setQuestions(response.data);
         } catch (err) {
           console.error("Error fetching questions:", err);
           let errorMsg = err.message;
-
           if (err.response) {
-            // Check for field-specific errors first
             if (err.response.data.date) {
               errorMsg = err.response.data.date[0];
-            }
-            // Check for non-field errors
-            else if (err.response.data.detail) {
+            } else if (err.response.data.detail) {
               errorMsg = err.response.data.detail;
             } else if (err.response.data.message) {
               errorMsg = err.response.data.message;
             }
-          } else if (err.message) {
-            errorMsg = err.message;
           }
-
           setError(errorMsg);
         } finally {
           setLoading(false);
@@ -544,7 +533,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     if (isOpen) {
       fetchQuestions();
     }
-  }, [isOpen, performanceId]);
+  }, [isOpen, trainingEvaluationId]);
 
   const handleChange = (e) => {
     setFormData({
@@ -555,7 +544,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitting formData:", formData);
     if (!formData.question.trim()) {
       setError("Question is required");
       return;
@@ -566,7 +554,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       const response = await axios.post(
         `${BASE_URL}/qms/training-evaluation/question-add/`,
         {
-          emp_training_eval: performanceId,
+          emp_training_eval: trainingEvaluationId,
           question_text: formData.question,
         }
       );
@@ -581,23 +569,16 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       setError("");
     } catch (err) {
       console.error("Error adding question:", err);
-      let errorMsg =  err.message;
-
+      let errorMsg = err.message;
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         }
-      } else if (err.message) {
-        errorMsg = err.message;
       }
-
       setError(errorMsg);
       setShowErrorModal(true);
       setTimeout(() => {
@@ -608,13 +589,11 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     }
   };
 
-  // Open delete confirmation modal
   const openDeleteModal = (question) => {
     setQuestionToDelete(question);
     setShowDeleteModal(true);
   };
 
-  // Close all modals
   const closeAllModals = () => {
     setShowDeleteModal(false);
     setShowDeleteQuestionSuccessModal(false);
@@ -622,7 +601,6 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     setShowAddQuestionSuccessModal(false);
   };
 
-  // Handle delete confirmation
   const confirmDelete = async () => {
     if (!questionToDelete) return;
 
@@ -632,10 +610,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
         `${BASE_URL}/qms/training-evaluation/question/${questionToDelete.id}/delete/`
       );
 
-      // Remove the deleted question from state
-      setQuestions(
-        questions.filter((question) => question.id !== questionToDelete.id)
-      );
+      setQuestions(questions.filter((question) => question.id !== questionToDelete.id));
       setShowDeleteModal(false);
       setShowDeleteQuestionSuccessModal(true);
       setTimeout(() => {
@@ -643,25 +618,18 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       }, 1500);
     } catch (err) {
       console.error("Error deleting question:", err);
-      setShowDeleteModal(false);
       let errorMsg = err.message;
-
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         }
-      } else if (err.message) {
-        errorMsg = err.message;
       }
-
       setError(errorMsg);
+      setShowDeleteModal(false);
       setShowErrorModal(true);
       setTimeout(() => {
         setShowErrorModal(false);
@@ -680,6 +648,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
+          key="questions-modal"
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -741,15 +710,9 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
                   <table className="w-full text-left">
                     <thead className="bg-[#24242D]">
                       <tr className="h-[48px]">
-                        <th className="px-4 add-question-theads text-left w-[10%]">
-                          No
-                        </th>
-                        <th className="px-4 add-question-theads text-left w-[70%]">
-                          Question
-                        </th>
-                        <th className="px-4 pr-8 add-question-theads text-right">
-                          Delete
-                        </th>
+                        <th className="px-4 add-question-theads text-left w-[10%]">No</th>
+                        <th className="px-4 add-question-theads text-left w-[70%]">Question</th>
+                        <th className="px-4 pr-8 add-question-theads text-right">Delete</th>
                       </tr>
                     </thead>
                   </table>
@@ -761,12 +724,8 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
                             key={question.id}
                             className="border-b border-[#383840] h-[42px] last:border-b-0"
                           >
-                            <td className="px-4 add-question-data w-[10%]">
-                              {index + 1}
-                            </td>
-                            <td className="px-4 add-question-data w-[70%]">
-                              {question.question_text}
-                            </td>
+                            <td className="px-4 add-question-data w-[10%]">{index + 1}</td>
+                            <td className="px-4 add-question-data w-[70%]">{question.question_text}</td>
                             <td className="px-4 text-center">
                               <button
                                 onClick={() => openDeleteModal(question)}
@@ -789,27 +748,26 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
       )}
 
       <QuestionAddSuccessModal
+        key="add-question-success"
         showAddQuestionSuccessModal={showAddQuestionSuccessModal}
-        onClose={() => {
-          setShowAddQuestionSuccessModal(false);
-        }}
+        onClose={() => setShowAddQuestionSuccessModal(false)}
       />
 
-      {/* Delete Confirmation Modal */}
       <DeleteQuestionConfirmModal
+        key="delete-question-confirm"
         showDeleteModal={showDeleteModal}
         onConfirm={confirmDelete}
         onCancel={closeAllModals}
       />
 
-      {/* Question Added Success Modal */}
       <DeleteQuestionSuccessModal
+        key="delete-question-success"
         showDeleteQuestionSuccessModal={showDeleteQuestionSuccessModal}
         onClose={() => setShowDeleteQuestionSuccessModal(false)}
       />
 
-      {/* Error Modal */}
       <ErrorModal
+        key="error-modal"
         showErrorModal={showErrorModal}
         onClose={() => setShowErrorModal(false)}
         error={error}
@@ -819,7 +777,7 @@ const QuestionsModal = ({ isOpen, onClose, performanceId }) => {
 };
 
 const QmsTrainingEvaluation = () => {
-  const [performances, setPerformances] = useState([]);
+  const [trainingEvaluations, setTrainingEvaluations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -834,8 +792,8 @@ const QmsTrainingEvaluation = () => {
     employee: null,
   });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false });
-  // Add state for SendMailModal
-  const [sendMailModal, setSendMailModal] = useState({ isOpen: false, performanceId: null });
+  // Add state for SendMailModalTraining
+  const [sendMailModalTraining, setSendMailModalTraining] = useState({ isOpen: false, trainingEvaluationId: null });
 
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -877,9 +835,9 @@ const QmsTrainingEvaluation = () => {
     return null;
   };
 
-  // Fetch employee performance data
+  // Fetch employee training evaluation data
   useEffect(() => {
-    const fetchPerformanceData = async () => {
+    const fetchTrainingEvaluationData = async () => {
       setLoading(true);
       try {
         const userId = getRelevantUserId();
@@ -899,9 +857,9 @@ const QmsTrainingEvaluation = () => {
         );
         setDraftCount(draftResponse.data.count);
 
-        // Sort performances by id in ascending order
-        const sortedPerformances = response.data.sort((a, b) => a.id - b.id);
-        setPerformances(sortedPerformances);
+        // Sort trainingEvaluations by id in ascending order
+        const sortedTrainingEvaluations = response.data.sort((a, b) => a.id - b.id);
+        setTrainingEvaluations(sortedTrainingEvaluations);
         setError(null);
       } catch (err) {
         let errorMsg = err.message;
@@ -928,7 +886,7 @@ const QmsTrainingEvaluation = () => {
       }
     };
 
-    fetchPerformanceData();
+    fetchTrainingEvaluationData();
   }, []);
 
   // Handle search
@@ -936,29 +894,29 @@ const QmsTrainingEvaluation = () => {
     setSearchTerm(e.target.value);
   };
 
-  // Filter performances based on search term
-  const filteredPerformances = performances.filter((performance) =>
-    performance.evaluation_title
+  // Filter trainingEvaluations based on search term
+  const filteredTrainingEvaluations = trainingEvaluations.filter((trainingEvaluation) =>
+    trainingEvaluation.evaluation_title
       ?.toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
 
-  // Add new employee performance evaluation
+  // Add new employee training Evaluation
   const handleAddEmployee = () => {
     navigate("/company/qms/add-training-evaluation");
   };
 
   // Go to drafts
-  const handleDraftEmployeePerformance = () => {
+  const handleDraftEmployeeTrainingEvaluation = () => {
     navigate("/company/qms/drafts-training-evaluation");
   };
 
-  // View performance
+  // View training evaluation
   const handleView = (id) => {
     navigate(`/company/qms/views-training-evaluation/${id}`);
   };
 
-  // Edit performance
+  // Edit training evaluation
   const handleEdit = (id) => {
     navigate(`/company/qms/edits-training-evaluation/${id}`);
   };
@@ -968,14 +926,14 @@ const QmsTrainingEvaluation = () => {
   };
 
   // Open delete confirmation modal
-  const openDeleteModal = (performance) => {
-    setTrainingEvaluationToDelete(performance);
+  const openDeleteModal = (trainingEvaluation) => {
+    setTrainingEvaluationToDelete(trainingEvaluation);
     setShowDeleteModal(true);
   };
 
-  // Add function to open SendMailModal
-  const openSendMailModal = (performanceId) => {
-    setSendMailModal({ isOpen: true, performanceId });
+  // Add function to open SendMailModalTraining
+  const openSendMailModalTraining = (trainingEvaluationId) => {
+    setSendMailModalTraining({ isOpen: true, trainingEvaluationId });
   };
 
   const cancelDeleteTrainingEvaluation = () => {
@@ -983,15 +941,15 @@ const QmsTrainingEvaluation = () => {
     setTrainingEvaluationToDelete(null);
   };
 
-  // Delete performance after confirmation
+  // Delete trainingEvaluation after confirmation
   const confirmDelete = async () => {
     try {
       await axios.delete(
         `${BASE_URL}/qms/training-evaluation/${trainingEvaluationToDelete.id}/update/`
       );
-      setPerformances(
-        performances.filter(
-          (performance) => performance.id !== trainingEvaluationToDelete.id
+      setTrainingEvaluations(
+        trainingEvaluations.filter(
+          (trainingEvaluation) => trainingEvaluation.id !== trainingEvaluationToDelete.id
         )
       );
       setShowDeleteModal(false);
@@ -1000,7 +958,7 @@ const QmsTrainingEvaluation = () => {
         setShowDeleteTrainingEvaluationSuccessModal(false);
       }, 2000);
     } catch (err) {
-      console.error("Error deleting performance evaluation:", err);
+      console.error("Error deleting training Evaluation:", err);
       let errorMsg = err.message;
 
       if (err.response) {
@@ -1028,17 +986,17 @@ const QmsTrainingEvaluation = () => {
   };
 
   // Open evaluation modal
-  const openEvaluationModal = (performance) => {
+  const openEvaluationModal = (trainingEvaluation) => {
     setEvaluationModal({
       isOpen: true,
-      employee: performance,
-      performanceId: performance.id,
+      employee: trainingEvaluation,
+      trainingEvaluationId: trainingEvaluation.id,
     });
   };
 
   // Open questions modal
-  const openQuestionsModal = (performanceId) => {
-    setQuestionsModal({ isOpen: true, performanceId });
+  const openQuestionsModal = (trainingEvaluationId) => {
+    setQuestionsModal({ isOpen: true, trainingEvaluationId });
   };
 
   // Format date
@@ -1058,11 +1016,11 @@ const QmsTrainingEvaluation = () => {
   const itemsPerPage = 10;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredPerformances.slice(
+  const currentItems = filteredTrainingEvaluations.slice(
     indexOfFirstItem,
     indexOfLastItem
   );
-  const totalPages = Math.ceil(filteredPerformances.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTrainingEvaluations.length / itemsPerPage);
 
   if (loading) {
     return (
@@ -1094,7 +1052,7 @@ const QmsTrainingEvaluation = () => {
 
           <button
             className="flex items-center justify-center !w-[100px] add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-            onClick={handleDraftEmployeePerformance}
+            onClick={handleDraftEmployeeTrainingEvaluation}
           >
             <span>Draft</span>
             {draftCount > 0 && (
@@ -1141,24 +1099,24 @@ const QmsTrainingEvaluation = () => {
           </thead>
           <tbody>
             {currentItems.length > 0 ? (
-              currentItems.map((performance, index) => (
+              currentItems.map((trainingEvaluation, index) => (
                 <tr
-                  key={performance.id}
+                  key={trainingEvaluation.id}
                   className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
                 >
                   <td className="pl-5 pr-2 add-manual-datas">
                     {indexOfFirstItem + index + 1}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {performance.evaluation_title || "Anonymous"}
+                    {trainingEvaluation.evaluation_title || "Anonymous"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {formatDate(performance.valid_till)}
+                    {formatDate(trainingEvaluation.valid_till)}
                   </td>
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openQuestionsModal(performance.id)}
+                      onClick={() => openQuestionsModal(trainingEvaluation.id)}
                     >
                       Add Questions
                     </button>
@@ -1166,7 +1124,7 @@ const QmsTrainingEvaluation = () => {
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openSendMailModal(performance.id)} // Trigger SendMailModal
+                      onClick={() => openSendMailModalTraining(trainingEvaluation.id)} // Trigger SendMailModalTraining
                     >
                       Send Mail
                     </button>
@@ -1182,13 +1140,13 @@ const QmsTrainingEvaluation = () => {
                   <td className="px-2 add-manual-datas">
                     <button
                       className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                      onClick={() => openEvaluationModal(performance)}
+                      onClick={() => openEvaluationModal(trainingEvaluation)}
                     >
                       Click to Evaluate
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleView(performance.id)}>
+                    <button onClick={() => handleView(trainingEvaluation.id)}>
                       <img
                         src={viewIcon}
                         alt="View Icon"
@@ -1197,7 +1155,7 @@ const QmsTrainingEvaluation = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleEdit(performance.id)}>
+                    <button onClick={() => handleEdit(trainingEvaluation.id)}>
                       <img
                         src={editIcon}
                         alt="Edit Icon"
@@ -1206,7 +1164,7 @@ const QmsTrainingEvaluation = () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => openDeleteModal(performance)}>
+                    <button onClick={() => openDeleteModal(trainingEvaluation)}>
                       <img
                         src={deleteIcon}
                         alt="Delete Icon"
@@ -1219,7 +1177,7 @@ const QmsTrainingEvaluation = () => {
             ) : (
               <tr>
                 <td colSpan="10" className="text-center py-4 not-found">
-                  No employee performance evaluations found
+                  No employee training evaluation found
                 </td>
               </tr>
             )}
@@ -1228,10 +1186,10 @@ const QmsTrainingEvaluation = () => {
       </div>
 
       {/* Pagination */}
-      {filteredPerformances.length > 0 && (
+      {filteredTrainingEvaluations.length > 0 && (
         <div className="flex justify-between items-center mt-3">
           <div className="text-white total-text">
-            Total-{filteredPerformances.length}
+            Total-{filteredTrainingEvaluations.length}
           </div>
           <div className="flex items-center gap-5">
             <button
@@ -1291,20 +1249,20 @@ const QmsTrainingEvaluation = () => {
         onClose={() => setEvaluationModal({ isOpen: false, employee: null })}
         employee={evaluationModal.employee}
         employeeList={employees}
-        performanceId={evaluationModal.performanceId}
+        trainingEvaluationId={evaluationModal.trainingEvaluationId}
       />
 
       <QuestionsModal
         isOpen={questionsModal.isOpen}
         onClose={() => setQuestionsModal({ isOpen: false })}
-        performanceId={questionsModal.performanceId}
+        trainingEvaluationId={questionsModal.trainingEvaluationId}
       />
 
-      {/* Add SendMailModal */}
-      <SendMailModal
-        isOpen={sendMailModal.isOpen}
-        onClose={() => setSendMailModal({ isOpen: false, performanceId: null })}
-        performanceId={sendMailModal.performanceId}
+      {/* Add SendMailModalTraining */}
+      <SendMailModalTraining
+        isOpen={sendMailModalTraining.isOpen}
+        onClose={() => setSendMailModalTraining({ isOpen: false, trainingEvaluationId: null })}
+        trainingEvaluationId={sendMailModalTraining.trainingEvaluationId}
       />
 
       {/* Delete Confirmation Modal */}
