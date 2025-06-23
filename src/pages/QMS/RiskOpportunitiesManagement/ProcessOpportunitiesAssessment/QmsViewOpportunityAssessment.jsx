@@ -1,8 +1,6 @@
 import React from "react";
 import { X, Eye } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import edits from "../../../../assets/images/Company Documentation/edit.svg";
-import deletes from "../../../../assets/images/Company Documentation/delete.svg";
 
 const QmsViewOpportunityAssessment = () => {
   const navigate = useNavigate();
@@ -12,19 +10,15 @@ const QmsViewOpportunityAssessment = () => {
   const assessmentDetails = {
     id: id,
     activity: "Welding",
-    potential_opportunity: "Anonymous",
-    opportunity_score: "25",
-    ranking: "H",
-    upload_attachment: "https://example.com/sample.pdf",
-    written_by: { id: 1, first_name: "John", last_name: "Doe" },
-    checked_by: { id: 2, first_name: "Jane", last_name: "Smith" },
+    opportunity: "Anonymous",
+    action_party: "25",
+    due_date: "H",
+    remarks: "https://example.com/sample.pdf",
+    potential_opportunity: { id: 1, first_name: "John", last_name: "Doe" },
+    opportunity_action_plan: { id: 2, first_name: "Jane", last_name: "Smith" },
     approved_by: null,
-    due_date: "2025-03-12",
     status: "Pending for Review/Checking",
   };
-
-  const currentUserId = 1; // Static user ID for demo (replace with localStorage.getItem("user_id") later)
-  const isCurrentUserWrittenBy = currentUserId === assessmentDetails.written_by?.id;
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -55,108 +49,110 @@ const QmsViewOpportunityAssessment = () => {
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg">
       <div className="flex justify-between items-center border-b border-[#383840] pb-[26px]">
-        <h1 className="viewmanualhead">Opportunity Assessment Information</h1>
+        <h1 className="viewhead">Opportunity Assessment Information</h1>
         <button
-          className="text-white bg-[#24242D] p-1 rounded-md"
+          className="text-white bg-[#24242D] p-2 rounded-md"
           onClick={handleCloseViewPage}
         >
           <X size={22} />
         </button>
       </div>
       <div className="mt-5">
-        <div className="grid grid-cols-2 divide-x divide-[#383840] border-b border-[#383840] pb-5">
-          <div className="grid grid-cols-1 gap-[40px]">
-            <div>
-              <label className="viewmanuallabels">Activity/Process</label>
-              <p className="viewmanuasdata">{assessmentDetails.activity || "N/A"}</p>
+        <div className="grid grid-cols-2 pb-5">
+          <div className="grid grid-cols-1 gap-[36px]">
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Activity/Process:</label>
+              <p className="viewdatas">{assessmentDetails.activity || "N/A"}</p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Potential Opportunity</label>
-              <p className="viewmanuasdata">{assessmentDetails.potential_opportunity || "N/A"}</p>
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Opportunity:</label>
+              <p className="viewdatas">{assessmentDetails.opportunity || "N/A"}</p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Opportunity Score</label>
-              <p className="viewmanuasdata">{assessmentDetails.opportunity_score || "N/A"}</p>
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Owner(s)/Action Party:</label>
+              <p className="viewdatas">{assessmentDetails.action_party || "N/A"}</p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Ranking</label>
-              <p className="viewmanuasdata">
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Ranking</label>
+              <p className="viewdatas">
                 <span
                   className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${
-                    assessmentDetails.ranking === "H"
+                    assessmentDetails.due_date === "H"
                       ? "bg-[#dd363611] text-[#dd3636]"
                       : "bg-[#36DDAE11] text-[#36DDAE]"
                   }`}
                 >
-                  {assessmentDetails.ranking || "N/A"}
+                  {assessmentDetails.due_date || "N/A"}
                 </span>
               </p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Attach Document</label>
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Attach Document</label>
               <div
                 className="flex items-center cursor-pointer gap-[8px]"
                 onClick={() => {
-                  if (assessmentDetails.upload_attachment) {
-                    window.open(assessmentDetails.upload_attachment, "_blank");
+                  if (assessmentDetails.remarks) {
+                    window.open(assessmentDetails.remarks, "_blank");
                   }
                 }}
               >
-                <p className="click-view-file-text">
-                  {assessmentDetails.upload_attachment ? "Click to view file" : "No file attached"}
+                <p className="viewdatas">
+                  {assessmentDetails.remarks ? "Click to view file" : "No file attached"}
                 </p>
-                {assessmentDetails.upload_attachment && (
+                {assessmentDetails.remarks && (
                   <Eye size={20} className="text-[#1E84AF]" />
                 )}
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-[40px] pl-5">
-            <div>
-              <label className="viewmanuallabels">Written/Prepared By</label>
-              <p className="viewmanuasdata">
-                {assessmentDetails.written_by
-                  ? `${assessmentDetails.written_by.first_name} ${assessmentDetails.written_by.last_name}`
+          <div className="grid grid-cols-1 gap-[36px] pl-10">
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Written/Prepared By</label>
+              <p className="viewdatas">
+                {assessmentDetails.potential_opportunity
+                  ? `${assessmentDetails.potential_opportunity.first_name} ${assessmentDetails.potential_opportunity.last_name}`
                   : "N/A"}
               </p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Checked/Reviewed By</label>
-              <p className="viewmanuasdata">
-                {assessmentDetails.checked_by
-                  ? `${assessmentDetails.checked_by.first_name} ${assessmentDetails.checked_by.last_name}`
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Checked/Reviewed By</label>
+              <p className="viewdatas">
+                {assessmentDetails.opportunity_action_plan
+                  ? `${assessmentDetails.opportunity_action_plan.first_name} ${assessmentDetails.opportunity_action_plan.last_name}`
                   : "N/A"}
               </p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Approved By</label>
-              <p className="viewmanuasdata">
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Approved By</label>
+              <p className="viewdatas">
                 {assessmentDetails.approved_by
                   ? `${assessmentDetails.approved_by.first_name} ${assessmentDetails.approved_by.last_name}`
                   : "N/A"}
               </p>
             </div>
-            <div>
-              <label className="viewmanuallabels">Due Date</label>
-              <p className="viewmanuasdata">{formatDate(assessmentDetails.due_date)}</p>
+            <div className="flex justify-between items-center pb-3 border-b border-[#2A2B32]">
+              <label className="viewlabels">Due Date</label>
+              <p className="viewdatas">{formatDate(assessmentDetails.due_date)}</p>
             </div>
             <div className="flex justify-end items-center">
-              {isCurrentUserWrittenBy && (
-                <div className="flex gap-10">
+                <div className="flex gap-5">
                   <div className="flex flex-col justify-center items-center">
-                    <label className="viewmanuallabels">Edit</label>
-                    <button onClick={handleEditAssessment}>
-                      <img src={edits} alt="Edit Icon" />
+                    <button
+                      className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons"
+                      onClick={handleDeleteAssessment}
+                    >
+                      Delete
                     </button>
                   </div>
                   <div className="flex flex-col justify-center items-center">
-                    <label className="viewmanuallabels">Delete</label>
-                    <button onClick={handleDeleteAssessment}>
-                      <img src={deletes} alt="Delete Icon" />
+                    <button
+                      className="border border-[#1E84AF] rounded w-[148px] h-[41px] text-[#1E84AF] hover:bg-[#1E84AF] hover:text-white duration-200 buttons"
+                      onClick={handleEditAssessment}
+                    >
+                      Edit
                     </button>
                   </div>
                 </div>
-              )}
             </div>
           </div>
         </div>

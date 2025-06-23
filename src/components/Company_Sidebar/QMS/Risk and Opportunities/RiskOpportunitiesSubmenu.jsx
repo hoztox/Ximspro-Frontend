@@ -137,6 +137,7 @@ const RiskOpportunitiesSubmenu = (props) => {
       relatedPaths: [
         "/company/qms/add-opportunity-assessment",
         "/company/qms/edit-opportunity-assessment",
+        "/company/qms/view-opportunity-assessment",
       ],
     },
     {

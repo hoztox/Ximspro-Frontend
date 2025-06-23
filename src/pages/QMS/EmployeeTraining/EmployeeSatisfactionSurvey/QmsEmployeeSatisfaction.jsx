@@ -16,7 +16,7 @@ import QuestionAddSuccessModal from "../Modals/QuestionAddSuccessModal";
 import DeleteQuestionConfirmModal from "../Modals/DeleteQuestionConfirmModal";
 import DeleteQuestionSuccessModal from "../Modals/DeleteQuestionSuccessModal";
 import RatingAddSuccessModal from "../Modals/RatingAddSuccessModal";
-import SendMailModal from "../SendMailModal";
+import SendMailModalSurveys from "../SendMailModalSurveys";
 
 const EvaluationModal = ({
   isOpen,
@@ -580,7 +580,7 @@ const QmsEmployeeSatisfaction = () => {
   const navigate = useNavigate();
   const [evaluationModal, setEvaluationModal] = useState({ isOpen: false, employee: null, surveyId: null });
   const [questionsModal, setQuestionsModal] = useState({ isOpen: false, surveyId: null });
-  const [sendMailModal, setSendMailModal] = useState({ isOpen: false, surveyId: null });
+  const [sendMailModalSurveys, setSendMailModalSurveys] = useState({ isOpen: false, surveyId: null });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [satisfactionToDelete, setSatisfactionToDelete] = useState(null);
   const [showDeleteEmployeeSatisfactionSuccessModal, setShowDeleteEmployeeSatisfactionSuccessModal] = useState(false);
@@ -688,8 +688,8 @@ const QmsEmployeeSatisfaction = () => {
     navigate("/company/qms/employees-satisfaction-graph");
   };
 
-  const openSendMailModal = (surveyId) => {
-    setSendMailModal({ isOpen: true, surveyId });
+  const openSendMailModalSurveys = (surveyId) => {
+    setSendMailModalSurveys({ isOpen: true, surveyId });
   };
 
   const openDeleteModal = (survey) => {
@@ -839,7 +839,7 @@ const QmsEmployeeSatisfaction = () => {
                       <td className="px-2 add-manual-datas">
                         <button
                           className="text-[#1E84AF] hover:text-[#176d8e] transition-colors duration-100"
-                          onClick={() => openSendMailModal(survey.id)}
+                          onClick={() => openSendMailModalSurveys(survey.id)}
                         >
                           Send Mail
                         </button>
@@ -944,10 +944,10 @@ const QmsEmployeeSatisfaction = () => {
         onClose={() => setQuestionsModal({ isOpen: false, surveyId: null })}
         surveyId={questionsModal.surveyId}
       />
-      <SendMailModal
-        isOpen={sendMailModal.isOpen}
-        onClose={() => setSendMailModal({ isOpen: false, surveyId: null })}
-        surveyId={sendMailModal.surveyId}
+      <SendMailModalSurveys
+        isOpen={sendMailModalSurveys.isOpen}
+        onClose={() => setSendMailModalSurveys({ isOpen: false, surveyId: null })}
+        surveyId={sendMailModalSurveys.surveyId}
       />
       <DeleteEmployeeSatisfactionConfirmModal
         showDeleteModal={showDeleteModal}
