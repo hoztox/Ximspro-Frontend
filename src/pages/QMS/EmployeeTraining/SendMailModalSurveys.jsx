@@ -1,41 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ChevronDown } from "lucide-react";
-import "./sendmail.css"
+import "./sendmail.css";
 import axios from "axios";
 import { BASE_URL } from "../../../Utils/Config";
 
-const SendMailModal = ({ isOpen, onClose, performanceId }) => {
+const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
   const [selectedManager, setSelectedManager] = useState("");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isManagerDropdownOpen, setIsManagerDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Dynamic data states
   const [managers, setManagers] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [company, setCompany] = useState(null);
-    const getUserCompanyId = () => {
-        const storedCompanyId = localStorage.getItem("company_id");
-        if (storedCompanyId) return storedCompanyId;
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
 
-        const userRole = localStorage.getItem("role");
-        if (userRole === "user") {
-            const userData = localStorage.getItem("user_company_id");
-            if (userData) {
-                try {
-                    return JSON.parse(userData);
-                } catch (e) {
-                    console.error("Error parsing user company ID:", e);
-                    return null;
-                }
-            }
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
         }
-        return null;
-    };
+      }
+    }
+    return null;
+  };
   // Fetch managers and employees when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -46,16 +46,17 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
   const fetchData = async () => {
     setLoadingData(true);
     try {
-     const companyId = getUserCompanyId();
-      const managersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      const companyId = getUserCompanyId();
+      const managersResponse = await axios.get(
+        `${BASE_URL}/company/users-active/${companyId}/`
+      );
       setManagers(managersResponse.data);
 
       // Fetch employees
-      const employeesResponse = await axios.get(`${BASE_URL}/company/employees-active/${companyId}/`);
+      const employeesResponse = await axios.get(
+        `${BASE_URL}/company/employees-active/${companyId}/`
+      );
       setEmployees(employeesResponse.data);
-
-
-
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load data. Please try again.");
@@ -64,9 +65,12 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
     }
   };
 
-  const filteredEmployees = employees.filter((employee) =>
-    `${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredEmployees = employees.filter(
+    (employee) =>
+      `${employee.first_name} ${employee.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleEmployeeToggle = (employee) => {
@@ -83,7 +87,7 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
   const handleRemoveEmployee = (employeeId) => {
     setSelectedEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
   };
- 
+
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
@@ -110,47 +114,44 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
 
     setLoading(true);
     setError("");
-    
+
     try {
- const companyId = getUserCompanyId();
-  const userId = getRelevantUserId();
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
       const payload = {
-        user:userId,
-        company:companyId,
+        user: userId,
+        company: companyId,
         manager: selectedManager,
-        employee: selectedEmployees.map(emp => emp.id),
-       
-       
+        employee: selectedEmployees.map((emp) => emp.id),
       };
 
       await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);
-      
+
       // Success feedback
       setError("");
       alert("Email sent successfully!");
-      
+
       // Reset form
       setSelectedManager("");
       setSelectedEmployees([]);
       setSearchTerm("");
-      
+
       setTimeout(() => {
         onClose();
       }, 1000);
-      
     } catch (err) {
       console.error("Error sending email:", err);
       let errorMsg = "Failed to send email. Please try again.";
-      
+
       if (err.response?.data) {
         if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
-        } else if (typeof err.response.data === 'object') {
+        } else if (typeof err.response.data === "object") {
           // Handle field-specific errors
           const errors = Object.values(err.response.data).flat();
-          errorMsg = errors.join(', ');
+          errorMsg = errors.join(", ");
         }
       }
       setError(errorMsg);
@@ -174,7 +175,7 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
   };
 
   const getManagerName = (manager) => {
-    return `${manager.first_name} ${manager.last_name}` ;
+    return `${manager.first_name} ${manager.last_name}`;
   };
 
   return (
@@ -198,7 +199,7 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
               <div className=" pt-5 pb-6 border-b border-[#383840] mx-5">
                 <p className="evaluate-modal-head !text-[20px]">Send Mail</p>
               </div>
-              
+
               {loadingData ? (
                 <div className="p-5 text-center">
                   <p className="text-[#AAAAAA]">Loading data...</p>
@@ -220,7 +221,9 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
                       >
                         <span>
                           {selectedManager
-                            ? getManagerName(managers.find((m) => m.id === selectedManager))
+                            ? getManagerName(
+                                managers.find((m) => m.id === selectedManager)
+                              )
                             : "Select Manager"}
                         </span>
                         <ChevronDown
@@ -243,11 +246,12 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
                                 className="w-full text-left p-3 hover:bg-[#383840] text-white"
                               >
                                 {getManagerName(manager)}
-                                
                               </button>
                             ))
                           ) : (
-                            <div className="p-3 text-[#AAAAAA]">No managers available</div>
+                            <div className="p-3 text-[#AAAAAA]">
+                              No managers available
+                            </div>
                           )}
                         </div>
                       )}
@@ -278,7 +282,9 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
                               </span>
                               <button
                                 type="button"
-                                onClick={() => handleRemoveEmployee(employee.id)}
+                                onClick={() =>
+                                  handleRemoveEmployee(employee.id)
+                                }
                                 className="text-[#AAAAAA] hover:text-red-600"
                               >
                                 <X className="w-4 h-4" />
@@ -323,21 +329,24 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
                                   <input
                                     type="checkbox"
                                     checked={!!isSelected}
-                                    onChange={() => handleEmployeeToggle(employee)}
+                                    onChange={() =>
+                                      handleEmployeeToggle(employee)
+                                    }
                                     className="form-checkboxes mt-1"
                                   />
                                   <div className="flex-1 min-w-0">
                                     <div className="font-medium text-white">
                                       {getEmployeeName(employee)}
                                     </div>
-                                     
                                   </div>
                                 </label>
                               );
                             })
                           ) : (
                             <div className="col-span-2 p-3 text-[#AAAAAA] text-center">
-                              {searchTerm ? 'No employees found matching your search' : 'No employees available'}
+                              {searchTerm
+                                ? "No employees found matching your search"
+                                : "No employees available"}
                             </div>
                           )}
                         </div>
@@ -364,7 +373,11 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
                     <button
                       type="submit"
                       className="save-btn duration-200"
-                      disabled={loading || selectedEmployees.length === 0 || !selectedManager}
+                      disabled={
+                        loading ||
+                        selectedEmployees.length === 0 ||
+                        !selectedManager
+                      }
                     >
                       {loading ? "Sending..." : "Send Email"}
                     </button>
@@ -379,4 +392,4 @@ const SendMailModal = ({ isOpen, onClose, performanceId }) => {
   );
 };
 
-export default SendMailModal;
+export default SendMailModalSurveys;
