@@ -616,7 +616,7 @@ const QmsEmployeeSatisfaction = () => {
     setLoading(true);
     try {
       const companyId = getUserCompanyId();
-      const response = await axios.get(`${BASE_URL}/qms/performanc/company/${companyId}/`);
+      const response = await axios.get(`${BASE_URL}/qms/survey/company/${companyId}/`);
       setSendMail(response.data);
     } catch (err) {
       console.error("Error fetching send mail data:", err);
