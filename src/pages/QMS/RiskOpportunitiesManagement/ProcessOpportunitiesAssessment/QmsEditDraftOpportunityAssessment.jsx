@@ -433,7 +433,7 @@ const handleUpdateClick = async () => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] rounded-lg text-white p-5 flex justify-center items-center min-h-[400px]">
+      <div className="bg-[#1C1C24] rounded-lg not-found p-5 flex justify-center items-center">
         <p>Loading Opportunity Assessment...</p>
       </div>
     );
@@ -467,14 +467,14 @@ const handleUpdateClick = async () => {
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
           <h1 className="add-manual-sections !px-0">
-            Edit Opportunity Assessment
+            Edit Draft Opportunity Assessment
           </h1>
 
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleListOpportunity}
           >
-            <span>List Opportunity Assessments</span>
+            <span>List Draft Opportunity Assessments</span>
           </button>
         </div>
 

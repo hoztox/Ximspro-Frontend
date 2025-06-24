@@ -400,6 +400,12 @@ import QmsViewEmployee from "./pages/QMS/EmployeeManagement/QmsViewEmployee";
 import QmsDraftOpportunityAssessments from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsDraftOpportunityAssessments";
 import QmsEditDraftOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsEditDraftOpportunityAssessment";
 import QmsViewDraftOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsViewDraftOpportunityAssessment";
+import QmsAddRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsAddRiskAssessment";
+import QmsEditRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsEditRiskAssessment";
+import QmsViewRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsViewRiskAssessment";
+import QmsDraftRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsDraftRiskAssessment";
+import QmsEditDraftRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsEditDraftRiskAssessment";
+import QmsViewDraftRiskAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessRisksAssessments/QmsViewDraftRiskAssessment";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -749,6 +755,12 @@ const ThemedApp = () => {
           <Route path="qms/view-draft-health-safety-incidents/:id" element={<QmsDraftViewHealthSafetyIncidents />} />
 
           <Route path="qms/list-process-risks-assessments" element={<QmsListRiskAssessment />} />
+          <Route path="qms/add-process-risks-assessments" element={<QmsAddRiskAssessment />} />
+          <Route path="qms/edit-process-risks-assessments/:id" element={<QmsEditRiskAssessment />} />
+          <Route path="qms/view-process-risks-assessments/:id" element={<QmsViewRiskAssessment />} />
+          <Route path="qms/draft-process-risks-assessments" element={<QmsDraftRiskAssessment />} />
+          <Route path="qms/edit-draft-process-risks-assessments/:id" element={<QmsEditDraftRiskAssessment />} />
+          <Route path="qms/view-draft-process-risks-assessments/:id" element={<QmsViewDraftRiskAssessment />} />
 
           <Route path="qms/list-opportunity-assessment" element={<QmsListOpportunityAssessment />} />
           <Route path="qms/add-opportunity-assessment" element={<QmsAddOpportunityAssessment />} />

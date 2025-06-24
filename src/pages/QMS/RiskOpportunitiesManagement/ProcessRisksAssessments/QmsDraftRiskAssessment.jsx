@@ -1,12 +1,10 @@
 import React, { useState } from "react";
-import { Search } from "lucide-react";
-import plusIcon from "../../../../assets/images/Company Documentation/plus icon.svg";
+import { Search, X } from "lucide-react";
 import viewIcon from "../../../../assets/images/Companies/view.svg";
-import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { useNavigate } from "react-router-dom";
 
-const QmsListRiskAssessment = () => {
+const QmsDraftRiskAssessment = () => {
   const [assessments, setAssessments] = useState([
     {
       id: 1,
@@ -27,7 +25,7 @@ const QmsListRiskAssessment = () => {
       risk_assessment: "3",
       risk_assessment_ranking: "L",
       action_owner: "Anonymous",
-       residual_risk: "25",
+      residual_risk: "25",
       residual_risk_ranking: "H",
       review_date: "20/02/2025",
       status: "Not Achieved",
@@ -74,24 +72,22 @@ const QmsListRiskAssessment = () => {
     (assessment) =>
       assessment.activity.toLowerCase().includes(searchQuery.toLowerCase()) ||
       assessment.hazard.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      assessment.action_owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assessment.action_owner
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       assessment.review_date.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddRiskAssessment = () => {
-    navigate("/company/qms/add-process-risks-assessments");
+  const handleClose = () => {
+    navigate("/company/qms/list-process-risks-assessments");
   };
 
-  const handleDraftRiskAssessment = () => {
-    navigate("/company/qms/draft-process-risks-assessments");
+  const handleEditDraftRiskAssessment = (id) => {
+    navigate(`/company/qms/edit-draft-process-risks-assessments/${id}`);
   };
 
   const handleViewRiskAssessment = (id) => {
-    navigate(`/company/qms/view-process-risks-assessments/${id}`);
-  };
-
-  const handleEditRiskAssessment = (id) => {
-    navigate(`/company/qms/edit-process-risks-assessments/${id}`);
+    navigate(`/company/qms/view-draft-process-risks-assessments/${id}`);
   };
 
   // Handle delete
@@ -118,7 +114,7 @@ const QmsListRiskAssessment = () => {
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="list-manual-head">List Risk Assessment</h1>
+        <h1 className="list-manual-head">Draft Risk Assessment</h1>
         <div className="flex gap-4">
           <div className="relative">
             <input
@@ -132,22 +128,8 @@ const QmsListRiskAssessment = () => {
               <Search size={18} />
             </div>
           </div>
-          <button
-            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white !w-[100px]"
-            onClick={() => handleDraftRiskAssessment()}
-          >
-            <span>Drafts</span>
-          </button>
-          <button
-            className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
-            onClick={handleAddRiskAssessment}
-          >
-            <span>Add Risk Assessment</span>
-            <img
-              src={plusIcon}
-              alt="Add Icon"
-              className="w-[18px] h-[18px] qms-add-plus"
-            />
+          <button onClick={handleClose} className="bg-[#24242D] p-2 rounded-md">
+            <X className="text-white" />
           </button>
         </div>
       </div>
@@ -158,24 +140,14 @@ const QmsListRiskAssessment = () => {
           <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-              <th className="px-2 text-left add-manual-theads">
-                Activity
-              </th>
-              <th className="px-2 text-left add-manual-theads">
-                Hazard
-              </th>
+              <th className="px-2 text-left add-manual-theads">Activity</th>
+              <th className="px-2 text-left add-manual-theads">Hazard</th>
               <th className="px-2 text-left add-manual-theads" colSpan={2}>
                 Risk Assessment
               </th>
-                <th className="px-2 text-left add-manual-theads">
-                Action Owner
-              </th>
-              <th className="px-2 text-left add-manual-theads" colSpan={2}>
-                Residual Risk
-              </th>
-              <th className="px-2 text-left add-manual-theads">Review Date</th>
+              <th className="px-2 text-left add-manual-theads">Action Owner</th>
+              <th className="px-2 text-center add-manual-theads">Action</th>
               <th className="px-2 text-center add-manual-theads">View</th>
-              <th className="px-2 text-center add-manual-theads">Edit</th>
               <th className="pr-2 text-center add-manual-theads">Delete</th>
             </tr>
           </thead>
@@ -192,9 +164,7 @@ const QmsListRiskAssessment = () => {
                   <td className="px-2 add-manual-datas">
                     {assessment.activity}
                   </td>
-                  <td className="px-2 add-manual-datas">
-                    {assessment.hazard}
-                  </td>
+                  <td className="px-2 add-manual-datas">{assessment.hazard}</td>
                   <td className="px-2 add-manual-datas text-center w-[56px]">
                     {assessment.risk_assessment}
                   </td>
@@ -209,28 +179,21 @@ const QmsListRiskAssessment = () => {
                       {assessment.risk_assessment_ranking}
                     </span>
                   </td>
-                   <td className="px-2 add-manual-datas">
+                  <td className="px-2 add-manual-datas">
                     {assessment.action_owner}
                   </td>
-                  <td className="px-2 add-manual-datas text-center w-[45px]">
-                    {assessment.residual_risk}
-                  </td>
-                  <td className="pl-1 add-manual-datas">
-                    <span
-                      className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${
-                        assessment.residual_risk_ranking === "H"
-                          ? "bg-[#dd363611] text-[#dd3636]"
-                          : "bg-[#36DDAE11] text-[#36DDAE]"
-                      }`}
+                  <td className="px-2 add-manual-datas !text-center">
+                    <button
+                      onClick={() => handleEditDraftRiskAssessment(assessment.id)}
+                      className="text-[#1E84AF]"
                     >
-                      {assessment.residual_risk_ranking}
-                    </span>
-                  </td>
-                  <td className="px-2 add-manual-datas">
-                    {assessment.review_date}
+                      Click to Continue
+                    </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleViewRiskAssessment(assessment.id)}>
+                    <button
+                      onClick={() => handleViewRiskAssessment(assessment.id)}
+                    >
                       <img
                         src={viewIcon}
                         alt="View Icon"
@@ -239,11 +202,6 @@ const QmsListRiskAssessment = () => {
                             "brightness(0) saturate(100%) invert(69%) sepia(32%) saturate(4%) hue-rotate(53deg) brightness(94%) contrast(86%)",
                         }}
                       />
-                    </button>
-                  </td>
-                  <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleEditRiskAssessment(assessment.id)}>
-                      <img src={editIcon} alt="Edit Icon" />
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
@@ -304,4 +262,4 @@ const QmsListRiskAssessment = () => {
     </div>
   );
 };
-export default QmsListRiskAssessment;
+export default QmsDraftRiskAssessment;

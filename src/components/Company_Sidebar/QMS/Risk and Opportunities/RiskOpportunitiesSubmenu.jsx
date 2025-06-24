@@ -128,6 +128,14 @@ const RiskOpportunitiesSubmenu = (props) => {
       label: "Process Risks Assessments",
       icon: <img src={policy} alt="Policy" className="w-[15px] h-[15px]" />,
       path: "/company/qms/list-process-risks-assessments",
+      relatedPaths: [
+        "/company/qms/add-process-risks-assessments",
+        "/company/qms/edit-process-risks-assessments",
+        "/company/qms/view-process-risks-assessments",
+        "/company/qms/draft-process-risks-assessments",
+        "/company/qms/edit-draft-process-risks-assessments",
+        "/company/qms/view-draft-process-risks-assessments",
+      ],
     },
     {
       id: "process-opportunities-assessment",
