@@ -123,9 +123,10 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
         company: companyId,
         manager: selectedManager,
         employee: selectedEmployees.map((emp) => emp.id),
+        training: trainingEvaluationId,
       };
 
-      await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);
+      await axios.post(`${BASE_URL}/qms/send-training-email/`, payload);
 
       // Success feedback
       setError("");
@@ -149,7 +150,7 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         } else if (typeof err.response.data === "object") {
-          // Handle field-specific errors
+       
           const errors = Object.values(err.response.data).flat();
           errorMsg = errors.join(", ");
         }
