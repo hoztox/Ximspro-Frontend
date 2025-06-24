@@ -397,6 +397,9 @@ import QmsAddEmployee from "./pages/QMS/EmployeeManagement/QmsAddEmployee";
 import QmsListEmployee from "./pages/QMS/EmployeeManagement/QmsListEmployee";
 import QmsEditEmployee from "./pages/QMS/EmployeeManagement/QmsEditEmployee";
 import QmsViewEmployee from "./pages/QMS/EmployeeManagement/QmsViewEmployee";
+import QmsDraftOpportunityAssessments from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsDraftOpportunityAssessments";
+import QmsEditDraftOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsEditDraftOpportunityAssessment";
+import QmsViewDraftOpportunityAssessment from "./pages/QMS/RiskOpportunitiesManagement/ProcessOpportunitiesAssessment/QmsViewDraftOpportunityAssessment";
 
 const ThemedApp = () => {
   const { theme } = useTheme();
@@ -751,6 +754,9 @@ const ThemedApp = () => {
           <Route path="qms/add-opportunity-assessment" element={<QmsAddOpportunityAssessment />} />
           <Route path="qms/edit-opportunity-assessment/:id" element={<QmsEditOpportunityAssessment />} />
           <Route path="qms/view-opportunity-assessment/:id" element={<QmsViewOpportunityAssessment />} />
+          <Route path="qms/draft-opportunity-assessment" element={<QmsDraftOpportunityAssessments />} />
+          <Route path="qms/edit-draft-opportunity-assessment/:id" element={<QmsEditDraftOpportunityAssessment />} />
+          <Route path="qms/view-draft-opportunity-assessment/:id" element={<QmsViewDraftOpportunityAssessment />} />
 
 
 

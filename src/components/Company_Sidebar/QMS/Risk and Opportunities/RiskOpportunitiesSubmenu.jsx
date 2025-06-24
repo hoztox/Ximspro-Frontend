@@ -138,6 +138,9 @@ const RiskOpportunitiesSubmenu = (props) => {
         "/company/qms/add-opportunity-assessment",
         "/company/qms/edit-opportunity-assessment",
         "/company/qms/view-opportunity-assessment",
+        "/company/qms/draft-opportunity-assessment",
+        "/company/qms/edit-draft-opportunity-assessment",
+        "/company/qms/view-draft-opportunity-assessment",
       ],
     },
     {

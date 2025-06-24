@@ -19,9 +19,9 @@ const QmsAddOpportunityAssessment = () => {
     review_frequency_month: "",
     remarks: "",
   });
-
-  const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
-
+  const [actionPlanFields, setActionPlanFields] = useState([
+    { id: 1, value: "" },
+  ]);
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
     benefit: false,
@@ -33,6 +33,8 @@ const QmsAddOpportunityAssessment = () => {
     year: false,
   });
   const [errors, setErrors] = useState({});
+  const [isSaveLoading, setIsSaveLoading] = useState(false);
+  const [isSaveDraftLoading, setIsSaveDraftLoading] = useState(false);
 
   const getDaysInMonth = (month, year) => {
     if (!month || !year) return 31;
@@ -195,6 +197,22 @@ const QmsAddOpportunityAssessment = () => {
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
 
+  const handleSave = () => {
+    setIsSaveLoading(true);
+    // Simulate save operation
+    setTimeout(() => {
+      setIsSaveLoading(false);
+    }, 1000);
+  };
+
+  const handleSaveDraft = () => {
+    setIsSaveDraftLoading(true);
+    // Simulate save draft operation
+    setTimeout(() => {
+      setIsSaveDraftLoading(false);
+    }, 1000);
+  };
+
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
       <div>
@@ -288,6 +306,7 @@ const QmsAddOpportunityAssessment = () => {
                     {benefitOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
+                        ))/({" "}
                       </option>
                     ))}
                   </select>
@@ -309,7 +328,7 @@ const QmsAddOpportunityAssessment = () => {
               {actionPlanFields.map((field, index) => (
                 <div key={field.id} className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 justify-between">
-                    <div className="flex gap-2 flex-1">
+                    <div class className="flex gap-2 flex-1">
                       <input
                         type="text"
                         value={field.value}
@@ -500,9 +519,7 @@ const QmsAddOpportunityAssessment = () => {
             </div>
 
             <div>
-              <label className="add-qms-manual-label">
-                Status
-              </label>
+              <label className="add-qms-manual-label">Status</label>
               <div className="relative">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -547,7 +564,17 @@ const QmsAddOpportunityAssessment = () => {
               <ErrorMessage message={errors.remarks} />
             </div>
 
-            <div className="mt-[35px]">
+            <div></div>
+            <div>
+              <button
+                className="request-correction-btn duration-200"
+                onClick={handleSaveDraft}
+                disabled={isSaveDraftLoading}
+              >
+                {isSaveDraftLoading ? "Saving..." : "Save as Draft"}
+              </button>
+            </div>
+            <div>
               <div className="flex gap-[22px] mb-6 justify-end">
                 <button
                   className="cancel-btn duration-200"
@@ -555,13 +582,16 @@ const QmsAddOpportunityAssessment = () => {
                 >
                   Cancel
                 </button>
-                <button className="save-btn duration-200" onClick={() => {}}>
-                  Save
+                <button
+                  className="save-btn duration-200"
+                  onClick={handleSave}
+                  disabled={isSaveLoading}
+                >
+                  {isSaveLoading ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>
           </div>
-
           <div className="flex items-center mt-[22px] justify-between"></div>
         </div>
       </div>

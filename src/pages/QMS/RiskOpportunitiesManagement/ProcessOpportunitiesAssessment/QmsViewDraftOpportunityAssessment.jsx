@@ -2,7 +2,7 @@ import React from "react";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const QmsViewOpportunityAssessment = () => {
+const QmsViewDraftOpportunityAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -19,11 +19,7 @@ const QmsViewOpportunityAssessment = () => {
     remarks: "Test",
     potential_opportunity: "Test",
     // Updated to an array for opportunity_action_plan with more data
-    opportunity_action_plan: [
-      "Action 1",
-      "Action 2",
-     
-    ], // Example list with more items
+    opportunity_action_plan: ["Action 1", "Action 2"], // Example list with more items
     approved_by: "Test",
     status: "Cancelled",
   };
@@ -40,19 +36,10 @@ const QmsViewOpportunityAssessment = () => {
       .replace(/\//g, "/");
   };
 
-  const handleCloseViewPage = () => {
-    navigate("/company/qms/list-opportunity-assessment");
+  const handleCloseViewDraftPage = () => {
+    navigate("/company/qms/draft-opportunity-assessment");
   };
 
-  const handleEditAssessment = () => {
-    navigate(`/company/qms/edit-opportunity-assessment/${id}`);
-  };
-
-  const handleDeleteAssessment = () => {
-    // Placeholder for delete action (to be implemented later)
-    console.log("Delete assessment:", id);
-    navigate("/company/qms/list-opportunity-assessment");
-  };
 
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg">
@@ -60,7 +47,7 @@ const QmsViewOpportunityAssessment = () => {
         <h1 className="viewhead">Opportunity Assessment Information</h1>
         <button
           className="text-white bg-[#24242D] p-2 rounded-md"
-          onClick={handleCloseViewPage}
+          onClick={handleCloseViewDraftPage}
         >
           <X size={22} />
         </button>
@@ -76,7 +63,7 @@ const QmsViewOpportunityAssessment = () => {
             </p>
           </div>
 
-           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Potential Opportunity:</label>
             <p className="viewdatas text-right">
               {assessmentDetails.potential_opportunity || "N/A"}
@@ -84,7 +71,7 @@ const QmsViewOpportunityAssessment = () => {
           </div>
 
           {/* Row 2: Opportunity and Opportunity Action Plan */}
-           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3 h-[33.8px]">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3 h-[33.8px]">
             <label className="viewlabels pr-4">Opportunity:</label>
             <div className="relative">
               <p className="viewdatas flex gap-3 absolute right-0">
@@ -111,7 +98,7 @@ const QmsViewOpportunityAssessment = () => {
             </div>
           </div>
 
-           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Opportunity Action Plan:</label>
             <div className="viewdatas">
               {Array.isArray(assessmentDetails.opportunity_action_plan) &&
@@ -169,31 +156,9 @@ const QmsViewOpportunityAssessment = () => {
             </p>
           </div>
 
-          
-          <div className="flex justify-end items-center">
-            <div className="flex gap-5">
-              <div className="flex flex-col justify-center items-center">
-                <button
-                  className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons"
-                  onClick={handleDeleteAssessment}
-                >
-                  Delete
-                </button>
-              </div>
-              <div className="flex flex-col justify-center items-center">
-                <button
-                  className="border border-[#1E84AF] rounded w-[148px] h-[41px] text-[#1E84AF] hover:bg-[#1E84AF] hover:text-white duration-200 buttons"
-                  onClick={handleEditAssessment}
-                >
-                  Edit
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default QmsViewOpportunityAssessment;
+export default QmsViewDraftOpportunityAssessment;
