@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const QmsEditOpportunityAssessment = ({ opportunityData }) => {
+const QmsEditOpportunityAssessment = () => {
   const navigate = useNavigate();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
@@ -33,6 +33,8 @@ const QmsEditOpportunityAssessment = ({ opportunityData }) => {
     year: false,
   });
   const [errors, setErrors] = useState({});
+
+  const opportunityData = "response.data"
 
   // Pre-populate form data and action plan fields when opportunityData is available
   useEffect(() => {
