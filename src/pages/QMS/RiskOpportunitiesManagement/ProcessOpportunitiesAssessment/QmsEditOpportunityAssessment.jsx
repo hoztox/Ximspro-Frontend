@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { ChevronDown, Plus, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { ChevronDown, Plus, X, Search } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from "axios";
 
 const QmsEditOpportunityAssessment = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-
+  
   const [formData, setFormData] = useState({
-    activity_process: "",
+    activity: "",
     potential_opportunity: "",
     probability: "",
     benefit: "",
-    owners_action_party: "",
+    owners: [],
     approved_by: "",
     status: "",
     date: "",
@@ -20,50 +23,33 @@ const QmsEditOpportunityAssessment = () => {
     review_frequency_month: "",
     remarks: "",
   });
-
+  
+  // Add separate state for date parts to maintain selection state
+  const [dateParts, setDateParts] = useState({
+    day: "",
+    month: "",
+    year: ""
+  });
+  
   const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
+  const [users, setUsers] = useState([]);
+  const [ownerSearchTerm, setOwnerSearchTerm] = useState("");
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
     benefit: false,
-    owners_action_party: false,
+    owners: false,
     approved_by: false,
     status: false,
     day: false,
     month: false,
     year: false,
   });
-  const [errors, setErrors] = useState({});
-
-  const opportunityData = "response.data"
-
-  // Pre-populate form data and action plan fields when opportunityData is available
-  useEffect(() => {
-    if (opportunityData) {
-      setFormData({
-        activity_process: opportunityData.activity_process || "",
-        potential_opportunity: opportunityData.potential_opportunity || "",
-        probability: opportunityData.probability || "",
-        benefit: opportunityData.benefit || "",
-        owners_action_party: opportunityData.owners_action_party || "",
-        approved_by: opportunityData.approved_by || "",
-        status: opportunityData.status || "",
-        date: opportunityData.date || "",
-        review_frequency_year: opportunityData.review_frequency_year || "",
-        review_frequency_month: opportunityData.review_frequency_month || "",
-        remarks: opportunityData.remarks || "",
-      });
-
-      // Pre-populate action plan fields
-      if (opportunityData.action_plan) {
-        const actionPlans = opportunityData.action_plan.split(";").filter(plan => plan.trim() !== "");
-        setActionPlanFields(
-          actionPlans.length > 0
-            ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan }))
-            : [{ id: 1, value: "" }]
-        );
-      }
-    }
-  }, [opportunityData]);
+  
+  const ownersDropdownRef = useRef(null);
 
   const getDaysInMonth = (month, year) => {
     if (!month || !year) return 31;
@@ -72,45 +58,223 @@ const QmsEditOpportunityAssessment = () => {
 
   const parseDate = () => {
     if (!formData.date) {
-      return { day: "", month: "", year: "" };
+      return dateParts;
     }
     const dateObj = new Date(formData.date);
-    return {
+    const parsed = {
       day: dateObj.getDate(),
       month: dateObj.getMonth() + 1,
       year: dateObj.getFullYear(),
     };
+    return parsed;
   };
 
-  const dateParts = parseDate();
+  // Use the parseDate function result
+  const currentDateParts = parseDate();
 
   const days = Array.from(
-    { length: getDaysInMonth(dateParts.month, dateParts.year) },
+    { length: getDaysInMonth(currentDateParts.month, currentDateParts.year) },
     (_, i) => i + 1
   );
 
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
-  const ownersActionParties = [
-    "Team A",
-    "Team B",
-    "Individual Contributor",
-    "External Partner",
-  ];
+  // Filter owners based on search term
+  const filteredOwners = users.filter((user) =>
+    `${user.first_name} ${user.last_name}`.toLowerCase().includes(ownerSearchTerm.toLowerCase())
+  );
 
-  const approvedByOptions = [
-    "Manager",
-    "Director",
-    "Executive",
-    "Compliance Officer",
-  ];
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
 
-  const probabilityOptions = ["Probability"];
-  const benefitOptions = ["Benefit"];
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
+    }
+    return null;
+  };
 
-  const statusOptions = ["Achieved", "Not Achieved", "Cancelled", "Hold"];
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
+
+  // Fetch users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const companyId = getUserCompanyId();
+        const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setErrors({ non_field_errors: "Failed to load users" });
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Handle click outside for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (ownersDropdownRef.current && !ownersDropdownRef.current.contains(event.target)) {
+        setOpenDropdowns((prev) => ({ ...prev, owners: false }));
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Helper function to format user display name
+  const formatUserName = (user) => {
+    if (!user) return "";
+    if (typeof user === 'string') return user;
+    
+    const firstName = user.first_name || "";
+    const lastName = user.last_name || "";
+    const username = user.username || "";
+    
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    } else if (firstName) {
+      return firstName;
+    } else if (lastName) {
+      return lastName;
+    } else if (username) {
+      return username;
+    }
+    
+    return "";
+  };
+
+  // Fetch opportunity assessment data
+  const fetchOpportunityData = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
+    const opportunityData = response.data;
+
+    console.log("Fetched opportunity data:", opportunityData);
+
+    // Defensive check: ensure opportunityData is a valid object
+    if (!opportunityData || typeof opportunityData !== "object") {
+      setError("Invalid data received from server.");
+      return;
+    }
+
+    // Parse owners - handle different data structures
+    let ownersArray = [];
+    if (opportunityData.owners && Array.isArray(opportunityData.owners)) {
+      ownersArray = opportunityData.owners.map(owner =>
+        typeof owner === "object" && owner !== null ? owner.id : owner
+      );
+    } else if (opportunityData.action_party) {
+      const matchingUser = users.find(user =>
+        `${user.first_name} ${user.last_name}` === opportunityData.action_party ||
+        user.username === opportunityData.action_party
+      );
+      if (matchingUser) {
+        ownersArray = [matchingUser.id];
+      }
+    }
+
+    // Pre-populate form data
+    setFormData({
+      activity: opportunityData.activity || "",
+      potential_opportunity: opportunityData.potential_opportunity || "",
+      probability: opportunityData.probability || opportunityData.opportunity || "",
+      benefit: opportunityData.benefit || "",
+      owners: ownersArray,
+      approved_by: typeof opportunityData.approved_by === "object" && opportunityData.approved_by !== null
+        ? opportunityData.approved_by.id
+        : opportunityData.approved_by || "",
+      status: opportunityData.status || "",
+      date: opportunityData.date || opportunityData.due_date || "",
+      review_frequency_year: opportunityData.review_frequency_year || "",
+      review_frequency_month: opportunityData.review_frequency_month || "",
+      remarks: opportunityData.remarks || "",
+    });
+
+    // Parse and set date parts
+    if (opportunityData.date || opportunityData.due_date) {
+      const dateObj = new Date(opportunityData.date || opportunityData.due_date);
+      setDateParts({
+        day: dateObj.getDate(),
+        month: dateObj.getMonth() + 1,
+        year: dateObj.getFullYear(),
+      });
+    }
+
+    // Pre-populate action plan fields
+    if (opportunityData.opportunity_action_plan) {
+      let actionPlans = [];
+
+      if (Array.isArray(opportunityData.opportunity_action_plan)) {
+        actionPlans = opportunityData.opportunity_action_plan;
+      } else if (typeof opportunityData.opportunity_action_plan === "string") {
+        actionPlans = opportunityData.opportunity_action_plan
+          .split(";")
+          .filter(plan => plan.trim() !== "");
+      }
+
+      setActionPlanFields(
+        actionPlans.length > 0
+          ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan.trim() }))
+          : [{ id: 1, value: "" }]
+      );
+    } else if (opportunityData.actions && Array.isArray(opportunityData.actions)) {
+      const actions = opportunityData.actions
+        .map(action =>
+          typeof action === "object" && action !== null ? action.action : action
+        )
+        .filter(action => action && action.trim() !== "");
+
+      setActionPlanFields(
+        actions.length > 0
+          ? actions.map((action, index) => ({ id: index + 1, value: action }))
+          : [{ id: 1, value: "" }]
+      );
+    }
+
+  } catch (error) {
+    console.error("Error fetching opportunity data:", error);
+    setError("Failed to load opportunity assessment data");
+
+    if (error.response?.status === 404) {
+      navigate("/company/qms/list-opportunity-assessment");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  useEffect(() => {
+    if (id && users.length > 0) {
+      fetchOpportunityData();
+    } else if (!id) {
+      setError("Invalid assessment ID");
+      setLoading(false);
+    }
+  }, [id, users]);
 
   const toggleDropdown = (dropdown) => {
     setOpenDropdowns((prev) => ({
@@ -121,39 +285,32 @@ const QmsEditOpportunityAssessment = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
+    setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleOwnersChange = (userId) => {
+    setFormData((prev) => {
+      const newOwners = prev.owners.includes(userId)
+        ? prev.owners.filter((id) => id !== userId)
+        : [...prev.owners, userId];
+      return { ...prev, owners: newOwners };
+    });
+    if (errors.owners) {
+      setErrors((prev) => ({ ...prev, owners: "" }));
     }
   };
 
   const handleActionPlanChange = (id, value) => {
-    setActionPlanFields(
-      actionPlanFields.map((field) =>
-        field.id === id ? { ...field, value } : field
-      )
+    setActionPlanFields((prev) =>
+      prev.map((field) => (field.id === id ? { ...field, value } : field))
     );
-
-    if (errors[`action_plan_${id}`]) {
-      setErrors((prev) => ({
-        ...prev,
-        [`action_plan_${id}`]: "",
-      }));
-    }
   };
 
   const addActionPlanField = () => {
-    const newId =
-      actionPlanFields.length > 0
-        ? Math.max(...actionPlanFields.map((f) => f.id)) + 1
-        : 1;
+    const newId = actionPlanFields.length > 0 ? Math.max(...actionPlanFields.map((f) => f.id)) + 1 : 1;
     setActionPlanFields([...actionPlanFields, { id: newId, value: "" }]);
   };
 
@@ -167,35 +324,32 @@ const QmsEditOpportunityAssessment = () => {
     const value = e.target.value;
 
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
-      const dateObj = parseDate();
-      dateObj[dropdown] = value === "" ? "" : parseInt(value, 10);
+      const newValue = value === "" ? "" : parseInt(value, 10);
+      
+      // Update the date parts state
+      const newDateParts = { ...dateParts, [dropdown]: newValue };
+      setDateParts(newDateParts);
 
-      if (dateObj.day && dateObj.month && dateObj.year) {
-        const newDate = `${dateObj.year}-${String(dateObj.month).padStart(
-          2,
-          "0"
-        )}-${String(dateObj.day).padStart(2, "0")}`;
-        setFormData((prev) => ({
-          ...prev,
-          date: newDate,
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          date: "",
-        }));
+      // Construct new date if all parts are available
+      if (newDateParts.day && newDateParts.month && newDateParts.year) {
+        // Validate the date is valid
+        const testDate = new Date(newDateParts.year, newDateParts.month - 1, newDateParts.day);
+        if (testDate.getFullYear() === newDateParts.year && 
+            testDate.getMonth() === newDateParts.month - 1 && 
+            testDate.getDate() === newDateParts.day) {
+          const newDate = `${newDateParts.year}-${String(newDateParts.month).padStart(2, "0")}-${String(newDateParts.day).padStart(2, "0")}`;
+          setFormData((prev) => ({ ...prev, date: newDate }));
+        }
+      }
+      
+      // Clear date error if exists
+      if (errors.date) {
+        setErrors((prev) => ({ ...prev, date: "" }));
       }
     } else {
-      setFormData((prev) => ({
-        ...prev,
-        [dropdown]: value,
-      }));
-
+      setFormData((prev) => ({ ...prev, [dropdown]: value }));
       if (errors[dropdown]) {
-        setErrors((prev) => ({
-          ...prev,
-          [dropdown]: "",
-        }));
+        setErrors((prev) => ({ ...prev, [dropdown]: "" }));
       }
     }
 
@@ -210,76 +364,111 @@ const QmsEditOpportunityAssessment = () => {
     navigate("/company/qms/list-opportunity-assessment");
   };
 
-  const handleUpdateClick = () => {
-    // Basic validation
-    const newErrors = {};
-    if (!formData.activity_process)
-      newErrors.activity_process = "Activity/Process is required";
-    if (!formData.potential_opportunity)
-      newErrors.potential_opportunity = "Potential Opportunity is required";
-    if (!formData.probability)
-      newErrors.probability = "Probability is required";
-    if (!formData.benefit) newErrors.benefit = "Benefit is required";
-    if (!formData.owners_action_party)
-      newErrors.owners_action_party = "Owner/Action Party is required";
-    if (!formData.approved_by)
-      newErrors.approved_by = "Approved By is required";
-    if (!formData.status) newErrors.status = "Status is required";
-    if (!formData.date) newErrors.date = "Date is required";
-
-    // Validate action plan fields
-    actionPlanFields.forEach((field, index) => {
-      if (!field.value.trim() && actionPlanFields.length === 1) {
-        newErrors[`action_plan_${field.id}`] = "At least one Action Plan is required";
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Prepare action plan data as a semicolon-separated string
-    const actionPlanString = actionPlanFields
-      .filter((field) => field.value.trim() !== "")
-      .map((field) => field.value)
-      .join(";");
-
-    // Simulate update API call with updated form data
-    const updatedFormData = {
-      ...formData,
-      action_plan: actionPlanString,
-    };
-    console.log("Updating opportunity with data:", updatedFormData);
-    // In a real app, you would make an API call here to update the data
-    // e.g., api.updateOpportunity(opportunityData.id, updatedFormData);
-
-    // Navigate back to list after successful update
-    navigate("/company/qms/list-opportunity-assessment");
-  };
-
   const getMonthName = (monthNum) => {
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
     return monthNames[monthNum - 1] || "";
   };
+
+const handleUpdateClick = async () => {
+  try {
+    setUpdateLoading(true);
+    
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
+
+    // Create base payload with scalar fields
+    const payload = {
+      activity: formData.activity || null,
+      potential_opportunity: formData.potential_opportunity || null,
+      opportunity: formData.probability ? parseInt(formData.probability) : null,
+      benefit: formData.benefit ? parseInt(formData.benefit) : null,
+      approved_by: formData.approved_by || null,
+      date: formData.date || null,
+      status: formData.status || "Achieved",
+      remarks: formData.remarks || null,
+      company: companyId,
+      user: userId,
+    };
+
+ 
+    if (formData.owners && formData.owners.length >= 0) {
+      payload.owners = formData.owners;
+    }
+
+  
+    const filteredActions = actionPlanFields.filter(field => field.value.trim() !== '');
+    if (filteredActions.length > 0) {
+      payload.actions = filteredActions.map((field) => ({ action: field.value }));
+    }
+
+    console.log('Updating opportunity with payload:', payload);
+
+     
+    const response = await axios.patch(
+      `${BASE_URL}/qms/risk-opportunity/${id}/`,
+      payload
+    );
+
+    console.log("Update response:", response.data);
+    
+   
+    navigate("/company/qms/list-opportunity-assessment");
+    
+  } catch (error) {
+    console.error("Error updating opportunity:", error);
+    if (error.response?.data) {
+      setErrors(error.response.data);
+    } else {
+      setErrors({ non_field_errors: "Failed to update opportunity assessment. Please try again." });
+    }
+  } finally {
+    setUpdateLoading(false);
+  }
+};
+
+  const probabilityOptions = [1, 2, 3, 4, 5];
+  const benefitOptions = [1, 2, 3, 4, 5];
+  const statusOptions = ["Achieved", "Not Achieved", "Cancelled", "Hold"];
 
   const ErrorMessage = ({ message }) => {
     if (!message) return null;
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-[#1C1C24] rounded-lg text-white p-5 flex justify-center items-center min-h-[400px]">
+        <p>Loading Opportunity Assessment...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && !formData.activity) {
+    return (
+      <div className="bg-[#1C1C24] rounded-lg text-white p-5">
+        <div className="text-red-500 text-center mt-8 mb-4">{error}</div>
+        <div className="text-center">
+          <button
+            onClick={fetchOpportunityData}
+            className="border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white duration-200 px-4 py-2 rounded mr-4"
+          >
+            Retry
+          </button>
+          <button
+            onClick={() => navigate("/company/qms/list-opportunity-assessment")}
+            className="border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white duration-200 px-4 py-2 rounded"
+          >
+            Back to List
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
@@ -298,17 +487,21 @@ const QmsEditOpportunityAssessment = () => {
         </div>
 
         <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
+          {errors.non_field_errors && (
+            <div className="text-red-500 mb-4">{errors.non_field_errors}</div>
+          )}
+          
           <div className="grid md:grid-cols-2 gap-5">
             <div>
               <label className="add-qms-manual-label">Activity/Process</label>
               <input
                 type="text"
-                name="activity_process"
-                value={formData.activity_process}
+                name="activity"
+                value={formData.activity}
                 onChange={handleChange}
                 className="w-full add-qms-manual-inputs"
               />
-              <ErrorMessage message={errors.activity_process} />
+              <ErrorMessage message={errors.activity} />
             </div>
 
             <div>
@@ -384,8 +577,6 @@ const QmsEditOpportunityAssessment = () => {
                   />
                 </div>
               </div>
-              <ErrorMessage message={errors.probability} />
-              <ErrorMessage message={errors.benefit} />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -423,47 +614,55 @@ const QmsEditOpportunityAssessment = () => {
                       )}
                     </div>
                   </div>
-                  <ErrorMessage message={errors[`action_plan_${field.id}`]} />
                 </div>
               ))}
             </div>
 
-            <div>
+            <div className="flex flex-col gap-3 relative" ref={ownersDropdownRef}>
               <label className="add-qms-manual-label">
                 Owner(s)/Action Party
               </label>
               <div className="relative">
-                <select
-                  className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                  name="owners_action_party"
-                  value={formData.owners_action_party}
-                  onFocus={() => toggleDropdown("owners_action_party")}
-                  onChange={(e) =>
-                    handleDropdownChange(e, "owners_action_party")
-                  }
-                  onBlur={() =>
-                    setOpenDropdowns((prev) => ({
-                      ...prev,
-                      owners_action_party: false,
-                    }))
-                  }
-                >
-                  <option value="" disabled>
-                    Select Owner/Action Party
-                  </option>
-                  {ownersActionParties.map((party) => (
-                    <option key={party} value={party}>
-                      {party}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.owners_action_party ? "rotate-180" : ""
-                  }`}
-                />
+                <div className="flex items-center mb-2 border border-[#383840] rounded-md">
+                  <input
+                    type="text"
+                    placeholder="Search owners..."
+                    value={ownerSearchTerm}
+                    onChange={(e) => setOwnerSearchTerm(e.target.value)}
+                    className="add-training-inputs !pr-10"
+                  />
+                  <Search className="absolute right-3" size={20} color="#AAAAAA" />
+                </div>
               </div>
-              <ErrorMessage message={errors.owners_action_party} />
+              
+              <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
+                {filteredOwners.length > 0 ? (
+                  filteredOwners.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center py-2 last:border-0"
+                    >
+                      <input
+                        type="checkbox"
+                        id={`owner-${user.id}`}
+                        checked={formData.owners.includes(user.id)}
+                        onChange={() => handleOwnersChange(user.id)}
+                        className="mr-2 form-checkboxes"
+                      />
+                      <label
+                        htmlFor={`owner-${user.id}`}
+                        className="text-sm text-[#AAAAAA] cursor-pointer"
+                      >
+                        {user.first_name} {user.last_name}
+                      </label>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-sm text-[#AAAAAA] p-2">
+                    No owners found
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>
@@ -487,9 +686,9 @@ const QmsEditOpportunityAssessment = () => {
                   <option value="" disabled>
                     Select Approver
                   </option>
-                  {approvedByOptions.map((approver) => (
-                    <option key={approver} value={approver}>
-                      {approver}
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {`${user.first_name} ${user.last_name}`}
                     </option>
                   ))}
                 </select>
@@ -499,7 +698,6 @@ const QmsEditOpportunityAssessment = () => {
                   }`}
                 />
               </div>
-              <ErrorMessage message={errors.approved_by} />
             </div>
 
             <div>
@@ -638,14 +836,16 @@ const QmsEditOpportunityAssessment = () => {
                 <button
                   className="cancel-btn duration-200"
                   onClick={handleCancelClick}
+                  disabled={updateLoading}
                 >
                   Cancel
                 </button>
                 <button
-                  className="save-btn duration-200"
+                  className="save-btn duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleUpdateClick}
+                  disabled={updateLoading}
                 >
-                  Save
+                  {updateLoading ? "Saving..." : "Save"}
                 </button>
               </div>
             </div>

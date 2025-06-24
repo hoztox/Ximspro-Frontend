@@ -1,32 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from "axios";
 
 const QmsViewOpportunityAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  
+  
+  const [assessmentDetails, setAssessmentDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  // Static sample data for demonstration (replace with actual data later)
-  const assessmentDetails = {
-    id: id,
-    activity: "Welding",
-    probability: "5",
-    benefit: "5",
-    opportunity_score: "25",
-    action_party: "Test",
-    due_date: "2023-03-15",
-    opportunity_score_status: "H",
-    remarks: "Test",
-    potential_opportunity: "Test",
-    // Updated to an array for opportunity_action_plan with more data
-    opportunity_action_plan: [
-      "Action 1",
-      "Action 2",
-     
-    ], // Example list with more items
-    approved_by: "Test",
-    status: "Cancelled",
+ 
+  const fetchAssessmentDetails = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      
+      const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`,);
+
+      setAssessmentDetails(response.data);
+      console.log("Fetched assessment details:", response.data);
+    } catch (error) {
+      console.error("Error fetching assessment details:", error);
+      setError("Failed to load opportunity assessment details");
+      
+       
+      if (error.response?.status === 404) {
+        navigate("/company/qms/list-opportunity-assessment");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
+ 
+  useEffect(() => {
+    if (id) {
+      fetchAssessmentDetails();
+    } else {
+      setError("Invalid assessment ID");
+      setLoading(false);
+    }
+  }, [id]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -40,6 +58,70 @@ const QmsViewOpportunityAssessment = () => {
       .replace(/\//g, "/");
   };
 
+  // Helper function to format user display name
+  const formatUserName = (user) => {
+    if (!user) return "N/A";
+    if (typeof user === 'string') return user;
+    
+    // If it's an object, extract the name
+    const firstName = user.first_name || "";
+    const lastName = user.last_name || "";
+    const username = user.username || "";
+    
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    } else if (firstName) {
+      return firstName;
+    } else if (lastName) {
+      return lastName;
+    } else if (username) {
+      return username;
+    }
+    
+    return "N/A";
+  };
+
+  // Helper function to format owners list
+  const formatOwners = (owners) => {
+    if (!owners || !Array.isArray(owners)) return null;
+    
+    return owners.map(owner => formatUserName(owner));
+  };
+
+  // Helper function to format actions list
+  const formatActions = (actions) => {
+    if (!actions || !Array.isArray(actions)) return "N/A";
+    
+    return actions.map(action => action.action || action).join(", ");
+  };
+
+  // Helper function to get risk category ranking
+  const getRiskRanking = (score) => {
+    if (!score) return "N/A";
+    const numScore = parseInt(score);
+    if (numScore >= 15) return "VH"; // Very High
+    if (numScore >= 8) return "H";   // High
+    if (numScore >= 4) return "M";   // Moderate
+    if (numScore >= 1) return "L";   // Low
+    return "N/A";
+  };
+
+  // Helper function to get ranking color
+  const getRankingColor = (ranking) => {
+    switch (ranking) {
+      case "VH":
+         return "bg-[#dd363611] text-[#dd3636]";
+      case "H":
+        return "bg-[#DD6B0611] text-[#DD6B06]";
+      case "M":
+        return "bg-[#FFD70011] text-[#FFD700]";
+      case "L":
+        return "bg-[#36DDAE11] text-[#36DDAE]";
+      default:
+        return "bg-[#858585] text-[#858585]";
+    }
+  };
+
   const handleCloseViewPage = () => {
     navigate("/company/qms/list-opportunity-assessment");
   };
@@ -48,11 +130,69 @@ const QmsViewOpportunityAssessment = () => {
     navigate(`/company/qms/edit-opportunity-assessment/${id}`);
   };
 
-  const handleDeleteAssessment = () => {
-    // Placeholder for delete action (to be implemented later)
-    console.log("Delete assessment:", id);
-    navigate("/company/qms/list-opportunity-assessment");
+  const handleDeleteAssessment = async () => {
+    if (!assessmentDetails) return;
+    
+    if (!window.confirm(`Are you sure you want to delete the assessment for "${assessmentDetails.activity}"?`)) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      
+      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${id}/`,  );
+
+      // Navigate back to list after successful deletion
+      navigate("/company/qms/list-opportunity-assessment");
+    } catch (error) {
+      console.error("Error deleting assessment:", error);
+      alert("Failed to delete assessment. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
+        <p className="text-white">Loading Opportunity Assessment...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error && !assessmentDetails) {
+    return (
+      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+        <div className="flex justify-between items-center border-b border-[#383840] pb-[26px]">
+          <h1 className="viewhead">Opportunity Assessment Information</h1>
+          <button
+            className="text-white bg-[#24242D] p-2 rounded-md"
+            onClick={handleCloseViewPage}
+          >
+            <X size={22} />
+          </button>
+        </div>
+        <div className="text-red-500 text-center mt-8 mb-4">{error}</div>
+        <div className="text-center">
+          <button
+            onClick={fetchAssessmentDetails}
+            className="border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white duration-200 px-4 py-2 rounded"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!assessmentDetails) {
+    return null;
+  }
+
+  // Get ranking for opportunity score
+  const opportunityRanking = getRiskRanking(assessmentDetails.opportunity_score);
 
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg">
@@ -68,7 +208,6 @@ const QmsViewOpportunityAssessment = () => {
       <div className="mt-8">
         <div className="grid grid-cols-2 gap-x-10 gap-y-[36px] pb-5">
           {/* Row 1: Activity/Process and Potential Opportunity */}
-
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Activity/Process:</label>
             <p className="viewdatas text-right">
@@ -76,7 +215,7 @@ const QmsViewOpportunityAssessment = () => {
             </p>
           </div>
 
-           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Potential Opportunity:</label>
             <p className="viewdatas text-right">
               {assessmentDetails.potential_opportunity || "N/A"}
@@ -84,100 +223,136 @@ const QmsViewOpportunityAssessment = () => {
           </div>
 
           {/* Row 2: Opportunity and Opportunity Action Plan */}
-           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3 h-[33.8px]">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3 h-[33.8px]">
             <label className="viewlabels pr-4">Opportunity:</label>
             <div className="relative">
               <p className="viewdatas flex gap-3 absolute right-0">
                 <span className="whitespace-nowrap">
-                  Probability: {assessmentDetails.probability || "N/A"}
+                  Probability: {assessmentDetails.probability || assessmentDetails.opportunity || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
                   Benefit: {assessmentDetails.benefit || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
-                  Opportunity Score:{" "}
-                  {assessmentDetails.opportunity_score || "N/A"}
+                  Opportunity Score: {assessmentDetails.opportunity_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] ${
-                    assessmentDetails.opportunity_score_status === "H"
-                      ? "bg-[#dd363611] text-[#dd3636]"
-                      : "bg-[#36DDAE11] text-[#36DDAE]"
-                  }`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] ${getRankingColor(opportunityRanking)}`}
                 >
-                  {assessmentDetails.opportunity_score_status || "N/A"}
+                  {opportunityRanking}
                 </span>
               </p>
             </div>
           </div>
 
-           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Opportunity Action Plan:</label>
             <div className="viewdatas">
-              {Array.isArray(assessmentDetails.opportunity_action_plan) &&
-              assessmentDetails.opportunity_action_plan.length > 0 ? (
-                <ol className="list-decimal pl-5 flex flex-col items-end">
-                  {assessmentDetails.opportunity_action_plan.map(
-                    (action, index) => (
-                      <li key={index} className="mb-2">
-                        {action}
-                      </li>
+              {assessmentDetails.opportunity_action_plan || assessmentDetails.actions ? (
+                <div className="text-right">
+                  {/* Handle opportunity_action_plan first */}
+                  {assessmentDetails.opportunity_action_plan ? (
+                    Array.isArray(assessmentDetails.opportunity_action_plan) ? (
+                      <ol className="list-decimal pl-5 flex flex-col items-end">
+                        {assessmentDetails.opportunity_action_plan.map((action, index) => (
+                          <li key={index} className="mb-2">
+                            {action}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <p>{assessmentDetails.opportunity_action_plan}</p>
                     )
+                  ) : assessmentDetails.actions ? (
+                    /* Handle actions array */
+                    <div className="text-right">
+                      {assessmentDetails.actions.map((actionObj, index) => (
+                        <div key={index} className="mb-2">
+                          {actionObj.action || actionObj}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>N/A</p>
                   )}
-                </ol>
+                </div>
               ) : (
                 <p>N/A</p>
               )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
-            {/* Row 3: Owner(s)/Action Party and Approved By */}
+          {/* Row 3: Owner(s)/Action Party and Approved By */}
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Owner(s)/Action Party:</label>
-            <p className="viewdatas text-right">
-              {assessmentDetails.action_party || "N/A"}
-            </p>
+            <div className="viewdatas">
+              {assessmentDetails.action_party ? (
+                <p className="text-right">{assessmentDetails.action_party}</p>
+              ) : formatOwners(assessmentDetails.owners) ? (
+                <div className="text-right">
+                  {formatOwners(assessmentDetails.owners).map((owner, index) => (
+                    <div key={index} className="mb-2">
+                      {owner}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-right">N/A</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Approved By:</label>
             <p className="viewdatas text-right">
-              {assessmentDetails.approved_by || "N/A"}
+              {formatUserName(assessmentDetails.approved_by)}
             </p>
           </div>
 
+          {/* Row 4: Due Date and Status */}
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
-            {/* Row 4: Due Date and Status */}
             <label className="viewlabels pr-4">Due Date:</label>
             <p className="viewdatas text-right">
-              {formatDate(assessmentDetails.due_date) || "N/A"}
+              {formatDate(assessmentDetails.date || assessmentDetails.due_date)}
             </p>
           </div>
 
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Status:</label>
             <p className="viewdatas text-right">
-              {assessmentDetails.status || "N/A"}
+              <span
+                className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
+                  assessmentDetails.status === "Achieved"
+                    ? "bg-[#36DDAE11] text-[#36DDAE]"
+                    : assessmentDetails.status === "Not Achieved"
+                    ? "bg-[#dd363611] text-[#dd3636]"
+                    : assessmentDetails.status === "Cancelled"
+                    ? "bg-[#1E84AF11] text-[#1E84AF]"
+                    : "bg-[#FFD70011] text-[#FFD700]"
+                }`}
+              >
+                {assessmentDetails.status || "N/A"}
+              </span>
             </p>
           </div>
 
+          {/* Row 5: Remarks and Buttons */}
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
-            {/* Row 5: Remarks and Buttons */}
             <label className="viewlabels pr-4">Remarks:</label>
             <p className="viewdatas text-right">
               {assessmentDetails.remarks || "N/A"}
             </p>
           </div>
 
-          
           <div className="flex justify-end items-center">
             <div className="flex gap-5">
               <div className="flex flex-col justify-center items-center">
                 <button
-                  className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons"
+                  className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons disabled:opacity-50 disabled:cursor-not-allowed"
                   onClick={handleDeleteAssessment}
+                  disabled={deleteLoading}
                 >
-                  Delete
+                  {deleteLoading ? "Deleting..." : "Delete"}
                 </button>
               </div>
               <div className="flex flex-col justify-center items-center">
