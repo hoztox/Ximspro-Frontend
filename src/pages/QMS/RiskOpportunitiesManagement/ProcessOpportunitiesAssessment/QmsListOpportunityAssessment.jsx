@@ -39,25 +39,33 @@ const QmsListOpportunityAssessment = () => {
   };
 
   // Fetch assessments from API
-  const fetchAssessments = async () => {
-    try {
-      setLoading(true);
-      const companyId = getUserCompanyId();
-  
-      const response = await axios.get(`${BASE_URL}/qms/risk-opportunities/company/${companyId}/` 
-      );
 
-      setAssessments(response.data);
-      setError("");
-      console.log("Fetched assessments:", response.data);
-    } catch (error) {
-      console.error("Error fetching assessments:", error);
+
+  const fetchAssessments = async () => {
+  try {
+    setLoading(true);
+    const companyId = getUserCompanyId();
+
+    const response = await axios.get(`${BASE_URL}/qms/risk-opportunities/company/${companyId}/`);
+    setAssessments(response.data);
+    setError("");
+    console.log("Fetched assessments:", response.data);
+  } catch (error) {
+    console.error("Error fetching assessments:", error);
+
+    if (error.response && error.response.status === 404) {
+      // Backend explicitly says no records found
+      setAssessments([]); // treat as empty, not error
+      setError(""); // clear error
+    } else {
+      // Other errors (network, 500s, etc.)
       setError("Failed to load opportunity assessments");
-      setAssessments([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Load data on component mount
   useEffect(() => {
