@@ -117,7 +117,7 @@ const QmsViewDraftOpportunityAssessment = () => {
       case "L":
         return "bg-[#36DDAE11] text-[#36DDAE]";
       default:
-        return "bg-[#858585] text-[#858585]";
+        return "bg-[#85858550] text-[#858585]";
     }
   };
 
@@ -125,37 +125,37 @@ const QmsViewDraftOpportunityAssessment = () => {
     navigate("/company/qms/draft-opportunity-assessment");
   };
 
-  const handleEditAssessment = () => {
-    navigate(`/company/qms/edit-draft-opportunity-assessment/${id}`);
-  };
+  // const handleEditAssessment = () => {
+  //   navigate(`/company/qms/edit-draft-opportunity-assessment/${id}`);
+  // };
 
-  const handleDeleteAssessment = async () => {
-    if (!assessmentDetails) return;
+  // const handleDeleteAssessment = async () => {
+  //   if (!assessmentDetails) return;
     
-    if (!window.confirm(`Are you sure you want to delete the assessment for "${assessmentDetails.activity}"?`)) {
-      return;
-    }
+  //   if (!window.confirm(`Are you sure you want to delete the assessment for "${assessmentDetails.activity}"?`)) {
+  //     return;
+  //   }
 
-    try {
-      setDeleteLoading(true);
+  //   try {
+  //     setDeleteLoading(true);
       
-      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${id}/`,  );
+  //     await axios.delete(`${BASE_URL}/qms/risk-opportunity/${id}/`,  );
 
-      // Navigate back to list after successful deletion
-      navigate("/company/qms/list-opportunity-assessment");
-    } catch (error) {
-      console.error("Error deleting assessment:", error);
-      alert("Failed to delete assessment. Please try again.");
-    } finally {
-      setDeleteLoading(false);
-    }
-  };
+  //     // Navigate back to list after successful deletion
+  //     navigate("/company/qms/list-opportunity-assessment");
+  //   } catch (error) {
+  //     console.error("Error deleting assessment:", error);
+  //     alert("Failed to delete assessment. Please try again.");
+  //   } finally {
+  //     setDeleteLoading(false);
+  //   }
+  // };
 
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
-        <p className="text-white">Loading Opportunity Assessment...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center">
+        <p className="not-found">Loading Opportunity Assessment...</p>
       </div>
     );
   }
@@ -236,7 +236,7 @@ const QmsViewDraftOpportunityAssessment = () => {
                   Opportunity Score: {assessmentDetails.opportunity_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] ${getRankingColor(opportunityRanking)}`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColor(opportunityRanking)}`}
                 >
                   {opportunityRanking}
                 </span>
@@ -301,7 +301,7 @@ const QmsViewDraftOpportunityAssessment = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Approved By:</label>
             <p className="viewdatas text-right">
               {formatUserName(assessmentDetails.approved_by)}
@@ -343,7 +343,7 @@ const QmsViewDraftOpportunityAssessment = () => {
             </p>
           </div>
 
-          <div className="flex justify-end items-center">
+          {/* <div className="flex justify-end items-center">
             <div className="flex gap-5">
               <div className="flex flex-col justify-center items-center">
                 <button
@@ -363,7 +363,7 @@ const QmsViewDraftOpportunityAssessment = () => {
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

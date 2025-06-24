@@ -441,7 +441,7 @@ const handleUpdateClick = async () => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] rounded-lg text-white p-5 flex justify-center items-center min-h-[400px]">
+      <div className="bg-[#1C1C24] rounded-lg not-found p-5 flex justify-center items-center min-h-[400px]">
         <p>Loading Opportunity Assessment...</p>
       </div>
     );

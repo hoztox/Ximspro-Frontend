@@ -107,7 +107,7 @@ const QmsListOpportunityAssessment = () => {
       case "L":
         return "bg-[#36DDAE11] text-[#36DDAE]";
       default:
-        return "bg-[#858585] text-[#858585]";
+        return "bg-[#85858550] text-[#858585]";
     }
   };
 
@@ -284,7 +284,7 @@ const QmsListOpportunityAssessment = () => {
                     <td className="px-2 add-manual-datas">
                       {assessment.potential_opportunity || "N/A"}
                     </td>
-                    <td className="px-2 add-manual-datas text-center w-[6%]">
+                    <td className="px-2 add-manual-datas text-center w-[65px]">
                       {assessment.opportunity_score || "N/A"}
                     </td>
                     <td className="pl-1 add-manual-datas">
@@ -353,7 +353,7 @@ const QmsListOpportunityAssessment = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
+            
         <div className="flex justify-between items-center mt-6 text-sm">
           <div className="text-white total-text">Total-{totalItems}</div>
           <div className="flex items-center gap-5">
@@ -390,14 +390,14 @@ const QmsListOpportunityAssessment = () => {
             </button>
           </div>
         </div>
-      )}
+       
 
       {/* Show total count even when pagination is not needed */}
-      {totalPages <= 1 && totalItems > 0 && (
+      {/* {totalPages <= 1 && totalItems > 0 && (
         <div className="flex justify-start items-center mt-6 text-sm">
           <div className="text-white total-text">Total-{totalItems}</div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

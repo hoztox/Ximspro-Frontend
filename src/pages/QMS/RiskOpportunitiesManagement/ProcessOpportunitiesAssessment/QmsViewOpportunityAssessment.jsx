@@ -118,7 +118,7 @@ const QmsViewOpportunityAssessment = () => {
       case "L":
         return "bg-[#36DDAE11] text-[#36DDAE]";
       default:
-        return "bg-[#858585] text-[#858585]";
+        return "bg-[#85858550] text-[#858585]";
     }
   };
 
@@ -155,8 +155,8 @@ const QmsViewOpportunityAssessment = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
-        <p className="text-white">Loading Opportunity Assessment...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center">
+        <p className="not-found">Loading Opportunity Assessment...</p>
       </div>
     );
   }
@@ -237,7 +237,7 @@ const QmsViewOpportunityAssessment = () => {
                   Opportunity Score: {assessmentDetails.opportunity_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] ${getRankingColor(opportunityRanking)}`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColor(opportunityRanking)}`}
                 >
                   {opportunityRanking}
                 </span>
@@ -302,7 +302,7 @@ const QmsViewOpportunityAssessment = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
+          <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Approved By:</label>
             <p className="viewdatas text-right">
               {formatUserName(assessmentDetails.approved_by)}
