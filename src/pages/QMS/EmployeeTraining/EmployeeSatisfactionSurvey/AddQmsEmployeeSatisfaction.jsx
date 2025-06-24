@@ -202,19 +202,19 @@ const AddQmsEmployeeSatisfaction = () => {
       let errorMsg = error.message;
 
       if (error.response) {
-        // Check for field-specific errors first
-        if (error.response.data.date) {
-          errorMsg = error.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (error.response.data.detail) {
-          errorMsg = error.response.data.detail;
-        } else if (error.response.data.message) {
-          errorMsg = error.response.data.message;
-        }
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
+  const data = error.response.data;
+
+  if (data.survey_title) {
+    errorMsg = data.survey_title[0];
+  } else if (data.valid_till) {
+    errorMsg = data.valid_till[0];
+  } else if (data.detail) {
+    errorMsg = data.detail;
+  } else if (data.message) {
+    errorMsg = data.message;
+  }
+}
+
 
       setError(errorMsg);
     } finally {
