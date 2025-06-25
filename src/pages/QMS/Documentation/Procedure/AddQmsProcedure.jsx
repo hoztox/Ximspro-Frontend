@@ -275,81 +275,81 @@ const AddQmsProcedure = () => {
     navigate("/company/qms/procedure");
   };
 
-const handleSaveClick = async () => {
-  if (!validateForm()) {
-    setError("Please fill in all required fields");
-    return;
-  }
-  try {
-    setLoading(true);
-
-    const companyId = getUserCompanyId();
-    if (!companyId) {
-      setError("Company ID not found. Please log in again.");
-      setLoading(false);
+  const handleSaveClick = async () => {
+    if (!validateForm()) {
+      setError("Please fill in all required fields");
       return;
     }
+    try {
+      setLoading(true);
 
-    const submitData = new FormData();
-    submitData.append("company", companyId);
-
-    Object.keys(formData).forEach((key) => {
-      if (
-        key === "send_notification_to_checked_by" ||
-        key === "send_notification_to_approved_by" ||
-        key === "send_email_to_checked_by" ||
-        key === "send_email_to_approved_by"
-      ) {
-        submitData.append(key, formData[key]);
+      const companyId = getUserCompanyId();
+      if (!companyId) {
+        setError("Company ID not found. Please log in again.");
+        setLoading(false);
         return;
       }
-      submitData.append(key, formData[key]);
-    });
 
-    if (fileObject) {
-      submitData.append("upload_attachment", fileObject);
-    }
+      const submitData = new FormData();
+      submitData.append("company", companyId);
 
-    const response = await axios.post(
-      `${BASE_URL}/qms/procedure-create/`,
-      submitData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      Object.keys(formData).forEach((key) => {
+        if (
+          key === "send_notification_to_checked_by" ||
+          key === "send_notification_to_approved_by" ||
+          key === "send_email_to_checked_by" ||
+          key === "send_email_to_approved_by"
+        ) {
+          submitData.append(key, formData[key]);
+          return;
+        }
+        submitData.append(key, formData[key]);
+      });
+
+      if (fileObject) {
+        submitData.append("upload_attachment", fileObject);
       }
-    );
 
-    setLoading(false);
-    setShowAddManualSuccessModal(true);
-    setTimeout(() => {
-      setShowAddManualSuccessModal(false);
-      navigate("/company/qms/procedure");
-    }, 1500);
-  } catch (err) {
-    setLoading(false);
-    let errorMsg = "An unexpected error occurred.";
+      const response = await axios.post(
+        `${BASE_URL}/qms/procedure-create/`,
+        submitData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    if (err.response) {
-      // Check for field-specific errors
-      if (err.response.data.title) {
-        errorMsg = err.response.data.title[0]; // e.g., "A procedure with this title already exists for your company."
-      } else if (err.response.data.detail) {
-        errorMsg = err.response.data.detail;
-      } else if (err.response.data.message) {
-        errorMsg = err.response.data.message;
+      setLoading(false);
+      setShowAddManualSuccessModal(true);
+      setTimeout(() => {
+        setShowAddManualSuccessModal(false);
+        navigate("/company/qms/procedure");
+      }, 1500);
+    } catch (err) {
+      setLoading(false);
+      let errorMsg = "An unexpected error occurred.";
+
+      if (err.response) {
+        // Check for field-specific errors
+        if (err.response.data.title) {
+          errorMsg = err.response.data.title[0]; // e.g., "A procedure with this title already exists for your company."
+        } else if (err.response.data.detail) {
+          errorMsg = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMsg = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMsg = err.message;
       }
-    } else if (err.message) {
-      errorMsg = err.message;
-    }
 
-    setError(errorMsg);
-    setShowDarftManualErrorModal(true);
-    setTimeout(() => {
-      setShowDarftManualErrorModal(false);
-    }, 3000);
-  }
-};
+      setError(errorMsg);
+      setShowDarftManualErrorModal(true);
+      setTimeout(() => {
+        setShowDarftManualErrorModal(false);
+      }, 3000);
+    }
+  };
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
 
@@ -421,6 +421,36 @@ const handleSaveClick = async () => {
       console.error("Error saving manual:", err);
     }
   };
+
+ const isFormEmpty = () => {
+  const fieldsToCheck = {
+    title: !formData.title?.trim(),
+    no: !formData.no?.trim(),
+    written_by: !formData.written_by,
+    checked_by: !formData.checked_by,
+    approved_by: !formData.approved_by,
+    rivision: !formData.rivision?.trim(),
+    review_frequency_year: !formData.review_frequency_year?.trim(),
+    review_frequency_month: !formData.review_frequency_month?.trim(),
+    related_record_format: !formData.related_record_format?.trim(),
+  };
+
+  // Check if document_type is still the default value
+  const isDocumentTypeDefault = formData.document_type === "System";
+
+  // Check if date is still the default value
+  const defaultDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(currentDay).padStart(2, "0")}`;
+  const isDateDefault = formData.date === defaultDate;
+
+  // Return true only if all fields are empty, document_type is default, date is default, and no file is uploaded
+  return (
+    Object.values(fieldsToCheck).every((val) => val === true) &&
+    isDocumentTypeDefault &&
+    isDateDefault &&
+    !fileObject
+  );
+};
+
 
   // Get month name from number
   const getMonthName = (monthNum) => {
@@ -521,9 +551,8 @@ const handleSaveClick = async () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.written_by ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? "rotate-180" : ""
+                    }`}
                 />
               </div>
               <ErrorMessage message={errors.written_by} />
@@ -602,9 +631,8 @@ const handleSaveClick = async () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.checked_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <ErrorMessage message={errors.checked_by} />
@@ -679,9 +707,8 @@ const handleSaveClick = async () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.approved_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 {/* <ErrorMessage message={errors.approved_by} /> */}
@@ -711,9 +738,8 @@ const handleSaveClick = async () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.document_type ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.document_type ? "rotate-180" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -738,9 +764,8 @@ const handleSaveClick = async () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.day ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -761,9 +786,8 @@ const handleSaveClick = async () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.month ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -783,9 +807,8 @@ const handleSaveClick = async () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.year ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -855,11 +878,15 @@ const handleSaveClick = async () => {
           <div className="flex items-center mt-[22px] justify-between">
             <div className="mb-6">
               <button
-                className="request-correction-btn duration-200"
                 onClick={handleDraftClick}
+                disabled={isFormEmpty() || loading}
+                className={`request-correction-btn duration-200 ${isFormEmpty() || loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 Save as Draft
               </button>
+
+
             </div>
 
             <div className="flex gap-[22px] mb-6">
