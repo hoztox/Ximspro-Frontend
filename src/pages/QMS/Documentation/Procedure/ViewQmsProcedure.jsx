@@ -14,7 +14,7 @@ import ReviewSubmitErrorModal from "./Modals/ReviewSubmitErrorModal";
 import DeleteQmsManualConfirmModal from "./Modals/DeleteQmsManualConfirmModal";
 import DeleteQmsManualsuccessModal from "./Modals/DeleteQmsManualsuccessModal";
 import DeleteQmsManualErrorModal from "./Modals/DeleteQmsManualErrorModal";
-import SuccessModal from "./Modals/SuccessModal"; 
+import SuccessModal from "./Modals/SuccessModal";
 
 const ViewQmsprocedure = () => {
   const navigate = useNavigate();
@@ -25,19 +25,14 @@ const ViewQmsprocedure = () => {
   const [corrections, setCorrections] = useState([]);
   const [highlightedCorrection, setHighlightedCorrection] = useState(null);
   const [historyCorrections, setHistoryCorrections] = useState([]);
-  const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] =
-    useState(false);
-  const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] =
-    useState(false);
-  const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] =
-    useState(false);
-  const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] =
-    useState(false);
+  const [usersData, setUsersData] = useState({});
+  const [showSentCorrectionSuccessModal, setShowSentCorrectionSuccessModal] = useState(false);
+  const [showSentCorrectionErrorModal, setShowSentCorrectionErrorModal] = useState(false);
+  const [showSubmitManualSuccessModal, setShowSubmitManualSuccessModal] = useState(false);
+  const [showSubmitManualErrorModal, setShowSubmitManualErrorModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
-    useState(false);
-  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
-    useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
   const [correctionRequest, setCorrectionRequest] = useState({
     isOpen: false,
     text: "",
@@ -70,7 +65,6 @@ const ViewQmsprocedure = () => {
         companyData.company_id = localStorage.getItem("company_id");
         companyData.company_name = localStorage.getItem("company_name");
         companyData.email_address = localStorage.getItem("email_address");
-        console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === "user") {
         const userData = {};
@@ -86,7 +80,6 @@ const ViewQmsprocedure = () => {
           });
         userData.role = role;
         userData.user_id = localStorage.getItem("user_id");
-        console.log("Regular User Data:", userData);
         return userData;
       }
     } catch (error) {
@@ -113,16 +106,12 @@ const ViewQmsprocedure = () => {
 
   const fetchManualDetails = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/qms/procedure-detail/${id}/`
-      );
+      const response = await axios.get(`${BASE_URL}/qms/procedure-detail/${id}/`);
       setManualDetails(response.data);
-      console.log("Procedure Details:", response.data);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching procedure details:", err);
       let errorMsg = err.message;
-
       if (err.response) {
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
@@ -134,7 +123,6 @@ const ViewQmsprocedure = () => {
       } else if (err.message) {
         errorMsg = err.message;
       }
-
       setError(errorMsg);
       setLoading(false);
     }
@@ -146,11 +134,8 @@ const ViewQmsprocedure = () => {
       if (!companyId) {
         throw new Error("Company ID not found");
       }
-      const response = await axios.get(
-        `${BASE_URL}/company/users-active/${companyId}/`
-      );
+      const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
       setUsers(response.data);
-      console.log("Fetched Users:", response.data);
     } catch (err) {
       console.error("Error fetching users:", err);
       setApproveError(err.message || "Failed to fetch users");
@@ -163,14 +148,9 @@ const ViewQmsprocedure = () => {
         setApproveError("Please select a user");
         return;
       }
-
-      const response = await axios.put(
-        `${BASE_URL}/qms/procedure/${id}/update/`, 
-        {
-          approved_by: selectedUserId,
-        }
-      );
-
+      const response = await axios.put(`${BASE_URL}/qms/procedure/${id}/update/`, {
+        approved_by: selectedUserId,
+      });
       setManualDetails(response.data);
       setShowSuccessModal(true);
       setSuccessMessage("Approver Added Successfully");
@@ -184,7 +164,6 @@ const ViewQmsprocedure = () => {
     } catch (err) {
       console.error("Error updating approved by:", err);
       let errorMsg = err.message;
-
       if (err.response) {
         if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
@@ -192,23 +171,18 @@ const ViewQmsprocedure = () => {
           errorMsg = err.response.data.message;
         }
       }
-
       setApproveError(errorMsg);
     }
   };
 
   const getViewedCorrections = () => {
-    const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
-      "user_id"
-    )}`;
+    const storageKey = `viewed_corrections_${id}_${localStorage.getItem("user_id")}`;
     const viewedCorrections = localStorage.getItem(storageKey);
     return viewedCorrections ? JSON.parse(viewedCorrections) : [];
   };
 
   const saveViewedCorrection = (correctionId) => {
-    const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
-      "user_id"
-    )}`;
+    const storageKey = `viewed_corrections_${id}_${localStorage.getItem("user_id")}`;
     const viewedCorrections = getViewedCorrections();
     if (!viewedCorrections.includes(correctionId)) {
       viewedCorrections.push(correctionId);
@@ -218,28 +192,34 @@ const ViewQmsprocedure = () => {
 
   const fetchManualCorrections = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/qms/procedure/${id}/corrections/` 
-      );
+      const response = await axios.get(`${BASE_URL}/qms/procedure/${id}/corrections/`);
       const allCorrections = response.data;
-      console.log("Fetched Procedure Corrections:", allCorrections);
+      const currentUserId = Number(localStorage.getItem("user_id"));
       const viewedCorrections = getViewedCorrections();
       setCorrections(allCorrections);
+
       const sortedCorrections = [...allCorrections].sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
-      if (sortedCorrections.length > 0) {
-        const mostRecent = sortedCorrections[0];
-        if (!viewedCorrections.includes(mostRecent.id)) {
-          setHighlightedCorrection(mostRecent);
-          setHistoryCorrections(sortedCorrections.slice(1));
-        } else {
-          setHighlightedCorrection(null);
-          setHistoryCorrections(sortedCorrections);
-        }
+
+      const userCorrections = allCorrections.filter(
+        (correction) => correction.to_user?.id === currentUserId
+      );
+
+      const latestUnviewedCorrection = userCorrections.find(
+        (correction) => !viewedCorrections.includes(correction.id)
+      );
+
+      if (latestUnviewedCorrection) {
+        setHighlightedCorrection(latestUnviewedCorrection);
+        setHistoryCorrections(
+          sortedCorrections.filter(
+            (correction) => correction.id !== latestUnviewedCorrection.id
+          )
+        );
       } else {
         setHighlightedCorrection(null);
-        setHistoryCorrections([]);
+        setHistoryCorrections(sortedCorrections);
       }
     } catch (error) {
       console.error("Error fetching procedure corrections:", error);
@@ -251,6 +231,26 @@ const ViewQmsprocedure = () => {
     fetchManualCorrections();
     fetchUsers();
   }, [id]);
+
+  const getUserName = (user) => {
+    if (!user) return "N/A";
+    if (typeof user === "object" && user.first_name && user.last_name) {
+      return `${user.first_name} ${user.last_name}`;
+    }
+    if (typeof user === "number" && usersData[user]) {
+      return `${usersData[user].first_name} ${usersData[user].last_name}`;
+    }
+    if (typeof user === "string" && user.includes("@")) {
+      return user;
+    }
+    if (
+      user === highlightedCorrection?.to_user &&
+      highlightedCorrection?.to_user_email
+    ) {
+      return highlightedCorrection.to_user_email;
+    }
+    return `User ${user}`;
+  };
 
   const handleCorrectionRequest = () => {
     setCorrectionRequest((prev) => ({
@@ -277,22 +277,33 @@ const ViewQmsprocedure = () => {
         alert("User not authenticated");
         return;
       }
+
+      const currentUserId = Number(currentUser.user_id);
+      let toUserId;
+
+      if (currentUserId === manualDetails.approved_by?.id) {
+        toUserId = manualDetails.checked_by?.id;
+      } else if (currentUserId === manualDetails.checked_by?.id) {
+        toUserId = manualDetails.written_by?.id;
+      } else {
+        throw new Error("Invalid correction flow");
+      }
+
       const requestData = {
         manual_id: id,
         correction: correctionRequest.text,
-        from_user: currentUser.user_id,
+        from_user: currentUserId,
+        to_user: toUserId,
       };
-      console.log("Submitting correction request:", requestData);
+
       const response = await axios.post(
         `${BASE_URL}/qms/procedure/submit-correction/`,
         requestData
       );
-      console.log("Correction response:", response.data);
+
       handleCloseCorrectionRequest();
       setShowSentCorrectionSuccessModal(true);
-      const storageKey = `viewed_corrections_${id}_${localStorage.getItem(
-        "user_id"
-      )}`;
+      const storageKey = `viewed_corrections_${id}_${localStorage.getItem("user_id")}`;
       localStorage.removeItem(storageKey);
       await fetchManualDetails();
       await fetchManualCorrections();
@@ -302,7 +313,6 @@ const ViewQmsprocedure = () => {
     } catch (error) {
       console.error("Error submitting correction:", error);
       let errorMsg = error.message;
-
       if (error.response) {
         if (error.response.data.date) {
           errorMsg = error.response.data.date[0];
@@ -314,7 +324,6 @@ const ViewQmsprocedure = () => {
       } else if (error.message) {
         errorMsg = error.message;
       }
-
       setError(errorMsg);
       setShowSentCorrectionErrorModal(true);
       setTimeout(() => {
@@ -385,20 +394,8 @@ const ViewQmsprocedure = () => {
   };
 
   const correctionVariants = {
-    hidden: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3,
-      },
-    },
-    visible: {
-      opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.3,
-      },
-    },
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.3 } },
   };
 
   const modalVariants = {
@@ -420,26 +417,34 @@ const ViewQmsprocedure = () => {
 
   const canReview = (() => {
     if (isCurrentUserWrittenBy) {
-      return false;
+      return (
+        manualDetails.status === "Correction Requested" &&
+        corrections.some(
+          (correction) =>
+            correction.to_user?.id === currentUserId &&
+            correction.from_user?.id === manualDetails.checked_by?.id
+        )
+      );
     }
+
     if (manualDetails.status === "Pending for Review/Checking") {
       return currentUserId === manualDetails.checked_by?.id;
     }
+
     if (manualDetails.status === "Correction Requested") {
-      const hasSentCorrections = corrections.some(
-        (correction) =>
-          correction.from_user?.id === currentUserId && !correction.is_addressed
-      );
-      if (hasSentCorrections) {
-        return false;
-      }
-      return corrections.some(
-        (correction) => correction.to_user?.id === currentUserId
+      const latestCorrection = corrections.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )[0];
+      return (
+        currentUserId === manualDetails.checked_by?.id &&
+        latestCorrection?.from_user?.id === manualDetails.approved_by?.id
       );
     }
+
     if (manualDetails.status === "Reviewed,Pending for Approval") {
       return currentUserId === manualDetails.approved_by?.id;
     }
+
     return false;
   })();
 
@@ -450,14 +455,17 @@ const ViewQmsprocedure = () => {
         alert("User not authenticated");
         return;
       }
+
       const requestData = {
         procedure_id: id,
         current_user_id: currentUser.user_id,
       };
+
       const response = await axios.post(
         `${BASE_URL}/qms/procedure-review/`,
         requestData
       );
+
       setShowSubmitManualSuccessModal(true);
       setTimeout(() => {
         setShowSubmitManualSuccessModal(false);
@@ -468,7 +476,6 @@ const ViewQmsprocedure = () => {
     } catch (error) {
       console.error("Error submitting review:", error);
       let errorMsg;
-
       if (error.response) {
         const data = error.response.data;
         errorMsg =
@@ -478,7 +485,6 @@ const ViewQmsprocedure = () => {
       } else {
         errorMsg = error.message || "An unknown error occurred.";
       }
-
       setError(errorMsg);
       setShowSubmitManualErrorModal(true);
       setTimeout(() => {
@@ -508,8 +514,7 @@ const ViewQmsprocedure = () => {
         <div className="bg-[#24242D] p-5 rounded-md mt-3">
           <div className="flex justify-between items-center mb-2">
             <div className="from-to-time text-[#AAAAAA]">
-              From: {highlightedCorrection.from_user?.first_name}{" "}
-              {highlightedCorrection.from_user?.last_name}
+              From: {getUserName(highlightedCorrection.from_user)}
             </div>
             <div className="from-to-time text-[#AAAAAA]">
               {formatCorrectionDate(highlightedCorrection.created_at)}
@@ -540,8 +545,7 @@ const ViewQmsprocedure = () => {
           >
             <div className="flex justify-between items-center mb-2">
               <div className="from-to-time text-[#AAAAAA]">
-                From: {correction.from_user?.first_name}{" "}
-                {correction.from_user?.last_name}
+                From: {getUserName(correction.from_user)}
               </div>
               <div className="from-to-time text-[#AAAAAA]">
                 {formatCorrectionDate(correction.created_at)}
@@ -582,15 +586,11 @@ const ViewQmsprocedure = () => {
             </div>
             <div>
               <label className="viewmanuallabels">Revision</label>
-              <p className="viewmanuasdata">
-                {manualDetails.rivision || "N/A"}
-              </p>
+              <p className="viewmanuasdata">{manualDetails.rivision || "N/A"}</p>
             </div>
             <div>
               <label className="viewmanuallabels">Document Type</label>
-              <p className="viewmanuasdata">
-                {manualDetails.document_type || "N/A"}
-              </p>
+              <p className="viewmanuasdata">{manualDetails.document_type || "N/A"}</p>
             </div>
             <div>
               <label className="viewmanuallabels">Document</label>
@@ -614,9 +614,7 @@ const ViewQmsprocedure = () => {
             </div>
             <div>
               <label className="viewmanuallabels">Related Record Format</label>
-              <p className="viewmanuasdata">
-                {manualDetails.related_record_format || "N/A"}
-              </p>
+              <p className="viewmanuasdata">{manualDetails.related_record_format || "N/A"}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 gap-[40px] pl-5">
@@ -700,13 +698,17 @@ const ViewQmsprocedure = () => {
         </div>
         {renderHighlightedCorrection()}
         {renderCorrectionHistory()}
-        {canReview && (
+        {canReview && !isCurrentUserWrittenBy && (
           <div className="flex flex-wrap justify-between mt-5">
             {!correctionRequest.isOpen && (
               <>
                 <button
-                  onClick={handleCorrectionRequest}
+                  onClick={() => {
+                    handleMoveToHistory();
+                    handleCorrectionRequest();
+                  }}
                   className="request-correction-btn duration-200"
+                  disabled={!canReview}
                 >
                   Request For Correction
                 </button>
@@ -768,7 +770,7 @@ const ViewQmsprocedure = () => {
                       onClick={handleCorrectionSubmit}
                       className="save-btn duration-200 text-white"
                     >
-                      Save
+                      Send
                     </button>
                   </div>
                 </motion.div>
@@ -859,20 +861,6 @@ const ViewQmsprocedure = () => {
           </div>
         )}
       </div>
-      <DeleteQmsManualConfirmModal
-        showDeleteModal={showDeleteModal}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-      />
-      <DeleteQmsManualsuccessModal
-        showDeleteManualSuccessModal={showDeleteManualSuccessModal}
-        onClose={() => setShowDeleteManualSuccessModal(false)}
-      />
-      <DeleteQmsManualErrorModal
-        showDeleteManualErrorModal={showDeleteManualErrorModal}
-        onClose={() => setShowDeleteManualErrorModal(false)}
-        error={error}
-      />
       <ManualCorrectionSuccessModal
         showSentCorrectionSuccessModal={showSentCorrectionSuccessModal}
         onClose={() => setShowSentCorrectionSuccessModal(false)}
@@ -889,6 +877,20 @@ const ViewQmsprocedure = () => {
       <ReviewSubmitErrorModal
         showSubmitManualErrorModal={showSubmitManualErrorModal}
         onClose={() => setShowSubmitManualErrorModal(false)}
+        error={error}
+      />
+      <DeleteQmsManualConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      <DeleteQmsManualsuccessModal
+        showDeleteManualSuccessModal={showDeleteManualSuccessModal}
+        onClose={() => setShowDeleteManualSuccessModal(false)}
+      />
+      <DeleteQmsManualErrorModal
+        showDeleteManualErrorModal={showDeleteManualErrorModal}
+        onClose={() => setShowDeleteManualErrorModal(false)}
         error={error}
       />
       <SuccessModal
