@@ -674,7 +674,7 @@ const QmsProcedure = () => {
                               ? "Review"
                               : manual.status === "Correction Requested"
                               ? "Click to Corrcet"
-                              : "Click to Corrcet"}
+                              : "Click to Approve"}
                           </button>
                         ) : (
                           <span className="text-[#858585]">
