@@ -29,16 +29,13 @@ const QmsRecordFormat = () => {
   const manualPerPage = 10;
 
   const [showPublishModal, setShowPublishModal] = useState(false);
-  // const [publishSuccess, setPublishSuccess] = useState(false);
   const [selectedManualId, setSelectedManualId] = useState(null);
   const [sendNotification, setSendNotification] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [manualToDelete, setManualToDelete] = useState(null);
-  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] =
-    useState(false);
-  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] =
-    useState(false);
+  const [showDeleteManualSuccessModal, setShowDeleteManualSuccessModal] = useState(false);
+  const [showDeleteManualErrorModal, setShowDeleteManualErrorModal] = useState(false);
 
   const [showPublishSuccessModal, setShowPublishSuccessModal] = useState(false);
   const [showPublishErrorModal, setShowPublishErrorModal] = useState(false);
@@ -57,10 +54,8 @@ const QmsRecordFormat = () => {
 
   const getCurrentUser = () => {
     const role = localStorage.getItem("role");
-
     try {
       if (role === "company") {
-        // Retrieve company user data
         const companyData = {};
         Object.keys(localStorage)
           .filter((key) => key.startsWith("company_"))
@@ -72,17 +67,12 @@ const QmsRecordFormat = () => {
               companyData[cleanKey] = localStorage.getItem(key);
             }
           });
-
-        // Add additional fields from localStorage
         companyData.role = role;
         companyData.company_id = localStorage.getItem("company_id");
         companyData.company_name = localStorage.getItem("company_name");
         companyData.email_address = localStorage.getItem("email_address");
-
-        console.log("Company User Data:", companyData);
         return companyData;
       } else if (role === "user") {
-        // Retrieve regular user data
         const userData = {};
         Object.keys(localStorage)
           .filter((key) => key.startsWith("user_"))
@@ -94,12 +84,8 @@ const QmsRecordFormat = () => {
               userData[cleanKey] = localStorage.getItem(key);
             }
           });
-
-        // Add additional fields from localStorage
         userData.role = role;
         userData.user_id = localStorage.getItem("user_id");
-
-        console.log("Regular User Data:", userData);
         return userData;
       }
     } catch (error) {
@@ -110,27 +96,22 @@ const QmsRecordFormat = () => {
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
-
     if (role === "company") {
       return localStorage.getItem("company_id");
     } else if (role === "user") {
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
-        return userCompanyId ? JSON.parse(userCompanyId) : null;
+        return userCompanyId ? parseInt(userCompanyId, 10) : null;
       } catch (e) {
         console.error("Error parsing user company ID:", e);
         return null;
       }
     }
-
     return null;
   };
 
-  // Centralized function to check if current user is involved with a manual
   const isUserInvolvedWithManual = (manual) => {
     const currentUserId = Number(localStorage.getItem("user_id"));
-
-    // Check if user is the writer, checker, or approver of the manual
     return (
       (manual.written_by && manual.written_by.id === currentUserId) ||
       (manual.checked_by && manual.checked_by.id === currentUserId) ||
@@ -138,22 +119,24 @@ const QmsRecordFormat = () => {
     );
   };
 
-  // Centralized function to filter manuals based on visibility rules
+  const canEditOrDelete = (manual) => {
+    const currentUserId = Number(localStorage.getItem("user_id"));
+    const role = localStorage.getItem("role");
+    if (role === "company") {
+      return true;
+    }
+    return manual.written_by && manual.written_by.id === currentUserId;
+  };
+
   const filterManualsByVisibility = (manualsData) => {
     const role = localStorage.getItem("role");
-
     return manualsData.filter((manual) => {
-      // If manual is published, show to everyone
       if (manual.status === "Published") {
         return true;
       }
-
-      // If user is a company admin, show all
       if (role === "company") {
         return true;
       }
-
-      // For other statuses, only show if user is involved with the manual
       return isUserInvolvedWithManual(manual);
     });
   };
@@ -163,35 +146,24 @@ const QmsRecordFormat = () => {
       setLoading(true);
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/record/${companyId}/`);
-
-      // Apply visibility filtering
       const filteredManuals = filterManualsByVisibility(response.data);
-
-      // Sort manuals by id in ascending order (oldest first), with fallback to written_at
       const sortedManuals = filteredManuals.sort((a, b) => {
         if (a.id && b.id) {
           return a.id - b.id;
         }
-        // Fallback to sorting by written_at or date if id is unavailable
         const dateA = new Date(a.written_at || a.date || 0);
         const dateB = new Date(b.written_at || b.date || 0);
         return dateA - dateB;
       });
-
       setManuals(sortedManuals);
-      console.log("Filtered and Sorted Manuals Data:", sortedManuals);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching manuals:", err);
       let errorMsg = err.message;
-
       if (err.response) {
-        // Check for field-specific errors first
         if (err.response.data.date) {
           errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
+        } else if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
@@ -199,7 +171,6 @@ const QmsRecordFormat = () => {
       } else if (err.message) {
         errorMsg = err.message;
       }
-
       setError(errorMsg);
       setLoading(false);
     }
@@ -212,24 +183,17 @@ const QmsRecordFormat = () => {
         const manualsResponse = await axios.get(
           `${BASE_URL}/qms/record/${companyId}/`
         );
-
-        // Apply visibility filtering
         const filteredManuals = filterManualsByVisibility(manualsResponse.data);
-
-        // Sort manuals by id in ascending order (oldest first), with fallback to written_at
         const sortedManuals = filteredManuals.sort((a, b) => {
           if (a.id && b.id) {
             return a.id - b.id;
           }
-          // Fallback to sorting by written_at or date if id is unavailable
           const dateA = new Date(a.written_at || a.date || 0);
           const dateB = new Date(b.written_at || b.date || 0);
           return dateA - dateB;
         });
-
         setManuals(sortedManuals);
 
-        // Fetch corrections for visible manuals
         const correctionsPromises = sortedManuals.map(async (manual) => {
           try {
             const correctionResponse = await axios.get(
@@ -248,36 +212,28 @@ const QmsRecordFormat = () => {
           }
         });
 
-        // Process all corrections
         const correctionResults = await Promise.all(correctionsPromises);
         const correctionsByManual = correctionResults.reduce((acc, result) => {
           acc[result.manualId] = result.corrections;
           return acc;
         }, {});
-
         setCorrections(correctionsByManual);
 
-        // Fetch draft count
         const id = getRelevantUserId();
         const draftResponse = await axios.get(
           `${BASE_URL}/qms/record/drafts-count/${id}/`
         );
         setDraftCount(draftResponse.data.count);
 
-        // Set current user and clear loading state
         setCurrentUser(getCurrentUser());
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
-        let errorMsg =error.message;
-
+        let errorMsg = error.message;
         if (error.response) {
-          // Check for field-specific errors first
           if (error.response.data.date) {
             errorMsg = error.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (error.response.data.detail) {
+          } else if (error.response.data.detail) {
             errorMsg = error.response.data.detail;
           } else if (error.response.data.message) {
             errorMsg = error.response.data.message;
@@ -285,7 +241,6 @@ const QmsRecordFormat = () => {
         } else if (error.message) {
           errorMsg = error.message;
         }
-
         setError(errorMsg);
         setLoading(false);
       }
@@ -296,15 +251,12 @@ const QmsRecordFormat = () => {
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-
     if (userRole === "user") {
       const userId = localStorage.getItem("user_id");
       if (userId) return userId;
     }
-
     const companyId = localStorage.getItem("company_id");
     if (companyId) return companyId;
-
     return null;
   };
 
@@ -312,7 +264,6 @@ const QmsRecordFormat = () => {
     navigate(`/company/qms/viewrecordformat/${id}`);
   };
 
-  // Delete manual
   const handleDelete = (id) => {
     setManualToDelete(id);
     setShowDeleteModal(true);
@@ -326,7 +277,7 @@ const QmsRecordFormat = () => {
         setShowDeleteManualSuccessModal(true);
         setTimeout(() => {
           setShowDeleteManualSuccessModal(false);
-          fetchManuals(); // Refresh the list after deletion
+          fetchManuals();
         }, 2000);
       } catch (err) {
         console.error("Error deleting record format:", err);
@@ -407,29 +358,23 @@ const QmsRecordFormat = () => {
   const handlePublish = (manual) => {
     setSelectedManualId(manual.id);
     setShowPublishModal(true);
-    // setPublishSuccess(false);
     setSendNotification(false);
   };
 
   const closePublishModal = () => {
     fetchManuals();
     setShowPublishModal(false);
-    setIsPublishing(false); // Reset loading state when modal is closed
-    setTimeout(() => {
-      // setPublishSuccess(false);
-    }, 300);
+    setIsPublishing(false);
+    setTimeout(() => {}, 300);
   };
-  // Modify the handlePublishSave function to update the manual's status
+
   const handlePublishSave = async () => {
     try {
       if (!selectedManualId) {
         alert("No record format selected for publishing");
         return;
       }
-
-      // Set publishing loading state to true when starting
       setIsPublishing(true);
-
       const userId = localStorage.getItem("user_id");
       const companyId = localStorage.getItem("company_id");
       const publisherId = userId || companyId;
@@ -438,7 +383,6 @@ const QmsRecordFormat = () => {
         setIsPublishing(false);
         return;
       }
-
       await axios.post(
         `${BASE_URL}/qms/record/${selectedManualId}/publish-notification/`,
         {
@@ -447,19 +391,18 @@ const QmsRecordFormat = () => {
           send_notification: sendNotification,
         }
       );
-
       setShowPublishSuccessModal(true);
       setTimeout(() => {
         setShowPublishSuccessModal(false);
         closePublishModal();
-        fetchManuals(); // Refresh the list
+        fetchManuals();
         navigate("/company/qms/record-format");
-        setIsPublishing(false); // Reset loading state after completion
+        setIsPublishing(false);
       }, 1500);
     } catch (error) {
       console.error("Error publishing record format:", error);
       setShowPublishErrorModal(true);
-      setIsPublishing(false); // Reset loading state on error
+      setIsPublishing(false);
       setTimeout(() => {
         setShowPublishErrorModal(false);
       }, 3000);
@@ -469,23 +412,24 @@ const QmsRecordFormat = () => {
   const canReview = (manual) => {
     const currentUserId = Number(localStorage.getItem("user_id"));
     const manualCorrections = corrections[manual.id] || [];
+    const latestCorrection = manualCorrections.sort(
+      (a, b) => new Date(b.created_at) - new Date(a.created_at)
+    )[0];
 
-    console.log("Reviewing Conditions Debug:", {
-      currentUserId,
-      checkedById: manual.checked_by?.id,
-      status: manual.status,
-      corrections: manualCorrections,
-      toUserValues: manualCorrections.map((correction) => correction.to_user),
-    });
+    if (manual.status === "Pending for Publish") {
+      return false;
+    }
 
     if (manual.status === "Pending for Review/Checking") {
       return currentUserId === manual.checked_by?.id;
     }
 
     if (manual.status === "Correction Requested") {
-      // Fix: Compare the to_user.id with currentUserId, not the entire object
-      return manualCorrections.some(
-        (correction) => correction.to_user.id === currentUserId
+      return (
+        (currentUserId === manual.checked_by?.id &&
+          latestCorrection?.from_user?.id === manual.approved_by?.id) ||
+        (currentUserId === manual.written_by?.id &&
+          latestCorrection?.from_user?.id === manual.checked_by?.id)
       );
     }
 
@@ -500,7 +444,6 @@ const QmsRecordFormat = () => {
     <div className="bg-[#1C1C24] list-manual-main">
       <div className="flex items-center justify-between px-[14px] pt-[24px]">
         <h1 className="list-manual-head">List Record Formats</h1>
-
         <DeleteQmsManualConfirmModal
           showDeleteModal={showDeleteModal}
           onConfirm={handleConfirmDelete}
@@ -517,18 +460,13 @@ const QmsRecordFormat = () => {
         />
         <PublishSuccessModal
           showPublishSuccessModal={showPublishSuccessModal}
-          onClose={() => {
-            setShowPublishSuccessModal(false);
-          }}
+          onClose={() => setShowPublishSuccessModal(false)}
         />
         <PublishErrorModal
           showPublishErrorModal={showPublishErrorModal}
-          onClose={() => {
-            setShowPublishErrorModal(false);
-          }}
+          onClose={() => setShowPublishErrorModal(false)}
           error={error}
         />
-
         <div className="flex space-x-5">
           <div className="relative">
             <input
@@ -566,7 +504,6 @@ const QmsRecordFormat = () => {
           </button>
         </div>
       </div>
-
       <div className="p-5 overflow-hidden">
         {loading ? (
           <div className="text-center py-4 not-found">
@@ -599,7 +536,7 @@ const QmsRecordFormat = () => {
               {paginatedManual.length > 0 ? (
                 paginatedManual.map((manual, index) => {
                   const canApprove = canReview(manual);
-
+                  const canEditDelete = canEditOrDelete(manual);
                   return (
                     <tr
                       key={manual.id}
@@ -642,7 +579,7 @@ const QmsRecordFormat = () => {
                             {manual.status === "Pending for Review/Checking"
                               ? "Review"
                               : manual.status === "Correction Requested"
-                              ? "Click to Approve"
+                              ? "Click to Correct"
                               : "Click to Approve"}
                           </button>
                         ) : (
@@ -660,21 +597,28 @@ const QmsRecordFormat = () => {
                         </button>
                       </td>
                       <td className="px-2 add-manual-datas text-center">
-                        <button
-                          onClick={() => handleEdit(manual.id)}
-                          title="Edit"
-                        >
-                          <img src={edits} alt="" />
-                        </button>
+                        {canEditDelete ? (
+                          <button
+                            onClick={() => handleEdit(manual.id)}
+                            title="Edit"
+                          >
+                            <img src={edits} alt="" />
+                          </button>
+                        ) : (
+                          <span className="text-[#858585] text-xs">-</span>
+                        )}
                       </td>
-
                       <td className="pl-2 pr-4 add-manual-datas text-center">
-                        <button
-                          onClick={() => handleDelete(manual.id)}
-                          title="Delete"
-                        >
-                          <img src={deletes} alt="" />
-                        </button>
+                        {canEditDelete ? (
+                          <button
+                            onClick={() => handleDelete(manual.id)}
+                            title="Delete"
+                          >
+                            <img src={deletes} alt="" />
+                          </button>
+                        ) : (
+                          <span className="text-[#858585] text-xs">-</span>
+                        )}
                       </td>
                     </tr>
                   );
@@ -744,7 +688,6 @@ const QmsRecordFormat = () => {
       <AnimatePresence>
         {showPublishModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay with animation */}
             <motion.div
               className="absolute inset-0 bg-black bg-opacity-50"
               initial={{ opacity: 0 }}
@@ -752,8 +695,6 @@ const QmsRecordFormat = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             />
-
-            {/* Modal with animation */}
             <motion.div
               className="bg-[#1C1C24] rounded-md shadow-xl w-auto h-auto relative"
               initial={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -782,9 +723,6 @@ const QmsRecordFormat = () => {
                       />
                     </div>
                   </div>
-                  {/* {publishSuccess && (
-                    <div className="text-green-500 mb-3">Manual published successfully!</div>
-                  )} */}
                   <div className="flex gap-5">
                     <button
                       onClick={closePublishModal}
