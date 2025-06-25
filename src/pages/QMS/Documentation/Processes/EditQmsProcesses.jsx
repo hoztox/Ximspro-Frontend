@@ -344,7 +344,6 @@ const EditQmsProcesses = () => {
   // Filter procedures based on search term
   const filteredProcedures = legalRequirementOptions.filter(
     (option) =>
-      !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
       option.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
   return (
@@ -370,7 +369,7 @@ const EditQmsProcesses = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
               <label className="block mb-3 add-qms-manual-label">
-                Name/Title
+                Name/Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"

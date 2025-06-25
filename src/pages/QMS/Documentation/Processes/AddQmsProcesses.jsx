@@ -16,6 +16,35 @@ const AddQmsProcesses = () => {
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [existingProcesses, setExistingProcesses] = useState([]);
+
+  const fetchExistingProcesses = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      if (!companyId) return;
+
+      const response = await axios.get(
+        `${BASE_URL}/qms/processes/${companyId}/`
+      );
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
+      setExistingProcesses(data);
+    } catch (err) {
+      console.error("Error fetching existing processes:", err);
+    }
+  };
+
+
+  const checkDuplicateName = (name) => {
+    if (!name.trim()) return false;
+
+    return existingProcesses.some(
+      (process) =>
+        process.name.toLowerCase().trim() === name.toLowerCase().trim()
+    );
+  };
 
   // Field validation errors
   const [validationErrors, setValidationErrors] = useState({
@@ -82,6 +111,7 @@ const AddQmsProcesses = () => {
         company: companyId,
       }));
       fetchComplianceData();
+      fetchExistingProcesses();
     }
   }, [companyId]);
 
@@ -109,13 +139,36 @@ const AddQmsProcesses = () => {
       console.log("Fetched compliance data:", response.data);
     } catch (err) {
       console.error("Error fetching compliance data:", err);
-      setLegalRequirementOptions([
-        { compliance_name: "GDPR", title: "GDPR Compliance" },
-        { compliance_name: "HIPAA", title: "HIPAA Compliance" },
-        { compliance_name: "CCPA", title: "CCPA Compliance" },
-        { compliance_name: "SOX", title: "SOX Compliance" },
-      ]);
     }
+  };
+
+  // Function to check if form is empty (similar to AddQmsProcedure)
+  const isFormEmpty = () => {
+    const fieldsToCheck = {
+      name: !formData.name?.trim(),
+      no: !formData.no?.trim(),
+      custom_legal_requirements: !formData.custom_legal_requirements?.trim(),
+    };
+
+    // Check if type is still the default value
+    const isTypeDefault = formData.type === "Strategic";
+
+    // Check if legal_requirements array is empty
+    const isLegalRequirementsEmpty = formData.legal_requirements.length === 0;
+
+    // Check if send_notification is still default (false)
+    const isSendNotificationDefault = formData.send_notification === false;
+
+    // Return true only if all fields are empty, type is default, legal requirements are empty,
+    // send_notification is default, and no file is uploaded
+    return (
+      Object.values(fieldsToCheck).every((val) => val === true) &&
+      isTypeDefault &&
+      isLegalRequirementsEmpty &&
+      isSendNotificationDefault &&
+      !formData.file &&
+      !showCustomField
+    );
   };
 
   const toggleDropdown = (field) => {
@@ -126,30 +179,47 @@ const AddQmsProcesses = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+  const { name, value, type, checked } = e.target;
+  setFormData({
+    ...formData,
+    [name]: type === "checkbox" ? checked : value,
+  });
 
-    // Clear validation error when user starts typing
-    if (name === "name" && value.trim() !== "") {
+  // Clear validation error when user starts typing and add real-time duplicate check
+  if (name === "name") {
+    if (value.trim() === "") {
+      setValidationErrors({
+        ...validationErrors,
+        name: "",
+      });
+    } else if (checkDuplicateName(value)) {
+      setValidationErrors({
+        ...validationErrors,
+        name: "Process Name already exists",
+      });
+    } else {
       setValidationErrors({
         ...validationErrors,
         name: "",
       });
     }
-  };
+  }
+};
 
   // Focus out validation for name field
   const handleNameBlur = () => {
-    if (formData.name.trim() === "") {
-      setValidationErrors({
-        ...validationErrors,
-        name: "Name/Title is Required",
-      });
-    }
-  };
+  if (formData.name.trim() === "") {
+    setValidationErrors({
+      ...validationErrors,
+      name: "Name/Title is Required",
+    });
+  } else if (checkDuplicateName(formData.name)) {
+    setValidationErrors({
+      ...validationErrors,
+      name: "Process Name already exists",
+    });
+  }
+};
 
   // Handle search term change
   const handleSearchChange = (e) => {
@@ -212,15 +282,17 @@ const AddQmsProcesses = () => {
   };
 
   const validateForm = () => {
-    const errors = {};
+  const errors = {};
 
-    if (!formData.name.trim()) {
-      errors.name = "Name/Title is Required";
-    }
+  if (!formData.name.trim()) {
+    errors.name = "Name/Title is Required";
+  } else if (checkDuplicateName(formData.name)) {
+    errors.name = "Process Name already exists";
+  }
 
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  setValidationErrors(errors);
+  return Object.keys(errors).length === 0;
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -294,7 +366,7 @@ const AddQmsProcesses = () => {
         navigate("/company/qms/processes");
       }, 1500);
     } catch (err) {
-      let errorMsg =  err.message;
+      let errorMsg = err.message;
 
       if (err.response) {
         // Check for field-specific errors first
@@ -434,10 +506,8 @@ const AddQmsProcesses = () => {
     }
   };
   // Filter procedures based on search term
-  const filteredProcedures = legalRequirementOptions.filter(
-    (option) =>
-      !["GDPR", "HIPAA", "CCPA", "SOX"].includes(option.compliance_name) &&
-      option.title.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProcedures = legalRequirementOptions.filter((option) =>
+    option.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -481,7 +551,7 @@ const AddQmsProcesses = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
             <div>
               <label className="block mb-3 add-qms-manual-label">
-                Name/Title
+                Name/Title <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -668,7 +738,12 @@ const AddQmsProcesses = () => {
               <button
                 type="button"
                 onClick={handleSaveAsDraft}
-                className="request-correction-btn duration-200"
+                disabled={isFormEmpty() || loading}
+                className={`request-correction-btn duration-200 ${
+                  isFormEmpty() || loading
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
+                }`}
               >
                 Save as Draft
               </button>
