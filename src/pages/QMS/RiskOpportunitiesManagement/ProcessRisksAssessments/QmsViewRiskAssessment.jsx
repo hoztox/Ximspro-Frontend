@@ -1,42 +1,106 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
+import { BASE_URL } from "../../../../Utils/Config";
 
 const QmsViewRiskAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  
+  const [riskAssessmentDetails, setRiskAssessmentDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Static sample data for demonstration (replace with actual data later)
-  const riskAssessmentDetails = {
-    id: id,
-    activity: "Welding",
-    hazard: "Test",
-    risks: ["Risk 1", "Risk 2"],
-    probability: "5",
-    benefit: "5",
-    risk_score: "25",
-    risk_score_status: "H",
-    action_owner: "Test",
-    control_measures: ["Control Measure 1", "Control Measure 2"],
-    required_control_measures: ["Required Control Measure 1", "Required Control Measure 2"],
-    residual_probability: "5",
-    residual_benefit: "5",
-    residual_risk_score: "25",
-    residual_risk_score_status: "H",
-    review_date: "2023-03-15",
-    remarks: "Test",
+  // Utility functions from your list component
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
+    }
+    return null;
+  };
+
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  // Fetch risk assessment details
+  useEffect(() => {
+    fetchRiskAssessmentDetails();
+  }, [id]);
+
+  const fetchRiskAssessmentDetails = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await axios.get(`${BASE_URL}/qms/process-risk-assessment/${id}/`, {
+        headers: getAuthHeaders()
+      });
+      
+      setRiskAssessmentDetails(response.data);
+      console.log("Risk Assessment Data:", response.data);
+    } catch (error) {
+      console.error('Error fetching risk assessment details:', error);
+      setError('Failed to load risk assessment details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Utility functions
+  const getRiskRanking = (category) => {
+    switch (category) {
+      case "Very High Risk":
+        return "VH";
+      case "High Risk":
+        return "H";
+      case "Moderate Risk":
+        return "M";
+      case "Low Risk":
+        return "L";
+      default:
+        return "N/A";
+    }
+  };
+
+  const getRankingColorClass = (category) => {
+    switch (category) {
+      case "Very High Risk":
+        return "bg-[#dd363611] text-[#dd3636]";
+      case "High Risk":
+        return "bg-[#DD6B0611] text-[#DD6B06]";
+      case "Moderate Risk":
+        return "bg-[#FFD70011] text-[#FFD700]";
+      case "Low Risk":
+        return "bg-[#36DDAE11] text-[#36DDAE]";
+      default:
+        return "bg-[#85858511] text-[#858585]";
+    }
   };
 
   const formatReviewDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date
-      .toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-      .replace(/\//g, "/");
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const navigateToRiskAssessmentList = () => {
@@ -47,10 +111,93 @@ const QmsViewRiskAssessment = () => {
     navigate(`/company/qms/edit-process-risks-assessments/${id}`);
   };
 
-  const deleteRiskAssessment = () => {
-    // Placeholder for delete action (to be implemented later)
-    console.log("Delete risk assessment:", id);
+  const deleteRiskAssessment = async () => {
+    if (!window.confirm('Are you sure you want to delete this risk assessment?')) {
+      return;
+    }
+
+    try {
+      // Add more detailed logging
+      console.log('Attempting to delete risk assessment with ID:', id);
+      console.log('Delete URL:', `${BASE_URL}/qms/process-risk-assessment/${id}/`);
+      
+      const response = await axios.delete(`${BASE_URL}/qms/process-risk-assessment/${id}/`, );
+      
+      console.log('Delete response:', response);
+      alert('Risk assessment deleted successfully');
+      navigate("/company/qms/list-process-risks-assessments");
+    } catch (error) {
+      console.error('Error deleting assessment:', error);
+      
+      // More detailed error logging
+      if (error.response) {
+        // Server responded with error status
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+        console.error('Response headers:', error.response.headers);
+        alert(`Failed to delete: ${error.response.data?.message || error.response.statusText || 'Server error'}`);
+      } else if (error.request) {
+        // Request was made but no response received
+        console.error('No response received:', error.request);
+        alert('Failed to delete: No response from server. Please check your connection.');
+      } else {
+        // Something else happened
+        console.error('Error message:', error.message);
+        alert(`Failed to delete: ${error.message}`);
+      }
+    }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
+        <p className="text-white">Loading Risk Assessment Details...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">{error}</p>
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={fetchRiskAssessmentDetails}
+              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
+            >
+              Retry
+            </button>
+            <button
+              onClick={navigateToRiskAssessmentList}
+              className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded"
+            >
+              Back to List
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!riskAssessmentDetails) {
+    return (
+      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+        <div className="text-center">
+          <p className="text-gray-400 mb-4">Risk assessment not found</p>
+          <button
+            onClick={navigateToRiskAssessmentList}
+            className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded"
+          >
+            Back to List
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#1C1C24] p-5 rounded-lg">
@@ -88,8 +235,8 @@ const QmsViewRiskAssessment = () => {
               riskAssessmentDetails.risks.length > 0 ? (
                 <ol className="list-decimal pl-5 flex flex-col items-end">
                   {riskAssessmentDetails.risks.map((risk, index) => (
-                    <li key={index} className="mb-2">
-                      {risk}
+                    <li key={index} className="mb-2 text-right">
+                      {typeof risk === 'object' ? (risk.name || risk.risk || JSON.stringify(risk)) : risk}
                     </li>
                   ))}
                 </ol>
@@ -104,23 +251,18 @@ const QmsViewRiskAssessment = () => {
             <div className="relative">
               <p className="viewdatas flex gap-3 absolute right-0">
                 <span className="whitespace-nowrap">
-                  Probability: {riskAssessmentDetails.probability || "N/A"}
+                  Likelihood: {riskAssessmentDetails.risk_likelihood || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
-                  Benefit: {riskAssessmentDetails.benefit || "N/A"}
+                  Severity: {riskAssessmentDetails.risk_severity || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
-                  Risk Score:{" "}
-                  {riskAssessmentDetails.risk_score || "N/A"}
+                  Risk Score: {riskAssessmentDetails.risk_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${
-                    riskAssessmentDetails.risk_score_status === "H"
-                      ? "bg-[#dd363611] text-[#dd3636]"
-                      : "bg-[#36DDAE11] text-[#36DDAE]"
-                  }`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(riskAssessmentDetails.risk_category)}`}
                 >
-                  {riskAssessmentDetails.risk_score_status || "N/A"}
+                  {getRiskRanking(riskAssessmentDetails.risk_category)}
                 </span>
               </p>
             </div>
@@ -130,12 +272,12 @@ const QmsViewRiskAssessment = () => {
           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Control Measures:</label>
             <div className="viewdatas">
-              {Array.isArray(riskAssessmentDetails.control_measures) &&
-              riskAssessmentDetails.control_measures.length > 0 ? (
+              {Array.isArray(riskAssessmentDetails.control_risks) &&
+              riskAssessmentDetails.control_risks.length > 0 ? (
                 <ol className="list-decimal pl-5 flex flex-col items-end">
-                  {riskAssessmentDetails.control_measures.map((measure, index) => (
-                    <li key={index} className="mb-2">
-                      {measure}
+                  {riskAssessmentDetails.control_risks.map((measure, index) => (
+                    <li key={index} className="mb-2 text-right">
+                      {typeof measure === 'object' ? (measure.name || measure.control_measure || JSON.stringify(measure)) : measure}
                     </li>
                   ))}
                 </ol>
@@ -148,12 +290,12 @@ const QmsViewRiskAssessment = () => {
           <div className="flex items-start justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Required Control Measures:</label>
             <div className="viewdatas">
-              {Array.isArray(riskAssessmentDetails.required_control_measures) &&
-              riskAssessmentDetails.required_control_measures.length > 0 ? (
+              {Array.isArray(riskAssessmentDetails.required_control_risks) &&
+              riskAssessmentDetails.required_control_risks.length > 0 ? (
                 <ol className="list-decimal pl-5 flex flex-col items-end">
-                  {riskAssessmentDetails.required_control_measures.map((measure, index) => (
-                    <li key={index} className="mb-2">
-                      {measure}
+                  {riskAssessmentDetails.required_control_risks.map((measure, index) => (
+                    <li key={index} className="mb-2 text-right">
+                      {typeof measure === 'object' ? (measure.name || measure.required_control_measure || measure.control_measure || JSON.stringify(measure)) : measure}
                     </li>
                   ))}
                 </ol>
@@ -167,7 +309,10 @@ const QmsViewRiskAssessment = () => {
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Action Owner:</label>
             <p className="viewdatas text-right">
-              {riskAssessmentDetails.action_owner || "N/A"}
+              {riskAssessmentDetails.owner
+                ? `${riskAssessmentDetails.owner.first_name || ''} ${riskAssessmentDetails.owner.last_name || ''}`.trim() ||
+                riskAssessmentDetails.owner.username
+                : 'N/A'}
             </p>
           </div>
 
@@ -176,23 +321,18 @@ const QmsViewRiskAssessment = () => {
             <div className="relative">
               <p className="viewdatas flex gap-3 absolute right-0">
                 <span className="whitespace-nowrap">
-                  Probability: {riskAssessmentDetails.residual_probability || "N/A"}
+                  Likelihood: {riskAssessmentDetails.residual_likelihood || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
-                  Benefit: {riskAssessmentDetails.residual_benefit || "N/A"}
+                  Severity: {riskAssessmentDetails.residual_severity || "N/A"}
                 </span>
                 <span className="whitespace-nowrap">
-                  Risk Score:{" "}
-                  {riskAssessmentDetails.residual_risk_score || "N/A"}
+                  Risk Score: {riskAssessmentDetails.residual_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${
-                    riskAssessmentDetails.residual_risk_score_status === "H"
-                      ? "bg-[#dd363611] text-[#dd3636]"
-                      : "bg-[#36DDAE11] text-[#36DDAE]"
-                  }`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(riskAssessmentDetails.residual_category)}`}
                 >
-                  {riskAssessmentDetails.residual_risk_score_status || "N/A"}
+                  {getRiskRanking(riskAssessmentDetails.residual_category)}
                 </span>
               </p>
             </div>
@@ -202,7 +342,7 @@ const QmsViewRiskAssessment = () => {
           <div className="flex items-center justify-between border-b border-[#2A2B32] pb-3">
             <label className="viewlabels pr-4">Review Date:</label>
             <p className="viewdatas text-right">
-              {formatReviewDate(riskAssessmentDetails.review_date) || "N/A"}
+              {formatReviewDate(riskAssessmentDetails.date)}
             </p>
           </div>
 

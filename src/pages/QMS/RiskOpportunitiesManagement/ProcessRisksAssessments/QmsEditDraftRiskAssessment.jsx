@@ -1,80 +1,200 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ChevronDown, Plus, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { BASE_URL } from "../../../../Utils/Config";
+import axios from "axios";
 
 const QmsEditDraftRiskAssessment = () => {
   const navigate = useNavigate();
+  const { id } = useParams(); // Assuming you pass the risk assessment ID in the URL
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
+
   const [formData, setFormData] = useState({
     activity: "",
     hazard: "",
-    probability: "",
-    benefit: "",
-    action_owner: "",
-    approved_by: "",
-    status: "",
+    risk_likelihood: "",
+    risk_severity: "",
+    owner: "",
     date: "",
-    review_frequency_year: "",
-    review_frequency_month: "",
+    residual_likelihood: "",
+    residual_severity: "",
     remarks: "",
   });
-  const [riskFields, setRiskFields] = useState([{ id: 1, value: "" }]);
-  const [controlMeasureFields, setControlMeasureFields] = useState([
-    { id: 1, value: "" },
-  ]);
-  const [requiredControlMeasureFields, setRequiredControlMeasureFields] =
-    useState([{ id: 1, value: "" }]);
+
+  // New state for date parts to avoid parsing issues
+  const [dateParts, setDateParts] = useState({
+    day: "",
+    month: "",
+    year: "",
+  });
+
+  const [riskFields, setRiskFields] = useState([{ id: 1, name: "" }]);
+  const [controlMeasureFields, setControlMeasureFields] = useState([{ id: 1, name: "" }]);
+  const [requiredControlMeasureFields, setRequiredControlMeasureFields] = useState([{ id: 1, name: "" }]);
+  const [users, setUsers] = useState([]);
   const [openDropdowns, setOpenDropdowns] = useState({
-    probability: false,
-    benefit: false,
-    action_owner: false,
-    approved_by: false,
-    status: false,
+    risk_likelihood: false,
+    risk_severity: false,
+    owner: false,
+    residual_likelihood: false,
+    residual_severity: false,
     day: false,
     month: false,
     year: false,
   });
   const [errors, setErrors] = useState({});
   const [isSaveLoading, setIsSaveLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const getDaysInMonth = (month, year) => {
     if (!month || !year) return 31;
     return new Date(year, month, 0).getDate();
   };
 
-  const parseDate = () => {
-    if (!formData.date) {
-      return { day: "", month: "", year: "" };
+  const getUserCompanyId = () => {
+    const storedCompanyId = localStorage.getItem("company_id");
+    if (storedCompanyId) return storedCompanyId;
+
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userData = localStorage.getItem("user_company_id");
+      if (userData) {
+        try {
+          return JSON.parse(userData);
+        } catch (e) {
+          console.error("Error parsing user company ID:", e);
+          return null;
+        }
+      }
     }
-    const dateObj = new Date(formData.date);
-    return {
-      day: dateObj.getDate(),
-      month: dateObj.getMonth() + 1,
-      year: dateObj.getFullYear(),
-    };
+    return null;
   };
 
-  const dateParts = parseDate();
+  const getRelevantUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      const userId = localStorage.getItem("user_id");
+      if (userId) return userId;
+    }
+    const companyId = localStorage.getItem("company_id");
+    if (companyId) return companyId;
+    return null;
+  };
 
-  const days = Array.from(
-    { length: getDaysInMonth(dateParts.month, dateParts.year) },
-    (_, i) => i + 1
+  // Fetch existing risk assessment data
+  useEffect(() => {
+    const fetchRiskAssessmentData = async () => {
+      if (!id) return;
+
+      try {
+        setIsLoadingData(true);
+        const response = await axios.get(`${BASE_URL}/qms/process-risk-assessment/${id}/`);
+        const data = response.data;
+
+        // Set form data - IMPORTANT: Extract only the ID from owner if it's an object
+        setFormData({
+          activity: data.activity || "",
+          hazard: data.hazard || "",
+          risk_likelihood: data.risk_likelihood || "",
+          risk_severity: data.risk_severity || "",
+          owner: typeof data.owner === 'object' && data.owner ? data.owner.id : data.owner || "",
+          date: data.date || "",
+          residual_likelihood: data.residual_likelihood || "",
+          residual_severity: data.residual_severity || "",
+          remarks: data.remarks || "",
+        });
+
+        // Parse and set date parts
+        if (data.date) {
+          const dateObj = new Date(data.date);
+          setDateParts({
+            day: dateObj.getDate(),
+            month: dateObj.getMonth() + 1,
+            year: dateObj.getFullYear(),
+          });
+        }
+
+        // Set dynamic fields
+        if (data.risks && data.risks.length > 0) {
+          setRiskFields(data.risks.map((risk, index) => ({
+            id: index + 1,
+            name: risk.name || ""
+          })));
+        }
+
+        if (data.control_risks && data.control_risks.length > 0) {
+          setControlMeasureFields(data.control_risks.map((control, index) => ({
+            id: index + 1,
+            name: control.name || ""
+          })));
+        }
+
+        if (data.required_control_risks && data.required_control_risks.length > 0) {
+          setRequiredControlMeasureFields(data.required_control_risks.map((required, index) => ({
+            id: index + 1,
+            name: required.name || ""
+          })));
+        }
+
+      } catch (error) {
+        console.error("Error fetching risk assessment data:", error);
+        setErrors({ non_field_errors: "Failed to load risk assessment data" });
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchRiskAssessmentData();
+  }, [id]);
+
+  // Fetch users
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const companyId = getUserCompanyId();
+        const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+        setErrors({ non_field_errors: "Failed to load users" });
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Update formData.date whenever dateParts changes
+  useEffect(() => {
+    const { day, month, year } = dateParts;
+    console.log("Date parts updated:", { day, month, year });
+    if (day && month && year) {
+      try {
+        const newDate = new Date(year, month - 1, day);
+        if (!isNaN(newDate.getTime())) {
+          const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          setFormData((prev) => ({ ...prev, date: formattedDate }));
+          setErrors((prev) => ({ ...prev, date: "" }));
+        } else {
+          setFormData((prev) => ({ ...prev, date: "" }));
+          setErrors((prev) => ({ ...prev, date: "Invalid date" }));
+        }
+      } catch (error) {
+        setFormData((prev) => ({ ...prev, date: "" }));
+        setErrors((prev) => ({ ...prev, date: "Invalid date" }));
+      }
+    } else if (!day && !month && !year) {
+      setFormData((prev) => ({ ...prev, date: "" }));
+    }
+  }, [dateParts]);
+
+  // Dynamic days array
+  const days = useMemo(
+    () => Array.from({ length: getDaysInMonth(dateParts.month, dateParts.year) }, (_, i) => i + 1),
+    [dateParts.month, dateParts.year]
   );
-
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
-
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
-
-  const actionOwnerOptions = [
-    "Team A",
-    "Team B",
-    "Individual Contributor",
-    "External Partner",
-  ];
-
-  const probabilityOptions = [""];
-  const benefitOptions = [""];
+  const riskScaleOptions = [1, 2, 3, 4, 5];
 
   const toggleDropdown = (dropdown) => {
     setOpenDropdowns((prev) => ({
@@ -98,32 +218,36 @@ const QmsEditDraftRiskAssessment = () => {
     }
   };
 
-  const handleRiskFieldChange = (id, value) => {
+  const handleRiskFieldChange = (id, name) => {
     setRiskFields(
-      riskFields.map((field) => (field.id === id ? { ...field, value } : field))
-    );
-  };
-
-  const handleControlMeasureFieldChange = (id, value) => {
-    setControlMeasureFields(
-      controlMeasureFields.map((field) =>
-        field.id === id ? { ...field, value } : field
+      riskFields.map((field) =>
+        field.id === id ? { ...field, name } : field
       )
     );
   };
 
-  const handleRequiredControlMeasureFieldChange = (id, value) => {
+  const handleControlMeasureFieldChange = (id, name) => {
+    setControlMeasureFields(
+      controlMeasureFields.map((field) =>
+        field.id === id ? { ...field, name } : field
+      )
+    );
+  };
+
+  const handleRequiredControlMeasureFieldChange = (id, name) => {
     setRequiredControlMeasureFields(
       requiredControlMeasureFields.map((field) =>
-        field.id === id ? { ...field, value } : field
+        field.id === id ? { ...field, name } : field
       )
     );
   };
 
   const addRiskField = () => {
     const newId =
-      riskFields.length > 0 ? Math.max(...riskFields.map((f) => f.id)) + 1 : 1;
-    setRiskFields([...riskFields, { id: newId, value: "" }]);
+      riskFields.length > 0
+        ? Math.max(...riskFields.map((f) => f.id)) + 1
+        : 1;
+    setRiskFields([...riskFields, { id: newId, name: "" }]);
   };
 
   const addControlMeasureField = () => {
@@ -131,10 +255,7 @@ const QmsEditDraftRiskAssessment = () => {
       controlMeasureFields.length > 0
         ? Math.max(...controlMeasureFields.map((f) => f.id)) + 1
         : 1;
-    setControlMeasureFields([
-      ...controlMeasureFields,
-      { id: newId, value: "" },
-    ]);
+    setControlMeasureFields([...controlMeasureFields, { id: newId, name: "" }]);
   };
 
   const addRequiredControlMeasureField = () => {
@@ -142,10 +263,7 @@ const QmsEditDraftRiskAssessment = () => {
       requiredControlMeasureFields.length > 0
         ? Math.max(...requiredControlMeasureFields.map((f) => f.id)) + 1
         : 1;
-    setRequiredControlMeasureFields([
-      ...requiredControlMeasureFields,
-      { id: newId, value: "" },
-    ]);
+    setRequiredControlMeasureFields([...requiredControlMeasureFields, { id: newId, name: "" }]);
   };
 
   const removeRiskField = (id) => {
@@ -156,42 +274,23 @@ const QmsEditDraftRiskAssessment = () => {
 
   const removeControlMeasureField = (id) => {
     if (controlMeasureFields.length > 1) {
-      setControlMeasureFields(
-        controlMeasureFields.filter((field) => field.id !== id)
-      );
+      setControlMeasureFields(controlMeasureFields.filter((field) => field.id !== id));
     }
   };
 
   const removeRequiredControlMeasureField = (id) => {
     if (requiredControlMeasureFields.length > 1) {
-      setRequiredControlMeasureFields(
-        requiredControlMeasureFields.filter((field) => field.id !== id)
-      );
+      setRequiredControlMeasureFields(requiredControlMeasureFields.filter((field) => field.id !== id));
     }
   };
 
-  const handleDropdownFieldChange = (e, dropdown) => {
-    const value = e.target.value;
-
+  const handleDropdownFieldChange = (value, dropdown) => {
+    console.log(`Changing ${dropdown} to:`, value);
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
-      const dateObj = parseDate();
-      dateObj[dropdown] = value === "" ? "" : parseInt(value, 10);
-
-      if (dateObj.day && dateObj.month && dateObj.year) {
-        const newDate = `${dateObj.year}-${String(dateObj.month).padStart(
-          2,
-          "0"
-        )}-${String(dateObj.day).padStart(2, "0")}`;
-        setFormData((prev) => ({
-          ...prev,
-          date: newDate,
-        }));
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          date: "",
-        }));
-      }
+      setDateParts((prev) => ({
+        ...prev,
+        [dropdown]: value,
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -215,18 +314,8 @@ const QmsEditDraftRiskAssessment = () => {
 
   const getMonthName = (monthNum) => {
     const monthNames = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
     ];
     return monthNames[monthNum - 1] || "";
   };
@@ -236,25 +325,77 @@ const QmsEditDraftRiskAssessment = () => {
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
 
-  const handleSave = () => {
-    setIsSaveLoading(true);
-    // Simulate save operation
-    setTimeout(() => {
-      setIsSaveLoading(false);
-    }, 1000);
+  const prepareSubmissionData = () => {
+    const submissionData = {
+      ...formData,
+      user: getRelevantUserId(),
+      company: getUserCompanyId(),
+      risks: riskFields.filter(field => field.name.trim()).map(field => ({ name: field.name })),
+      control_risks: controlMeasureFields.filter(field => field.name.trim()).map(field => ({ name: field.name })),
+      required_control_risks: requiredControlMeasureFields.filter(field => field.name.trim()).map(field => ({ name: field.name })),
+    };
+
+    // Ensure owner is always a number/string ID, not an object
+    if (typeof submissionData.owner === 'object' && submissionData.owner && submissionData.owner.id) {
+      submissionData.owner = submissionData.owner.id;
+    }
+
+    console.log("Submission data:", submissionData);
+    return submissionData;
   };
+
+  const handleSave = async () => {
+    setIsSaveLoading(true);
+    try {
+      const { day, month, year } = dateParts;
+      if (!day || !month || !year) {
+        setErrors((prev) => ({ ...prev, date: "Please select a valid date" }));
+        setIsSaveLoading(false);
+        return;
+      }
+
+      const submissionData = {
+        ...prepareSubmissionData(),
+        is_draft: false,
+      };
+
+      const response = await axios.put(
+        `${BASE_URL}/qms/process-risk-assessment/${id}/`,
+        submissionData
+      );
+
+      console.log("Risk assessment updated successfully:", response.data);
+      handleNavigateToRiskAssessmentList();
+    } catch (error) {
+      console.error("Error updating risk assessment:", error);
+      if (error.response?.data) {
+        setErrors(error.response.data);
+      } else {
+        setErrors({ non_field_errors: "Failed to update risk assessment" });
+      }
+    } finally {
+      setIsSaveLoading(false);
+    }
+  };
+
+  if (isLoadingData) {
+    return (
+      <div className="bg-[#1C1C24] rounded-lg text-white flex items-center justify-center min-h-[400px]">
+        <div className="text-white">Loading risk assessment data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
-          <h1 className="add-manual-sections !px-0">Edit Draft Risk Assessment</h1>
-
+          <h1 className="add-manual-sections !px-0">Edit Risk Assessment</h1>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleNavigateToRiskAssessmentList}
           >
-            <span>List Draft Risk Assessment</span>
+            <span>List Risk Assessment</span>
           </button>
         </div>
 
@@ -292,7 +433,7 @@ const QmsEditDraftRiskAssessment = () => {
                     <div className="flex gap-2 flex-1">
                       <input
                         type="text"
-                        value={field.value}
+                        value={field.name}
                         onChange={(e) =>
                           handleRiskFieldChange(field.id, e.target.value)
                         }
@@ -317,9 +458,9 @@ const QmsEditDraftRiskAssessment = () => {
                       )}
                     </div>
                   </div>
-                  <ErrorMessage message={errors[`risk_${field.id}`]} />
                 </div>
               ))}
+              <ErrorMessage message={errors.risks} />
             </div>
 
             <div>
@@ -328,63 +469,52 @@ const QmsEditDraftRiskAssessment = () => {
                 <div className="relative w-1/2">
                   <select
                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                    name="probability"
-                    value={formData.probability}
-                    onFocus={() => toggleDropdown("probability")}
-                    onChange={(e) =>
-                      handleDropdownFieldChange(e, "probability")
-                    }
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({
-                        ...prev,
-                        probability: false,
-                      }))
-                    }
+                    name="risk_likelihood"
+                    value={formData.risk_likelihood}
+                    onFocus={() => toggleDropdown("risk_likelihood")}
+                    onChange={(e) => handleDropdownFieldChange(e.target.value, "risk_likelihood")}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, risk_likelihood: false }))}
                   >
                     <option value="" disabled>
-                      Select
+                      Likelihood
                     </option>
-                    {probabilityOptions.map((option) => (
+                    {riskScaleOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.probability ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_likelihood ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/2">
                   <select
                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                    name="benefit"
-                    value={formData.benefit}
-                    onFocus={() => toggleDropdown("benefit")}
-                    onChange={(e) => handleDropdownFieldChange(e, "benefit")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, benefit: false }))
-                    }
+                    name="risk_severity"
+                    value={formData.risk_severity}
+                    onFocus={() => toggleDropdown("risk_severity")}
+                    onChange={(e) => handleDropdownFieldChange(e.target.value, "risk_severity")}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, risk_severity: false }))}
                   >
                     <option value="" disabled>
-                      Select
+                      Severity
                     </option>
-                    {benefitOptions.map((option) => (
+                    {riskScaleOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.benefit ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_severity ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
-              <ErrorMessage message={errors.probability} />
-              <ErrorMessage message={errors.benefit} />
+              <ErrorMessage message={errors.risk_likelihood} />
+              <ErrorMessage message={errors.risk_severity} />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -395,12 +525,9 @@ const QmsEditDraftRiskAssessment = () => {
                     <div className="flex gap-2 flex-1">
                       <input
                         type="text"
-                        value={field.value}
+                        value={field.name}
                         onChange={(e) =>
-                          handleControlMeasureFieldChange(
-                            field.id,
-                            e.target.value
-                          )
+                          handleControlMeasureFieldChange(field.id, e.target.value)
                         }
                         className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
                       />
@@ -423,29 +550,22 @@ const QmsEditDraftRiskAssessment = () => {
                       )}
                     </div>
                   </div>
-                  <ErrorMessage
-                    message={errors[`control_measure_${field.id}`]}
-                  />
                 </div>
               ))}
+              <ErrorMessage message={errors.control_measures} />
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="add-qms-manual-label">
-                Required Control Measures
-              </label>
+              <label className="add-qms-manual-label">Required Control Measures</label>
               {requiredControlMeasureFields.map((field, index) => (
                 <div key={field.id} className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 justify-between">
                     <div className="flex gap-2 flex-1">
                       <input
                         type="text"
-                        value={field.value}
+                        value={field.name}
                         onChange={(e) =>
-                          handleRequiredControlMeasureFieldChange(
-                            field.id,
-                            e.target.value
-                          )
+                          handleRequiredControlMeasureFieldChange(field.id, e.target.value)
                         }
                         className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
                       />
@@ -460,9 +580,7 @@ const QmsEditDraftRiskAssessment = () => {
                       ) : (
                         <button
                           type="button"
-                          onClick={() =>
-                            removeRequiredControlMeasureField(field.id)
-                          }
+                          onClick={() => removeRequiredControlMeasureField(field.id)}
                           className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
                         >
                           <X className="text-white" />
@@ -470,11 +588,9 @@ const QmsEditDraftRiskAssessment = () => {
                       )}
                     </div>
                   </div>
-                  <ErrorMessage
-                    message={errors[`required_control_measure_${field.id}`]}
-                  />
                 </div>
               ))}
+              <ErrorMessage message={errors.required_control_measures} />
             </div>
 
             <div>
@@ -482,33 +598,27 @@ const QmsEditDraftRiskAssessment = () => {
               <div className="relative">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                  name="action_owner"
-                  value={formData.action_owner}
-                  onFocus={() => toggleDropdown("action_owner")}
-                  onChange={(e) => handleDropdownFieldChange(e, "action_owner")}
-                  onBlur={() =>
-                    setOpenDropdowns((prev) => ({
-                      ...prev,
-                      action_owner: false,
-                    }))
-                  }
+                  name="owner"
+                  value={formData.owner}
+                  onFocus={() => toggleDropdown("owner")}
+                  onChange={(e) => handleDropdownFieldChange(e.target.value, "owner")}
+                  onBlur={() => setOpenDropdowns((prev) => ({ ...prev, owner: false }))}
                 >
                   <option value="" disabled>
                     Select Action Owner
                   </option>
-                  {actionOwnerOptions.map((party) => (
-                    <option key={party} value={party}>
-                      {party}
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.first_name} {user.last_name}
                     </option>
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.action_owner ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.owner ? "rotate-180" : ""
+                    }`}
                 />
               </div>
-              <ErrorMessage message={errors.action_owner} />
+              <ErrorMessage message={errors.owner} />
             </div>
 
             <div>
@@ -517,63 +627,52 @@ const QmsEditDraftRiskAssessment = () => {
                 <div className="relative w-1/2">
                   <select
                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                    name="probability"
-                    value={formData.probability}
-                    onFocus={() => toggleDropdown("probability")}
-                    onChange={(e) =>
-                      handleDropdownFieldChange(e, "probability")
-                    }
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({
-                        ...prev,
-                        probability: false,
-                      }))
-                    }
+                    name="residual_likelihood"
+                    value={formData.residual_likelihood}
+                    onFocus={() => toggleDropdown("residual_likelihood")}
+                    onChange={(e) => handleDropdownFieldChange(e.target.value, "residual_likelihood")}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, residual_likelihood: false }))}
                   >
                     <option value="" disabled>
-                      Select
+                      Likelihood
                     </option>
-                    {probabilityOptions.map((option) => (
+                    {riskScaleOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.probability ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.residual_likelihood ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/2">
                   <select
                     className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
-                    name="benefit"
-                    value={formData.benefit}
-                    onFocus={() => toggleDropdown("benefit")}
-                    onChange={(e) => handleDropdownFieldChange(e, "benefit")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, benefit: false }))
-                    }
+                    name="residual_severity"
+                    value={formData.residual_severity}
+                    onFocus={() => toggleDropdown("residual_severity")}
+                    onChange={(e) => handleDropdownFieldChange(e.target.value, "residual_severity")}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, residual_severity: false }))}
                   >
                     <option value="" disabled>
-                      Select
+                      Severity
                     </option>
-                    {benefitOptions.map((option) => (
+                    {riskScaleOptions.map((option) => (
                       <option key={option} value={option}>
                         {option}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.benefit ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.residual_severity ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
-              <ErrorMessage message={errors.probability} />
-              <ErrorMessage message={errors.benefit} />
+              <ErrorMessage message={errors.residual_likelihood} />
+              <ErrorMessage message={errors.residual_severity} />
             </div>
 
             <div>
@@ -581,17 +680,16 @@ const QmsEditDraftRiskAssessment = () => {
               <div className="flex space-x-5">
                 <div className="relative w-1/3">
                   <select
-                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                    className="w-full appearance-none add-qms-manual-inputs cursor-pointer"
                     value={dateParts.day || ""}
                     onFocus={() => toggleDropdown("day")}
-                    onChange={(e) => handleDropdownFieldChange(e, "day")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, day: false }))
-                    }
+                    onChange={(e) => {
+                      console.log("Day dropdown changed:", e.target.value);
+                      handleDropdownFieldChange(e.target.value, "day");
+                    }}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, day: false }))}
                   >
-                    <option value="" disabled>
-                      dd
-                    </option>
+                    <option value="" disabled>dd</option>
                     {days.map((day) => (
                       <option key={`day-${day}`} value={day}>
                         {day < 10 ? `0${day}` : day}
@@ -599,46 +697,45 @@ const QmsEditDraftRiskAssessment = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.day ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
                   <select
-                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                    className="w-full appearance-none add-qms-manual-inputs cursor-pointer"
                     value={dateParts.month || ""}
                     onFocus={() => toggleDropdown("month")}
-                    onChange={(e) => handleDropdownFieldChange(e, "month")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, month: false }))
-                    }
+                    onChange={(e) => {
+                      console.log("Month dropdown changed:", e.target.value);
+                      handleDropdownFieldChange(e.target.value, "month");
+                    }}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, month: false }))}
                   >
                     <option value="" disabled>
                       mm
                     </option>
                     {months.map((month) => (
                       <option key={`month-${month}`} value={month}>
-                        {month < 10 ? `0${month}` : month} -{" "}
-                        {getMonthName(month).substring(0, 3)}
+                        {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
                       </option>
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.month ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
                   <select
-                    className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
+                    className="w-full appearance-none add-qms-manual-inputs cursor-pointer"
                     value={dateParts.year || ""}
                     onFocus={() => toggleDropdown("year")}
-                    onChange={(e) => handleDropdownFieldChange(e, "year")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, year: false }))
-                    }
+                    onChange={(e) => {
+                      console.log("Year dropdown changed:", e.target.value);
+                      handleDropdownFieldChange(e.target.value, "year");
+                    }}
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, year: false }))}
                   >
                     <option value="" disabled>
                       yyyy
@@ -650,9 +747,8 @@ const QmsEditDraftRiskAssessment = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.year ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
