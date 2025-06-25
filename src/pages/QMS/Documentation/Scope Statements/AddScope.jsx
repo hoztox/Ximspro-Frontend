@@ -1110,7 +1110,7 @@ const AddScope = () => {
           onClick={handleSave}
           disabled={isSaving}
         >
-          {isSaving ? 'Saving...' : 'Add Scope Statement'}
+          {isSaving ? 'Saving...' : 'Add Scope'}
         </button>
       </div>
     </div>
