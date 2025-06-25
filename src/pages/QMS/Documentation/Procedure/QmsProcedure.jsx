@@ -673,7 +673,7 @@ const QmsProcedure = () => {
                             {manual.status === "Pending for Review/Checking"
                               ? "Review"
                               : manual.status === "Correction Requested"
-                              ? "Click to Corrcet"
+                              ? "Click to Correct"
                               : "Click to Approve"}
                           </button>
                         ) : (

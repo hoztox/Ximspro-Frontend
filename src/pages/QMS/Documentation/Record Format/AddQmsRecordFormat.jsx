@@ -333,18 +333,23 @@ const AddQmsRecordFormat = () => {
       setTimeout(() => {
         setShowDarftManualErrorModal(false);
       }, 3000);
-      let errorMsg = err.message;
 
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
+      let errorMsg = "An error occurred while saving.";
+
+      if (err.response && err.response.data) {
+        const data = err.response.data;
+
+
+        if (data.title && Array.isArray(data.title)) {
+          errorMsg = data.title[0];
+        } else if (data.date && Array.isArray(data.date)) {
+          errorMsg = data.date[0];
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else if (data.message) {
+          errorMsg = data.message;
+        } else if (typeof data === "string") {
+          errorMsg = data;
         }
       } else if (err.message) {
         errorMsg = err.message;
@@ -352,6 +357,7 @@ const AddQmsRecordFormat = () => {
 
       setError(errorMsg);
     }
+
   };
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -425,6 +431,34 @@ const AddQmsRecordFormat = () => {
     }
   };
 
+
+
+  const isFormEmpty = () => {
+    // Check if all relevant formData fields are empty
+    const fieldsToCheck = {
+      title: formData.title.trim() === "",
+      no: formData.no.trim() === "",
+      written_by: !formData.written_by,
+      checked_by: !formData.checked_by,
+      approved_by: !formData.approved_by,
+      rivision: formData.rivision.trim() === "",
+      document_type: formData.document_type === "System", // Default value
+      review_frequency_year: formData.review_frequency_year.trim() === "",
+      review_frequency_month: formData.review_frequency_month.trim() === "",
+      retention_period: formData.retention_period.trim() === "",
+    };
+
+    // Check if date is the default current date
+    const defaultDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(currentDay).padStart(2, "0")}`;
+    const isDefaultDate = formData.date === defaultDate;
+
+    // Check if all fields are empty and no file is selected
+    return (
+      Object.values(fieldsToCheck).every((isEmpty) => isEmpty) &&
+      isDefaultDate &&
+      !fileObject
+    );
+  };
   // Get month name from number
   const getMonthName = (monthNum) => {
     const monthNames = [
@@ -524,9 +558,8 @@ const AddQmsRecordFormat = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.written_by ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.written_by ? "rotate-180" : ""
+                    }`}
                 />
               </div>
               <ErrorMessage message={errors.written_by} />
@@ -605,9 +638,8 @@ const AddQmsRecordFormat = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.checked_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.checked_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <ErrorMessage message={errors.checked_by} />
@@ -682,9 +714,8 @@ const AddQmsRecordFormat = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.approved_by ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.approved_by ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 {/* <ErrorMessage message={errors.approved_by} /> */}
@@ -714,9 +745,8 @@ const AddQmsRecordFormat = () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                    openDropdowns.document_type ? "rotate-180" : ""
-                  }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.document_type ? "rotate-180" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -741,9 +771,8 @@ const AddQmsRecordFormat = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.day ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -764,9 +793,8 @@ const AddQmsRecordFormat = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.month ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -786,9 +814,8 @@ const AddQmsRecordFormat = () => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
-                      openDropdowns.year ? "rotate-180" : ""
-                    }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -856,11 +883,14 @@ const AddQmsRecordFormat = () => {
           <div className="flex items-center mt-[22px] justify-between">
             <div className="mb-6">
               <button
-                className="request-correction-btn duration-200"
+                className={`request-correction-btn duration-200 ${isFormEmpty() || loading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 onClick={handleDraftClick}
+                disabled={isFormEmpty() || loading}
               >
                 Save as Draft
               </button>
+
             </div>
 
             <div className="flex gap-[22px] mb-6">

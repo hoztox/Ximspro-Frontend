@@ -506,6 +506,36 @@ const handleSaveClick = async () => {
   }
 };
 
+
+
+const isFormEmpty = () => {
+  const fieldsToCheck = {
+    title: !formData.title?.trim(),
+    no: !formData.no?.trim(),
+    written_by: !formData.written_by,
+    checked_by: !formData.checked_by,
+    approved_by: !formData.approved_by,
+    rivision: !formData.rivision?.trim(),
+    review_frequency_year: !formData.review_frequency_year?.trim(),
+    review_frequency_month: !formData.review_frequency_month?.trim(),
+    related_record_format: !formData.related_record_format?.trim(),
+  };
+
+  // Check if document_type is still the default value
+  const isDocumentTypeDefault = formData.document_type === "System";
+
+  // Check if date is still the default value
+  const defaultDate = `${currentYear}-${String(currentMonth).padStart(2, "0")}-${String(currentDay).padStart(2, "0")}`;
+  const isDateDefault = formData.date === defaultDate;
+
+  // Return true only if all fields are empty, document_type is default, date is default, and no file is uploaded
+  return (
+    Object.values(fieldsToCheck).every((val) => val === true) &&
+    isDocumentTypeDefault &&
+    isDateDefault &&
+    !fileObject
+  );
+};
   // Get month name from number
   const getMonthName = (monthNum) => {
     const monthNames = [
@@ -919,11 +949,14 @@ const handleSaveClick = async () => {
           <div className="flex items-center mt-[22px] justify-between">
             <div className="mb-6">
               <button
-                className="request-correction-btn duration-200"
                 onClick={handleDraftClick}
+                disabled={isFormEmpty() || loading}
+                className={`request-correction-btn duration-200 ${isFormEmpty() || loading ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
               >
                 Save as Draft
               </button>
+
             </div>
 
             <div className="flex gap-[22px] mb-6">
