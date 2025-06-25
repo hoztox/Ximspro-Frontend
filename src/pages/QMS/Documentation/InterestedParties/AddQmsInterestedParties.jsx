@@ -343,131 +343,155 @@ const AddQmsInterestedParties = () => {
         navigate("/company/qms/interested-parties");
       }, 1500);
     } catch (err) {
-      let errorMsg = err.message;
+  let errorMsg = "Something went wrong";
 
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
+  if (err.response) {
+    const data = err.response.data;
 
-      setError(errorMsg);
-      setShowAddQmsInterestedErrorModal(true);
-      setTimeout(() => {
-        setShowAddQmsInterestedErrorModal(false);
-      }, 3000);
-      console.error("Error details:", err.response?.data);
-      setSubmitting(false);
+   
+    if (data.name && Array.isArray(data.name)) {
+      errorMsg = data.name[0];  
+    } else if (data.detail) {
+      errorMsg = data.detail;
+    } else if (data.message) {
+      errorMsg = data.message;
     }
+  }
+
+  setError(errorMsg);
+  setShowAddQmsInterestedErrorModal(true);
+  setTimeout(() => {
+    setShowAddQmsInterestedErrorModal(false);
+  }, 3000);
+  console.error("Error details:", err.response?.data);
+  setSubmitting(false);
+}
+
   };
 
   const handleCancel = () => {
     navigate("/company/qms/interested-parties");
   };
 
-  const handleSaveAsDraft = async () => {
-    try {
-      setLoading(true);
+const isFormEmpty = () => {
+  const isNameEmpty = !formData.name?.trim();
+  const isSpecialRequirementsEmpty = !formData.special_requirements?.trim();
+  const isLegalRequirementsEmpty = !formData.legal_requirements?.trim();
+  const isCustomLegalRequirementsEmpty = !formData.custom_legal_requirements?.trim();
+  const isTypeEmpty = !formData.type?.trim();
+  const isCategoryDefault = formData.category === "Internal";
+  const areNeedsExpectationsEmpty = formData.needs_expectations.every(
+    (item) => !item.needs?.trim() && !item.expectations?.trim()
+  );
+  const isFileEmpty = !formData.file;
+  const isSendNotificationDefault = formData.send_notification === false;
 
-      const companyId = getUserCompanyId();
-      const userId = getRelevantUserId();
+  return (
+    isNameEmpty &&
+    isSpecialRequirementsEmpty &&
+    isLegalRequirementsEmpty &&
+    isCustomLegalRequirementsEmpty &&
+    isTypeEmpty &&
+    isCategoryDefault &&
+    areNeedsExpectationsEmpty &&
+    isFileEmpty &&
+    isSendNotificationDefault
+  );
+};
 
-      if (!companyId || !userId) {
-        setError("Company ID or User ID not found. Please log in again.");
-        setLoading(false);
-        return;
-      }
+// Update handleSaveAsDraft (with corrected URL if needed)
+const handleSaveAsDraft = async () => {
+  try {
+    setLoading(true);
 
-      const needsArray = formData.needs_expectations.map((item) => ({
-        needs: item.needs,
-        expectation: item.expectations,
-      }));
+    const companyId = getUserCompanyId();
+    const userId = getRelevantUserId();
 
-      const draftData = {
-        name: formData.name,
-        company: companyId,
-        category: formData.category,
-        special_requirements: formData.special_requirements || "",
-        legal_requirements: formData.legal_requirements || "",
-        custom_legal_requirements: formData.custom_legal_requirements || "",
-        send_notification: formData.send_notification,
-        type: formData.type || null, // Send CauseParty ID or null if not selected
-        is_draft: true,
-        user: userId,
-        needs: needsArray,
-      };
-
-      let response;
-
-      if (formData.file instanceof File) {
-        const formDataToSend = new FormData();
-        formDataToSend.append("data", JSON.stringify(draftData));
-        formDataToSend.append("company", companyId);
-        formDataToSend.append("name", formData.name);
-        formDataToSend.append("is_draft", "true");
-        formDataToSend.append("user", userId);
-        formDataToSend.append("file", formData.file);
-
-        response = await axios.post(
-          `${BASE_URL}/qms/interst/draft-create/`,
-          formDataToSend,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-      } else {
-        response = await axios.post(
-          `${BASE_URL}/qms/interst/draft-create/`,
-          draftData
-        );
-      }
-
-      console.log("Draft saved:", response);
-
+    if (!companyId || !userId) {
+      setError("Company ID or User ID not found. Please log in again.");
       setLoading(false);
-      setShowDraftInterestedSuccessModal(true);
-      setTimeout(() => {
-        setShowDraftInterestedSuccessModal(false);
-        navigate("/company/qms/interested-parties");
-      }, 1500);
-    } catch (err) {
-      setLoading(false);
-      setShowDraftInterestedErrorModal(true);
-      setTimeout(() => {
-        setShowDraftInterestedErrorModal(false);
-      }, 3000);
-      let errorMsg = err.message;
-
-      if (err.response) {
-        // Check for field-specific errors first
-        if (err.response.data.date) {
-          errorMsg = err.response.data.date[0];
-        }
-        // Check for non-field errors
-        else if (err.response.data.detail) {
-          errorMsg = err.response.data.detail;
-        } else if (err.response.data.message) {
-          errorMsg = err.response.data.message;
-        }
-      } else if (err.message) {
-        errorMsg = err.message;
-      }
-
-      setError(errorMsg);
-      console.error("Error saving Draft:", err.response?.data || err);
+      return;
     }
-  };
+
+    const needsArray = formData.needs_expectations.map((item) => ({
+      needs: item.needs || "",
+      expectation: item.expectations || "",
+    }));
+
+    const draftData = {
+      name: formData.name || "",
+      company: companyId,
+      category: formData.category || "Internal",
+      special_requirements: formData.special_requirements || "",
+      legal_requirements: formData.legal_requirements || "",
+      custom_legal_requirements: formData.custom_legal_requirements || "",
+      send_notification: formData.send_notification || false,
+      type: formData.type || null,
+      is_draft: true,
+      user: userId,
+      needs: needsArray,
+    };
+
+    let response;
+
+    if (formData.file instanceof File) {
+      const formDataToSend = new FormData();
+      formDataToSend.append("data", JSON.stringify(draftData));
+      formDataToSend.append("company", companyId);
+      formDataToSend.append("name", draftData.name);
+      formDataToSend.append("is_draft", "true");
+      formDataToSend.append("user", userId);
+      formDataToSend.append("file", formData.file);
+
+      response = await axios.post(
+        `${BASE_URL}/qms/interst/draft-create/`,
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+    } else {
+      response = await axios.post(
+        `${BASE_URL}/qms/interst/draft-create/`, 
+        draftData
+      );
+    }
+
+    console.log("Draft saved:", response);
+
+    setLoading(false);
+    setShowDraftInterestedSuccessModal(true);
+    setTimeout(() => {
+      setShowDraftInterestedSuccessModal(false);
+      navigate("/company/qms/interested-parties");
+    }, 1500);
+  } catch (err) {
+    setLoading(false);
+    setShowDraftInterestedErrorModal(true);
+    setTimeout(() => {
+      setShowDraftInterestedErrorModal(false);
+    }, 3000);
+    let errorMsg = err.message;
+
+    if (err.response) {
+      if (err.response.data.date) {
+        errorMsg = err.response.data.date[0];
+      } else if (err.response.data.detail) {
+        errorMsg = err.response.data.detail;
+      } else if (err.response.data.message) {
+        errorMsg = err.response.data.message;
+      }
+    } else if (err.message) {
+      errorMsg = err.message;
+    }
+
+    setError(errorMsg);
+    console.error("Error saving Draft:", err.response?.data || err);
+  }
+};
+ 
 
   if (loading) {
     return (
@@ -524,9 +548,8 @@ const AddQmsInterestedParties = () => {
                 value={formData.name}
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                className={`w-full add-qms-intertested-inputs ${
-                  fieldTouched.name && nameError ? "border-red-500" : ""
-                }`}
+                className={`w-full add-qms-intertested-inputs ${fieldTouched.name && nameError ? "border-red-500" : ""
+                  }`}
               />
               {fieldTouched.name && nameError && (
                 <p className="text-red-500 text-sm mt-1">{nameError}</p>
@@ -551,9 +574,8 @@ const AddQmsInterestedParties = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none transition-transform duration-300">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
-                      dropdownRotation.category ? "rotate-180" : ""
-                    }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.category ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
@@ -679,18 +701,16 @@ const AddQmsInterestedParties = () => {
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                   <ChevronDown
-                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${
-                      dropdownRotation.legal_requirements ? "rotate-180" : ""
-                    }`}
+                    className={`h-5 w-5 text-gray-500 transform transition-transform duration-300 ${dropdownRotation.legal_requirements ? "rotate-180" : ""
+                      }`}
                   />
                 </div>
               </div>
               <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  showCustomField
+                className={`overflow-hidden transition-all duration-300 ease-in-out ${showCustomField
                     ? "h-32 mt-3 opacity-100"
                     : "max-h-0 opacity-0"
-                }`}
+                  }`}
               >
                 <textarea
                   name="custom_legal_requirements"
@@ -777,13 +797,14 @@ const AddQmsInterestedParties = () => {
             <div></div>
             <div className="flex items-center justify-between col-span-2">
               <div>
-                <button
-                  type="button"
-                  onClick={handleSaveAsDraft}
-                  className="request-correction-btn duration-200"
-                >
-                  Save as Draft
-                </button>
+               <button
+      type="button"
+      onClick={handleSaveAsDraft}
+      className={`request-correction-btn duration-200 ${isFormEmpty() ? "opacity-50 cursor-not-allowed" : ""}`}
+      disabled={isFormEmpty() || loading}
+    >
+      Save as Draft
+    </button>
               </div>
               <div className="flex justify-end space-x-5">
                 <button
