@@ -4,11 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import RootCauseModal from './RootCauseModal';
-import SuccessModal from '../Modals/SuccessModal';
-import ErrorModal from '../Modals/ErrorModal';
+import SuccessModal from '../../../../components/Modals/SuccessModal';
+import ErrorModal from '../../../../components/Modals/ErrorModal';
 
 const QmsEditHealthSafetyIncidents = () => {
-    const { id } = useParams(); // Get the incident ID from URL parameters
+    const { id } = useParams();
     const getUserCompanyId = () => {
         const storedCompanyId = localStorage.getItem("company_id");
         if (storedCompanyId) return storedCompanyId;

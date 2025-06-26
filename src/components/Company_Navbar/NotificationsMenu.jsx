@@ -260,134 +260,134 @@ const NotificationsMenu = forwardRef(({
         }
     };
 
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                setIsLoading(true);
-                const user = getCurrentUser();
-                if (!user || !user.user_id) {
-                    console.error("User not found or not logged in");
-                    return;
-                }
+    // useEffect(() => {
+    //     const fetchNotifications = async () => {
+    //         try {
+    //             setIsLoading(true);
+    //             const user = getCurrentUser();
+    //             if (!user || !user.user_id) {
+    //                 console.error("User not found or not logged in");
+    //                 return;
+    //             }
 
-                await fetchUnreadCount(user.user_id);
+    //             await fetchUnreadCount(user.user_id);
 
-                // Define all API endpoints
-                const endpoints = [
-                    { name: 'manual', url: `${BASE_URL}/qms/notifications/${user.user_id}/` },
-                    { name: 'procedure', url: `${BASE_URL}/qms/notifications-procedure/${user.user_id}/` },
-                    { name: 'conformity', url: `${BASE_URL}/qms/conformity/notifications/${user.user_id}/` },
-                    { name: 'car', url: `${BASE_URL}/qms/car/notifications/${user.user_id}/` },
-                    { name: 'preventive', url: `${BASE_URL}/qms/preventive/notifications/${user.user_id}/` },
-                    { name: 'energyReview', url: `${BASE_URL}/qms/energy-review/notifications/${user.user_id}/` },
-                    { name: 'record', url: `${BASE_URL}/qms/notifications-record/${user.user_id}/` },
-                    { name: 'compliance', url: `${BASE_URL}/qms/compliances/notifications/${user.user_id}/` },
-                    { name: 'interested_party', url: `${BASE_URL}/qms/interst/notifications/${user.user_id}/` },
-                    { name: 'process', url: `${BASE_URL}/qms/processes/notifications/${user.user_id}/` },
-                    { name: 'legal', url: `${BASE_URL}/qms/legal/notifications/${user.user_id}/` },
-                    { name: 'evaluation', url: `${BASE_URL}/qms/notifications-evaluation/${user.user_id}/` },
-                    { name: 'changes', url: `${BASE_URL}/qms/changes/notifications/${user.user_id}/` },
-                    { name: 'sustainability', url: `${BASE_URL}/qms/notifications-sustainability/${user.user_id}/` },
-                    { name: 'training', url: `${BASE_URL}/qms/training/notifications/${user.user_id}/` },
-                    { name: 'meeting', url: `${BASE_URL}/qms/meeting/notifications/${user.user_id}/` }
-                ];
+    //             // Define all API endpoints
+    //             const endpoints = [
+    //                 { name: 'manual', url: `${BASE_URL}/qms/notifications/${user.user_id}/` },
+    //                 { name: 'procedure', url: `${BASE_URL}/qms/notifications-procedure/${user.user_id}/` },
+    //                 { name: 'conformity', url: `${BASE_URL}/qms/conformity/notifications/${user.user_id}/` },
+    //                 { name: 'car', url: `${BASE_URL}/qms/car/notifications/${user.user_id}/` },
+    //                 { name: 'preventive', url: `${BASE_URL}/qms/preventive/notifications/${user.user_id}/` },
+    //                 { name: 'energyReview', url: `${BASE_URL}/qms/energy-review/notifications/${user.user_id}/` },
+    //                 { name: 'record', url: `${BASE_URL}/qms/notifications-record/${user.user_id}/` },
+    //                 { name: 'compliance', url: `${BASE_URL}/qms/compliances/notifications/${user.user_id}/` },
+    //                 { name: 'interested_party', url: `${BASE_URL}/qms/interst/notifications/${user.user_id}/` },
+    //                 { name: 'process', url: `${BASE_URL}/qms/processes/notifications/${user.user_id}/` },
+    //                 { name: 'legal', url: `${BASE_URL}/qms/legal/notifications/${user.user_id}/` },
+    //                 { name: 'evaluation', url: `${BASE_URL}/qms/notifications-evaluation/${user.user_id}/` },
+    //                 { name: 'changes', url: `${BASE_URL}/qms/changes/notifications/${user.user_id}/` },
+    //                 { name: 'sustainability', url: `${BASE_URL}/qms/notifications-sustainability/${user.user_id}/` },
+    //                 { name: 'training', url: `${BASE_URL}/qms/training/notifications/${user.user_id}/` },
+    //                 { name: 'meeting', url: `${BASE_URL}/qms/meeting/notifications/${user.user_id}/` }
+    //             ];
 
-                // Fetch all notifications with error handling
-                const responses = await Promise.allSettled(
-                    endpoints.map(endpoint => axios.get(endpoint.url))
-                );
+    //             // Fetch all notifications with error handling
+    //             const responses = await Promise.allSettled(
+    //                 endpoints.map(endpoint => axios.get(endpoint.url))
+    //             );
 
-                // Process responses safely
-                const notificationArrays = {};
-                responses.forEach((response, index) => {
-                    const endpointName = endpoints[index].name;
-                    if (response.status === 'fulfilled') {
-                        notificationArrays[endpointName] = safeArrayExtract(response.value.data);
-                    } else {
-                        console.error(`Failed to fetch ${endpointName} notifications:`, response.reason);
-                        notificationArrays[endpointName] = [];
-                    }
-                });
+    //             // Process responses safely
+    //             const notificationArrays = {};
+    //             responses.forEach((response, index) => {
+    //                 const endpointName = endpoints[index].name;
+    //                 if (response.status === 'fulfilled') {
+    //                     notificationArrays[endpointName] = safeArrayExtract(response.value.data);
+    //                 } else {
+    //                     console.error(`Failed to fetch ${endpointName} notifications:`, response.reason);
+    //                     notificationArrays[endpointName] = [];
+    //                 }
+    //             });
 
-                // Transform notifications with type information
-                const transformedNotifications = {
-                    manual: notificationArrays.manual.map(n => ({ ...n, notificationType: 'manual' })),
-                    procedure: notificationArrays.procedure.map(n => ({ ...n, notificationType: 'procedure' })),
-                    conformity: notificationArrays.conformity.map(n => ({ ...n, notificationType: 'conformity' })),
-                    car: notificationArrays.car.map(n => ({ 
-                        ...n, 
-                        notificationType: 'car',
-                        car: n.carnumber || {}
-                    })),
-                    preventive: notificationArrays.preventive.map(n => ({ 
-                        ...n, 
-                        notificationType: 'preventive',
-                        preventive: n.preventivenumber || n.preventive || n.preventive_action || {}
-                    })),
-                    energyReview: notificationArrays.energyReview.map(n => ({ 
-                        ...n, 
-                        notificationType: 'energy_review',
-                        energy_review: n.energy_review || {}
-                    })),
-                    record: notificationArrays.record.map(n => ({ ...n, notificationType: 'record' })),
-                    compliance: notificationArrays.compliance.map(n => ({ ...n, notificationType: 'compliance' })),
-                    interested_party: notificationArrays.interested_party.map(n => ({ ...n, notificationType: 'interested_party' })),
-                    process: notificationArrays.process.map(n => ({ ...n, notificationType: 'process' })),
-                    legal: notificationArrays.legal.map(n => ({ ...n, notificationType: 'legal' })),
-                    evaluation: notificationArrays.evaluation.map(n => ({ ...n, notificationType: 'evaluation' })),
-                    changes: notificationArrays.changes.map(n => ({ ...n, notificationType: 'changes' })),
-                    sustainability: notificationArrays.sustainability.map(n => ({ ...n, notificationType: 'sustainability' })),
-                    training: notificationArrays.training.map(n => ({ ...n, notificationType: 'training' })),
-                    meeting: notificationArrays.meeting.map(n => ({ ...n, notificationType: 'meeting' }))
-                };
+    //             // Transform notifications with type information
+    //             const transformedNotifications = {
+    //                 manual: notificationArrays.manual.map(n => ({ ...n, notificationType: 'manual' })),
+    //                 procedure: notificationArrays.procedure.map(n => ({ ...n, notificationType: 'procedure' })),
+    //                 conformity: notificationArrays.conformity.map(n => ({ ...n, notificationType: 'conformity' })),
+    //                 car: notificationArrays.car.map(n => ({ 
+    //                     ...n, 
+    //                     notificationType: 'car',
+    //                     car: n.carnumber || {}
+    //                 })),
+    //                 preventive: notificationArrays.preventive.map(n => ({ 
+    //                     ...n, 
+    //                     notificationType: 'preventive',
+    //                     preventive: n.preventivenumber || n.preventive || n.preventive_action || {}
+    //                 })),
+    //                 energyReview: notificationArrays.energyReview.map(n => ({ 
+    //                     ...n, 
+    //                     notificationType: 'energy_review',
+    //                     energy_review: n.energy_review || {}
+    //                 })),
+    //                 record: notificationArrays.record.map(n => ({ ...n, notificationType: 'record' })),
+    //                 compliance: notificationArrays.compliance.map(n => ({ ...n, notificationType: 'compliance' })),
+    //                 interested_party: notificationArrays.interested_party.map(n => ({ ...n, notificationType: 'interested_party' })),
+    //                 process: notificationArrays.process.map(n => ({ ...n, notificationType: 'process' })),
+    //                 legal: notificationArrays.legal.map(n => ({ ...n, notificationType: 'legal' })),
+    //                 evaluation: notificationArrays.evaluation.map(n => ({ ...n, notificationType: 'evaluation' })),
+    //                 changes: notificationArrays.changes.map(n => ({ ...n, notificationType: 'changes' })),
+    //                 sustainability: notificationArrays.sustainability.map(n => ({ ...n, notificationType: 'sustainability' })),
+    //                 training: notificationArrays.training.map(n => ({ ...n, notificationType: 'training' })),
+    //                 meeting: notificationArrays.meeting.map(n => ({ ...n, notificationType: 'meeting' }))
+    //             };
 
-                // Combine all notifications
-                const combinedNotifications = [
-                    ...transformedNotifications.manual,
-                    ...transformedNotifications.procedure,
-                    ...transformedNotifications.conformity,
-                    ...transformedNotifications.car,
-                    ...transformedNotifications.preventive,
-                    ...transformedNotifications.energyReview,
-                    ...transformedNotifications.record,
-                    ...transformedNotifications.compliance,
-                    ...transformedNotifications.interested_party,
-                    ...transformedNotifications.process,
-                    ...transformedNotifications.legal,
-                    ...transformedNotifications.evaluation,
-                    ...transformedNotifications.changes,
-                    ...transformedNotifications.sustainability,
-                    ...transformedNotifications.training,
-                    ...transformedNotifications.meeting
-                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    //             // Combine all notifications
+    //             const combinedNotifications = [
+    //                 ...transformedNotifications.manual,
+    //                 ...transformedNotifications.procedure,
+    //                 ...transformedNotifications.conformity,
+    //                 ...transformedNotifications.car,
+    //                 ...transformedNotifications.preventive,
+    //                 ...transformedNotifications.energyReview,
+    //                 ...transformedNotifications.record,
+    //                 ...transformedNotifications.compliance,
+    //                 ...transformedNotifications.interested_party,
+    //                 ...transformedNotifications.process,
+    //                 ...transformedNotifications.legal,
+    //                 ...transformedNotifications.evaluation,
+    //                 ...transformedNotifications.changes,
+    //                 ...transformedNotifications.sustainability,
+    //                 ...transformedNotifications.training,
+    //                 ...transformedNotifications.meeting
+    //             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-                setNotifications(prev => ({
-                    ...prev,
-                    QMS: combinedNotifications,
-                    energy_review: transformedNotifications.energyReview
-                }));
+    //             setNotifications(prev => ({
+    //                 ...prev,
+    //                 QMS: combinedNotifications,
+    //                 energy_review: transformedNotifications.energyReview
+    //             }));
 
-                if (onNotificationsUpdate) {
-                    onNotificationsUpdate(prev => ({
-                        ...prev,
-                        QMS: combinedNotifications,
-                        energy_review: transformedNotifications.energyReview
-                    }));
-                }
-            } catch (error) {
-                console.error("Error fetching notifications:", error);
-                setNotifications(prev => ({
-                    ...prev,
-                    QMS: [],
-                    energy_review: []
-                }));
-            } finally {
-                setIsLoading(false);
-            }
-        };
+    //             if (onNotificationsUpdate) {
+    //                 onNotificationsUpdate(prev => ({
+    //                     ...prev,
+    //                     QMS: combinedNotifications,
+    //                     energy_review: transformedNotifications.energyReview
+    //                 }));
+    //             }
+    //         } catch (error) {
+    //             console.error("Error fetching notifications:", error);
+    //             setNotifications(prev => ({
+    //                 ...prev,
+    //                 QMS: [],
+    //                 energy_review: []
+    //             }));
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
 
-        fetchNotifications();
-    }, [onNotificationsUpdate]);
+    //     fetchNotifications();
+    // }, [onNotificationsUpdate]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);

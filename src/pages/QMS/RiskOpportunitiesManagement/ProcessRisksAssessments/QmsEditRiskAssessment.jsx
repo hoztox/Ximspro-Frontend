@@ -3,10 +3,12 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../../../../components/Modals/SuccessModal";  
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsEditRiskAssessment = () => {
   const navigate = useNavigate();
-  const { id } = useParams(); // Assuming you pass the risk assessment ID in the URL
+  const { id } = useParams();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
 
@@ -22,7 +24,6 @@ const QmsEditRiskAssessment = () => {
     remarks: "",
   });
 
-  // New state for date parts to avoid parsing issues
   const [dateParts, setDateParts] = useState({
     day: "",
     month: "",
@@ -46,6 +47,10 @@ const QmsEditRiskAssessment = () => {
   const [errors, setErrors] = useState({});
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  // New state for modals
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const getDaysInMonth = (month, year) => {
     if (!month || !year) return 31;
@@ -92,7 +97,6 @@ const QmsEditRiskAssessment = () => {
         const response = await axios.get(`${BASE_URL}/qms/process-risk-assessment/${id}/`);
         const data = response.data;
         
-        // Set form data - IMPORTANT: Extract only the ID from owner if it's an object
         setFormData({
           activity: data.activity || "",
           hazard: data.hazard || "",
@@ -105,7 +109,6 @@ const QmsEditRiskAssessment = () => {
           remarks: data.remarks || "",
         });
 
-        // Parse and set date parts
         if (data.date) {
           const dateObj = new Date(data.date);
           setDateParts({
@@ -115,7 +118,6 @@ const QmsEditRiskAssessment = () => {
           });
         }
 
-        // Set dynamic fields
         if (data.risks && data.risks.length > 0) {
           setRiskFields(data.risks.map((risk, index) => ({
             id: index + 1,
@@ -139,7 +141,8 @@ const QmsEditRiskAssessment = () => {
 
       } catch (error) {
         console.error("Error fetching risk assessment data:", error);
-        setErrors({ non_field_errors: "Failed to load risk assessment data" });
+        setErrorMessage("Failed to load risk assessment data");
+        setShowErrorModal(true);
       } finally {
         setIsLoadingData(false);
       }
@@ -157,7 +160,8 @@ const QmsEditRiskAssessment = () => {
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
-        setErrors({ non_field_errors: "Failed to load users" });
+        setErrorMessage("Failed to load users");
+        setShowErrorModal(true);
       }
     };
     fetchUsers();
@@ -166,7 +170,6 @@ const QmsEditRiskAssessment = () => {
   // Update formData.date whenever dateParts changes
   useEffect(() => {
     const { day, month, year } = dateParts;
-    console.log("Date parts updated:", { day, month, year });
     if (day && month && year) {
       try {
         const newDate = new Date(year, month - 1, day);
@@ -187,7 +190,6 @@ const QmsEditRiskAssessment = () => {
     }
   }, [dateParts]);
 
-  // Dynamic days array
   const days = useMemo(
     () => Array.from({ length: getDaysInMonth(dateParts.month, dateParts.year) }, (_, i) => i + 1),
     [dateParts.month, dateParts.year]
@@ -285,7 +287,6 @@ const QmsEditRiskAssessment = () => {
   };
 
   const handleDropdownFieldChange = (value, dropdown) => {
-    console.log(`Changing ${dropdown} to:`, value);
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       setDateParts((prev) => ({
         ...prev,
@@ -335,13 +336,21 @@ const QmsEditRiskAssessment = () => {
       required_control_risks: requiredControlMeasureFields.filter(field => field.name.trim()).map(field => ({ name: field.name })),
     };
     
-    // Ensure owner is always a number/string ID, not an object
     if (typeof submissionData.owner === 'object' && submissionData.owner && submissionData.owner.id) {
       submissionData.owner = submissionData.owner.id;
     }
     
-    console.log("Submission data:", submissionData);
     return submissionData;
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    handleNavigateToRiskAssessmentList(); // Navigate after closing the modal
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setErrorMessage("");
   };
 
   const handleSave = async () => {
@@ -360,15 +369,20 @@ const QmsEditRiskAssessment = () => {
         submissionData
       );
 
-      console.log("Risk assessment updated successfully:", response.data);
-      handleNavigateToRiskAssessmentList();
+      setShowSuccessModal(true);
+      setTimeout(() => {
+       setShowSuccessModal(false);
+        navigate("/company/qms/list-process-risks-assessments");
+      }, 2000);
     } catch (error) {
       console.error("Error updating risk assessment:", error);
       if (error.response?.data) {
         setErrors(error.response.data);
+        setErrorMessage("Failed to update risk assessment. Please check the form for errors.");
       } else {
-        setErrors({ non_field_errors: "Failed to update risk assessment" });
+        setErrorMessage("Failed to update risk assessment. Please try again.");
       }
+      setShowErrorModal(true); // Show error modal
     } finally {
       setIsSaveLoading(false);
     }
@@ -376,14 +390,26 @@ const QmsEditRiskAssessment = () => {
 
   if (isLoadingData) {
     return (
-      <div className="bg-[#1C1C24] rounded-lg text-white flex items-center justify-center min-h-[400px]">
-        <div className="text-white">Loading risk assessment data...</div>
+      <div className="bg-[#1C1C24] rounded-lg not-found flex items-center justify-center py-5">
+        <div>Loading Risk Assessment Data...</div>
       </div>
     );
   }
 
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
+      {/* Success and Error Modals */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        successMessage="Risk Assessment Updated Successfully!"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={handleCloseErrorModal}
+        error={errorMessage}
+      />
+
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
           <h1 className="add-manual-sections !px-0">Edit Risk Assessment</h1>
@@ -680,7 +706,6 @@ const QmsEditRiskAssessment = () => {
                     value={dateParts.day || ""}
                     onFocus={() => toggleDropdown("day")}
                     onChange={(e) => {
-                      console.log("Day dropdown changed:", e.target.value);
                       handleDropdownFieldChange(e.target.value, "day");
                     }}
                     onBlur={() => setOpenDropdowns((prev) => ({ ...prev, day: false }))}
@@ -703,7 +728,6 @@ const QmsEditRiskAssessment = () => {
                     value={dateParts.month || ""}
                     onFocus={() => toggleDropdown("month")}
                     onChange={(e) => {
-                      console.log("Month dropdown changed:", e.target.value);
                       handleDropdownFieldChange(e.target.value, "month");
                     }}
                     onBlur={() => setOpenDropdowns((prev) => ({ ...prev, month: false }))}
@@ -728,7 +752,6 @@ const QmsEditRiskAssessment = () => {
                     value={dateParts.year || ""}
                     onFocus={() => toggleDropdown("year")}
                     onChange={(e) => {
-                      console.log("Year dropdown changed:", e.target.value);
                       handleDropdownFieldChange(e.target.value, "year");
                     }}
                     onBlur={() => setOpenDropdowns((prev) => ({ ...prev, year: false }))}
@@ -763,7 +786,7 @@ const QmsEditRiskAssessment = () => {
               <ErrorMessage message={errors.remarks} />
             </div>
 
-           <div></div>
+            <div></div>
             <div>
               <div className="flex gap-[22px] mb-6 justify-end">
                 <button
@@ -788,4 +811,5 @@ const QmsEditRiskAssessment = () => {
     </div>
   );
 };
+
 export default QmsEditRiskAssessment;

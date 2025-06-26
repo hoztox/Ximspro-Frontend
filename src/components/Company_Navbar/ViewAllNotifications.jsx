@@ -197,40 +197,40 @@ const ViewAllNotifications = () => {
             console.error("Invalid Manual ID:", manualId);
         }
     };
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-                setIsLoading(true);
-                const user = getCurrentUser();
-                if (!user || !user.user_id) {
-                    console.error("User not found or not logged in");
-                    return;
-                }
-                const response = await axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
-                console.log("Notifications Response:", response.data);
-                // Group notifications by their type (currently defaulting to QMS)
-                const groupedNotifications = {
-                    QMS: response.data,
-                    EMS: [],
-                    OHS: [],
-                    EnMS: [],
-                    BMS: [],
-                    AMS: [],
-                    IMS: []
-                };
-                setNotifications(groupedNotifications);
-            } catch (error) {
-                console.error("Error fetching notifications:", error);
-                setNotifications(prev => ({
-                    ...prev,
-                    QMS: []
-                }));
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchNotifications();
-    }, []);
+    // useEffect(() => {
+    //     const fetchNotifications = async () => {
+    //         try {
+    //             setIsLoading(true);
+    //             const user = getCurrentUser();
+    //             if (!user || !user.user_id) {
+    //                 console.error("User not found or not logged in");
+    //                 return;
+    //             }
+    //             const response = await axios.get(`${BASE_URL}/qms/notifications/${user.user_id}/`);
+    //             console.log("Notifications Response:", response.data);
+    //             // Group notifications by their type (currently defaulting to QMS)
+    //             const groupedNotifications = {
+    //                 QMS: response.data,
+    //                 EMS: [],
+    //                 OHS: [],
+    //                 EnMS: [],
+    //                 BMS: [],
+    //                 AMS: [],
+    //                 IMS: []
+    //             };
+    //             setNotifications(groupedNotifications);
+    //         } catch (error) {
+    //             console.error("Error fetching notifications:", error);
+    //             setNotifications(prev => ({
+    //                 ...prev,
+    //                 QMS: []
+    //             }));
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
+    //     fetchNotifications();
+    // }, []);
     return (
         <div className="bg-[#1C1C24] p-5 rounded-md">
             <div>

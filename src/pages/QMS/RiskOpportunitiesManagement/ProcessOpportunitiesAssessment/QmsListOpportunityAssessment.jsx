@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "../../../../components/Modals/DeleteConfimModal"; 
+import SuccessModal from "../../../../components/Modals/SuccessModal"; 
+import ErrorModal from "../../../../components/Modals/ErrorModal"; 
 
 const QmsListOpportunityAssessment = () => {
   const [assessments, setAssessments] = useState([]);
@@ -15,6 +18,12 @@ const QmsListOpportunityAssessment = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [assessmentToDelete, setAssessmentToDelete] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -39,33 +48,26 @@ const QmsListOpportunityAssessment = () => {
   };
 
   // Fetch assessments from API
-
-
   const fetchAssessments = async () => {
-  try {
-    setLoading(true);
-    const companyId = getUserCompanyId();
-
-    const response = await axios.get(`${BASE_URL}/qms/risk-opportunities/company/${companyId}/`);
-    setAssessments(response.data);
-    setError("");
-    console.log("Fetched assessments:", response.data);
-  } catch (error) {
-    console.error("Error fetching assessments:", error);
-
-    if (error.response && error.response.status === 404) {
-      // Backend explicitly says no records found
-      setAssessments([]); // treat as empty, not error
-      setError(""); // clear error
-    } else {
-      // Other errors (network, 500s, etc.)
-      setError("Failed to load opportunity assessments");
+    try {
+      setLoading(true);
+      const companyId = getUserCompanyId();
+      const response = await axios.get(`${BASE_URL}/qms/risk-opportunities/company/${companyId}/`);
+      setAssessments(response.data);
+      setError("");
+      console.log("Fetched assessments:", response.data);
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+      if (error.response && error.response.status === 404) {
+        setAssessments([]);
+        setError("");
+      } else {
+        setError("Failed to load opportunity assessments");
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Load data on component mount
   useEffect(() => {
@@ -82,16 +84,16 @@ const QmsListOpportunityAssessment = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB'); 
+    return date.toLocaleDateString("en-GB");
   };
 
   // Helper function to get risk category ranking
   const getRiskRanking = (score) => {
     if (!score) return "N/A";
-    if (score >= 15) return "VH";  
-    if (score >= 8) return "H";    
-    if (score >= 4) return "M";    
-    if (score >= 1) return "L";    
+    if (score >= 15) return "VH";
+    if (score >= 8) return "H";
+    if (score >= 4) return "M";
+    if (score >= 1) return "L";
     return "N/A";
   };
 
@@ -99,7 +101,7 @@ const QmsListOpportunityAssessment = () => {
   const getRankingColor = (ranking) => {
     switch (ranking) {
       case "VH":
-         return "bg-[#dd363611] text-[#dd3636]";
+        return "bg-[#dd363611] text-[#dd3636]";
       case "H":
         return "bg-[#DD6B0611] text-[#DD6B06]";
       case "M":
@@ -146,20 +148,27 @@ const QmsListOpportunityAssessment = () => {
     navigate(`/company/qms/edit-opportunity-assessment/${id}`);
   };
 
-  // Handle delete
-  const handleDeleteAssessment = async (assessment) => {
-    if (!window.confirm(`Are you sure you want to delete the assessment for "${assessment.activity}"?`)) {
-      return;
-    }
+  // Handle delete initiation
+  const initiateDelete = (assessment) => {
+    setAssessmentToDelete(assessment);
+    setShowDeleteModal(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteAssessment = async () => {
+    if (!assessmentToDelete) return;
 
     try {
       setDeleteLoading(true);
-      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${assessment.id}/`,  
-      );
+      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${assessmentToDelete.id}/`);
+      setAssessments(assessments.filter((item) => item.id !== assessmentToDelete.id));
+      setSuccessMessage('Opportunity Assessment Deleted Successfully');
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 2000);
 
-      // Remove from local state
-      setAssessments(assessments.filter((item) => item.id !== assessment.id));
-      
       // Reset to first page if current page becomes empty
       const remainingItems = assessments.length - 1;
       const newTotalPages = Math.ceil(remainingItems / itemsPerPage);
@@ -168,16 +177,18 @@ const QmsListOpportunityAssessment = () => {
       }
     } catch (error) {
       console.error("Error deleting assessment:", error);
-      alert("Failed to delete assessment. Please try again.");
+      setErrorMessage("Failed to delete assessment. Please try again.");
+      setShowDeleteModal(false);
+      setShowErrorModal(true);
     } finally {
       setDeleteLoading(false);
+      setAssessmentToDelete(null);
     }
   };
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () =>
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const nextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
   // Display loading state
@@ -208,6 +219,27 @@ const QmsListOpportunityAssessment = () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+      {/* Modals */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleDeleteAssessment}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setAssessmentToDelete(null);
+        }}
+        deleteMessage={ "Opportunity Assessment?" }
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={errorMessage}
+      />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="list-manual-head">List Opportunity Assessments</h1>
@@ -250,20 +282,14 @@ const QmsListOpportunityAssessment = () => {
           <thead className="bg-[#24242D]">
             <tr className="h-[48px]">
               <th className="pl-4 pr-2 text-left add-manual-theads">No</th>
-              <th className="px-2 text-left add-manual-theads">
-                Activity/Process
-              </th>
-              <th className="px-2 text-left add-manual-theads">
-                Potential Opportunity
-              </th>
-              <th className="px-2 text-left add-manual-theads" colSpan={2}>
-                Opportunity Score
-              </th>
+              <th className="px-2 text-left add-manual-theads">Activity/Process</th>
+              <th className="px-2 text-left add-manual-theads">Potential Opportunity</th>
+              <th className="px-2 text-left add-manual-theads" colSpan={2}>Opportunity Score</th>
               <th className="px-2 text-left add-manual-theads">Due Date</th>
               <th className="px-2 text-center add-manual-theads">Status</th>
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
-              <th className="pr-2 text-center add-manual-theads">Delete</th>
+              <th className="px-2 text-center add-manual-theads">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -275,28 +301,18 @@ const QmsListOpportunityAssessment = () => {
                     key={assessment.id}
                     className="border-b border-[#383840] hover:bg-[#1a1a20] h-[50px] cursor-pointer"
                   >
-                    <td className="pl-5 pr-2 add-manual-datas">
-                      {indexOfFirstItem + index + 1}
-                    </td>
-                    <td className="px-2 add-manual-datas">
-                      {assessment.activity || "N/A"}
-                    </td>
-                    <td className="px-2 add-manual-datas">
-                      {assessment.potential_opportunity || "N/A"}
-                    </td>
+                    <td className="pl-5 pr-2 add-manual-datas">{indexOfFirstItem + index + 1}</td>
+                    <td className="px-2 add-manual-datas">{assessment.activity || "N/A"}</td>
+                    <td className="px-2 add-manual-datas">{assessment.potential_opportunity || "N/A"}</td>
                     <td className="px-2 add-manual-datas text-center w-[65px]">
                       {assessment.opportunity_score || "N/A"}
                     </td>
                     <td className="pl-1 add-manual-datas">
-                      <span
-                        className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColor(ranking)}`}
-                      >
+                      <span className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColor(ranking)}`}>
                         {ranking}
                       </span>
                     </td>
-                    <td className="px-2 add-manual-datas">
-                      {formatDate(assessment.date)}
-                    </td>
+                    <td className="px-2 add-manual-datas">{formatDate(assessment.date)}</td>
                     <td className="px-2 add-manual-datas !text-center">
                       <span
                         className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
@@ -330,8 +346,8 @@ const QmsListOpportunityAssessment = () => {
                       </button>
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
-                      <button 
-                        onClick={() => handleDeleteAssessment(assessment)}
+                      <button
+                        onClick={() => initiateDelete(assessment)}
                         disabled={deleteLoading}
                         className={deleteLoading ? "opacity-50 cursor-not-allowed" : ""}
                       >
@@ -353,51 +369,36 @@ const QmsListOpportunityAssessment = () => {
       </div>
 
       {/* Pagination */}
-            
-        <div className="flex justify-between items-center mt-6 text-sm">
-          <div className="text-white total-text">Total-{totalItems}</div>
-          <div className="flex items-center gap-5">
+      <div className="flex justify-between items-center mt-6 text-sm">
+        <div className="text-white total-text">Total-{totalItems}</div>
+        <div className="flex items-center gap-5">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""}`}
+          >
+            Previous
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
             <button
-              onClick={prevPage}
-              disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${
-                currentPage === 1 ? "opacity-50" : ""
-              }`}
+              key={number}
+              onClick={() => paginate(number)}
+              className={`${currentPage === number ? "pagin-active" : "pagin-inactive"}`}
             >
-              Previous
+              {number}
             </button>
+          ))}
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-              <button
-                key={number}
-                onClick={() => paginate(number)}
-                className={`${
-                  currentPage === number ? "pagin-active" : "pagin-inactive"
-                }`}
-              >
-                {number}
-              </button>
-            ))}
-
-            <button
-              onClick={nextPage}
-              disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${
-                currentPage === totalPages ? "opacity-50" : ""
-              }`}
-            >
-              Next
-            </button>
-          </div>
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""}`}
+          >
+            Next
+          </button>
         </div>
-       
-
-      {/* Show total count even when pagination is not needed */}
-      {/* {totalPages <= 1 && totalItems > 0 && (
-        <div className="flex justify-start items-center mt-6 text-sm">
-          <div className="text-white total-text">Total-{totalItems}</div>
-        </div>
-      )} */}
+      </div>
     </div>
   );
 };

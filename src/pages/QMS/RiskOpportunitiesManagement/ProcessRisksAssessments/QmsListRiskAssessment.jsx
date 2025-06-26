@@ -7,6 +7,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfirmModal from "../../../../components/Modals/DeleteConfimModal";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsListRiskAssessment = () => {
   const [assessments, setAssessments] = useState([]);
@@ -14,10 +17,14 @@ const QmsListRiskAssessment = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const navigate = useNavigate();
-
-
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -38,48 +45,32 @@ const QmsListRiskAssessment = () => {
     return null;
   };
 
-  const getRelevantUserId = () => {
-    const userRole = localStorage.getItem("role");
-    if (userRole === "user") {
-      const userId = localStorage.getItem("user_id");
-      if (userId) return userId;
+  useEffect(() => {
+    fetchAssessments();
+  }, []);
+
+  const fetchAssessments = async () => {
+    try {
+      setLoading(true);
+      const companyId = getUserCompanyId();
+      const response = await fetch(
+        `${BASE_URL}/qms/process-risk-assessment/company/${companyId}/`
+      );
+      const data = await response.json();
+
+      if (Array.isArray(data)) {
+        setAssessments(data);
+      } else {
+        setAssessments([]);
+      }
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+      setError("Failed to load risk assessments. Please try again.");
+      setAssessments([]);
+    } finally {
+      setLoading(false);
     }
-    const companyId = localStorage.getItem("company_id");
-    if (companyId) return companyId;
-    return null;
   };
-
-
-
-useEffect(() => {
-  fetchAssessments();
-}, []);
-
-const fetchAssessments = async () => {
-  try {
-    setLoading(true);
-
-    const companyId = getUserCompanyId();
-    const response = await fetch(`${BASE_URL}/qms/process-risk-assessment/company/${companyId}/`);
-
-    const data = await response.json();
-
- 
-    if (Array.isArray(data)) {
-      setAssessments(data);
-    } else {
-      setAssessments([]);  
-    }
-  } catch (error) {
-    console.error('Error fetching assessments:', error);
-    setError('Failed to load risk assessments. Please try again.');
-    setAssessments([]); // optional: set to empty if error occurs
-  } finally {
-    setLoading(false);
-  }
-};
-
-
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -89,22 +80,24 @@ const fetchAssessments = async () => {
 
   // Pagination
   const itemsPerPage = 10;
-
-  // Search functionality - filter all assessments first
-  const filteredAssessments = assessments.filter((assessment) =>
-    assessment.activity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    assessment.hazard?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    assessment.owner?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    assessment.date?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAssessments = assessments.filter(
+    (assessment) =>
+      assessment.activity?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assessment.hazard?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assessment.owner?.username
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      assessment.date?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalItems = filteredAssessments.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  // Get current items after filtering
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredAssessments.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = filteredAssessments.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   const handleAddRiskAssessment = () => {
     navigate("/company/qms/add-process-risks-assessments");
@@ -122,37 +115,38 @@ const fetchAssessments = async () => {
     navigate(`/company/qms/edit-process-risks-assessments/${id}`);
   };
 
-  // Handle delete with API call
-  const handleDeleteRiskAssessment = async (assessment) => {
-    if (!window.confirm('Are you sure you want to delete this risk assessment?')) {
-      return;
-    }
+  const handleDeleteRiskAssessment = (assessment) => {
+    setSelectedAssessment(assessment);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
-      const response = await fetch(`${BASE_URL}/qms/process-risk-assessment/${assessment.id}/`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          // Add authentication headers if needed
-          // 'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        // Remove from local state
-        setAssessments(assessments.filter((item) => item.id !== assessment.id));
-        // Show success message
-        alert('Risk assessment deleted successfully');
-      } else {
-        throw new Error('Failed to delete assessment');
-      }
+      await axios.delete(
+        `${BASE_URL}/qms/process-risk-assessment/${selectedAssessment.id}/`
+      );
+      setAssessments(
+        assessments.filter((item) => item.id !== selectedAssessment.id)
+      );
+      setShowDeleteModal(false);
+      setSuccessMessage("Risk assessment deleted successfully");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 2000);
     } catch (error) {
-      console.error('Error deleting assessment:', error);
-      alert('Failed to delete risk assessment. Please try again.');
+      console.error("Error deleting assessment:", error);
+      setShowDeleteModal(false);
+      setErrorMessage("Failed to delete risk assessment. Please try again.");
+      setShowErrorModal(true);
     }
   };
 
-  // Utility function to get risk ranking letter based on category
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setSelectedAssessment(null);
+  };
+
   const getRiskRanking = (category) => {
     switch (category) {
       case "Very High Risk":
@@ -168,15 +162,14 @@ const fetchAssessments = async () => {
     }
   };
 
- 
   const getRankingColorClass = (category) => {
     switch (category) {
       case "Very High Risk":
-         return "bg-[#dd363611] text-[#dd3636]";
+        return "bg-[#dd363611] text-[#dd3636]";
       case "High Risk":
-       return "bg-[#DD6B0611] text-[#DD6B06]";
+        return "bg-[#DD6B0611] text-[#DD6B06]";
       case "Moderate Risk":
-         return "bg-[#FFD70011] text-[#FFD700]";
+        return "bg-[#FFD70011] text-[#FFD700]";
       case "Low Risk":
         return "bg-[#36DDAE11] text-[#36DDAE]";
       default:
@@ -184,20 +177,17 @@ const fetchAssessments = async () => {
     }
   };
 
-  
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
+    if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB'); 
+    return date.toLocaleDateString("en-GB");
   };
 
-  
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () =>
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
 
- 
   if (loading) {
     return (
       <div className="bg-[#1C1C24] not-found p-5 rounded-lg flex justify-center items-center">
@@ -206,7 +196,6 @@ const fetchAssessments = async () => {
     );
   }
 
-  // Display error state
   if (error) {
     return (
       <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -225,9 +214,27 @@ const fetchAssessments = async () => {
 
   return (
     <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
+      {/* Modals */}
+      <DeleteConfirmModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        deleteMessage="Risk Assessment"
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={errorMessage}
+      />
+
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="list-manual-head">List Risk Assessment</h1>
+        <h1 className="list-manual-head">List Risk Assessments</h1>
         <div className="flex gap-4">
           <div className="relative">
             <input
@@ -279,7 +286,7 @@ const fetchAssessments = async () => {
               <th className="px-2 text-left add-manual-theads">Review Date</th>
               <th className="px-2 text-center add-manual-theads">View</th>
               <th className="px-2 text-center add-manual-theads">Edit</th>
-              <th className="pr-2 text-center add-manual-theads">Delete</th>
+              <th className="px-2 text-center add-manual-theads">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -293,34 +300,38 @@ const fetchAssessments = async () => {
                     {indexOfFirstItem + index + 1}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {assessment.activity || 'N/A'}
+                    {assessment.activity || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas">
-                    {assessment.hazard || 'N/A'}
+                    {assessment.hazard || "N/A"}
                   </td>
                   <td className="px-2 add-manual-datas text-center w-[56px]">
-                    {assessment.risk_score || 'N/A'}
+                    {assessment.risk_score || "N/A"}
                   </td>
                   <td className="pl-1 add-manual-datas">
                     <span
-                      className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColorClass(assessment.risk_category)}`}
+                      className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColorClass(
+                        assessment.risk_category
+                      )}`}
                     >
                       {getRiskRanking(assessment.risk_category)}
                     </span>
                   </td>
                   <td className="px-2 add-manual-datas">
                     {assessment.owner
-                      ? `${assessment.owner.first_name || ''} ${assessment.owner.last_name || ''}`.trim() ||
-                      assessment.owner.username
-                      : 'N/A'}
+                      ? `${assessment.owner.first_name || ""} ${
+                          assessment.owner.last_name || ""
+                        }`.trim() || assessment.owner.username
+                      : "N/A"}
                   </td>
-
                   <td className="px-2 add-manual-datas text-center w-[45px]">
-                    {assessment.residual_score || 'N/A'}
+                    {assessment.residual_score || "N/A"}
                   </td>
                   <td className="pl-1 add-manual-datas">
                     <span
-                      className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColorClass(assessment.residual_category)}`}
+                      className={`inline-block rounded-[4px] px-[15px] py-[5px] text-xs ${getRankingColorClass(
+                        assessment.residual_category
+                      )}`}
                     >
                       {getRiskRanking(assessment.residual_category)}
                     </span>
@@ -329,7 +340,9 @@ const fetchAssessments = async () => {
                     {formatDate(assessment.date)}
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleViewRiskAssessment(assessment.id)}>
+                    <button
+                      onClick={() => handleViewRiskAssessment(assessment.id)}
+                    >
                       <img
                         src={viewIcon}
                         alt="View Icon"
@@ -341,12 +354,16 @@ const fetchAssessments = async () => {
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleEditRiskAssessment(assessment.id)}>
+                    <button
+                      onClick={() => handleEditRiskAssessment(assessment.id)}
+                    >
                       <img src={editIcon} alt="Edit Icon" />
                     </button>
                   </td>
                   <td className="px-2 add-manual-datas !text-center">
-                    <button onClick={() => handleDeleteRiskAssessment(assessment)}>
+                    <button
+                      onClick={() => handleDeleteRiskAssessment(assessment)}
+                    >
                       <img src={deleteIcon} alt="Delete Icon" />
                     </button>
                   </td>
@@ -355,7 +372,9 @@ const fetchAssessments = async () => {
             ) : (
               <tr>
                 <td colSpan="12" className="py-4 text-center not-found">
-                  {searchQuery ? 'No matching risk assessments found' : 'No Risk Assessments Found'}
+                  {searchQuery
+                    ? "No matching risk assessments found"
+                    : "No Risk Assessments Found"}
                 </td>
               </tr>
             )}
@@ -371,28 +390,31 @@ const fetchAssessments = async () => {
             <button
               onClick={prevPage}
               disabled={currentPage === 1}
-              className={`cursor-pointer swipe-text ${currentPage === 1 ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === 1 ? "opacity-50" : ""
+              }`}
             >
               Previous
             </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-              <button
-                key={number}
-                onClick={() => paginate(number)}
-                className={`${currentPage === number ? "pagin-active" : "pagin-inactive"
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+              (number) => (
+                <button
+                  key={number}
+                  onClick={() => paginate(number)}
+                  className={`${
+                    currentPage === number ? "pagin-active" : "pagin-inactive"
                   }`}
-              >
-                {number}
-              </button>
-            ))}
-
+                >
+                  {number}
+                </button>
+              )
+            )}
             <button
               onClick={nextPage}
               disabled={currentPage === totalPages}
-              className={`cursor-pointer swipe-text ${currentPage === totalPages ? "opacity-50" : ""
-                }`}
+              className={`cursor-pointer swipe-text ${
+                currentPage === totalPages ? "opacity-50" : ""
+              }`}
             >
               Next
             </button>

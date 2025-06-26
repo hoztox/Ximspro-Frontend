@@ -5,6 +5,9 @@ import deleteIcon from "../../../../assets/images/Company Documentation/delete.s
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "../../../../components/Modals/DeleteConfimModal";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsDraftOpportunityAssessments = () => {
   const [assessments, setAssessments] = useState([]);
@@ -13,6 +16,12 @@ const QmsDraftOpportunityAssessments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [error, setError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  // Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
 
@@ -47,16 +56,12 @@ const QmsDraftOpportunityAssessments = () => {
       );
       setAssessments(response.data);
       setError("");
-      console.log("Fetched assessments:", response.data);
     } catch (error) {
       console.error("Error fetching assessments:", error);
-
       if (error.response && error.response.status === 404) {
-        // Backend explicitly says no records found
-        setAssessments([]); // treat as empty, not error
-        setError(""); // clear error
+        setAssessments([]);
+        setError("");
       } else {
-        // Other errors (network, 500s, etc.)
         setError("Failed to load opportunity assessments");
       }
     } finally {
@@ -134,7 +139,7 @@ const QmsDraftOpportunityAssessments = () => {
   const totalItems = filteredAssessments.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  // Get current items
+  // Get current page items
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredAssessments.slice(
@@ -150,44 +155,46 @@ const QmsDraftOpportunityAssessments = () => {
     navigate(`/company/qms/view-draft-opportunity-assessment/${id}`);
   };
 
-  const handleEditAssessment = (id) => {
+  const handleEditModalAssessment = (id) => {
     navigate(`/company/qms/edit-draft-opportunity-assessment/${id}`);
   };
 
-  // Handle delete
-  const handleDeleteAssessment = async (assessment) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete the assessment for "${assessment.activity}"?`
-      )
-    ) {
-      return;
-    }
+  // Handle delete initiation
+  const initiateDelete = (assessment) => {
+    setSelectedAssessment(assessment);
+    setShowDeleteModal(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = async () => {
+    if (!selectedAssessment) return;
 
     try {
       setDeleteLoading(true);
-      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${assessment.id}/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      // Remove from local state
-      setAssessments(assessments.filter((item) => item.id !== assessment.id));
-
-      // Reset to first page if current page becomes empty
-      const remainingItems = assessments.length - 1;
-      const newTotalPages = Math.ceil(remainingItems / itemsPerPage);
-      if (currentPage > newTotalPages && newTotalPages > 0) {
-        setCurrentPage(newTotalPages);
-      }
+      await axios.delete(
+        `${BASE_URL}/qms/risk-opportunity/${selectedAssessment.id}/`,
+      );
+      setAssessments(assessments.filter((item) => item.id !== selectedAssessment.id));
+      setShowDeleteModal(false);
+      setShowSuccessModal(true);
+      setTimeout(() => {
+          setShowSuccessModal(false);
+        }, 2000);
     } catch (error) {
       console.error("Error deleting assessment:", error);
-      alert("Failed to delete assessment. Please try again.");
+      setErrorMessage("Failed to delete assessment. Please try again.");
+      setShowDeleteModal(false);
+      setShowErrorModal(true);
     } finally {
       setDeleteLoading(false);
+      setSelectedAssessment(null);
     }
+  };
+
+  // Handle delete cancellation
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setSelectedAssessment(null);
   };
 
   // Change page
@@ -300,24 +307,9 @@ const QmsDraftOpportunityAssessments = () => {
                     <td className="px-2 add-manual-datas">
                       {formatDate(assessment.date)}
                     </td>
-                    {/* <td className="px-2 add-manual-datas !text-center">
-                       <span
-                         className={`inline-block rounded-[4px] px-[6px] py-[3px] text-xs ${
-                           assessment.status === "Achieved"
-                             ? "bg-[#36DDAE11] text-[#36DDAE]"
-                             : assessment.status === "Not Achieved"
-                             ? "bg-[#dd363611] text-[#dd3636]"
-                             : assessment.status === "Cancelled"
-                             ? "bg-[#1E84AF11] text-[#1E84AF]"
-                             : "bg-[#FFD70011] text-[#FFD700]"
-                         }`}
-                       >
-                         {assessment.status || "N/A"}
-                       </span>
-                     </td> */}
                     <td className="px-2 add-manual-datas !text-center">
                       <button
-                        onClick={() => handleEditAssessment(assessment.id)}
+                        onClick={() => handleEditModalAssessment(assessment.id)}
                         className="text-[#1E84AF]"
                       >
                         Click to Continue
@@ -339,7 +331,7 @@ const QmsDraftOpportunityAssessments = () => {
                     </td>
                     <td className="px-2 add-manual-datas !text-center">
                       <button
-                        onClick={() => handleDeleteAssessment(assessment)}
+                        onClick={() => initiateDelete(assessment)}
                         disabled={deleteLoading}
                         className={
                           deleteLoading ? "opacity-50 cursor-not-allowed" : ""
@@ -365,7 +357,6 @@ const QmsDraftOpportunityAssessments = () => {
       </div>
 
       {/* Pagination */}
-
       <div className="flex justify-between items-center mt-6 text-sm">
         <div className="text-white total-text">Total-{totalItems}</div>
         <div className="flex items-center gap-5">
@@ -403,12 +394,23 @@ const QmsDraftOpportunityAssessments = () => {
         </div>
       </div>
 
-      {/* Show total count even when pagination is not needed */}
-      {/* {totalPages <= 1 && totalItems > 0 && (
-         <div className="flex justify-start items-center mt-6 text-sm">
-           <div className="text-white total-text">Total-{totalItems}</div>
-         </div>
-       )} */}
+      {/* Modals */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        deleteMessage={"Opportunity Assessment"}
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage="Opportunity Assessment Deleted Successfully!"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={errorMessage}
+      />
     </div>
   );
 };

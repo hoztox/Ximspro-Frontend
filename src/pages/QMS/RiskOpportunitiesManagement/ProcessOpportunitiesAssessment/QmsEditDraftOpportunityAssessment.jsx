@@ -3,13 +3,15 @@ import { ChevronDown, Plus, X, Search } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsEditDraftOpportunityAssessment = () => {
- const navigate = useNavigate();
+  const navigate = useNavigate();
   const { id } = useParams();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-  
+
   const [formData, setFormData] = useState({
     activity: "",
     potential_opportunity: "",
@@ -23,14 +25,13 @@ const QmsEditDraftOpportunityAssessment = () => {
     review_frequency_month: "",
     remarks: "",
   });
-  
-  // Add separate state for date parts to maintain selection state
+
   const [dateParts, setDateParts] = useState({
     day: "",
     month: "",
-    year: ""
+    year: "",
   });
-  
+
   const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
   const [users, setUsers] = useState([]);
   const [ownerSearchTerm, setOwnerSearchTerm] = useState("");
@@ -38,6 +39,9 @@ const QmsEditDraftOpportunityAssessment = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
+  const [showErrorModal, setShowErrorModal] = useState(false); // State for error modal
+  const [modalErrorMessage, setModalErrorMessage] = useState(""); // State for error message
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
     benefit: false,
@@ -48,7 +52,7 @@ const QmsEditDraftOpportunityAssessment = () => {
     month: false,
     year: false,
   });
-  
+
   const ownersDropdownRef = useRef(null);
 
   const getDaysInMonth = (month, year) => {
@@ -69,7 +73,6 @@ const QmsEditDraftOpportunityAssessment = () => {
     return parsed;
   };
 
-  // Use the parseDate function result
   const currentDateParts = parseDate();
 
   const days = Array.from(
@@ -80,7 +83,6 @@ const QmsEditDraftOpportunityAssessment = () => {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
-  // Filter owners based on search term
   const filteredOwners = users.filter((user) =>
     `${user.first_name} ${user.last_name}`.toLowerCase().includes(ownerSearchTerm.toLowerCase())
   );
@@ -115,7 +117,6 @@ const QmsEditDraftOpportunityAssessment = () => {
     return null;
   };
 
-  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -130,7 +131,6 @@ const QmsEditDraftOpportunityAssessment = () => {
     fetchUsers();
   }, []);
 
-  // Handle click outside for dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (ownersDropdownRef.current && !ownersDropdownRef.current.contains(event.target)) {
@@ -141,15 +141,14 @@ const QmsEditDraftOpportunityAssessment = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Helper function to format user display name
   const formatUserName = (user) => {
     if (!user) return "";
-    if (typeof user === 'string') return user;
-    
+    if (typeof user === "string") return user;
+
     const firstName = user.first_name || "";
     const lastName = user.last_name || "";
     const username = user.username || "";
-    
+
     if (firstName && lastName) {
       return `${firstName} ${lastName}`;
     } else if (firstName) {
@@ -159,105 +158,101 @@ const QmsEditDraftOpportunityAssessment = () => {
     } else if (username) {
       return username;
     }
-    
+
     return "";
   };
 
-  // Fetch opportunity assessment data
- // Fetch opportunity assessment data
-const fetchOpportunityData = async () => {
-  try {
-    setLoading(true);
-    setError("");
-    
-    const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
-    const opportunityData = response.data;
-    
-    console.log("Fetched opportunity data:", opportunityData);
-    
-    // Parse owners - handle different data structures
-    let ownersArray = [];
-    if (opportunityData.owners && Array.isArray(opportunityData.owners)) {
-      ownersArray = opportunityData.owners.map(owner => 
-        typeof owner === 'object' ? owner.id : owner
-      );
-    } else if (opportunityData.action_party) {
-      // If action_party is a string, try to find matching user
-      const matchingUser = users.find(user => 
-        `${user.first_name} ${user.last_name}` === opportunityData.action_party ||
-        user.username === opportunityData.action_party
-      );
-      if (matchingUser) {
-        ownersArray = [matchingUser.id];
+  const fetchOpportunityData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
+      const opportunityData = response.data;
+
+      console.log("Fetched opportunity data:", opportunityData);
+
+      let ownersArray = [];
+      if (opportunityData.owners && Array.isArray(opportunityData.owners)) {
+        ownersArray = opportunityData.owners.map((owner) =>
+          typeof owner === "object" ? owner.id : owner
+        );
+      } else if (opportunityData.action_party) {
+        const matchingUser = users.find(
+          (user) =>
+            `${user.first_name} ${user.last_name}` === opportunityData.action_party ||
+            user.username === opportunityData.action_party
+        );
+        if (matchingUser) {
+          ownersArray = [matchingUser.id];
+        }
       }
-    }
 
-    // Pre-populate form data
-    setFormData({
-      activity: opportunityData.activity || "",
-      potential_opportunity: opportunityData.potential_opportunity || "",
-      probability: opportunityData.probability || opportunityData.opportunity || "",
-      benefit: opportunityData.benefit || "",
-      owners: ownersArray,
-      // Fix: Check if approved_by exists before accessing its id property
-      approved_by: opportunityData.approved_by && typeof opportunityData.approved_by === 'object' 
-        ? opportunityData.approved_by.id  
-        : opportunityData.approved_by || "",
-      status: opportunityData.status || "",
-      date: opportunityData.date || opportunityData.due_date || "",
-      review_frequency_year: opportunityData.review_frequency_year || "",
-      review_frequency_month: opportunityData.review_frequency_month || "",
-      remarks: opportunityData.remarks || "",
-    });
-
-    // Parse and set date parts
-    if (opportunityData.date || opportunityData.due_date) {
-      const dateObj = new Date(opportunityData.date || opportunityData.due_date);
-      setDateParts({
-        day: dateObj.getDate(),
-        month: dateObj.getMonth() + 1,
-        year: dateObj.getFullYear(),
+      setFormData({
+        activity: opportunityData.activity || "",
+        potential_opportunity: opportunityData.potential_opportunity || "",
+        probability: opportunityData.probability || opportunityData.opportunity || "",
+        benefit: opportunityData.benefit || "",
+        owners: ownersArray,
+        approved_by:
+          opportunityData.approved_by && typeof opportunityData.approved_by === "object"
+            ? opportunityData.approved_by.id
+            : opportunityData.approved_by || "",
+        status: opportunityData.status || "",
+        date: opportunityData.date || opportunityData.due_date || "",
+        review_frequency_year: opportunityData.review_frequency_year || "",
+        review_frequency_month: opportunityData.review_frequency_month || "",
+        remarks: opportunityData.remarks || "",
       });
-    }
 
-    // Pre-populate action plan fields
-    if (opportunityData.opportunity_action_plan) {
-      let actionPlans = [];
-      
-      if (Array.isArray(opportunityData.opportunity_action_plan)) {
-        actionPlans = opportunityData.opportunity_action_plan;
-      } else if (typeof opportunityData.opportunity_action_plan === 'string') {
-        actionPlans = opportunityData.opportunity_action_plan.split(";").filter(plan => plan.trim() !== "");
+      if (opportunityData.date || opportunityData.due_date) {
+        const dateObj = new Date(opportunityData.date || opportunityData.due_date);
+        setDateParts({
+          day: dateObj.getDate(),
+          month: dateObj.getMonth() + 1,
+          year: dateObj.getFullYear(),
+        });
       }
-      
-      setActionPlanFields(
-        actionPlans.length > 0
-          ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan.trim() }))
-          : [{ id: 1, value: "" }]
-      );
-    } else if (opportunityData.actions && Array.isArray(opportunityData.actions)) {
-      const actions = opportunityData.actions.map(action => 
-        typeof action === 'object' ? action.action : action
-      ).filter(action => action && action.trim() !== "");
-      
-      setActionPlanFields(
-        actions.length > 0
-          ? actions.map((action, index) => ({ id: index + 1, value: action }))
-          : [{ id: 1, value: "" }]
-      );
+
+      if (opportunityData.opportunity_action_plan) {
+        let actionPlans = [];
+
+        if (Array.isArray(opportunityData.opportunity_action_plan)) {
+          actionPlans = opportunityData.opportunity_action_plan;
+        } else if (typeof opportunityData.opportunity_action_plan === "string") {
+          actionPlans = opportunityData.opportunity_action_plan
+            .split(";")
+            .filter((plan) => plan.trim() !== "");
+        }
+
+        setActionPlanFields(
+          actionPlans.length > 0
+            ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan.trim() }))
+            : [{ id: 1, value: "" }]
+        );
+      } else if (opportunityData.actions && Array.isArray(opportunityData.actions)) {
+        const actions = opportunityData.actions
+          .map((action) => (typeof action === "object" ? action.action : action))
+          .filter((action) => action && action.trim() !== "");
+
+        setActionPlanFields(
+          actions.length > 0
+            ? actions.map((action, index) => ({ id: index + 1, value: action }))
+            : [{ id: 1, value: "" }]
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching opportunity data:", error);
+      setError("Failed to load opportunity assessment data");
+
+      if (error.response?.status === 404) {
+        navigate("/company/qms/draft-opportunity-assessment");
+      }
+    } finally {
+      setLoading(false);
     }
-    
-  } catch (error) {
-    console.error("Error fetching opportunity data:", error);
-    setError("Failed to load opportunity assessment data");
-    
-    if (error.response?.status === 404) {
-      navigate("/company/qms/draft-opportunity-assessment");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+
   useEffect(() => {
     if (id && users.length > 0) {
       fetchOpportunityData();
@@ -316,24 +311,24 @@ const fetchOpportunityData = async () => {
 
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       const newValue = value === "" ? "" : parseInt(value, 10);
-      
-      // Update the date parts state
+
       const newDateParts = { ...dateParts, [dropdown]: newValue };
       setDateParts(newDateParts);
 
-      // Construct new date if all parts are available
       if (newDateParts.day && newDateParts.month && newDateParts.year) {
-        // Validate the date is valid
         const testDate = new Date(newDateParts.year, newDateParts.month - 1, newDateParts.day);
-        if (testDate.getFullYear() === newDateParts.year && 
-            testDate.getMonth() === newDateParts.month - 1 && 
-            testDate.getDate() === newDateParts.day) {
-          const newDate = `${newDateParts.year}-${String(newDateParts.month).padStart(2, "0")}-${String(newDateParts.day).padStart(2, "0")}`;
+        if (
+          testDate.getFullYear() === newDateParts.year &&
+          testDate.getMonth() === newDateParts.month - 1 &&
+          testDate.getDate() === newDateParts.day
+        ) {
+          const newDate = `${newDateParts.year}-${String(newDateParts.month).padStart(2, "0")}-${String(
+            newDateParts.day
+          ).padStart(2, "0")}`;
           setFormData((prev) => ({ ...prev, date: newDate }));
         }
       }
-      
-      // Clear date error if exists
+
       if (errors.date) {
         setErrors((prev) => ({ ...prev, date: "" }));
       }
@@ -357,69 +352,80 @@ const fetchOpportunityData = async () => {
 
   const getMonthName = (monthNum) => {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return monthNames[monthNum - 1] || "";
   };
 
-const handleUpdateClick = async () => {
-  try {
-    setUpdateLoading(true);
-    
-    const companyId = getUserCompanyId();
-    const userId = getRelevantUserId();
+  const handleUpdateClick = async () => {
+    try {
+      setUpdateLoading(true);
 
-    // Create base payload with scalar fields
-    const payload = {
-      activity: formData.activity || null,
-      potential_opportunity: formData.potential_opportunity || null,
-      opportunity: formData.probability ? parseInt(formData.probability) : null,
-      benefit: formData.benefit ? parseInt(formData.benefit) : null,
-      approved_by: formData.approved_by || null,
-      date: formData.date || null,
-      status: formData.status || "Achieved",
-      remarks: formData.remarks || null,
-      company: companyId,
-      user: userId,
-      is_draft : false
-    };
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
 
- 
-    if (formData.owners && formData.owners.length >= 0) {
-      payload.owners = formData.owners;
+      const payload = {
+        activity: formData.activity || null,
+        potential_opportunity: formData.potential_opportunity || null,
+        opportunity: formData.probability ? parseInt(formData.probability) : null,
+        benefit: formData.benefit ? parseInt(formData.benefit) : null,
+        approved_by: formData.approved_by || null,
+        date: formData.date || null,
+        status: formData.status || "Achieved",
+        remarks: formData.remarks || null,
+        company: companyId,
+        user: userId,
+        is_draft: false,
+      };
+
+      if (formData.owners && formData.owners.length >= 0) {
+        payload.owners = formData.owners;
+      }
+
+      const filteredActions = actionPlanFields.filter((field) => field.value.trim() !== "");
+      if (filteredActions.length > 0) {
+        payload.actions = filteredActions.map((field) => ({ action: field.value }));
+      }
+
+      console.log("Updating opportunity with payload:", payload);
+
+      const response = await axios.patch(`${BASE_URL}/qms/risk-opportunity/${id}/`, payload);
+
+      console.log("Update response:", response.data);
+
+      // Show success modal
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/draft-opportunity-assessment");
+      }, 2000); // Auto-close after 2 seconds
+    } catch (error) {
+      console.error("Error updating opportunity:", error);
+      if (error.response?.data) {
+        setErrors(error.response.data);
+        setModalErrorMessage(
+          error.response.data.non_field_errors ||
+            "Failed to update opportunity assessment. Please check the form and try again."
+        );
+      } else {
+        setModalErrorMessage("Failed to update opportunity assessment. Please try again.");
+      }
+      setShowErrorModal(true); // Show error modal
+    } finally {
+      setUpdateLoading(false);
     }
-
-  
-    const filteredActions = actionPlanFields.filter(field => field.value.trim() !== '');
-    if (filteredActions.length > 0) {
-      payload.actions = filteredActions.map((field) => ({ action: field.value }));
-    }
-
-    console.log('Updating opportunity with payload:', payload);
-
-     
-    const response = await axios.patch(
-      `${BASE_URL}/qms/risk-opportunity/${id}/`,
-      payload
-    );
-
-    console.log("Update response:", response.data);
-    
-   
-    navigate("/company/qms/draft-opportunity-assessment");
-    
-  } catch (error) {
-    console.error("Error updating opportunity:", error);
-    if (error.response?.data) {
-      setErrors(error.response.data);
-    } else {
-      setErrors({ non_field_errors: "Failed to update opportunity assessment. Please try again." });
-    }
-  } finally {
-    setUpdateLoading(false);
-  }
-};
+  };
 
   const probabilityOptions = [1, 2, 3, 4, 5];
   const benefitOptions = [1, 2, 3, 4, 5];
@@ -430,7 +436,6 @@ const handleUpdateClick = async () => {
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="bg-[#1C1C24] rounded-lg not-found p-5 flex justify-center items-center">
@@ -439,7 +444,6 @@ const handleUpdateClick = async () => {
     );
   }
 
-  // Error state
   if (error && !formData.activity) {
     return (
       <div className="bg-[#1C1C24] rounded-lg text-white p-5">
@@ -464,6 +468,16 @@ const handleUpdateClick = async () => {
 
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage="Opportunity Assessment Updated Successfully!"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={modalErrorMessage}
+      />
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
           <h1 className="add-manual-sections !px-0">
@@ -482,7 +496,7 @@ const handleUpdateClick = async () => {
           {errors.non_field_errors && (
             <div className="text-red-500 mb-4">{errors.non_field_errors}</div>
           )}
-          
+
           <div className="grid md:grid-cols-2 gap-5">
             <div>
               <label className="add-qms-manual-label">Activity/Process</label>
@@ -626,7 +640,7 @@ const handleUpdateClick = async () => {
                   <Search className="absolute right-3" size={20} color="#AAAAAA" />
                 </div>
               </div>
-              
+
               <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
                 {filteredOwners.length > 0 ? (
                   filteredOwners.map((user) => (
@@ -803,7 +817,7 @@ const handleUpdateClick = async () => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ISE-in-out ${
                     openDropdowns.status ? "rotate-180" : ""
                   }`}
                 />
@@ -848,4 +862,4 @@ const handleUpdateClick = async () => {
   );
 };
 
-export default QmsEditDraftOpportunityAssessment
+export default QmsEditDraftOpportunityAssessment;
