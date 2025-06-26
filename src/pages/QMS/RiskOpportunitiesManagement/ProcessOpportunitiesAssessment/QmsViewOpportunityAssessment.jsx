@@ -3,32 +3,37 @@ import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import DeleteConfimModal from "../../../../components/Modals/DeleteConfimModal";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsViewOpportunityAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
-  
+
   const [assessmentDetails, setAssessmentDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalErrorMessage, setModalErrorMessage] = useState("");
 
- 
   const fetchAssessmentDetails = async () => {
     try {
       setLoading(true);
       setError("");
-      
-      const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`,);
 
+      const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
       setAssessmentDetails(response.data);
       console.log("Fetched assessment details:", response.data);
     } catch (error) {
       console.error("Error fetching assessment details:", error);
       setError("Failed to load opportunity assessment details");
-      
-       
+      setModalErrorMessage("Failed to load opportunity assessment details");
+      setShowErrorModal(true);
+
       if (error.response?.status === 404) {
         navigate("/company/qms/list-opportunity-assessment");
       }
@@ -36,12 +41,14 @@ const QmsViewOpportunityAssessment = () => {
       setLoading(false);
     }
   };
- 
+
   useEffect(() => {
     if (id) {
       fetchAssessmentDetails();
     } else {
       setError("Invalid assessment ID");
+      setModalErrorMessage("Invalid assessment ID");
+      setShowErrorModal(true);
       setLoading(false);
     }
   }, [id]);
@@ -58,16 +65,14 @@ const QmsViewOpportunityAssessment = () => {
       .replace(/\//g, "/");
   };
 
-  // Helper function to format user display name
   const formatUserName = (user) => {
     if (!user) return "N/A";
-    if (typeof user === 'string') return user;
-    
-    // If it's an object, extract the name
+    if (typeof user === "string") return user;
+
     const firstName = user.first_name || "";
     const lastName = user.last_name || "";
     const username = user.username || "";
-    
+
     if (firstName && lastName) {
       return `${firstName} ${lastName}`;
     } else if (firstName) {
@@ -77,40 +82,34 @@ const QmsViewOpportunityAssessment = () => {
     } else if (username) {
       return username;
     }
-    
+
     return "N/A";
   };
 
-  // Helper function to format owners list
   const formatOwners = (owners) => {
     if (!owners || !Array.isArray(owners)) return null;
-    
-    return owners.map(owner => formatUserName(owner));
+    return owners.map((owner) => formatUserName(owner));
   };
 
-  // Helper function to format actions list
   const formatActions = (actions) => {
     if (!actions || !Array.isArray(actions)) return "N/A";
-    
-    return actions.map(action => action.action || action).join(", ");
+    return actions.map((action) => action.action || action).join(", ");
   };
 
-  // Helper function to get risk category ranking
   const getRiskRanking = (score) => {
     if (!score) return "N/A";
     const numScore = parseInt(score);
-    if (numScore >= 15) return "VH"; // Very High
-    if (numScore >= 8) return "H";   // High
-    if (numScore >= 4) return "M";   // Moderate
-    if (numScore >= 1) return "L";   // Low
+    if (numScore >= 15) return "VH";
+    if (numScore >= 8) return "H";
+    if (numScore >= 4) return "M";
+    if (numScore >= 1) return "L";
     return "N/A";
   };
 
-  // Helper function to get ranking color
   const getRankingColor = (ranking) => {
     switch (ranking) {
       case "VH":
-         return "bg-[#dd363611] text-[#dd3636]";
+        return "bg-[#dd363611] text-[#dd3636]";
       case "H":
         return "bg-[#DD6B0611] text-[#DD6B06]";
       case "M":
@@ -130,29 +129,35 @@ const QmsViewOpportunityAssessment = () => {
     navigate(`/company/qms/edit-opportunity-assessment/${id}`);
   };
 
-  const handleDeleteAssessment = async () => {
+  const handleDeleteAssessment = () => {
     if (!assessmentDetails) return;
-    
-    if (!window.confirm(`Are you sure you want to delete the assessment for "${assessmentDetails.activity}"?`)) {
-      return;
-    }
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
     try {
       setDeleteLoading(true);
-      
-      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${id}/`,  );
+      setShowDeleteModal(false);
 
-      // Navigate back to list after successful deletion
-      navigate("/company/qms/list-opportunity-assessment");
+      await axios.delete(`${BASE_URL}/qms/risk-opportunity/${id}/`);
+
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        navigate("/company/qms/list-opportunity-assessment");
+      }, 2000);
     } catch (error) {
       console.error("Error deleting assessment:", error);
-      alert("Failed to delete assessment. Please try again.");
+      setModalErrorMessage("Failed to delete assessment. Please try again.");
+      setShowErrorModal(true);
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  // Loading state
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+  };
+
   if (loading) {
     return (
       <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center">
@@ -161,7 +166,6 @@ const QmsViewOpportunityAssessment = () => {
     );
   }
 
-  // Error state
   if (error && !assessmentDetails) {
     return (
       <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
@@ -183,6 +187,11 @@ const QmsViewOpportunityAssessment = () => {
             Retry
           </button>
         </div>
+        <ErrorModal
+          showErrorModal={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          error={modalErrorMessage}
+        />
       </div>
     );
   }
@@ -191,7 +200,6 @@ const QmsViewOpportunityAssessment = () => {
     return null;
   }
 
-  // Get ranking for opportunity score
   const opportunityRanking = getRiskRanking(assessmentDetails.opportunity_score);
 
   return (
@@ -250,7 +258,6 @@ const QmsViewOpportunityAssessment = () => {
             <div className="viewdatas">
               {assessmentDetails.opportunity_action_plan || assessmentDetails.actions ? (
                 <div className="text-right">
-                  {/* Handle opportunity_action_plan first */}
                   {assessmentDetails.opportunity_action_plan ? (
                     Array.isArray(assessmentDetails.opportunity_action_plan) ? (
                       <ol className="list-decimal pl-5 flex flex-col items-end">
@@ -264,7 +271,6 @@ const QmsViewOpportunityAssessment = () => {
                       <p>{assessmentDetails.opportunity_action_plan}</p>
                     )
                   ) : assessmentDetails.actions ? (
-                    /* Handle actions array */
                     <div className="text-right">
                       {assessmentDetails.actions.map((actionObj, index) => (
                         <div key={index} className="mb-2">
@@ -367,6 +373,24 @@ const QmsViewOpportunityAssessment = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+        deleteMessage={"Opportunity Assessment"}
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage="Opportunity Assessment Deleted Successfully!"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={modalErrorMessage}
+      />
     </div>
   );
 };

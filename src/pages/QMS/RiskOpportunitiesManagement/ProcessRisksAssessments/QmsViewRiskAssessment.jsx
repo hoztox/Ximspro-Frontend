@@ -3,14 +3,21 @@ import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
+import DeleteConfimModal from "../../../../components/Modals/DeleteConfimModal";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsViewRiskAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [riskAssessmentDetails, setRiskAssessmentDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Utility functions from your list component
   const getUserCompanyId = () => {
@@ -34,7 +41,7 @@ const QmsViewRiskAssessment = () => {
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token') || localStorage.getItem('access_token');
+    const token = localStorage.getItem("token") || localStorage.getItem("access_token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
@@ -49,14 +56,14 @@ const QmsViewRiskAssessment = () => {
       setError(null);
 
       const response = await axios.get(`${BASE_URL}/qms/process-risk-assessment/${id}/`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       });
-      
+
       setRiskAssessmentDetails(response.data);
       console.log("Risk Assessment Data:", response.data);
     } catch (error) {
-      console.error('Error fetching risk assessment details:', error);
-      setError('Failed to load risk assessment details. Please try again.');
+      console.error("Error fetching risk assessment details:", error);
+      setError("Failed to load risk assessment details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -111,83 +118,70 @@ const QmsViewRiskAssessment = () => {
     navigate(`/company/qms/edit-process-risks-assessments/${id}`);
   };
 
-  const deleteRiskAssessment = async () => {
-    if (!window.confirm('Are you sure you want to delete this risk assessment?')) {
-      return;
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true); // Show the delete confirmation modal
+  };
 
+  const handleDeleteConfirm = async () => {
+    setShowDeleteModal(false); // Close the delete confirmation modal
     try {
-      // Add more detailed logging
-      console.log('Attempting to delete risk assessment with ID:', id);
-      console.log('Delete URL:', `${BASE_URL}/qms/process-risk-assessment/${id}/`);
-      
-      const response = await axios.delete(`${BASE_URL}/qms/process-risk-assessment/${id}/`, );
-      
-      console.log('Delete response:', response);
-      alert('Risk assessment deleted successfully');
-      navigate("/company/qms/list-process-risks-assessments");
+      console.log("Attempting to delete risk assessment with ID:", id);
+      console.log("Delete URL:", `${BASE_URL}/qms/process-risk-assessment/${id}/`);
+
+      const response = await axios.delete(`${BASE_URL}/qms/process-risk-assessment/${id}/`, {
+        headers: getAuthHeaders(),
+      });
+
+      console.log("Delete response:", response);
+      setShowSuccessModal(true); // Show success modal
+      setTimeout(() => {
+        navigate("/company/qms/list-process-risks-assessments");
+      }, 2000);
     } catch (error) {
-      console.error('Error deleting assessment:', error);
-      
-      // More detailed error logging
+      console.error("Error deleting assessment:", error);
+      let errorMsg = "Failed to delete risk assessment. Please try again.";
       if (error.response) {
-        // Server responded with error status
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        console.error('Response headers:', error.response.headers);
-        alert(`Failed to delete: ${error.response.data?.message || error.response.statusText || 'Server error'}`);
+        errorMsg = error.response.data?.message || error.response.statusText || "Server error";
       } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received:', error.request);
-        alert('Failed to delete: No response from server. Please check your connection.');
+        errorMsg = "No response from server. Please check your connection.";
       } else {
-        // Something else happened
-        console.error('Error message:', error.message);
-        alert(`Failed to delete: ${error.message}`);
+        errorMsg = error.message;
       }
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true); // Show error modal
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false); // Close the delete confirmation modal
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false); // Close the success modal
+    navigate("/company/qms/list-process-risks-assessments"); // Navigate after closing
+  };
+
+  const handleErrorClose = () => {
+    setShowErrorModal(false); // Close the error modal
+    setErrorMessage(""); // Clear the error message
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
-        <p className="text-white">Loading Risk Assessment Details...</p>
+      <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center">
+        <p>Loading Risk Assessment Details...</p>
       </div>
     );
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">{error}</p>
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={fetchRiskAssessmentDetails}
-              className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"
-            >
-              Retry
-            </button>
-            <button
-              onClick={navigateToRiskAssessmentList}
-              className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded"
-            >
-              Back to List
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // No data state
   if (!riskAssessmentDetails) {
     return (
       <div className="bg-[#1C1C24] text-white p-5 rounded-lg">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Risk assessment not found</p>
+          <p className="text-gray-400 mb-4">Risk Assessment Not Found</p>
           <button
             onClick={navigateToRiskAssessmentList}
             className="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded"
@@ -236,7 +230,9 @@ const QmsViewRiskAssessment = () => {
                 <ol className="list-decimal pl-5 flex flex-col items-end">
                   {riskAssessmentDetails.risks.map((risk, index) => (
                     <li key={index} className="mb-2 text-right">
-                      {typeof risk === 'object' ? (risk.name || risk.risk || JSON.stringify(risk)) : risk}
+                      {typeof risk === "object"
+                        ? risk.name || risk.risk || JSON.stringify(risk)
+                        : risk}
                     </li>
                   ))}
                 </ol>
@@ -260,7 +256,9 @@ const QmsViewRiskAssessment = () => {
                   Risk Score: {riskAssessmentDetails.risk_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(riskAssessmentDetails.risk_category)}`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(
+                    riskAssessmentDetails.risk_category
+                  )}`}
                 >
                   {getRiskRanking(riskAssessmentDetails.risk_category)}
                 </span>
@@ -277,7 +275,9 @@ const QmsViewRiskAssessment = () => {
                 <ol className="list-decimal pl-5 flex flex-col items-end">
                   {riskAssessmentDetails.control_risks.map((measure, index) => (
                     <li key={index} className="mb-2 text-right">
-                      {typeof measure === 'object' ? (measure.name || measure.control_measure || JSON.stringify(measure)) : measure}
+                      {typeof measure === "object"
+                        ? measure.name || measure.control_measure || JSON.stringify(measure)
+                        : measure}
                     </li>
                   ))}
                 </ol>
@@ -295,7 +295,12 @@ const QmsViewRiskAssessment = () => {
                 <ol className="list-decimal pl-5 flex flex-col items-end">
                   {riskAssessmentDetails.required_control_risks.map((measure, index) => (
                     <li key={index} className="mb-2 text-right">
-                      {typeof measure === 'object' ? (measure.name || measure.required_control_measure || measure.control_measure || JSON.stringify(measure)) : measure}
+                      {typeof measure === "object"
+                        ? measure.name ||
+                          measure.required_control_measure ||
+                          measure.control_measure ||
+                          JSON.stringify(measure)
+                        : measure}
                     </li>
                   ))}
                 </ol>
@@ -310,9 +315,10 @@ const QmsViewRiskAssessment = () => {
             <label className="viewlabels pr-4">Action Owner:</label>
             <p className="viewdatas text-right">
               {riskAssessmentDetails.owner
-                ? `${riskAssessmentDetails.owner.first_name || ''} ${riskAssessmentDetails.owner.last_name || ''}`.trim() ||
-                riskAssessmentDetails.owner.username
-                : 'N/A'}
+                ? `${riskAssessmentDetails.owner.first_name || ""} ${
+                    riskAssessmentDetails.owner.last_name || ""
+                  }`.trim() || riskAssessmentDetails.owner.username
+                : "N/A"}
             </p>
           </div>
 
@@ -330,7 +336,9 @@ const QmsViewRiskAssessment = () => {
                   Risk Score: {riskAssessmentDetails.residual_score || "N/A"}
                 </span>
                 <span
-                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(riskAssessmentDetails.residual_category)}`}
+                  className={`rounded flex items-center justify-center px-3 h-[21px] whitespace-nowrap ${getRankingColorClass(
+                    riskAssessmentDetails.residual_category
+                  )}`}
                 >
                   {getRiskRanking(riskAssessmentDetails.residual_category)}
                 </span>
@@ -360,7 +368,7 @@ const QmsViewRiskAssessment = () => {
               <div className="flex flex-col justify-center items-center">
                 <button
                   className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons"
-                  onClick={deleteRiskAssessment}
+                  onClick={handleDeleteClick} // Updated to show delete modal
                 >
                   Delete
                 </button>
@@ -377,6 +385,24 @@ const QmsViewRiskAssessment = () => {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <DeleteConfimModal
+        showDeleteModal={showDeleteModal}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        deleteMessage="Risk Assessment"
+      />
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={handleSuccessClose}
+        successMessage="Risk Assessment Deleted Successfully"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={handleErrorClose}
+        error={errorMessage}
+      />
     </div>
   );
 };

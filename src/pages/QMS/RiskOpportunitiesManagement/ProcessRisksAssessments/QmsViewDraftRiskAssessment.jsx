@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
-import axios from "axios";
 
 const QmsViewDraftRiskAssessment = () => {
   const navigate = useNavigate();
@@ -103,53 +102,12 @@ const QmsViewDraftRiskAssessment = () => {
    const navigateToRiskAssessmentList = () => {
      navigate("/company/qms/draft-process-risks-assessments");
    };
- 
-   const navigateToEditRiskAssessment = () => {
-     navigate(`/company/qms/edit-draft-process-risks-assessments/${id}`);
-   };
- 
-    const deleteRiskAssessment = async () => {
-    if (!window.confirm('Are you sure you want to delete this risk assessment?')) {
-      return;
-    }
 
-    try {
-      // Add more detailed logging
-      console.log('Attempting to delete risk assessment with ID:', id);
-      console.log('Delete URL:', `${BASE_URL}/qms/process-risk-assessment/${id}/`);
-      
-      const response = await axios.delete(`${BASE_URL}/qms/process-risk-assessment/${id}/`, );
-      
-      console.log('Delete response:', response);
-      alert('Risk assessment deleted successfully');
-      navigate("/company/qms/list-process-risks-assessments");
-    } catch (error) {
-      console.error('Error deleting assessment:', error);
-      
-      // More detailed error logging
-      if (error.response) {
-        // Server responded with error status
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        console.error('Response headers:', error.response.headers);
-        alert(`Failed to delete: ${error.response.data?.message || error.response.statusText || 'Server error'}`);
-      } else if (error.request) {
-        // Request was made but no response received
-        console.error('No response received:', error.request);
-        alert('Failed to delete: No response from server. Please check your connection.');
-      } else {
-        // Something else happened
-        console.error('Error message:', error.message);
-        alert(`Failed to delete: ${error.message}`);
-      }
-    }
-  };
- 
    // Loading state
    if (loading) {
      return (
-       <div className="bg-[#1C1C24] p-5 rounded-lg flex justify-center items-center min-h-[400px]">
-         <p className="text-white">Loading Risk Assessment Details...</p>
+       <div className="bg-[#1C1C24] p-5 rounded-lg not-found flex justify-center items-center">
+         <p>Loading Risk Assessment Details...</p>
        </div>
      );
    }
@@ -326,30 +284,7 @@ const QmsViewDraftRiskAssessment = () => {
              <p className="viewdatas text-right">
                {riskAssessmentDetails.remarks || "N/A"}
              </p>
-           </div>
- 
-           {/* Row 6: Buttons */}
-           <div></div>
-           <div className="flex justify-end items-center">
-             <div className="flex gap-5">
-               <div className="flex flex-col justify-center items-center">
-                 <button
-                   className="border border-[#F9291F] rounded w-[148px] h-[41px] text-[#F9291F] hover:bg-[#F9291F] hover:text-white duration-200 buttons"
-                   onClick={deleteRiskAssessment}
-                 >
-                   Delete
-                 </button>
-               </div>
-               <div className="flex flex-col justify-center items-center">
-                 <button
-                   className="border border-[#1E84AF] rounded w-[148px] h-[41px] text-[#1E84AF] hover:bg-[#1E84AF] hover:text-white duration-200 buttons"
-                   onClick={navigateToEditRiskAssessment}
-                 >
-                   Edit
-                 </button>
-               </div>
-             </div>
-           </div>
+           </div>       
          </div>
        </div>
      </div>

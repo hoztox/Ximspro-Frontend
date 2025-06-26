@@ -612,7 +612,7 @@ const QmsListHealthSafetyRiskAssessments = () => {
               placeholder="Search..."
               value={searchQuery}
               onChange={handleSearchChange}
-              className="serach-input-manual focus:outline-none bg-transparent"
+              className="serach-input-manual focus:outline-none bg-transparent !w-[160px]"
             />
             <div className="absolute right-[1px] top-[2px] text-white bg-[#24242D] p-[10.5px] w-[55px] rounded-tr-[6px] rounded-br-[6px] flex justify-center items-center">
               <Search size={18} />

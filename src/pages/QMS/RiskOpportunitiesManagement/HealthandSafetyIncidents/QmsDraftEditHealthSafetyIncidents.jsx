@@ -4,8 +4,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { BASE_URL } from "../../../../Utils/Config";
 import RootCauseModal from './RootCauseModal';
-import SuccessModal from '../Modals/SuccessModal';
-import ErrorModal from '../Modals/ErrorModal';
+import SuccessModal from '../../../../components/Modals/SuccessModal';
+import ErrorModal from '../../../../components/Modals/ErrorModal';
 
 const QmsDraftEditHealthSafetyIncidents = () => {
     const { id } = useParams();

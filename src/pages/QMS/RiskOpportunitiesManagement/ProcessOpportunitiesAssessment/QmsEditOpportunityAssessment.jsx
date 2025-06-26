@@ -3,13 +3,20 @@ import { ChevronDown, Plus, X, Search } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsEditOpportunityAssessment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-  
+
+  // State for modals
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalErrorMessage, setModalErrorMessage] = useState("");
+
   const [formData, setFormData] = useState({
     activity: "",
     potential_opportunity: "",
@@ -23,14 +30,13 @@ const QmsEditOpportunityAssessment = () => {
     review_frequency_month: "",
     remarks: "",
   });
-  
-  // Add separate state for date parts to maintain selection state
+
   const [dateParts, setDateParts] = useState({
     day: "",
     month: "",
-    year: ""
+    year: "",
   });
-  
+
   const [actionPlanFields, setActionPlanFields] = useState([{ id: 1, value: "" }]);
   const [users, setUsers] = useState([]);
   const [ownerSearchTerm, setOwnerSearchTerm] = useState("");
@@ -48,7 +54,7 @@ const QmsEditOpportunityAssessment = () => {
     month: false,
     year: false,
   });
-  
+
   const ownersDropdownRef = useRef(null);
 
   const getDaysInMonth = (month, year) => {
@@ -61,15 +67,13 @@ const QmsEditOpportunityAssessment = () => {
       return dateParts;
     }
     const dateObj = new Date(formData.date);
-    const parsed = {
+    return {
       day: dateObj.getDate(),
       month: dateObj.getMonth() + 1,
       year: dateObj.getFullYear(),
     };
-    return parsed;
   };
 
-  // Use the parseDate function result
   const currentDateParts = parseDate();
 
   const days = Array.from(
@@ -80,7 +84,6 @@ const QmsEditOpportunityAssessment = () => {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
-  // Filter owners based on search term
   const filteredOwners = users.filter((user) =>
     `${user.first_name} ${user.last_name}`.toLowerCase().includes(ownerSearchTerm.toLowerCase())
   );
@@ -115,7 +118,6 @@ const QmsEditOpportunityAssessment = () => {
     return null;
   };
 
-  // Fetch users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -130,7 +132,6 @@ const QmsEditOpportunityAssessment = () => {
     fetchUsers();
   }, []);
 
-  // Handle click outside for dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (ownersDropdownRef.current && !ownersDropdownRef.current.contains(event.target)) {
@@ -141,15 +142,14 @@ const QmsEditOpportunityAssessment = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Helper function to format user display name
   const formatUserName = (user) => {
     if (!user) return "";
-    if (typeof user === 'string') return user;
-    
+    if (typeof user === "string") return user;
+
     const firstName = user.first_name || "";
     const lastName = user.last_name || "";
     const username = user.username || "";
-    
+
     if (firstName && lastName) {
       return `${firstName} ${lastName}`;
     } else if (firstName) {
@@ -159,113 +159,105 @@ const QmsEditOpportunityAssessment = () => {
     } else if (username) {
       return username;
     }
-    
+
     return "";
   };
 
-  // Fetch opportunity assessment data
   const fetchOpportunityData = async () => {
-  try {
-    setLoading(true);
-    setError("");
+    try {
+      setLoading(true);
+      setError("");
 
-    const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
-    const opportunityData = response.data;
+      const response = await axios.get(`${BASE_URL}/qms/risk-opportunity/${id}/`);
+      const opportunityData = response.data;
 
-    console.log("Fetched opportunity data:", opportunityData);
+      console.log("Fetched opportunity data:", opportunityData);
 
-    // Defensive check: ensure opportunityData is a valid object
-    if (!opportunityData || typeof opportunityData !== "object") {
-      setError("Invalid data received from server.");
-      return;
-    }
-
-    // Parse owners - handle different data structures
-    let ownersArray = [];
-    if (opportunityData.owners && Array.isArray(opportunityData.owners)) {
-      ownersArray = opportunityData.owners.map(owner =>
-        typeof owner === "object" && owner !== null ? owner.id : owner
-      );
-    } else if (opportunityData.action_party) {
-      const matchingUser = users.find(user =>
-        `${user.first_name} ${user.last_name}` === opportunityData.action_party ||
-        user.username === opportunityData.action_party
-      );
-      if (matchingUser) {
-        ownersArray = [matchingUser.id];
+      if (!opportunityData || typeof opportunityData !== "object") {
+        setError("Invalid data received from server.");
+        return;
       }
-    }
 
-    // Pre-populate form data
-    setFormData({
-      activity: opportunityData.activity || "",
-      potential_opportunity: opportunityData.potential_opportunity || "",
-      probability: opportunityData.probability || opportunityData.opportunity || "",
-      benefit: opportunityData.benefit || "",
-      owners: ownersArray,
-      approved_by: typeof opportunityData.approved_by === "object" && opportunityData.approved_by !== null
-        ? opportunityData.approved_by.id
-        : opportunityData.approved_by || "",
-      status: opportunityData.status || "",
-      date: opportunityData.date || opportunityData.due_date || "",
-      review_frequency_year: opportunityData.review_frequency_year || "",
-      review_frequency_month: opportunityData.review_frequency_month || "",
-      remarks: opportunityData.remarks || "",
-    });
+      let ownersArray = [];
+      if (opportunityData.owners && Array.isArray(opportunityData.owners)) {
+        ownersArray = opportunityData.owners.map((owner) =>
+          typeof owner === "object" && owner !== null ? owner.id : owner
+        );
+      } else if (opportunityData.action_party) {
+        const matchingUser = users.find(
+          (user) =>
+            `${user.first_name} ${user.last_name}` === opportunityData.action_party ||
+            user.username === opportunityData.action_party
+        );
+        if (matchingUser) {
+          ownersArray = [matchingUser.id];
+        }
+      }
 
-    // Parse and set date parts
-    if (opportunityData.date || opportunityData.due_date) {
-      const dateObj = new Date(opportunityData.date || opportunityData.due_date);
-      setDateParts({
-        day: dateObj.getDate(),
-        month: dateObj.getMonth() + 1,
-        year: dateObj.getFullYear(),
+      setFormData({
+        activity: opportunityData.activity || "",
+        potential_opportunity: opportunityData.potential_opportunity || "",
+        probability: opportunityData.probability || opportunityData.opportunity || "",
+        benefit: opportunityData.benefit || "",
+        owners: ownersArray,
+        approved_by:
+          typeof opportunityData.approved_by === "object" && opportunityData.approved_by !== null
+            ? opportunityData.approved_by.id
+            : opportunityData.approved_by || "",
+        status: opportunityData.status || "",
+        date: opportunityData.date || opportunityData.due_date || "",
+        review_frequency_year: opportunityData.review_frequency_year || "",
+        review_frequency_month: opportunityData.review_frequency_month || "",
+        remarks: opportunityData.remarks || "",
       });
-    }
 
-    // Pre-populate action plan fields
-    if (opportunityData.opportunity_action_plan) {
-      let actionPlans = [];
-
-      if (Array.isArray(opportunityData.opportunity_action_plan)) {
-        actionPlans = opportunityData.opportunity_action_plan;
-      } else if (typeof opportunityData.opportunity_action_plan === "string") {
-        actionPlans = opportunityData.opportunity_action_plan
-          .split(";")
-          .filter(plan => plan.trim() !== "");
+      if (opportunityData.date || opportunityData.due_date) {
+        const dateObj = new Date(opportunityData.date || opportunityData.due_date);
+        setDateParts({
+          day: dateObj.getDate(),
+          month: dateObj.getMonth() + 1,
+          year: dateObj.getFullYear(),
+        });
       }
 
-      setActionPlanFields(
-        actionPlans.length > 0
-          ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan.trim() }))
-          : [{ id: 1, value: "" }]
-      );
-    } else if (opportunityData.actions && Array.isArray(opportunityData.actions)) {
-      const actions = opportunityData.actions
-        .map(action =>
-          typeof action === "object" && action !== null ? action.action : action
-        )
-        .filter(action => action && action.trim() !== "");
+      if (opportunityData.opportunity_action_plan) {
+        let actionPlans = [];
 
-      setActionPlanFields(
-        actions.length > 0
-          ? actions.map((action, index) => ({ id: index + 1, value: action }))
-          : [{ id: 1, value: "" }]
-      );
+        if (Array.isArray(opportunityData.opportunity_action_plan)) {
+          actionPlans = opportunityData.opportunity_action_plan;
+        } else if (typeof opportunityData.opportunity_action_plan === "string") {
+          actionPlans = opportunityData.opportunity_action_plan
+            .split(";")
+            .filter((plan) => plan.trim() !== "");
+        }
+
+        setActionPlanFields(
+          actionPlans.length > 0
+            ? actionPlans.map((plan, index) => ({ id: index + 1, value: plan.trim() }))
+            : [{ id: 1, value: "" }]
+        );
+      } else if (opportunityData.actions && Array.isArray(opportunityData.actions)) {
+        const actions = opportunityData.actions
+          .map((action) => (typeof action === "object" && action !== null ? action.action : action))
+          .filter((action) => action && action.trim() !== "");
+
+        setActionPlanFields(
+          actions.length > 0
+            ? actions.map((action, index) => ({ id: index + 1, value: action }))
+            : [{ id: 1, value: "" }]
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching opportunity data:", error);
+      setError("Failed to load opportunity assessment data");
+
+      if (error.response?.status === 404) {
+        navigate("/company/qms/list-opportunity-assessment");
+      }
+    } finally {
+      setLoading(false);
     }
-
-  } catch (error) {
-    console.error("Error fetching opportunity data:", error);
-    setError("Failed to load opportunity assessment data");
-
-    if (error.response?.status === 404) {
-      navigate("/company/qms/list-opportunity-assessment");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (id && users.length > 0) {
@@ -325,24 +317,24 @@ const QmsEditOpportunityAssessment = () => {
 
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       const newValue = value === "" ? "" : parseInt(value, 10);
-      
-      // Update the date parts state
+
       const newDateParts = { ...dateParts, [dropdown]: newValue };
       setDateParts(newDateParts);
 
-      // Construct new date if all parts are available
       if (newDateParts.day && newDateParts.month && newDateParts.year) {
-        // Validate the date is valid
         const testDate = new Date(newDateParts.year, newDateParts.month - 1, newDateParts.day);
-        if (testDate.getFullYear() === newDateParts.year && 
-            testDate.getMonth() === newDateParts.month - 1 && 
-            testDate.getDate() === newDateParts.day) {
-          const newDate = `${newDateParts.year}-${String(newDateParts.month).padStart(2, "0")}-${String(newDateParts.day).padStart(2, "0")}`;
+        if (
+          testDate.getFullYear() === newDateParts.year &&
+          testDate.getMonth() === newDateParts.month - 1 &&
+          testDate.getDate() === newDateParts.day
+        ) {
+          const newDate = `${newDateParts.year}-${String(newDateParts.month).padStart(2, "0")}-${String(
+            newDateParts.day
+          ).padStart(2, "0")}`;
           setFormData((prev) => ({ ...prev, date: newDate }));
         }
       }
-      
-      // Clear date error if exists
+
       if (errors.date) {
         setErrors((prev) => ({ ...prev, date: "" }));
       }
@@ -366,68 +358,97 @@ const QmsEditOpportunityAssessment = () => {
 
   const getMonthName = (monthNum) => {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return monthNames[monthNum - 1] || "";
   };
 
-const handleUpdateClick = async () => {
-  try {
-    setUpdateLoading(true);
-    
-    const companyId = getUserCompanyId();
-    const userId = getRelevantUserId();
+  const handleUpdateClick = async () => {
+    try {
+      setUpdateLoading(true);
 
-    // Create base payload with scalar fields
-    const payload = {
-      activity: formData.activity || null,
-      potential_opportunity: formData.potential_opportunity || null,
-      opportunity: formData.probability ? parseInt(formData.probability) : null,
-      benefit: formData.benefit ? parseInt(formData.benefit) : null,
-      approved_by: formData.approved_by || null,
-      date: formData.date || null,
-      status: formData.status || "Achieved",
-      remarks: formData.remarks || null,
-      company: companyId,
-      user: userId,
-    };
+      const companyId = getUserCompanyId();
+      const userId = getRelevantUserId();
 
- 
-    if (formData.owners && formData.owners.length >= 0) {
-      payload.owners = formData.owners;
+      const payload = {
+        activity: formData.activity || null,
+        potential_opportunity: formData.potential_opportunity || null,
+        opportunity: formData.probability ? parseInt(formData.probability) : null,
+        benefit: formData.benefit ? parseInt(formData.benefit) : null,
+        approved_by: formData.approved_by || null,
+        date: formData.date || null,
+        status: formData.status || "Achieved",
+        remarks: formData.remarks || null,
+        company: companyId,
+        user: userId,
+      };
+
+      if (formData.owners && formData.owners.length >= 0) {
+        payload.owners = formData.owners;
+      }
+
+      const filteredActions = actionPlanFields.filter((field) => field.value.trim() !== "");
+      if (filteredActions.length > 0) {
+        payload.actions = filteredActions.map((field) => ({ action: field.value }));
+      }
+
+      console.log("Updating opportunity with payload:", payload);
+
+      const response = await axios.patch(`${BASE_URL}/qms/risk-opportunity/${id}/`, payload);
+
+      console.log("Update response:", response.data);
+
+      // Show success modal
+      setShowSuccessModal(true);
+       setTimeout(() => {
+       setShowSuccessModal(false);
+        navigate("/company/qms/list-opportunity-assessment");
+      }, 2000);
+    } catch (error) {
+      console.error("Error updating opportunity:", error);
+      let errorMessage = "Failed to update opportunity assessment. Please try again.";
+      if (error.response?.data) {
+        if (typeof error.response.data === "object") {
+          // Extract the first error message from the response
+          const firstKey = Object.keys(error.response.data)[0];
+          errorMessage = error.response.data[firstKey] || errorMessage;
+          if (Array.isArray(errorMessage)) {
+            errorMessage = errorMessage[0];
+          }
+        } else {
+          errorMessage = error.response.data || errorMessage;
+        }
+        setErrors(error.response.data);
+      }
+      // Show error modal
+      setModalErrorMessage(errorMessage);
+      setShowErrorModal(true);
+    } finally {
+      setUpdateLoading(false);
     }
+  };
 
-  
-    const filteredActions = actionPlanFields.filter(field => field.value.trim() !== '');
-    if (filteredActions.length > 0) {
-      payload.actions = filteredActions.map((field) => ({ action: field.value }));
-    }
-
-    console.log('Updating opportunity with payload:', payload);
-
-     
-    const response = await axios.patch(
-      `${BASE_URL}/qms/risk-opportunity/${id}/`,
-      payload
-    );
-
-    console.log("Update response:", response.data);
-    
-   
+  // Modal close handlers
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
     navigate("/company/qms/list-opportunity-assessment");
-    
-  } catch (error) {
-    console.error("Error updating opportunity:", error);
-    if (error.response?.data) {
-      setErrors(error.response.data);
-    } else {
-      setErrors({ non_field_errors: "Failed to update opportunity assessment. Please try again." });
-    }
-  } finally {
-    setUpdateLoading(false);
-  }
-};
+  };
+
+  const handleCloseErrorModal = () => {
+    setShowErrorModal(false);
+    setModalErrorMessage("");
+  };
 
   const probabilityOptions = [1, 2, 3, 4, 5];
   const benefitOptions = [1, 2, 3, 4, 5];
@@ -438,16 +459,14 @@ const handleUpdateClick = async () => {
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
 
-  // Loading state
   if (loading) {
     return (
-      <div className="bg-[#1C1C24] rounded-lg not-found p-5 flex justify-center items-center min-h-[400px]">
+      <div className="bg-[#1C1C24] rounded-lg not-found p-5 flex justify-center items-center">
         <p>Loading Opportunity Assessment...</p>
       </div>
     );
   }
 
-  // Error state
   if (error && !formData.activity) {
     return (
       <div className="bg-[#1C1C24] rounded-lg text-white p-5">
@@ -474,10 +493,7 @@ const handleUpdateClick = async () => {
     <div className="bg-[#1C1C24] rounded-lg text-white">
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
-          <h1 className="add-manual-sections !px-0">
-            Edit Opportunity Assessment
-          </h1>
-
+          <h1 className="add-manual-sections !px-0">Edit Opportunity Assessment</h1>
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleListOpportunity}
@@ -490,7 +506,7 @@ const handleUpdateClick = async () => {
           {errors.non_field_errors && (
             <div className="text-red-500 mb-4">{errors.non_field_errors}</div>
           )}
-          
+
           <div className="grid md:grid-cols-2 gap-5">
             <div>
               <label className="add-qms-manual-label">Activity/Process</label>
@@ -505,9 +521,7 @@ const handleUpdateClick = async () => {
             </div>
 
             <div>
-              <label className="add-qms-manual-label">
-                Potential Opportunity
-              </label>
+              <label className="add-qms-manual-label">Potential Opportunity</label>
               <input
                 type="text"
                 name="potential_opportunity"
@@ -528,12 +542,7 @@ const handleUpdateClick = async () => {
                     value={formData.probability}
                     onFocus={() => toggleDropdown("probability")}
                     onChange={(e) => handleDropdownChange(e, "probability")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({
-                        ...prev,
-                        probability: false,
-                      }))
-                    }
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, probability: false }))}
                   >
                     <option value="" disabled>
                       Select Probability
@@ -557,9 +566,7 @@ const handleUpdateClick = async () => {
                     value={formData.benefit}
                     onFocus={() => toggleDropdown("benefit")}
                     onChange={(e) => handleDropdownChange(e, "benefit")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, benefit: false }))
-                    }
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, benefit: false }))}
                   >
                     <option value="" disabled>
                       Select Benefit
@@ -580,9 +587,7 @@ const handleUpdateClick = async () => {
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="add-qms-manual-label">
-                Opportunity Action Plan
-              </label>
+              <label className="add-qms-manual-label">Opportunity Action Plan</label>
               {actionPlanFields.map((field, index) => (
                 <div key={field.id} className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 justify-between">
@@ -590,9 +595,7 @@ const handleUpdateClick = async () => {
                       <input
                         type="text"
                         value={field.value}
-                        onChange={(e) =>
-                          handleActionPlanChange(field.id, e.target.value)
-                        }
+                        onChange={(e) => handleActionPlanChange(field.id, e.target.value)}
                         className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
                       />
                       {index === actionPlanFields.length - 1 ? (
@@ -619,9 +622,7 @@ const handleUpdateClick = async () => {
             </div>
 
             <div className="flex flex-col gap-3 relative" ref={ownersDropdownRef}>
-              <label className="add-qms-manual-label">
-                Owner(s)/Action Party
-              </label>
+              <label className="add-qms-manual-label">Owner(s)/Action Party</label>
               <div className="relative">
                 <div className="flex items-center mb-2 border border-[#383840] rounded-md">
                   <input
@@ -634,14 +635,11 @@ const handleUpdateClick = async () => {
                   <Search className="absolute right-3" size={20} color="#AAAAAA" />
                 </div>
               </div>
-              
+
               <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
                 {filteredOwners.length > 0 ? (
                   filteredOwners.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center py-2 last:border-0"
-                    >
+                    <div key={user.id} className="flex items-center py-2 last:border-0">
                       <input
                         type="checkbox"
                         id={`owner-${user.id}`}
@@ -649,18 +647,13 @@ const handleUpdateClick = async () => {
                         onChange={() => handleOwnersChange(user.id)}
                         className="mr-2 form-checkboxes"
                       />
-                      <label
-                        htmlFor={`owner-${user.id}`}
-                        className="text-sm text-[#AAAAAA] cursor-pointer"
-                      >
+                      <label htmlFor={`owner-${user.id}`} className="text-sm text-[#AAAAAA] cursor-pointer">
                         {user.first_name} {user.last_name}
                       </label>
                     </div>
                   ))
                 ) : (
-                  <div className="text-sm text-[#AAAAAA] p-2">
-                    No owners found
-                  </div>
+                  <div className="text-sm text-[#AAAAAA] p-2">No owners found</div>
                 )}
               </div>
             </div>
@@ -676,12 +669,7 @@ const handleUpdateClick = async () => {
                   value={formData.approved_by}
                   onFocus={() => toggleDropdown("approved_by")}
                   onChange={(e) => handleDropdownChange(e, "approved_by")}
-                  onBlur={() =>
-                    setOpenDropdowns((prev) => ({
-                      ...prev,
-                      approved_by: false,
-                    }))
-                  }
+                  onBlur={() => setOpenDropdowns((prev) => ({ ...prev, approved_by: false }))}
                 >
                   <option value="" disabled>
                     Select Approver
@@ -709,9 +697,7 @@ const handleUpdateClick = async () => {
                     value={dateParts.day || ""}
                     onFocus={() => toggleDropdown("day")}
                     onChange={(e) => handleDropdownChange(e, "day")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, day: false }))
-                    }
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, day: false }))}
                   >
                     <option value="" disabled>
                       dd
@@ -734,17 +720,14 @@ const handleUpdateClick = async () => {
                     value={dateParts.month || ""}
                     onFocus={() => toggleDropdown("month")}
                     onChange={(e) => handleDropdownChange(e, "month")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, month: false }))
-                    }
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, month: false }))}
                   >
                     <option value="" disabled>
                       mm
                     </option>
                     {months.map((month) => (
                       <option key={`month-${month}`} value={month}>
-                        {month < 10 ? `0${month}` : month} -{" "}
-                        {getMonthName(month).substring(0, 3)}
+                        {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
                       </option>
                     ))}
                   </select>
@@ -760,9 +743,7 @@ const handleUpdateClick = async () => {
                     value={dateParts.year || ""}
                     onFocus={() => toggleDropdown("year")}
                     onChange={(e) => handleDropdownChange(e, "year")}
-                    onBlur={() =>
-                      setOpenDropdowns((prev) => ({ ...prev, year: false }))
-                    }
+                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, year: false }))}
                   >
                     <option value="" disabled>
                       yyyy
@@ -784,9 +765,7 @@ const handleUpdateClick = async () => {
             </div>
 
             <div>
-              <label className="add-qms-manual-label">
-                Status
-              </label>
+              <label className="add-qms-manual-label">Status</label>
               <div className="relative">
                 <select
                   className="w-full add-qms-manual-inputs appearance-none cursor-pointer"
@@ -794,12 +773,7 @@ const handleUpdateClick = async () => {
                   value={formData.status}
                   onFocus={() => toggleDropdown("status")}
                   onChange={(e) => handleDropdownChange(e, "status")}
-                  onBlur={() =>
-                    setOpenDropdowns((prev) => ({
-                      ...prev,
-                      status: false,
-                    }))
-                  }
+                  onBlur={() => setOpenDropdowns((prev) => ({ ...prev, status: false }))}
                 >
                   <option value="" disabled>
                     Select Status
@@ -852,6 +826,18 @@ const handleUpdateClick = async () => {
           </div>
         </div>
       </div>
+
+      {/* Render Success and Error Modals */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        successMessage="Opportunity Assessment Updated Successfully!"
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={handleCloseErrorModal}
+        error={modalErrorMessage}
+      />
     </div>
   );
 };

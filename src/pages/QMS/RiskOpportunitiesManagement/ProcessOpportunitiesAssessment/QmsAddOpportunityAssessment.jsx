@@ -3,6 +3,8 @@ import { ChevronDown, Plus, X, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsAddOpportunityAssessment = () => {
   const navigate = useNavigate();
@@ -23,7 +25,6 @@ const QmsAddOpportunityAssessment = () => {
     remarks: "",
   });
   
-  // Add separate state for date parts to maintain selection state
   const [dateParts, setDateParts] = useState({
     day: "",
     month: "",
@@ -36,6 +37,10 @@ const QmsAddOpportunityAssessment = () => {
   const [errors, setErrors] = useState({});
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isSaveDraftLoading, setIsSaveDraftLoading] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [openDropdowns, setOpenDropdowns] = useState({
     probability: false,
     benefit: false,
@@ -67,7 +72,6 @@ const QmsAddOpportunityAssessment = () => {
     return parsed;
   };
 
-  // Use the parseDate function result
   const currentDateParts = parseDate();
 
   const days = Array.from(
@@ -78,7 +82,6 @@ const QmsAddOpportunityAssessment = () => {
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
-  // Filter owners based on search term
   const filteredOwners = users.filter((user) =>
     `${user.first_name} ${user.last_name}`.toLowerCase().includes(ownerSearchTerm.toLowerCase())
   );
@@ -121,7 +124,8 @@ const QmsAddOpportunityAssessment = () => {
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
-        setErrors({ non_field_errors: "Failed to load users" });
+        setErrorMessage("Failed to load users");
+        setShowErrorModal(true);
       }
     };
     fetchUsers();
@@ -187,13 +191,10 @@ const QmsAddOpportunityAssessment = () => {
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       const newValue = value === "" ? "" : parseInt(value, 10);
       
-      // Update the date parts state
       const newDateParts = { ...dateParts, [dropdown]: newValue };
       setDateParts(newDateParts);
 
-      // Construct new date if all parts are available
       if (newDateParts.day && newDateParts.month && newDateParts.year) {
-        // Validate the date is valid
         const testDate = new Date(newDateParts.year, newDateParts.month - 1, newDateParts.day);
         if (testDate.getFullYear() === newDateParts.year && 
             testDate.getMonth() === newDateParts.month - 1 && 
@@ -203,7 +204,6 @@ const QmsAddOpportunityAssessment = () => {
         }
       }
       
-      // Clear date error if exists
       if (errors.date) {
         setErrors((prev) => ({ ...prev, date: "" }));
       }
@@ -233,7 +233,6 @@ const QmsAddOpportunityAssessment = () => {
     return monthNames[monthNum - 1] || "";
   };
 
-  // Create a common function to build the payload
   const buildPayload = (isDraft = false) => {
     const companyId = getUserCompanyId();
     const userId = getRelevantUserId();
@@ -253,30 +252,38 @@ const QmsAddOpportunityAssessment = () => {
         .map((field) => ({ action: field.value })),
       company: companyId,
       user: userId,
-      is_draft: isDraft, // Add the is_draft field
+      is_draft: isDraft,
     };
   };
 
   const handleSave = async () => {
     setIsSaveLoading(true);
     try {
-      const payload = buildPayload(false); // Not a draft
-      console.log('Sending save payload:', payload);  
-
+      const payload = buildPayload(false);
       const response = await axios.post(
         `${BASE_URL}/qms/risk-opportunity/create/`,
-        payload  
+        payload
       );
-      
-      console.log('Save response:', response.data);  
-      navigate("/company/qms/list-opportunity-assessment");
+      setSuccessMessage("Opportunity Assessment Saved Successfully!");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-opportunity-assessment");
+      }, 2000);
     } catch (error) {
-      console.error('Save error:', error);  
+      console.error('Save error:', error);
+      let errorMsg = "Failed to save assessment. Please try again.";
       if (error.response?.data) {
-        setErrors(error.response.data);
-      } else {
-        setErrors({ non_field_errors: "Failed to save assessment. Please try again." });
+        const errorData = error.response.data;
+        if (typeof errorData === 'object') {
+          const errorMessages = Object.values(errorData).flat().join(' ');
+          errorMsg = errorMessages || errorMsg;
+        } else {
+          errorMsg = errorData || errorMsg;
+        }
       }
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
     } finally {
       setIsSaveLoading(false);
     }
@@ -285,23 +292,31 @@ const QmsAddOpportunityAssessment = () => {
   const handleSaveDraft = async () => {
     setIsSaveDraftLoading(true);
     try {
-      const payload = buildPayload(true); // This is a draft
-      console.log('Sending draft payload:', payload);
-
+      const payload = buildPayload(true);
       const response = await axios.post(
         `${BASE_URL}/qms/risk-opportunity/create/`,
         payload
       );
-      
-      console.log('Draft response:', response.data);
-      navigate("/company/qms/list-opportunity-assessment");
+      setSuccessMessage("Opportunity Assessment Drafted Successfully!");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        navigate("/company/qms/list-opportunity-assessment");
+      }, 2000);
     } catch (error) {
       console.error('Draft save error:', error);
+      let errorMsg = "Failed to save draft. Please try again.";
       if (error.response?.data) {
-        setErrors(error.response.data);
-      } else {
-        setErrors({ non_field_errors: "Failed to save draft. Please try again." });
+        const errorData = error.response.data;
+        if (typeof errorData === 'object') {
+          const errorMessages = Object.values(errorData).flat().join(' ');
+          errorMsg = errorMessages || errorMsg;
+        } else {
+          errorMsg = errorData || errorMsg;
+        }
       }
+      setErrorMessage(errorMsg);
+      setShowErrorModal(true);
     } finally {
       setIsSaveDraftLoading(false);
     }
@@ -318,12 +333,21 @@ const QmsAddOpportunityAssessment = () => {
 
   return (
     <div className="bg-[#1C1C24] rounded-lg text-white">
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={errorMessage}
+      />
       <div>
         <div className="flex items-center justify-between px-[65px] 2xl:px-[122px]">
           <h1 className="add-manual-sections !px-0">
             Add Opportunity Assessment
           </h1>
-
           <button
             className="flex items-center justify-center add-manual-btn gap-[10px] duration-200 border border-[#858585] text-[#858585] hover:bg-[#858585] hover:text-white"
             onClick={handleListOpportunity}
@@ -333,10 +357,6 @@ const QmsAddOpportunityAssessment = () => {
         </div>
 
         <div className="border-t border-[#383840] mx-[18px] pt-[22px] px-[47px] 2xl:px-[104px]">
-          {errors.non_field_errors && (
-            <div className="text-red-500 mb-4">{errors.non_field_errors}</div>
-          )}
-          
           <div className="grid md:grid-cols-2 gap-5">
             <div>
               <label className="add-qms-manual-label">Activity/Process</label>
@@ -423,7 +443,7 @@ const QmsAddOpportunityAssessment = () => {
                   />
                 </div>
               </div>
-              
+              <ErrorMessage message={errors.probability || errors.benefit} />
             </div>
 
             <div className="flex flex-col gap-3">
@@ -461,10 +481,9 @@ const QmsAddOpportunityAssessment = () => {
                       )}
                     </div>
                   </div>
-              
+                  <ErrorMessage message={errors.actions} />
                 </div>
               ))}
-               
             </div>
 
             <div className="flex flex-col gap-3 relative" ref={ownersDropdownRef}>
@@ -483,7 +502,6 @@ const QmsAddOpportunityAssessment = () => {
                   <Search className="absolute right-3" size={20} color="#AAAAAA" />
                 </div>
               </div>
-              
               <div className="border border-[#383840] rounded-md p-2 max-h-[130px] overflow-y-auto">
                 {filteredOwners.length > 0 ? (
                   filteredOwners.map((user) => (
@@ -512,7 +530,7 @@ const QmsAddOpportunityAssessment = () => {
                   </div>
                 )}
               </div>
-              
+              <ErrorMessage message={errors.owners} />
             </div>
 
             <div>
@@ -548,7 +566,7 @@ const QmsAddOpportunityAssessment = () => {
                   }`}
                 />
               </div>
-             
+              <ErrorMessage message={errors.approved_by} />
             </div>
 
             <div>

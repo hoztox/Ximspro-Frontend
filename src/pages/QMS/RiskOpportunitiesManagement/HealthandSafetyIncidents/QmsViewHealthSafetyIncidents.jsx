@@ -5,9 +5,9 @@ import deletes from "../../../../assets/images/Company Documentation/delete.svg"
 import { useNavigate, useParams } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
-import DeleteConfimModal from "../Modals/DeleteConfimModal";
-import SuccessModal from "../Modals/SuccessModal";
-import ErrorModal from "../Modals/ErrorModal";
+import DeleteConfimModal from "../../../../components/Modals/DeleteConfimModal";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsViewHealthSafetyIncidents = () => {
     const [formData, setFormData] = useState({

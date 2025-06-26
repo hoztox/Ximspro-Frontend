@@ -3,6 +3,8 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BASE_URL } from "../../../../Utils/Config";
 import axios from "axios";
+import SuccessModal from "../../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../../components/Modals/ErrorModal";
 
 const QmsAddRiskAssessment = () => {
   const navigate = useNavigate();
@@ -21,7 +23,6 @@ const QmsAddRiskAssessment = () => {
     remarks: "",
   });
 
-  // New state for date parts to avoid parsing issues
   const [dateParts, setDateParts] = useState({
     day: "",
     month: "",
@@ -29,8 +30,11 @@ const QmsAddRiskAssessment = () => {
   });
 
   const [riskFields, setRiskFields] = useState([{ id: 1, name: "" }]);
-  const [controlMeasureFields, setControlMeasureFields] = useState([{ id: 1, name: "" }]);
-  const [requiredControlMeasureFields, setRequiredControlMeasureFields] = useState([{ id: 1, name: "" }]);
+  const [controlMeasureFields, setControlMeasureFields] = useState([
+    { id: 1, name: "" },
+  ]);
+  const [requiredControlMeasureFields, setRequiredControlMeasureFields] =
+    useState([{ id: 1, name: "" }]);
   const [users, setUsers] = useState([]);
   const [openDropdowns, setOpenDropdowns] = useState({
     risk_likelihood: false,
@@ -45,6 +49,11 @@ const QmsAddRiskAssessment = () => {
   const [errors, setErrors] = useState({});
   const [isSaveLoading, setIsSaveLoading] = useState(false);
   const [isSaveDraftLoading, setIsSaveDraftLoading] = useState(false);
+  // New state for modals
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const getDaysInMonth = (month, year) => {
     if (!month || !year) return 31;
@@ -85,26 +94,29 @@ const QmsAddRiskAssessment = () => {
     const fetchUsers = async () => {
       try {
         const companyId = getUserCompanyId();
-        const response = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+        const response = await axios.get(
+          `${BASE_URL}/company/users-active/${companyId}/`
+        );
         setUsers(response.data);
       } catch (error) {
         console.error("Error fetching users:", error);
-        setErrors({ non_field_errors: "Failed to load users" });
+        setErrorMessage("Failed to load users");
+        setShowErrorModal(true);
       }
     };
     fetchUsers();
   }, []);
 
-  // Update formData.date whenever dateParts changes
   useEffect(() => {
     const { day, month, year } = dateParts;
-    console.log("Date parts updated:", { day, month, year }); // Debug log
     if (day && month && year) {
-
       try {
         const newDate = new Date(year, month - 1, day);
         if (!isNaN(newDate.getTime())) {
-          const formattedDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const formattedDate = `${year}-${String(month).padStart(
+            2,
+            "0"
+          )}-${String(day).padStart(2, "0")}`;
           setFormData((prev) => ({ ...prev, date: formattedDate }));
           setErrors((prev) => ({ ...prev, date: "" }));
         } else {
@@ -120,9 +132,12 @@ const QmsAddRiskAssessment = () => {
     }
   }, [dateParts]);
 
-  // Dynamic days array
   const days = useMemo(
-    () => Array.from({ length: getDaysInMonth(dateParts.month, dateParts.year) }, (_, i) => i + 1),
+    () =>
+      Array.from(
+        { length: getDaysInMonth(dateParts.month, dateParts.year) },
+        (_, i) => i + 1
+      ),
     [dateParts.month, dateParts.year]
   );
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -153,9 +168,7 @@ const QmsAddRiskAssessment = () => {
 
   const handleRiskFieldChange = (id, name) => {
     setRiskFields(
-      riskFields.map((field) =>
-        field.id === id ? { ...field, name } : field
-      )
+      riskFields.map((field) => (field.id === id ? { ...field, name } : field))
     );
   };
 
@@ -177,9 +190,7 @@ const QmsAddRiskAssessment = () => {
 
   const addRiskField = () => {
     const newId =
-      riskFields.length > 0
-        ? Math.max(...riskFields.map((f) => f.id)) + 1
-        : 1;
+      riskFields.length > 0 ? Math.max(...riskFields.map((f) => f.id)) + 1 : 1;
     setRiskFields([...riskFields, { id: newId, name: "" }]);
   };
 
@@ -196,7 +207,10 @@ const QmsAddRiskAssessment = () => {
       requiredControlMeasureFields.length > 0
         ? Math.max(...requiredControlMeasureFields.map((f) => f.id)) + 1
         : 1;
-    setRequiredControlMeasureFields([...requiredControlMeasureFields, { id: newId, name: "" }]);
+    setRequiredControlMeasureFields([
+      ...requiredControlMeasureFields,
+      { id: newId, name: "" },
+    ]);
   };
 
   const removeRiskField = (id) => {
@@ -207,18 +221,21 @@ const QmsAddRiskAssessment = () => {
 
   const removeControlMeasureField = (id) => {
     if (controlMeasureFields.length > 1) {
-      setControlMeasureFields(controlMeasureFields.filter((field) => field.id !== id));
+      setControlMeasureFields(
+        controlMeasureFields.filter((field) => field.id !== id)
+      );
     }
   };
 
   const removeRequiredControlMeasureField = (id) => {
     if (requiredControlMeasureFields.length > 1) {
-      setRequiredControlMeasureFields(requiredControlMeasureFields.filter((field) => field.id !== id));
+      setRequiredControlMeasureFields(
+        requiredControlMeasureFields.filter((field) => field.id !== id)
+      );
     }
   };
 
   const handleDropdownFieldChange = (value, dropdown) => {
-    console.log(`Changing ${dropdown} to:`, value); 
     if (dropdown === "day" || dropdown === "month" || dropdown === "year") {
       setDateParts((prev) => ({
         ...prev,
@@ -247,8 +264,18 @@ const QmsAddRiskAssessment = () => {
 
   const getMonthName = (monthNum) => {
     const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return monthNames[monthNum - 1] || "";
   };
@@ -258,43 +285,45 @@ const QmsAddRiskAssessment = () => {
     return <div className="text-red-500 text-sm mt-1">{message}</div>;
   };
 
-const prepareSubmissionData = (isDraft = false) => {
-  const submissionData = {
-    user: getRelevantUserId(),
-    company: getUserCompanyId(),
-    is_draft: isDraft,
-  };
+  const prepareSubmissionData = (isDraft = false) => {
+    const submissionData = {
+      user: getRelevantUserId(),
+      company: getUserCompanyId(),
+      is_draft: isDraft,
+    };
 
- 
-  Object.keys(formData).forEach(key => {
-    if (isDraft) {
-    
-      if (formData[key] && formData[key].toString().trim() !== '') {
+    Object.keys(formData).forEach((key) => {
+      if (isDraft) {
+        if (formData[key] && formData[key].toString().trim() !== "") {
+          submissionData[key] = formData[key];
+        }
+      } else {
         submissionData[key] = formData[key];
       }
-    } else {
-    
-      submissionData[key] = formData[key];
+    });
+
+    const risks = riskFields
+      .filter((field) => field.name.trim())
+      .map((field) => ({ name: field.name }));
+    const controlRisks = controlMeasureFields
+      .filter((field) => field.name.trim())
+      .map((field) => ({ name: field.name }));
+    const requiredControlRisks = requiredControlMeasureFields
+      .filter((field) => field.name.trim())
+      .map((field) => ({ name: field.name }));
+
+    if (risks.length > 0) {
+      submissionData.risks = risks;
     }
-  });
+    if (controlRisks.length > 0) {
+      submissionData.control_risks = controlRisks;
+    }
+    if (requiredControlRisks.length > 0) {
+      submissionData.required_control_risks = requiredControlRisks;
+    }
 
-  
-  const risks = riskFields.filter(field => field.name.trim()).map(field => ({ name: field.name }));
-  const controlRisks = controlMeasureFields.filter(field => field.name.trim()).map(field => ({ name: field.name }));
-  const requiredControlRisks = requiredControlMeasureFields.filter(field => field.name.trim()).map(field => ({ name: field.name }));
-
-  if (risks.length > 0) {
-    submissionData.risks = risks;
-  }
-  if (controlRisks.length > 0) {
-    submissionData.control_risks = controlRisks;
-  }
-  if (requiredControlRisks.length > 0) {
-    submissionData.required_control_risks = requiredControlRisks;
-  }
-
-  return submissionData;
-};
+    return submissionData;
+  };
 
   const handleSave = async () => {
     setIsSaveLoading(true);
@@ -312,15 +341,27 @@ const prepareSubmissionData = (isDraft = false) => {
         submissionData
       );
 
-      console.log("Risk assessment saved successfully:", response.data);
-      handleNavigateToRiskAssessmentList();
+      setSuccessMessage("Risk Assessment Saved Successfully!");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        handleNavigateToRiskAssessmentList();
+      }, 2000); // Close modal after 2 seconds and navigate
     } catch (error) {
       console.error("Error saving risk assessment:", error);
       if (error.response?.data) {
         setErrors(error.response.data);
+        let errorMsg = "Failed to save risk assessment";
+        if (error.response.data.non_field_errors) {
+          errorMsg = error.response.data.non_field_errors.join(", ");
+        } else {
+          errorMsg = Object.values(error.response.data).flat().join(", ");
+        }
+        setErrorMessage(errorMsg);
       } else {
-        setErrors({ non_field_errors: "Failed to save risk assessment" });
+        setErrorMessage("Failed to save risk assessment");
       }
+      setShowErrorModal(true);
     } finally {
       setIsSaveLoading(false);
     }
@@ -329,21 +370,33 @@ const prepareSubmissionData = (isDraft = false) => {
   const handleSaveDraft = async () => {
     setIsSaveDraftLoading(true);
     try {
-      const submissionData = prepareSubmissionData(true)
+      const submissionData = prepareSubmissionData(true);
       const response = await axios.post(
         `${BASE_URL}/qms/process-risk-assessment/create/`,
         submissionData
       );
 
-      console.log("Draft saved successfully:", response.data);
-      handleNavigateToRiskAssessmentList();
+      setSuccessMessage("Risk Assessment Drafted Successfully!");
+      setShowSuccessModal(true);
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        handleNavigateToRiskAssessmentList();
+      }, 2000);
     } catch (error) {
       console.error("Error saving draft:", error);
       if (error.response?.data) {
         setErrors(error.response.data);
+        let errorMsg = "Failed to save draft";
+        if (error.response.data.non_field_errors) {
+          errorMsg = error.response.data.non_field_errors.join(", ");
+        } else {
+          errorMsg = Object.values(error.response.data).flat().join(", ");
+        }
+        setErrorMessage(errorMsg);
       } else {
-        setErrors({ non_field_errors: "Failed to save draft" });
+        setErrorMessage("Failed to save draft");
       }
+      setShowErrorModal(true);
     } finally {
       setIsSaveDraftLoading(false);
     }
@@ -435,8 +488,18 @@ const prepareSubmissionData = (isDraft = false) => {
                     name="risk_likelihood"
                     value={formData.risk_likelihood}
                     onFocus={() => toggleDropdown("risk_likelihood")}
-                    onChange={(e) => handleDropdownFieldChange(e.target.value, "risk_likelihood")}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, risk_likelihood: false }))}
+                    onChange={(e) =>
+                      handleDropdownFieldChange(
+                        e.target.value,
+                        "risk_likelihood"
+                      )
+                    }
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({
+                        ...prev,
+                        risk_likelihood: false,
+                      }))
+                    }
                   >
                     <option value="" disabled>
                       Likelihood
@@ -446,11 +509,11 @@ const prepareSubmissionData = (isDraft = false) => {
                         {option}
                       </option>
                     ))}
-
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_likelihood ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.risk_likelihood ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
                 <div className="relative w-1/2">
@@ -459,8 +522,15 @@ const prepareSubmissionData = (isDraft = false) => {
                     name="risk_severity"
                     value={formData.risk_severity}
                     onFocus={() => toggleDropdown("risk_severity")}
-                    onChange={(e) => handleDropdownFieldChange(e.target.value, "risk_severity")}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, risk_severity: false }))}
+                    onChange={(e) =>
+                      handleDropdownFieldChange(e.target.value, "risk_severity")
+                    }
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({
+                        ...prev,
+                        risk_severity: false,
+                      }))
+                    }
                   >
                     <option value="" disabled>
                       Severity
@@ -472,8 +542,9 @@ const prepareSubmissionData = (isDraft = false) => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.risk_severity ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.risk_severity ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -491,7 +562,10 @@ const prepareSubmissionData = (isDraft = false) => {
                         type="text"
                         value={field.name}
                         onChange={(e) =>
-                          handleControlMeasureFieldChange(field.id, e.target.value)
+                          handleControlMeasureFieldChange(
+                            field.id,
+                            e.target.value
+                          )
                         }
                         className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
                       />
@@ -520,7 +594,9 @@ const prepareSubmissionData = (isDraft = false) => {
             </div>
 
             <div className="flex flex-col gap-3">
-              <label className="add-qms-manual-label">Required Control Measures</label>
+              <label className="add-qms-manual-label">
+                Required Control Measures
+              </label>
               {requiredControlMeasureFields.map((field, index) => (
                 <div key={field.id} className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 justify-between">
@@ -529,7 +605,10 @@ const prepareSubmissionData = (isDraft = false) => {
                         type="text"
                         value={field.name}
                         onChange={(e) =>
-                          handleRequiredControlMeasureFieldChange(field.id, e.target.value)
+                          handleRequiredControlMeasureFieldChange(
+                            field.id,
+                            e.target.value
+                          )
                         }
                         className="add-qms-manual-inputs focus:outline-none flex-1 !mt-0"
                       />
@@ -544,7 +623,9 @@ const prepareSubmissionData = (isDraft = false) => {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => removeRequiredControlMeasureField(field.id)}
+                          onClick={() =>
+                            removeRequiredControlMeasureField(field.id)
+                          }
                           className="bg-[#24242D] h-[49px] w-[49px] flex justify-center items-center rounded-md"
                         >
                           <X className="text-white" />
@@ -565,8 +646,12 @@ const prepareSubmissionData = (isDraft = false) => {
                   name="owner"
                   value={formData.owner}
                   onFocus={() => toggleDropdown("owner")}
-                  onChange={(e) => handleDropdownFieldChange(e.target.value, "owner")}
-                  onBlur={() => setOpenDropdowns((prev) => ({ ...prev, owner: false }))}
+                  onChange={(e) =>
+                    handleDropdownFieldChange(e.target.value, "owner")
+                  }
+                  onBlur={() =>
+                    setOpenDropdowns((prev) => ({ ...prev, owner: false }))
+                  }
                 >
                   <option value="" disabled>
                     Select Action Owner
@@ -578,8 +663,9 @@ const prepareSubmissionData = (isDraft = false) => {
                   ))}
                 </select>
                 <ChevronDown
-                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.owner ? "rotate-180" : ""
-                    }`}
+                  className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                    openDropdowns.owner ? "rotate-180" : ""
+                  }`}
                 />
               </div>
               <ErrorMessage message={errors.owner} />
@@ -594,8 +680,18 @@ const prepareSubmissionData = (isDraft = false) => {
                     name="residual_likelihood"
                     value={formData.residual_likelihood}
                     onFocus={() => toggleDropdown("residual_likelihood")}
-                    onChange={(e) => handleDropdownFieldChange(e.target.value, "residual_likelihood")}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, residual_likelihood: false }))}
+                    onChange={(e) =>
+                      handleDropdownFieldChange(
+                        e.target.value,
+                        "residual_likelihood"
+                      )
+                    }
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({
+                        ...prev,
+                        residual_likelihood: false,
+                      }))
+                    }
                   >
                     <option value="" disabled>
                       Likelihood
@@ -607,8 +703,9 @@ const prepareSubmissionData = (isDraft = false) => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.residual_likelihood ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.residual_likelihood ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
                 <div className="relative w-1/2">
@@ -617,8 +714,18 @@ const prepareSubmissionData = (isDraft = false) => {
                     name="residual_severity"
                     value={formData.residual_severity}
                     onFocus={() => toggleDropdown("residual_severity")}
-                    onChange={(e) => handleDropdownFieldChange(e.target.value, "residual_severity")}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, residual_severity: false }))}
+                    onChange={(e) =>
+                      handleDropdownFieldChange(
+                        e.target.value,
+                        "residual_severity"
+                      )
+                    }
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({
+                        ...prev,
+                        residual_severity: false,
+                      }))
+                    }
                   >
                     <option value="" disabled>
                       Severity
@@ -630,8 +737,9 @@ const prepareSubmissionData = (isDraft = false) => {
                     ))}
                   </select>
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.residual_severity ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.residual_severity ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
@@ -648,22 +756,25 @@ const prepareSubmissionData = (isDraft = false) => {
                     value={dateParts.day || ""}
                     onFocus={() => toggleDropdown("day")}
                     onChange={(e) => {
-                      console.log("Day dropdown changed:", e.target.value);
                       handleDropdownFieldChange(e.target.value, "day");
                     }}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, day: false }))}
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({ ...prev, day: false }))
+                    }
                   >
-                    <option value="" disabled>dd</option>
+                    <option value="" disabled>
+                      dd
+                    </option>
                     {days.map((day) => (
                       <option key={`day-${day}`} value={day}>
                         {day < 10 ? `0${day}` : day}
                       </option>
                     ))}
                   </select>
-
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.day ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.day ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -672,24 +783,26 @@ const prepareSubmissionData = (isDraft = false) => {
                     value={dateParts.month || ""}
                     onFocus={() => toggleDropdown("month")}
                     onChange={(e) => {
-                      console.log("Month dropdown changed:", e.target.value); // Debug log
                       handleDropdownFieldChange(e.target.value, "month");
                     }}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, month: false }))}
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({ ...prev, month: false }))
+                    }
                   >
                     <option value="" disabled>
                       mm
                     </option>
                     {months.map((month) => (
                       <option key={`month-${month}`} value={month}>
-                        {month < 10 ? `0${month}` : month} - {getMonthName(month).substring(0, 3)}
+                        {month < 10 ? `0${month}` : month} -{" "}
+                        {getMonthName(month).substring(0, 3)}
                       </option>
                     ))}
                   </select>
-
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.month ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.month ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
                 <div className="relative w-1/3">
@@ -698,10 +811,11 @@ const prepareSubmissionData = (isDraft = false) => {
                     value={dateParts.year || ""}
                     onFocus={() => toggleDropdown("year")}
                     onChange={(e) => {
-                      console.log("Year dropdown changed:", e.target.value); // Debug log
                       handleDropdownFieldChange(e.target.value, "year");
                     }}
-                    onBlur={() => setOpenDropdowns((prev) => ({ ...prev, year: false }))}
+                    onBlur={() =>
+                      setOpenDropdowns((prev) => ({ ...prev, year: false }))
+                    }
                   >
                     <option value="" disabled>
                       yyyy
@@ -712,17 +826,17 @@ const prepareSubmissionData = (isDraft = false) => {
                       </option>
                     ))}
                   </select>
-
                   <ChevronDown
-                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${openDropdowns.year ? "rotate-180" : ""
-                      }`}
+                    className={`absolute right-3 top-7 h-4 w-4 text-gray-400 transition-transform duration-300 ease-in-out ${
+                      openDropdowns.year ? "rotate-180" : ""
+                    }`}
                   />
                 </div>
               </div>
               <ErrorMessage message={errors.date} />
             </div>
 
-           <div>
+            <div>
               <label className="add-qms-manual-label">Remarks</label>
               <input
                 type="text"
@@ -764,6 +878,18 @@ const prepareSubmissionData = (isDraft = false) => {
           <div className="flex items-center mt-[22px] justify-between"></div>
         </div>
       </div>
+
+      {/* Success and Error Modals */}
+      <SuccessModal
+        showSuccessModal={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        successMessage={successMessage}
+      />
+      <ErrorModal
+        showErrorModal={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        error={errorMessage}
+      />
     </div>
   );
 };
