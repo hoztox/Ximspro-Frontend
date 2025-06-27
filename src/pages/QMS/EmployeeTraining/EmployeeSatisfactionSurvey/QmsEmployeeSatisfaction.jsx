@@ -5,7 +5,6 @@ import viewIcon from "../../../../assets/images/Companies/view.svg";
 import editIcon from "../../../../assets/images/Company Documentation/edit.svg";
 import deleteIcon from "../../../../assets/images/Company Documentation/delete.svg";
 import { motion, AnimatePresence } from "framer-motion";
- 
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { BASE_URL } from "../../../../Utils/Config";
@@ -26,11 +25,13 @@ const EvaluationModal = ({
   surveyId,
 }) => {
   const [selectedEmployee, setSelectedEmployee] = useState("Select Employee");
+  const [selectedSource, setSelectedSource] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
+  const [employees, setEmployees] = useState([]); // Add employees state
   const [submitting, setSubmitting] = useState(false);
   const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
@@ -51,24 +52,49 @@ const EvaluationModal = ({
     return null;
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
-        );
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching unsubmitted users:", error);
-        setError("Failed to load employees");
-      }
-    };
-    if (isOpen && surveyId) {
-      fetchUsers();
+// Fetch survey-specific send email data to get employees and users
+// Fetch survey-specific send email data to get employees and users
+useEffect(() => {
+  const fetchSurveyEmailData = async () => {
+    try {
+      const companyId = getUserCompanyId();
+      
+      
+      const response = await axios.get(
+        `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
+      );
+      
+      console.log("Evaluation data (filtered):", response.data);
+      
+    
+      const evaluationData = response.data;
+      const employeesFromEvaluation = evaluationData.filter(item => item.type === "employee");
+      const usersFromEvaluation = evaluationData.filter(item => item.type === "user");
+      
+      setEmployees(employeesFromEvaluation);
+      setUsers(usersFromEvaluation);
+      
+      console.log("Employees with incomplete surveys:", employeesFromEvaluation);
+      console.log("Users with incomplete surveys:", usersFromEvaluation);
+      
+    } catch (error) {
+      console.error("Error fetching survey evaluation data:", error);
+      setError("Failed to load survey participants");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+      
+ 
+      setEmployees([]);
+      setUsers([]);
     }
-  }, [isOpen, surveyId]);
+  };
 
+  if (isOpen && surveyId) {
+    fetchSurveyEmailData();
+  }
+}, [isOpen, surveyId]);
+
+ 
   useEffect(() => {
     const fetchQuestions = async () => {
       if (selectedEmployee === "Select Employee" || !selectedEmployee) return;
@@ -77,11 +103,13 @@ const EvaluationModal = ({
         const questionsResponse = await axios.get(
           `${BASE_URL}/qms/survey/${surveyId}/questions/`
         );
+        console.log("Fetched questions:", questionsResponse.data);
         const allQuestions = questionsResponse.data;
         const companyId = getUserCompanyId();
         const userResponse = await axios.get(
           `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
         );
+        console.log("Fetched evaluation data:", userResponse.data);
         const userData = userResponse.data.find(
           (user) => user.id === parseInt(selectedEmployee)
         );
@@ -96,10 +124,13 @@ const EvaluationModal = ({
           };
         }).filter((question) => !question.answer);
 
+        console.log("Unanswered questions:", unansweredQuestions);
         setQuestions(unansweredQuestions);
       } catch (err) {
         console.error("Error fetching questions:", err);
         setError("Failed to load questions");
+        setShowErrorModal(true);
+        setTimeout(() => setShowErrorModal(false), 3000);
       } finally {
         setLoading(false);
       }
@@ -109,9 +140,10 @@ const EvaluationModal = ({
     }
   }, [isOpen, surveyId, selectedEmployee]);
 
+  // Rest of your existing functions remain the same
   const toggleRatingSelector = (questionId) => {
     if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
+      setError("Please select an employee or user first");
       setShowErrorModal(true);
       setTimeout(() => setShowErrorModal(false), 3000);
       return;
@@ -127,55 +159,152 @@ const EvaluationModal = ({
     setActiveRatingQuestion(null);
   };
 
-  const handleSubmitAllAnswers = async () => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const questionsWithAnswers = questions.filter((q) => q.answer);
-      for (const question of questionsWithAnswers) {
-        await axios.patch(
-          `${BASE_URL}/qms/survey/question/answer/${question.id}/`,
-          {
-            answer: question.answer,
-            employee_id: selectedEmployee,
-          }
-        );
-      }
-      const companyId = getUserCompanyId();
-      const response = await axios.get(
-        `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
-      );
-      setUsers(response.data);
-      setQuestions([]);
-      setSelectedEmployee("Select Employee");
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        onClose();
-      }, 1500);
-    } catch (err) {
-      console.error("Error submitting answers:", err);
-      setError(err.response?.data?.message || err.message);
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-    } finally {
-      setSubmitting(false);
-    }
+  const handleEmployeeChange = (e) => {
+    const [source, id] = e.target.value.split(":");
+    setSelectedEmployee(id);
+    setSelectedSource(source);
+    console.log("Selected:", { source, id });
   };
 
-  const combinedOptions = [...(employeeList || []), ...(users || [])].reduce(
-    (unique, item) => {
-      const exists = unique.find((x) => x.id === item.id);
-      if (!exists) unique.push(item);
-      return unique;
-    },
-    []
-  );
+  const handleSubmitAllAnswers = async () => {
+  if (selectedEmployee === "Select Employee" || !selectedSource) {
+    setError("Please select an employee or user first");
+    setShowErrorModal(true);
+    setTimeout(() => setShowErrorModal(false), 3000);
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    const questionsWithAnswers = questions.filter((q) => q.answer);
+
+    if (questionsWithAnswers.length === 0) {
+      throw new Error("No answers provided.");
+    }
+
+    console.log("Submitting answers for:", {
+      source: selectedSource,
+      id: selectedEmployee,
+      questions: questionsWithAnswers,
+    });
+
+    for (const question of questionsWithAnswers) {
+      const requestData = {
+        answer: question.answer,
+      };
+
+      if (selectedSource === "employee") {
+        requestData.employee_id = parseInt(selectedEmployee);
+      } else if (selectedSource === "user") {
+        requestData.user_id = parseInt(selectedEmployee);
+      } else {
+        throw new Error(`Invalid source type: ${selectedSource}`);
+      }
+
+      console.log("Request data for question", question.id, ":", requestData);
+
+      try {
+        const response = await axios.patch(
+          `${BASE_URL}/qms/survey/question/answer/${question.id}/`,
+          requestData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Success response for question", question.id, ":", response.data);
+      } catch (questionError) {
+        console.error("Error submitting answer for question:", question.id);
+        console.error("Request data:", requestData);
+        console.error("Error response:", questionError.response?.data);
+        console.error("Error status:", questionError.response?.status);
+
+        if (questionError.response?.status === 404) {
+          if (requestData.user_id) {
+            throw new Error(
+              `User with ID ${requestData.user_id} not found for question ${question.id}`
+            );
+          } else if (requestData.employee_id) {
+            throw new Error(
+              `Employee with ID ${requestData.employee_id} not found for question ${question.id}`
+            );
+          } else {
+            throw new Error(`Question ${question.id} not found`);
+          }
+        } else if (questionError.response?.status === 400) {
+          throw new Error(
+            `Invalid request for question ${question.id}: ${JSON.stringify(
+              questionError.response.data
+            )}`
+          );
+        } else if (questionError.response?.status === 403) {
+          throw new Error(`Permission denied for question ${question.id}`);
+        }
+
+        throw questionError;
+      }
+    }
+
+    // Refresh the data after successful submission - Use the evaluation endpoint that filters completed surveys
+    const companyId = getUserCompanyId();
+    const response = await axios.get(
+      `${BASE_URL}/qms/survey/${companyId}/evaluation/${surveyId}/`
+    );
+    
+    // The evaluation endpoint returns users with type field, separate them
+    const evaluationData = response.data;
+    const employeesFromEvaluation = evaluationData.filter(item => item.type === "employee");
+    const usersFromEvaluation = evaluationData.filter(item => item.type === "user");
+    
+    setEmployees(employeesFromEvaluation);
+    setUsers(usersFromEvaluation);
+    
+    console.log("Refreshed employees:", employeesFromEvaluation);
+    console.log("Refreshed users:", usersFromEvaluation);
+
+    // Reset form state
+    setQuestions([]);
+    setSelectedEmployee("Select Employee");
+    setSelectedSource(null);
+
+    setShowAddRatingSuccessModal(true);
+    setTimeout(() => {
+      setShowAddRatingSuccessModal(false);
+      onClose();
+    }, 1500);
+  } catch (err) {
+    console.error("Error submitting answers:", err);
+    console.error("Error details:", {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status,
+    });
+
+    let errorMessage = "Failed to submit answers";
+    if (err.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err.response?.data?.error) {
+      errorMessage = err.response.data.error;
+    } else if (err.response?.data) {
+      errorMessage = JSON.stringify(err.response.data);
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+
+    setError(errorMessage);
+    setShowErrorModal(true);
+    setTimeout(() => setShowErrorModal(false), 3000);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+  // Format employee and user names for display
+  const formatName = (item) =>
+    item.first_name && item.last_name
+      ? `${item.first_name} ${item.last_name}`
+      : item.first_name || item.last_name || item.username || item.email || `ID ${item.id}`;
 
   return (
     <AnimatePresence>
@@ -210,25 +339,37 @@ const EvaluationModal = ({
                   errorMessege={error}
                   showErrorModal={showErrorModal}
                   onClose={() => setShowErrorModal(false)}
+                  autoClose={false}
                 />
                 <div className="p-5 pt-6">
                   <div className="flex relative items-center gap-3">
-                    <label className="block evaluate-modal-head">Select Employee</label>
+                    <label className="block evaluate-modal-head">Select Employee or User</label>
                     <select
                       className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none cursor-pointer border-none px-3 select-employee-dropdown"
-                      value={selectedEmployee}
-                      onChange={(e) => setSelectedEmployee(e.target.value)}
+                      value={selectedSource ? `${selectedSource}:${selectedEmployee}` : "Select Employee"}
+                      onChange={handleEmployeeChange}
                       onFocus={() => setIsDropdownOpen(true)}
                       onBlur={() => setIsDropdownOpen(false)}
                     >
                       <option value="Select Employee">Select Employee</option>
-                      {combinedOptions.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.first_name && item.last_name
-                            ? `${item.first_name} ${item.last_name}`
-                            : item.first_name || item.last_name || item.username || item.email}
-                        </option>
-                      ))}
+                      {employees.length > 0 && (
+                        <optgroup label="Employees">
+                          {employees.map((emp) => (
+                            <option key={`employee-${emp.id}`} value={`employee:${emp.id}`}>
+                              {formatName(emp)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {users.length > 0 && (
+                        <optgroup label="Users">
+                          {users.map((user) => (
+                            <option key={`user-${user.id}`} value={`user:${user.id}`}>
+                              {formatName(user)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
@@ -303,8 +444,8 @@ const EvaluationModal = ({
                           <tr>
                             <td colSpan="3" className="text-center py-4 not-found">
                               {selectedEmployee === "Select Employee"
-                                ? "Please select an employee"
-                                : "No unanswered questions for this employee"}
+                                ? "Please select an employee or user"
+                                : "No unanswered questions for this selection"}
                             </td>
                           </tr>
                         )}
@@ -325,10 +466,10 @@ const EvaluationModal = ({
                   </button>
                 </div>
               </div>
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
-        )}
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };
@@ -618,6 +759,7 @@ const QmsEmployeeSatisfaction = () => {
       const companyId = getUserCompanyId();
       const response = await axios.get(`${BASE_URL}/qms/survey/company/${companyId}/`);
       setSendMail(response.data);
+      console.log("ssssssssss",response.data)
     } catch (err) {
       console.error("Error fetching send mail data:", err);
       setError("Failed to load send mail data");

@@ -993,7 +993,7 @@ const AddQmsPolicy = () => {
 
   const LinkInstructions = () => (
     <div className="text-xs text-gray-400 mb-2">
-      💡 Tip: Click on links to open or edit them. Right-click for more options.
+       
     </div>
   );
 

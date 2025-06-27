@@ -26,235 +26,22 @@ const EvaluationModal = ({
   performanceId,
 }) => {
   const [selectedEmployee, setSelectedEmployee] = useState("Select Employee");
+  const [selectedSource, setSelectedSource] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [questions, setQuestions] = useState([]);
-  const [sendMail, setSendMail] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [users, setUsers] = useState([]);
-  const [performances, setPerformances] = useState([]);
+  const [employees, setEmployees] = useState([]); // Add employees state
   const [submitting, setSubmitting] = useState(false);
-
-  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] =
-    useState(false);
+  const [showAddRatingSuccessModal, setShowAddRatingSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-
-  // Track which question is currently showing the rating selector
   const [activeRatingQuestion, setActiveRatingQuestion] = useState(null);
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const companyId = getUserCompanyId();
-        const response = await axios.get(
-          `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
-        );
-        setUsers(response.data);
-      } catch (error) {
-        console.error("Error fetching unsubmitted users:", error);
-        setError("Failed to load employees");
-      }
-    };
-    if (isOpen && performanceId) {
-      fetchUsers();
-    }
-  }, [isOpen, performanceId]);
-
-  useEffect(() => {
-    const fetchPerformanceData = async () => {
-      setLoading(true);
-      try {
-        const companyId = getUserCompanyId();
-        if (!companyId) {
-          setError("Company ID not found");
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get(
-          `${BASE_URL}/qms/performance/${companyId}/`
-        );
-        setPerformances(response.data);
-        setError(null);
-      } catch (err) {
-        let errorMsg = err.message;
-
-        if (err.response) {
-          // Check for field-specific errors first
-          if (err.response.data.date) {
-            errorMsg = err.response.data.date[0];
-          }
-          // Check for non-field errors
-          else if (err.response.data.detail) {
-            errorMsg = err.response.data.detail;
-          } else if (err.response.data.message) {
-            errorMsg = err.response.data.message;
-          }
-        } else if (err.message) {
-          errorMsg = err.message;
-        }
-
-        setError(errorMsg);
-        console.error("Error fetching employee performance data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPerformanceData();
-  }, []);
-
-  // Fetch questions when modal opens
- useEffect(() => {
-  const fetchQuestions = async () => {
-    if (selectedEmployee === "Select Employee" || !selectedEmployee) return;
-    setLoading(true);
-    try {
-      // Fetch all questions for the performance
-      const questionsResponse = await axios.get(
-        `${BASE_URL}/qms/performance/${performanceId}/questions/`
-      );
-      const allQuestions = questionsResponse.data;
-
-      // Fetch user-specific question data from UsersNotSubmittedAnswersView
-      const companyId = getUserCompanyId();
-      const userResponse = await axios.get(
-        `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
-      );
-      const userData = userResponse.data.find(
-        (user) => user.id === parseInt(selectedEmployee)
-      );
-
-      // Filter questions to show only those not answered by the selected employee
-      const unansweredQuestions = allQuestions.map((question) => {
-        const userQuestion = userData?.questions.find(
-          (q) => q.question_text === question.question_text
-        );
-        return {
-          ...question,
-          answer: userQuestion?.answer || null,
-        };
-      }).filter((question) => !question.answer);
-
-      setQuestions(unansweredQuestions);
-    } catch (err) {
-      console.error("Error fetching questions:", err);
-      setError("Failed to load questions");
-    } finally {
-      setLoading(false);
-    }
-  };
-  if (isOpen && performanceId && selectedEmployee !== "Select Employee") {
-    fetchQuestions();
-  }
-}, [isOpen, performanceId, selectedEmployee]);
-
-  const fetchSendmail = async () => {
-    setLoading(true);
-    try {
-      const companyId = getUserCompanyId();
-      const response = await axios.get(
-        `${BASE_URL}/qms/performance/company/${companyId}/`
-      );
-      setSendMail(response.data);
-      console.log("Fetched send mail:", response.data);
-    } catch (err) {
-      console.error("Error fetching performance data:", err);
-      setError("Failed to load performance data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchSendmail();
-  }, []);
-
-
-  // Toggle the rating selector for a specific question
-  const toggleRatingSelector = (questionId) => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      setShowErrorModal(true);
-      setTimeout(() => {
-        setShowErrorModal(false);
-      }, 3000);
-      return;
-    }
-
-    setActiveRatingQuestion(
-      activeRatingQuestion === questionId ? null : questionId
-    );
-  };
-
-  // Handle when a rating is selected
-const handleAnswerChange = (questionId, rating) => {
-  const updatedQuestions = questions.map((q) =>
-    q.id === questionId ? { ...q, answer: rating.toString() } : q
-  );
-  setQuestions(updatedQuestions);
-  setActiveRatingQuestion(null);
-};
-
-  // Submit all answers when Done button is clicked
-  const handleSubmitAllAnswers = async () => {
-    if (selectedEmployee === "Select Employee") {
-      setError("Please select an employee first");
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const questionsWithAnswers = questions.filter((q) => q.answer);
-      for (const question of questionsWithAnswers) {
-        await axios.patch(
-          `${BASE_URL}/qms/performance/question/answer/${question.id}/`,
-          {
-            answer: question.answer,
-            employee_id: selectedEmployee,
-          }
-        );
-      }
-      // Refresh users list to remove employee if all questions answered
-      const companyId = getUserCompanyId();
-      const response = await axios.get(
-        `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
-      );
-      setUsers(response.data);
-      setQuestions([]);
-      setSelectedEmployee("Select Employee");
-      setShowAddRatingSuccessModal(true);
-      setTimeout(() => {
-        setShowAddRatingSuccessModal(false);
-        onClose();
-      }, 1500);
-    } catch (err) {
-      console.error("Error submitting answers:", err);
-      setError(err.response?.data?.message || err.message);
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const combinedOptions = [...(employeeList || []), ...(users || [])].reduce(
-    (unique, item) => {
-      const exists = unique.find((x) => x.id === item.id);
-      if (!exists) {
-        unique.push(item);
-      }
-      return unique;
-    },
-    []
-  );
 
   const getUserCompanyId = () => {
     const role = localStorage.getItem("role");
-    if (role === "company") {
-      return localStorage.getItem("company_id");
-    } else if (role === "user") {
+    if (role === "company") return localStorage.getItem("company_id");
+    else if (role === "user") {
       try {
         const userCompanyId = localStorage.getItem("user_company_id");
         return userCompanyId ? JSON.parse(userCompanyId) : null;
@@ -265,6 +52,253 @@ const handleAnswerChange = (questionId, rating) => {
     }
     return null;
   };
+
+  // Fetch performance-specific evaluation data to get employees and users
+  useEffect(() => {
+    const fetchPerformanceEmailData = async () => {
+      try {
+        const companyId = getUserCompanyId();
+        
+        const response = await axios.get(
+          `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
+        );
+        
+        console.log("Evaluation data (filtered):", response.data);
+        
+        const evaluationData = response.data;
+        const employeesFromEvaluation = evaluationData.filter(item => item.type === "employee");
+        const usersFromEvaluation = evaluationData.filter(item => item.type === "user");
+        
+        setEmployees(employeesFromEvaluation);
+        setUsers(usersFromEvaluation);
+        
+        console.log("Employees with incomplete performance reviews:", employeesFromEvaluation);
+        console.log("Users with incomplete performance reviews:", usersFromEvaluation);
+        
+      } catch (error) {
+        console.error("Error fetching performance evaluation data:", error);
+        setError("Failed to load performance participants");
+        setShowErrorModal(true);
+        setTimeout(() => setShowErrorModal(false), 3000);
+        
+        setEmployees([]);
+        setUsers([]);
+      }
+    };
+
+    if (isOpen && performanceId) {
+      fetchPerformanceEmailData();
+    }
+  }, [isOpen, performanceId]);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (selectedEmployee === "Select Employee" || !selectedEmployee) return;
+      setLoading(true);
+      try {
+        const questionsResponse = await axios.get(
+          `${BASE_URL}/qms/performance/${performanceId}/questions/`
+        );
+        console.log("Fetched questions:", questionsResponse.data);
+        const allQuestions = questionsResponse.data;
+        const companyId = getUserCompanyId();
+        const userResponse = await axios.get(
+          `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
+        );
+        console.log("Fetched evaluation data:", userResponse.data);
+        const userData = userResponse.data.find(
+          (user) => user.id === parseInt(selectedEmployee)
+        );
+
+        const unansweredQuestions = allQuestions.map((question) => {
+          const userQuestion = userData?.questions.find(
+            (q) => q.question_text === question.question_text
+          );
+          return {
+            ...question,
+            answer: userQuestion?.answer || null,
+          };
+        }).filter((question) => !question.answer);
+
+        console.log("Unanswered questions:", unansweredQuestions);
+        setQuestions(unansweredQuestions);
+      } catch (err) {
+        console.error("Error fetching questions:", err);
+        setError("Failed to load questions");
+        setShowErrorModal(true);
+        setTimeout(() => setShowErrorModal(false), 3000);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (isOpen && performanceId && selectedEmployee !== "Select Employee") {
+      fetchQuestions();
+    }
+  }, [isOpen, performanceId, selectedEmployee]);
+
+  const toggleRatingSelector = (questionId) => {
+    if (selectedEmployee === "Select Employee") {
+      setError("Please select an employee or user first");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+      return;
+    }
+    setActiveRatingQuestion(activeRatingQuestion === questionId ? null : questionId);
+  };
+
+  const handleAnswerChange = (questionId, rating) => {
+    const updatedQuestions = questions.map((q) =>
+      q.id === questionId ? { ...q, answer: rating.toString() } : q
+    );
+    setQuestions(updatedQuestions);
+    setActiveRatingQuestion(null);
+  };
+
+  const handleEmployeeChange = (e) => {
+    const [source, id] = e.target.value.split(":");
+    setSelectedEmployee(id);
+    setSelectedSource(source);
+    console.log("Selected:", { source, id });
+  };
+
+  const handleSubmitAllAnswers = async () => {
+    if (selectedEmployee === "Select Employee" || !selectedSource) {
+      setError("Please select an employee or user first");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const questionsWithAnswers = questions.filter((q) => q.answer);
+
+      if (questionsWithAnswers.length === 0) {
+        throw new Error("No answers provided.");
+      }
+
+      console.log("Submitting answers for:", {
+        source: selectedSource,
+        id: selectedEmployee,
+        questions: questionsWithAnswers,
+      });
+
+      for (const question of questionsWithAnswers) {
+        const requestData = {
+          answer: question.answer,
+        };
+
+        if (selectedSource === "employee") {
+          requestData.employee_id = parseInt(selectedEmployee);
+        } else if (selectedSource === "user") {
+          requestData.user_id = parseInt(selectedEmployee);
+        } else {
+          throw new Error(`Invalid source type: ${selectedSource}`);
+        }
+
+        console.log("Request data for question", question.id, ":", requestData);
+
+        try {
+          const response = await axios.patch(
+            `${BASE_URL}/qms/performance/question/answer/${question.id}/`,
+            requestData,
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          console.log("Success response for question", question.id, ":", response.data);
+        } catch (questionError) {
+          console.error("Error submitting answer for question:", question.id);
+          console.error("Request data:", requestData);
+          console.error("Error response:", questionError.response?.data);
+          console.error("Error status:", questionError.response?.status);
+
+          if (questionError.response?.status === 404) {
+            if (requestData.user_id) {
+              throw new Error(
+                `User with ID ${requestData.user_id} not found for question ${question.id}`
+              );
+            } else if (requestData.employee_id) {
+              throw new Error(
+                `Employee with ID ${requestData.employee_id} not found for question ${question.id}`
+              );
+            } else {
+              throw new Error(`Question ${question.id} not found`);
+            }
+          } else if (questionError.response?.status === 400) {
+            throw new Error(
+              `Invalid request for question ${question.id}: ${JSON.stringify(
+                questionError.response.data
+              )}`
+            );
+          } else if (questionError.response?.status === 403) {
+            throw new Error(`Permission denied for question ${question.id}`);
+          }
+
+          throw questionError;
+        }
+      }
+
+      // Refresh the data after successful submission
+      const companyId = getUserCompanyId();
+      const response = await axios.get(
+        `${BASE_URL}/qms/performance/${companyId}/evaluation/${performanceId}/`
+      );
+      
+      const evaluationData = response.data;
+      const employeesFromEvaluation = evaluationData.filter(item => item.type === "employee");
+      const usersFromEvaluation = evaluationData.filter(item => item.type === "user");
+      
+      setEmployees(employeesFromEvaluation);
+      setUsers(usersFromEvaluation);
+      
+      console.log("Refreshed employees:", employeesFromEvaluation);
+      console.log("Refreshed users:", usersFromEvaluation);
+
+      // Reset form state
+      setQuestions([]);
+      setSelectedEmployee("Select Employee");
+      setSelectedSource(null);
+
+      setShowAddRatingSuccessModal(true);
+      setTimeout(() => {
+        setShowAddRatingSuccessModal(false);
+        onClose();
+      }, 1500);
+    } catch (err) {
+      console.error("Error submitting answers:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+      });
+
+      let errorMessage = "Failed to submit answers";
+      if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.data) {
+        errorMessage = JSON.stringify(err.response.data);
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Format employee and user names for display
+  const formatName = (item) =>
+    item.first_name && item.last_name
+      ? `${item.first_name} ${item.last_name}`
+      : item.first_name || item.last_name || item.username || item.email || `ID ${item.id}`;
 
   return (
     <AnimatePresence>
@@ -291,57 +325,54 @@ const handleAnswerChange = (questionId, rating) => {
                     being Very Poor and 10 being Excellent
                   </p>
                 </div>
-
                 <RatingAddSuccessModal
                   showAddRatingSuccessModal={showAddRatingSuccessModal}
-                  onClose={() => {
-                    setShowAddRatingSuccessModal(false);
-                  }}
+                  onClose={() => setShowAddRatingSuccessModal(false)}
                 />
-
                 <ErrorModal
                   errorMessege={error}
                   showErrorModal={showErrorModal}
-                  onClose={() => {
-                    setShowErrorModal(false);
-                  }}
+                  onClose={() => setShowErrorModal(false)}
+                  autoClose={false}
                 />
-
                 <div className="p-5 pt-6">
                   <div className="flex relative items-center gap-3">
-                    <label className="block evaluate-modal-head">
-                      Select Employee
-                    </label>
+                    <label className="block evaluate-modal-head">Select Employee or User</label>
                     <select
                       className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none cursor-pointer border-none px-3 select-employee-dropdown"
-                      value={selectedEmployee}
-                      onChange={(e) => setSelectedEmployee(e.target.value)}
+                      value={selectedSource ? `${selectedSource}:${selectedEmployee}` : "Select Employee"}
+                      onChange={handleEmployeeChange}
                       onFocus={() => setIsDropdownOpen(true)}
                       onBlur={() => setIsDropdownOpen(false)}
                     >
                       <option value="Select Employee">Select Employee</option>
-                      {combinedOptions.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.first_name && item.last_name
-                            ? `${item.first_name} ${item.last_name}`
-                            : item.first_name ||
-                            item.last_name ||
-                            item.username ||
-                            item.email}
-                        </option>
-                      ))}
+                      {employees.length > 0 && (
+                        <optgroup label="Employees">
+                          {employees.map((emp) => (
+                            <option key={`employee-${emp.id}`} value={`employee:${emp.id}`}>
+                              {formatName(emp)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {users.length > 0 && (
+                        <optgroup label="Users">
+                          {users.map((user) => (
+                            <option key={`user-${user.id}`} value={`user:${user.id}`}>
+                              {formatName(user)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
-
                     <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180" : ""
-                          }`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180deg" : ""}`}
                       />
                     </div>
                   </div>
                 </div>
-
                 {loading ? (
                   <div className="text-center py-6 not-found">Loading questions...</div>
                 ) : (
@@ -351,7 +382,7 @@ const handleAnswerChange = (questionId, rating) => {
                         <tr className="h-[48px]">
                           <th className="px-4 text-left employee-evaluation-theads w-16">No</th>
                           <th className="px-4 text-left employee-evaluation-theads">Question</th>
-                          <th className="px-4 text-right employee-evaluation-theads w-32">Answer</th>
+                          <th className="px-4 text-right employee-evaluation-theads w-32">Rating</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -388,10 +419,11 @@ const handleAnswerChange = (questionId, rating) => {
                                         <button
                                           key={rating}
                                           onClick={() => handleAnswerChange(question.id, rating)}
-                                          className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${rating === 10
+                                          className={`w-[33px] h-[26px] rounded-md flex items-center justify-center employee-evaluate-data ${
+                                            rating === 10
                                               ? "border border-[#1E84AF] !text-[#1E84AF]"
                                               : "border border-[#5B5B5B] !text-[#5B5B5B]"
-                                            } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
+                                          } hover:border-[#1E84AF] hover:!text-[#1E84AF] duration-200`}
                                         >
                                           {rating}
                                         </button>
@@ -406,8 +438,8 @@ const handleAnswerChange = (questionId, rating) => {
                           <tr>
                             <td colSpan="3" className="text-center py-4 not-found">
                               {selectedEmployee === "Select Employee"
-                                ? "Please select an employee"
-                                : "No unanswered questions for this employee"}
+                                ? "Please select an employee or user"
+                                : "No unanswered questions for this selection"}
                             </td>
                           </tr>
                         )}
@@ -415,7 +447,6 @@ const handleAnswerChange = (questionId, rating) => {
                     </table>
                   </div>
                 )}
-
                 <div className="p-4 flex justify-end space-x-4">
                   <button className="cancel-btn duration-200" onClick={onClose}>
                     Cancel
