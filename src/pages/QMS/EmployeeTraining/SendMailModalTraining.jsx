@@ -8,6 +8,7 @@ import { BASE_URL } from "../../../Utils/Config";
 const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
   const [selectedManager, setSelectedManager] = useState("");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]); // Added for users
   const [searchTerm, setSearchTerm] = useState("");
   const [isManagerDropdownOpen, setIsManagerDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -16,8 +17,10 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
   // Dynamic data states
   const [managers, setManagers] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [users, setUsers] = useState([]); // Added for users
   const [loadingData, setLoadingData] = useState(true);
   const [company, setCompany] = useState(null);
+
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
     if (storedCompanyId) return storedCompanyId;
@@ -36,7 +39,16 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     }
     return null;
   };
-  // Fetch managers and employees when modal opens
+
+  const getCurrentUserId = () => {
+    const userRole = localStorage.getItem("role");
+    if (userRole === "user") {
+      return localStorage.getItem("user_id");
+    }
+    return localStorage.getItem("company_id");
+  };
+
+  // Fetch managers, employees, and users when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchData();
@@ -47,16 +59,19 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     setLoadingData(true);
     try {
       const companyId = getUserCompanyId();
-      const managersResponse = await axios.get(
-        `${BASE_URL}/company/users-active/${companyId}/`
-      );
+      
+      // Fetch managers (users)
+      const managersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
       setManagers(managersResponse.data);
 
       // Fetch employees
-      const employeesResponse = await axios.get(
-        `${BASE_URL}/company/employees-active/${companyId}/`
-      );
+      const employeesResponse = await axios.get(`${BASE_URL}/company/employees-active/${companyId}/`);
       setEmployees(employeesResponse.data);
+
+      // Fetch all users (for the recipient list)
+      const usersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      setUsers(usersResponse.data);
+
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load data. Please try again.");
@@ -65,13 +80,26 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     }
   };
 
-  const filteredEmployees = employees.filter(
-    (employee) =>
-      `${employee.first_name} ${employee.last_name}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      employee.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter employees and users, excluding the selected manager and current user
+  const filteredEmployees = employees.filter((employee) =>
+    (`${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    employee.email?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const filteredUsers = users.filter((user) => {
+    const currentUserId = getCurrentUserId();
+    // Exclude both the selected manager and the current user from the user list
+    return user.id !== selectedManager && 
+           user.id.toString() !== currentUserId?.toString() &&
+           (`${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
+
+  // Filter managers to exclude the current user
+  const filteredManagers = managers.filter((manager) => {
+    const currentUserId = getCurrentUserId();
+    return manager.id.toString() !== currentUserId?.toString();
+  });
 
   const handleEmployeeToggle = (employee) => {
     setSelectedEmployees((prev) => {
@@ -84,9 +112,31 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     });
   };
 
+  const handleUserToggle = (user) => {
+    setSelectedUsers((prev) => {
+      const isSelected = prev.find((u) => u.id === user.id);
+      if (isSelected) {
+        return prev.filter((u) => u.id !== user.id);
+      } else {
+        return [...prev, user];
+      }
+    });
+  };
+
   const handleRemoveEmployee = (employeeId) => {
     setSelectedEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
   };
+
+  const handleRemoveUser = (userId) => {
+    setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
+  };
+
+  // Clear selected users if they become the manager
+  useEffect(() => {
+    if (selectedManager) {
+      setSelectedUsers((prev) => prev.filter((u) => u.id !== selectedManager));
+    }
+  }, [selectedManager]);
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
@@ -101,14 +151,15 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
 
     return null;
   };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedManager) {
       setError("Manager is required");
       return;
     }
-    if (selectedEmployees.length === 0) {
-      setError("At least one employee must be selected");
+    if (selectedEmployees.length === 0 && selectedUsers.length === 0) {
+      setError("At least one employee or user must be selected");
       return;
     }
 
@@ -122,7 +173,8 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
         user: userId,
         company: companyId,
         manager: selectedManager,
-        employee: selectedEmployees.map((emp) => emp.id),
+        employee: selectedEmployees.map(emp => emp.id),
+        users: selectedUsers.map(user => user.id), // Added users to payload
         training: trainingEvaluationId,
       };
 
@@ -135,11 +187,13 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
       // Reset form
       setSelectedManager("");
       setSelectedEmployees([]);
+      setSelectedUsers([]);
       setSearchTerm("");
 
       setTimeout(() => {
         onClose();
       }, 1000);
+
     } catch (err) {
       console.error("Error sending email:", err);
       let errorMsg = "Failed to send email. Please try again.";
@@ -150,7 +204,6 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         } else if (typeof err.response.data === "object") {
-       
           const errors = Object.values(err.response.data).flat();
           errorMsg = errors.join(", ");
         }
@@ -165,6 +218,7 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     // Clear all form data
     setSelectedManager("");
     setSelectedEmployees([]);
+    setSelectedUsers([]);
     setSearchTerm("");
     setIsManagerDropdownOpen(false);
     setError("");
@@ -175,9 +229,19 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     return `${employee.first_name} ${employee.last_name}`;
   };
 
+  const getUserName = (user) => {
+    return `${user.first_name} ${user.last_name}`;
+  };
+
   const getManagerName = (manager) => {
     return `${manager.first_name} ${manager.last_name}`;
   };
+
+  // Combine selected employees and users for display
+  const allSelectedRecipients = [
+    ...selectedEmployees.map(emp => ({ ...emp, type: 'employee' })),
+    ...selectedUsers.map(user => ({ ...user, type: 'user' }))
+  ];
 
   return (
     <AnimatePresence>
@@ -222,9 +286,7 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                       >
                         <span>
                           {selectedManager
-                            ? getManagerName(
-                                managers.find((m) => m.id === selectedManager)
-                              )
+                            ? getManagerName(filteredManagers.find((m) => m.id === selectedManager) || managers.find((m) => m.id === selectedManager))
                             : "Select Manager"}
                         </span>
                         <ChevronDown
@@ -235,8 +297,8 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                       </button>
                       {isManagerDropdownOpen && (
                         <div className="absolute top-full left-0 right-0 bg-[#24242D] add-question-inputs rounded-md mt-1 z-10 max-h-48 overflow-y-auto">
-                          {managers.length > 0 ? (
-                            managers.map((manager) => (
+                          {filteredManagers.length > 0 ? (
+                            filteredManagers.map((manager) => (
                               <button
                                 key={manager.id}
                                 type="button"
@@ -250,41 +312,44 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                               </button>
                             ))
                           ) : (
-                            <div className="p-3 text-[#AAAAAA]">
-                              No managers available
-                            </div>
+                            <div className="p-3 text-[#AAAAAA]">No managers available</div>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Employee Selection */}
+                  {/* Recipients Selection (Employees + Users) */}
                   <div>
                     <label className="block mb-3 add-question-label">
-                      Select Employee
+                      Select Recipients (Employees & Users)
                     </label>
 
-                    {/* Selected Employee Tags */}
+                    {/* Selected Recipients Tags */}
                     <div className="flex flex-wrap gap-[6px] mb-[10px] bg-[#24242D] min-h-[49px] rounded-md px-4 py-2">
-                      {selectedEmployees.length === 0 ? (
+                      {allSelectedRecipients.length === 0 ? (
                         <div className="flex items-center text-[#AAAAAA] text-sm">
-                          No employees selected
+                          No recipients selected
                         </div>
                       ) : (
                         <>
-                          {selectedEmployees.slice(0, 4).map((employee) => (
+                          {allSelectedRecipients.slice(0, 4).map((recipient) => (
                             <div
-                              key={employee.id}
+                              key={`${recipient.type}-${recipient.id}`}
                               className="bg-[#1C1C24] text-white px-2 h-[34px] rounded add-question-label !text-[14px] flex items-center gap-2 max-w-[150px]"
                             >
                               <span className="truncate overflow-hidden text-ellipsis whitespace-nowrap flex-1">
-                                {getEmployeeName(employee)}
+                                {recipient.type === 'employee' ? getEmployeeName(recipient) : getUserName(recipient)}
+                                <span className="text-[#AAAAAA] text-xs ml-1">
+                                  ({recipient.type === 'employee' ? 'E' : 'U'})
+                                </span>
                               </span>
                               <button
                                 type="button"
-                                onClick={() =>
-                                  handleRemoveEmployee(employee.id)
+                                onClick={() => 
+                                  recipient.type === 'employee' 
+                                    ? handleRemoveEmployee(recipient.id)
+                                    : handleRemoveUser(recipient.id)
                                 }
                                 className="text-[#AAAAAA] hover:text-red-600"
                               >
@@ -292,9 +357,9 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                               </button>
                             </div>
                           ))}
-                          {selectedEmployees.length > 4 && (
+                          {allSelectedRecipients.length > 4 && (
                             <div className="bg-[#1C1C24] text-white px-3 h-[34px] rounded add-question-label !text-[14px] items-center flex">
-                              +{selectedEmployees.length - 4} more
+                              +{allSelectedRecipients.length - 4} more
                             </div>
                           )}
                         </>
@@ -309,45 +374,82 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="w-full bg-[#1C1C24] border border-[#5B5B5B] rounded-md px-4 py-[10px] text-white outline-none add-question-inputs"
-                          placeholder="Search employees by name or email..."
+                          placeholder="Search employees and users by name or email..."
                         />
                         <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#AAAAAA] w-5 h-5" />
                       </div>
 
                       <div className="max-h-[176px] overflow-y-auto">
-                        {/* Employee List */}
+                        {/* Combined Employee and User List */}
                         <div className="grid grid-cols-2 gap-0">
-                          {filteredEmployees.length > 0 ? (
-                            filteredEmployees.map((employee) => {
-                              const isSelected = selectedEmployees.find(
-                                (emp) => emp.id === employee.id
-                              );
-                              return (
-                                <label
-                                  key={employee.id}
-                                  className="flex items-start p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={!!isSelected}
-                                    onChange={() =>
-                                      handleEmployeeToggle(employee)
-                                    }
-                                    className="form-checkboxes mt-1"
-                                  />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="font-medium text-white">
-                                      {getEmployeeName(employee)}
+                          {/* Employees Section */}
+                          {filteredEmployees.length > 0 && (
+                            <>
+                              <div className="col-span-2 px-3 py-2 text-[#AAAAAA] text-sm font-medium border-b border-[#383840]">
+                                Employees
+                              </div>
+                              {filteredEmployees.map((employee) => {
+                                const isSelected = selectedEmployees.find(
+                                  (emp) => emp.id === employee.id
+                                );
+                                return (
+                                  <label
+                                    key={`employee-${employee.id}`}
+                                    className="flex items-start p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={!!isSelected}
+                                      onChange={() => handleEmployeeToggle(employee)}
+                                      className="form-checkboxes mt-1"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-white">
+                                        {getEmployeeName(employee)}
+                                      </div>
                                     </div>
-                                  </div>
-                                </label>
-                              );
-                            })
-                          ) : (
+                                  </label>
+                                );
+                              })}
+                            </>
+                          )}
+
+                          {/* Users Section */}
+                          {filteredUsers.length > 0 && (
+                            <>
+                              <div className="col-span-2 px-3 py-2 text-[#AAAAAA] text-sm font-medium border-b border-[#383840]">
+                                Users
+                              </div>
+                              {filteredUsers.map((user) => {
+                                const isSelected = selectedUsers.find(
+                                  (u) => u.id === user.id
+                                );
+                                return (
+                                  <label
+                                    key={`user-${user.id}`}
+                                    className="flex items-start p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={!!isSelected}
+                                      onChange={() => handleUserToggle(user)}
+                                      className="form-checkboxes mt-1"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="font-medium text-white">
+                                        {getUserName(user)}
+                                      </div>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </>
+                          )}
+
+                          {/* No results message */}
+                          {filteredEmployees.length === 0 && filteredUsers.length === 0 && (
                             <div className="col-span-2 p-3 text-[#AAAAAA] text-center">
-                              {searchTerm
-                                ? "No employees found matching your search"
-                                : "No employees available"}
+                              {searchTerm ? 'No employees or users found matching your search' : 'No employees or users available'}
                             </div>
                           )}
                         </div>
@@ -374,11 +476,7 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
                     <button
                       type="submit"
                       className="save-btn duration-200"
-                      disabled={
-                        loading ||
-                        selectedEmployees.length === 0 ||
-                        !selectedManager
-                      }
+                      disabled={loading || (selectedEmployees.length === 0 && selectedUsers.length === 0) || !selectedManager}
                     >
                       {loading ? "Sending..." : "Send Email"}
                     </button>
@@ -392,4 +490,5 @@ const SendMailModalTraining = ({ isOpen, onClose, trainingEvaluationId }) => {
     </AnimatePresence>
   );
 };
+
 export default SendMailModalTraining;
