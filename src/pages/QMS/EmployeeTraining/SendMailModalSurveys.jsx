@@ -4,22 +4,24 @@ import { Search, X, ChevronDown } from "lucide-react";
 import "./sendmail.css";
 import axios from "axios";
 import { BASE_URL } from "../../../Utils/Config";
+import SuccessModal from "../../../components/Modals/SuccessModal";
+import ErrorModal from "../../../components/Modals/ErrorModal";
 
 const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
   const [selectedManager, setSelectedManager] = useState("");
   const [selectedEmployees, setSelectedEmployees] = useState([]);
-  const [selectedUsers, setSelectedUsers] = useState([]); // Added for users
+  const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isManagerDropdownOpen, setIsManagerDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Dynamic data states
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [showErrorModal, setShowErrorModal] = useState(false);
   const [managers, setManagers] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [users, setUsers] = useState([]); // Added for users
+  const [users, setUsers] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
-  const [company, setCompany] = useState(null);
 
   const getUserCompanyId = () => {
     const storedCompanyId = localStorage.getItem("company_id");
@@ -48,7 +50,6 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     return localStorage.getItem("company_id");
   };
 
-  // Fetch managers, employees, and users when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchData();
@@ -59,28 +60,29 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     setLoadingData(true);
     try {
       const companyId = getUserCompanyId();
-      
-      // Fetch managers (users)
-      const managersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
+      if (!companyId) {
+        throw new Error("Company ID not found. Please log in again.");
+      }
+
+      const [managersResponse, employeesResponse, usersResponse] = await Promise.all([
+        axios.get(`${BASE_URL}/company/users-active/${companyId}/`),
+        axios.get(`${BASE_URL}/company/employees-active/${companyId}/`),
+        axios.get(`${BASE_URL}/company/users-active/${companyId}/`),
+      ]);
+
       setManagers(managersResponse.data);
-
-      // Fetch employees
-      const employeesResponse = await axios.get(`${BASE_URL}/company/employees-active/${companyId}/`);
       setEmployees(employeesResponse.data);
-
-      // Fetch all users (for the recipient list)
-      const usersResponse = await axios.get(`${BASE_URL}/company/users-active/${companyId}/`);
       setUsers(usersResponse.data);
-
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError("Failed to load data. Please try again.");
+      setError(err.message || "Failed to load data. Please try again.");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
     } finally {
       setLoadingData(false);
     }
   };
 
-  // Filter employees and users, excluding the selected manager and current user
   const filteredEmployees = employees.filter((employee) =>
     (`${employee.first_name} ${employee.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
     employee.email?.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -88,14 +90,12 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
 
   const filteredUsers = users.filter((user) => {
     const currentUserId = getCurrentUserId();
-    // Exclude both the selected manager and the current user from the user list
-    return user.id !== selectedManager && 
+    return user.id !== selectedManager &&
            user.id.toString() !== currentUserId?.toString() &&
            (`${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
            user.email?.toLowerCase().includes(searchTerm.toLowerCase()));
   });
 
-  // Filter managers to exclude the current user
   const filteredManagers = managers.filter((manager) => {
     const currentUserId = getCurrentUserId();
     return manager.id.toString() !== currentUserId?.toString();
@@ -131,7 +131,6 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     setSelectedUsers((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  // Clear selected users if they become the manager
   useEffect(() => {
     if (selectedManager) {
       setSelectedUsers((prev) => prev.filter((u) => u.id !== selectedManager));
@@ -140,15 +139,12 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
 
   const getRelevantUserId = () => {
     const userRole = localStorage.getItem("role");
-
     if (userRole === "user") {
       const userId = localStorage.getItem("user_id");
       if (userId) return userId;
     }
-
     const companyId = localStorage.getItem("company_id");
     if (companyId) return companyId;
-
     return null;
   };
 
@@ -156,14 +152,20 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     e.preventDefault();
     if (!selectedManager) {
       setError("Manager is required");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
       return;
     }
     if (selectedEmployees.length === 0 && selectedUsers.length === 0) {
       setError("At least one employee or user must be selected");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
       return;
     }
     if (!surveyId) {
       setError("Survey ID is required");
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
       return;
     }
 
@@ -173,59 +175,61 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     try {
       const companyId = getUserCompanyId();
       const userId = getRelevantUserId();
+      if (!companyId || !userId) {
+        throw new Error("Authentication data missing. Please log in again.");
+      }
+
       const payload = {
         user: userId,
         company: companyId,
         manager: selectedManager,
         employee: selectedEmployees.map((emp) => emp.id),
-        users: selectedUsers.map(user => user.id), // Added users to payload
-        survey: surveyId, // Include surveyId in the payload
+        users: selectedUsers.map((user) => user.id),
+        survey: surveyId,
       };
 
       await axios.post(`${BASE_URL}/qms/send-survey-email/`, payload);
 
-      // Success feedback
-      setError("");
-      alert("Email sent successfully!");
-
-      // Reset form
-      setSelectedManager("");
-      setSelectedEmployees([]);
-      setSelectedUsers([]);
-      setSearchTerm("");
-
+      setSuccessMessage("Email Sent Successfully");
+      setShowSuccessModal(true);
       setTimeout(() => {
+        setShowSuccessModal(false);
+        setSelectedManager("");
+        setSelectedEmployees([]);
+        setSelectedUsers([]);
+        setSearchTerm("");
         onClose();
-      }, 1000);
+      }, 2000);
     } catch (err) {
       console.error("Error sending email:", err);
       let errorMsg = "Failed to send email. Please try again.";
-
       if (err.response?.data) {
         if (err.response.data.detail) {
           errorMsg = err.response.data.detail;
         } else if (err.response.data.message) {
           errorMsg = err.response.data.message;
         } else if (typeof err.response.data === "object") {
-          // Handle field-specific errors
           const errors = Object.values(err.response.data).flat();
           errorMsg = errors.join(", ");
         }
       }
       setError(errorMsg);
+      setShowErrorModal(true);
+      setTimeout(() => setShowErrorModal(false), 3000);
     } finally {
       setLoading(false);
     }
   };
 
   const handleCancel = () => {
-    // Clear all form data
     setSelectedManager("");
     setSelectedEmployees([]);
     setSelectedUsers([]);
     setSearchTerm("");
     setIsManagerDropdownOpen(false);
     setError("");
+    setShowErrorModal(false);
+    setShowSuccessModal(false);
     onClose();
   };
 
@@ -241,7 +245,6 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
     return `${manager.first_name} ${manager.last_name}`;
   };
 
-  // Combine selected employees and users for display
   const allSelectedRecipients = [
     ...selectedEmployees.map(emp => ({ ...emp, type: 'employee' })),
     ...selectedUsers.map(user => ({ ...user, type: 'user' }))
@@ -265,7 +268,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
             <div className="bg-[#1C1C24] text-white rounded-lg">
-              <div className=" pt-5 pb-6 border-b border-[#383840] mx-5">
+              <div className="pt-5 pb-6 border-b border-[#383840] mx-5">
                 <p className="evaluate-modal-head !text-[20px]">Send Mail</p>
               </div>
 
@@ -283,10 +286,9 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                     <div className="relative">
                       <button
                         type="button"
-                        onClick={() =>
-                          setIsManagerDropdownOpen(!isManagerDropdownOpen)
-                        }
+                        onClick={() => setIsManagerDropdownOpen(!isManagerDropdownOpen)}
                         className="w-full bg-[#24242D] rounded-md p-3 text-left text-[#AAAAAA] outline-none add-question-inputs flex items-center justify-between"
+                        aria-label="Select Manager"
                       >
                         <span>
                           {selectedManager
@@ -294,9 +296,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                             : "Select Manager"}
                         </span>
                         <ChevronDown
-                          className={`w-5 h-5 transition-transform duration-200 ${
-                            isManagerDropdownOpen ? "rotate-180" : "rotate-0"
-                          }`}
+                          className={`w-5 h-5 transition-transform duration-200 ${isManagerDropdownOpen ? "rotate-180" : "rotate-0"}`}
                         />
                       </button>
                       {isManagerDropdownOpen && (
@@ -323,7 +323,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                     </div>
                   </div>
 
-                  {/* Recipients Selection (Employees + Users) */}
+                  {/* Recipients Selection */}
                   <div>
                     <label className="block mb-3 add-question-label">
                       Select Recipients (Employees & Users)
@@ -332,7 +332,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                     {/* Selected Recipients Tags */}
                     <div className="flex flex-wrap gap-[6px] mb-[10px] bg-[#24242D] min-h-[49px] rounded-md px-4 py-2">
                       {allSelectedRecipients.length === 0 ? (
-                        <div className="flex items-center text-[#AAAAAA] text-sm">
+                        <div className="flex items-center add-question-label !text-[#AAAAAA]">
                           No recipients selected
                         </div>
                       ) : (
@@ -356,6 +356,7 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                                     : handleRemoveUser(recipient.id)
                                 }
                                 className="text-[#AAAAAA] hover:text-red-600"
+                                aria-label={`Remove ${recipient.type === 'employee' ? getEmployeeName(recipient) : getUserName(recipient)}`}
                               >
                                 <X className="w-4 h-4" />
                               </button>
@@ -371,7 +372,6 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                     </div>
 
                     <div className="border border-[#5B5B5B] rounded-md px-4 py-[18px]">
-                      {/* Search Input */}
                       <div className="relative mb-3">
                         <input
                           type="text"
@@ -379,17 +379,16 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="w-full bg-[#1C1C24] border border-[#5B5B5B] rounded-md px-4 py-[10px] text-white outline-none add-question-inputs"
                           placeholder="Search employees and users by name or email..."
+                          aria-label="Search employees and users"
                         />
                         <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#AAAAAA] w-5 h-5" />
                       </div>
 
                       <div className="max-h-[176px] overflow-y-auto">
-                        {/* Combined Employee and User List */}
                         <div className="grid grid-cols-2 gap-0">
-                          {/* Employees Section */}
                           {filteredEmployees.length > 0 && (
                             <>
-                              <div className="col-span-2 px-3 py-2 text-[#AAAAAA] text-sm font-medium border-b border-[#383840]">
+                              <div className="col-span-2 px-3 py-2 add-question-label !text-[#AAAAAA] border-b border-[#383840]">
                                 Employees
                               </div>
                               {filteredEmployees.map((employee) => {
@@ -399,13 +398,13 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                                 return (
                                   <label
                                     key={`employee-${employee.id}`}
-                                    className="flex items-start p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
+                                    className="flex items-center p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
                                   >
                                     <input
                                       type="checkbox"
                                       checked={!!isSelected}
                                       onChange={() => handleEmployeeToggle(employee)}
-                                      className="form-checkboxes mt-1"
+                                      className="form-checkboxes"
                                     />
                                     <div className="flex-1 min-w-0">
                                       <div className="font-medium text-white">
@@ -418,10 +417,9 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                             </>
                           )}
 
-                          {/* Users Section */}
                           {filteredUsers.length > 0 && (
                             <>
-                              <div className="col-span-2 px-3 py-2 text-[#AAAAAA] text-sm font-medium border-b border-[#383840]">
+                              <div className="col-span-2 px-3 py-2 add-question-label !text-[#AAAAAA] border-b border-[#383840]">
                                 Users
                               </div>
                               {filteredUsers.map((user) => {
@@ -431,13 +429,13 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                                 return (
                                   <label
                                     key={`user-${user.id}`}
-                                    className="flex items-start p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
+                                    className="flex items-center p-3 cursor-pointer gap-3 send-mail-label hover:bg-[#2A2A32]"
                                   >
                                     <input
                                       type="checkbox"
                                       checked={!!isSelected}
                                       onChange={() => handleUserToggle(user)}
-                                      className="form-checkboxes mt-1"
+                                      className="form-checkboxes"
                                     />
                                     <div className="flex-1 min-w-0">
                                       <div className="font-medium text-white">
@@ -450,9 +448,8 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                             </>
                           )}
 
-                          {/* No results message */}
                           {filteredEmployees.length === 0 && filteredUsers.length === 0 && (
-                            <div className="col-span-2 p-3 text-[#AAAAAA] text-center">
+                            <div className="col-span-2 p-3 not-found text-center">
                               {searchTerm ? 'No employees or users found matching your search' : 'No employees or users available'}
                             </div>
                           )}
@@ -461,32 +458,37 @@ const SendMailModalSurveys = ({ isOpen, onClose, surveyId }) => {
                     </div>
                   </div>
 
-                  {error && (
-                    <div className="bg-red-900/20 border border-red-500/30 rounded-md p-3">
-                      <p className="text-red-400 text-sm">{error}</p>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
                   <div className="flex justify-end space-x-4">
                     <button
                       type="button"
                       onClick={handleCancel}
                       className="cancel-btn duration-200"
                       disabled={loading}
+                      aria-label="Cancel"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="save-btn duration-200"
-                      disabled={loading || (selectedEmployees.length === 0 && selectedUsers.length === 0) || !selectedManager}
+                      className="save-btn duration-200 cursor-pointer"
+                      disabled={loading || (selectedEmployees.length === 0 && selectedUsers.length === 0) || !selectedManager || !surveyId}
+                      aria-label="Send Email"
                     >
                       {loading ? "Sending..." : "Send Email"}
                     </button>
                   </div>
                 </form>
               )}
+              <SuccessModal
+                showSuccessModal={showSuccessModal}
+                onClose={() => setShowSuccessModal(false)}
+                successMessage={successMessage}
+              />
+              <ErrorModal
+                showErrorModal={showErrorModal}
+                onClose={() => setShowErrorModal(false)}
+                error={error}
+              />
             </div>
           </motion.div>
         </motion.div>

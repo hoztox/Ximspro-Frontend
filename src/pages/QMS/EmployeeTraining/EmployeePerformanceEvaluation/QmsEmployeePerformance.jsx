@@ -339,7 +339,7 @@ const EvaluationModal = ({
                   <div className="flex relative items-center gap-3">
                     <label className="block evaluate-modal-head">Select Employee or User</label>
                     <select
-                      className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none cursor-pointer border-none px-3 select-employee-dropdown"
+                      className="w-[215px] h-[49px] bg-[#24242D] p-2 rounded-md appearance-none outline-none cursor-pointer border-none px-3 select-employee-dropdown"
                       value={selectedSource ? `${selectedSource}:${selectedEmployee}` : "Select Employee"}
                       onChange={handleEmployeeChange}
                       onFocus={() => setIsDropdownOpen(true)}
@@ -365,10 +365,10 @@ const EvaluationModal = ({
                         </optgroup>
                       )}
                     </select>
-                    <div className="absolute -top-[9px] right-[145px] flex items-center pr-2 pointer-events-none mt-6">
+                    <div className="absolute -top-[9px] right-[90px] flex items-center pr-2 pointer-events-none mt-6">
                       <ChevronDown
                         size={20}
-                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180deg" : ""}`}
+                        className={`transition-transform duration-300 text-[#AAAAAA] ${isDropdownOpen ? "rotate-180" : ""}`}
                       />
                     </div>
                   </div>
